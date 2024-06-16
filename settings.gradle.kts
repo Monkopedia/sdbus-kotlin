@@ -1,3 +1,2 @@
-
-rootProject.name = "kotlin-dbus"
-
+rootProject.name = "kotlin_dbus"
+include("codegen")
