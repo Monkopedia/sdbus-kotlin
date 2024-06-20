@@ -213,11 +213,9 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
         var obj: Object? = null
 
         init {
-            println("Alloc vtable")
         }
 
         fun clear() {
-            println("Clear vtable")
             scope.clear()
             obj = null
         }

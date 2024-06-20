@@ -10,6 +10,7 @@ import com.monkopedia.sdbus.header.Signature
 import com.monkopedia.sdbus.header.UnixFd
 import com.monkopedia.sdbus.header.Variant
 import com.monkopedia.sdbus.header.callMethod
+import com.monkopedia.sdbus.header.callMethodAsync
 import com.monkopedia.sdbus.header.getProperty
 import com.monkopedia.sdbus.header.return_slot
 import com.monkopedia.sdbus.header.setProperty
@@ -130,10 +131,10 @@ abstract class IntegrationTestsProxy(proxy: IProxy) :
             .withArguments { call(arg0) }
             .readResult()
 
-    fun doOperationAsync(arg0: UInt): UInt =
-        m_proxy.callMethod("doOperationAsync").onInterface(INTERFACE_NAME)
+    suspend fun doOperationAsync(arg0: UInt): UInt =
+        m_proxy.callMethodAsync("doOperationAsync").onInterface(INTERFACE_NAME)
             .withArguments { call(arg0) }
-            .readResult()
+            .getResult<UInt>()
 
     fun getSignature(): Signature =
         m_proxy.callMethod("getSignature").onInterface(INTERFACE_NAME).readResult()

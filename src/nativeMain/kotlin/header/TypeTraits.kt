@@ -2,7 +2,6 @@
 
 package com.monkopedia.sdbus.header
 
-import com.monkopedia.sdbus.internal.Unowned
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 import kotlinx.cinterop.ByteVar

@@ -64,10 +64,7 @@ abstract class IntegrationTestsAdaptor(override val m_object: IObject) : ObjectA
             registerMethod("doOperationAsync").withInputParamNames("arg0")
                 .withOutputParamNames("arg0").implementedAs {
                     acall { arg0: UInt ->
-                        println("Doop async")
-                        doOperationAsync(arg0).also {
-                            println("DoneAsync")
-                        }
+                        doOperationAsync(arg0)
                     } withContext Dispatchers.Unconfined
                 },
             registerMethod("getSignature").withOutputParamNames("arg0")

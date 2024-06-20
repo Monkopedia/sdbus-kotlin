@@ -22,6 +22,7 @@ import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 
 class DBusMethodTests : BaseTest() {
@@ -253,7 +254,7 @@ class DBusMethodTests : BaseTest() {
     }
 
     @Test
-    fun CanAccessAssociatedMethodCallMessageInAsyncMethodCallHandler(): Unit = memScoped {
+    fun CanAccessAssociatedMethodCallMessageInAsyncMethodCallHandler(): Unit = runTest {
         fixture.m_proxy!!.doOperationAsync(10u); // This will save pointer to method call message on server side
 
         assertNotNull(fixture.m_adaptor!!.m_methodCallMsg);

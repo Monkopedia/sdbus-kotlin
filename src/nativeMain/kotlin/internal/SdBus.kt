@@ -282,7 +282,6 @@ class SdBus : ISdBus {
         name: String?,
         flags: uint64_t
     ): Int = lock.withLock {
-        println("Requesting name")
         return sdbus.sd_bus_request_name(bus, name, flags)
     }
 

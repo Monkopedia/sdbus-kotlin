@@ -72,7 +72,6 @@ val FloatTypeConverter = buildTypeConverter(FloatVar::value)
 val DoubleTypeConverter = buildTypeConverter(DoubleVar::value)
 
 inline fun <K, reified N : CVariable> NativeTypeConverter<K, N>.doAllocNative(scope: MemScope, source: List<K>): CArrayPointer<N> {
-    println("Alloc native ${source.size}")
     return scope.allocArray(source.size) {
         set(source[it])
     }

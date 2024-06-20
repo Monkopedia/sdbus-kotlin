@@ -7,8 +7,6 @@ import cnames.structs.sd_bus_slot
 import com.monkopedia.sdbus.internal.ISdBus
 import com.monkopedia.sdbus.internal.Reference
 import com.monkopedia.sdbus.internal.Slot
-import com.monkopedia.sdbus.internal.Unowned
-import com.monkopedia.sdbus.internal.create
 import kotlin.native.internal.NativePtr
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.CPointer

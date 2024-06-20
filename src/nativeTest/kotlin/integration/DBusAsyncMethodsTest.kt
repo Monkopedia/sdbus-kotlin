@@ -92,11 +92,8 @@ class DBusAsyncMethodsTest : BaseTest() {
             val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH);
             startedCount.emit(Unit)
             while (!invoke) delay(1)
-            println("Start async call")
             val result = proxy.doOperationAsync(param);
-            println("Got async call result")
             results.emit(result);
-            println("Done")
         }
         val pool = newFixedThreadPoolContext(3, "test-pool")
 
@@ -105,22 +102,16 @@ class DBusAsyncMethodsTest : BaseTest() {
                 call(it)
             }
         }
-        println("WAiting for starts")
         startedCount.take(3).collect()
         invoke = true;
-        println("WAiting for joins")
         invocations.joinAll()
-        println("Joined")
 
         assertEquals(setOf(500u, 1000u, 1500u), results.take(3).toList().toSet())
-        println("Closing")
         pool.close()
-        println("Leaving")
     }
 
     @Test
     fun HandlesCorrectlyABulkOfParallelServerSideAsyncMethods(): Unit = runTest {
-
         memScoped {
             var resultCount by atomic(0.convert<size_t>());
             var invoke by atomic(false)

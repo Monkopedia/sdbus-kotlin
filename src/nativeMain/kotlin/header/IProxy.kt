@@ -4,10 +4,7 @@ package com.monkopedia.sdbus.header
 
 import com.monkopedia.sdbus.internal.Proxy
 import com.monkopedia.sdbus.internal.Proxy.AsyncCallInfo
-import com.monkopedia.sdbus.internal.ScopedObject.WeakPtr
 import com.monkopedia.sdbus.internal.Slot
-import com.monkopedia.sdbus.internal.Unowned
-import com.monkopedia.sdbus.internal.create
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlin.time.Duration

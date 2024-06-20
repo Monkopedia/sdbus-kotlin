@@ -4,8 +4,6 @@ package com.monkopedia.sdbus.header
 
 import com.monkopedia.sdbus.internal.Object
 import com.monkopedia.sdbus.internal.Slot
-import com.monkopedia.sdbus.internal.Unowned
-import com.monkopedia.sdbus.internal.create
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.EINVAL
 

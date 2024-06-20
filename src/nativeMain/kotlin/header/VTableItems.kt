@@ -31,22 +31,18 @@ data class MethodVTableItem(
         outputSignature = Signature(callback.method.outputType.signature.value)
         val start = Clock.System.now()
         callbackHandler = { call ->
-            println("Async call handler ${Clock.System.now() - start}")
             callback.invoke(call,
                 onSuccess = { type, result ->
-                    println("Async call success ${Clock.System.now() - start}")
                     call.createReply().also {
                         @Suppress("UNCHECKED_CAST")
                         it.serialize(type, result)
                     }
                 },
                 onFailure = {
-                    println("Async call error ${it.stackTraceToString()} ${Clock.System.now() - start}")
                     call.createErrorReply(it.toError())
                 },
                 onResult = {
                     it.send()
-                    println("Async call sent ${Clock.System.now() - start}")
                 }
             )
         }

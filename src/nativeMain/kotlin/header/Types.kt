@@ -57,10 +57,10 @@ class Variant() {
         msg_.seal()
     }
 
-    inline fun <reified T: Any> get(): T {
+    inline fun <reified T : Any> get(): T {
         val serializer = serializer<T>()
         return get(
-            serializer.also { println("Types getting $it") },
+            serializer,
             serializersModuleOf(serializer),
             signature_of<T>()
         )

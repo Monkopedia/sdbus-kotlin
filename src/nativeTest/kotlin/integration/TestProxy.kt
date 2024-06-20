@@ -27,7 +27,6 @@ import com.monkopedia.sdbus.header.toError
 import com.monkopedia.sdbus.header.with_future
 import com.monkopedia.sdbus.header.with_future_t
 import com.monkopedia.sdbus.internal.Slot
-import com.monkopedia.sdbus.internal.Unowned
 import kotlin.time.Duration
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.DeferScope

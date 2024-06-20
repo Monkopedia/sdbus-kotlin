@@ -185,13 +185,8 @@ class Connection private constructor(
     private val eventThread = EventLoopThread(bus, sdbus_)
     private val loopExit = eventThread.exitFd
     private val cleaner = createCleaner(loopExit) { exit ->
-        println("Cleanup connection")
         exit.notify()
     }
-//    private val cleaner2 = createCleaner(floatingMatchRules_) { matches ->
-//        println("Cleanup 2 connection")
-//        matches.clear()
-//    }
 
     constructor(intf: ISdBus, factory: BusFactory) : this(intf, openBus(intf, factory))
 
@@ -388,13 +383,11 @@ class Connection private constructor(
         SDBUS_THROW_ERROR_IF(r < 0, "Failed to register object vtable", -r);
 
         val cPointer = slot[0]
-        println("Alloc $cPointer")
 //        val ptr = cValue<CPointerVar<sd_bus_slot>> {
 //            this.value = slot[0]
 //        }
         Reference(cPointer) {
 //            memScoped {
-            println("De-alloc ${it}")
             sdbus_.sd_bus_slot_unref(it)
 //            }
             ref?.dispose()
@@ -496,7 +489,6 @@ class Connection private constructor(
         // An event loop may wait in poll with timeout `t1', while in another thread an async call is made with
         // timeout `t2'. If `t2' < `t1', then we have to wake up the event loop thread to update its poll timeout.
         if (timeoutAfter < timeoutBefore) {
-            println("Notifying for wakeup")
             eventThread.notifyEventLoopToWakeUpFromPoll()
         }
 
@@ -542,9 +534,7 @@ class Connection private constructor(
     ) = memScoped {
         val names = if (interfaces.isNotEmpty()) toStrv(interfaces.map { it.value }) else null
 
-        println("Emitting interface added")
         val r = sdbus_.sd_bus_emit_interfaces_added_strv(bus_.get(), objectPath.value, names)
-        println("Emitted interface added signal $objectPath $interfaces $r")
 
         SDBUS_THROW_ERROR_IF(r < 0, "Failed to emit InterfacesAdded signal", -r)
 
@@ -625,7 +615,6 @@ class Connection private constructor(
         var fd: Int by holder::fd
         private val cleaner = createCleaner(holder) {
             if (it.shouldCleanup) {
-                println("Running FD Cleaner ${it.fd}")
                 require(it.fd >= 0)
                 close(it.fd)
             }
@@ -738,7 +727,6 @@ class Connection private constructor(
 
             // Wake up notification, in order that we re-enter poll with freshly read PollData (namely, new poll timeout thereof)
             if ((fds[1].revents.toInt() and POLLIN) != 0) {
-                println("Wake up notification")
                 val cleared = eventFd_?.clear()
                 SDBUS_THROW_ERROR_IF(
                     cleared != true,

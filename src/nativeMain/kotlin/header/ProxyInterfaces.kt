@@ -1,7 +1,5 @@
 package com.monkopedia.sdbus.header
 
-import com.monkopedia.sdbus.internal.Unowned
-
 /********************************************//**
  * @class ProxyObjectHolder
  *
