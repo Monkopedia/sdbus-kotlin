@@ -15,13 +15,13 @@ interface ProxyHolder {
 interface PeerProxy : ProxyHolder {
     fun Ping() {
         memScoped {
-            m_proxy.callMethod("Ping").own(this).onInterface(INTERFACE_NAME);
+            m_proxy.callMethod("Ping").onInterface(INTERFACE_NAME);
         }
     }
 
     fun GetMachineId(): String {
         memScoped {
-            return m_proxy.callMethod("GetMachineId").own(this)
+            return m_proxy.callMethod("GetMachineId")
                 .onInterface(INTERFACE_NAME)
                 .readResult<String>()
         }
@@ -37,7 +37,7 @@ interface IntrospectableProxy : ProxyHolder {
 
     fun Introspect(): String {
         memScoped {
-            return m_proxy.callMethod("Introspect").own(this)
+            return m_proxy.callMethod("Introspect")
                 .onInterface(INTERFACE_NAME)
                 .readResult<String>()
         }
@@ -105,7 +105,7 @@ interface PropertiesProxy : ProxyHolder {
         interfaceName: InterfaceName,
         propertyName: PropertyName,
         value: Variant,
-        callback: TypedMethodCall
+        callback: TypedMethodCall<*>
     ): PendingAsyncCall {
         return m_proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
             .uponReplyInvoke(callback);
@@ -115,9 +115,9 @@ interface PropertiesProxy : ProxyHolder {
         interfaceName: InterfaceName,
         propertyName: PropertyName,
         value: Variant,
-        callback: TypedMethodCall,
+        callback: TypedMethodCall<*>,
         return_slot: return_slot_t
-    ): Unowned<Slot> {
+    ): Slot {
         return m_proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
             .uponReplyInvoke(callback, return_slot);
     }
@@ -224,8 +224,7 @@ interface ObjectManagerProxy : ProxyHolder {
 
     fun getManagedObjects(): Map<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>> {
         memScoped {
-            @Suppress("UNCHECKED_CAST")
-            return m_proxy.callMethod("GetManagedObjects").own(this)
+            return m_proxy.callMethod("GetManagedObjects")
                 .onInterface(INTERFACE_NAME)
                 .readResult()
         }

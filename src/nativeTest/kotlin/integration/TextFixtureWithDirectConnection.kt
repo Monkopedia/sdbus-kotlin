@@ -2,35 +2,26 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Connection
 import com.monkopedia.sdbus.header.IConnection
 import com.monkopedia.sdbus.header.createBusConnection
 import com.monkopedia.sdbus.header.createDirectBusConnection
 import com.monkopedia.sdbus.header.createServerBus
 import kotlin.native.concurrent.ThreadLocal
-import kotlin.native.internal.NativePtr.Companion.NULL
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.atomicfu.AtomicBoolean
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
-import kotlinx.cinterop.interpretCPointer
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
-import kotlinx.cinterop.toKString
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import platform.linux.sockaddr_un
 import platform.posix.AF_UNIX
@@ -42,7 +33,6 @@ import platform.posix.bind
 import platform.posix.fcntl
 import platform.posix.listen
 import platform.posix.memset
-import platform.posix.sa_family_t
 import platform.posix.sa_family_tVar
 import platform.posix.snprintf
 import platform.posix.socket
@@ -51,13 +41,10 @@ import platform.posix.unlink
 import platform.posix.usleep
 
 @ThreadLocal
-val leaker = Arena()
+val s_adaptorConnection = createBusConnection()
 
 @ThreadLocal
-val s_adaptorConnection = createBusConnection().own(leaker)
-
-@ThreadLocal
-val s_proxyConnection = createBusConnection().own(leaker)
+val s_proxyConnection = createBusConnection()
 
 
 class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
@@ -73,12 +60,19 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onScopeClosed() {
         runBlocking {
+            println("Leaving event loop")
             m_proxyConnection?.leaveEventLoop();
+            println("Leaving event loop 2")
             m_adaptorConnection?.leaveEventLoop();
 //            s_adaptorConnection.leaveEventLoop()
 //            s_proxyConnection.leaveEventLoop()
+            println("Closing context")
             context.close()
+            println("Nulling")
+            m_proxyConnection = null
+            m_adaptorConnection = null
         }
+        println("Done")
     }
 
     suspend fun CoroutineScope.createClientAndServerConnections(sock: Int) {
@@ -86,23 +80,23 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
             try {
                 val fd = accept(sock, null, null);
                 val set = fcntl(fd, F_SETFD, /*SOCK_NONBLOCK|*/SOCK_CLOEXEC)
-                m_adaptorConnection = createServerBus(fd).own(scope)
+                m_adaptorConnection = createServerBus(fd)
                 // This is necessary so that createDirectBusConnection() below does not block
                 m_adaptorConnection?.enterEventLoopAsync();
             } catch (t: Throwable) {
-                t.printStackTrace()
+                println(t.stackTraceToString())
                 throw t
             }
         }
         try {
 
         m_proxyConnection =
-            createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH").own(scope)
+            createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
         m_proxyConnection?.enterEventLoopAsync();
 
         job.join();
         } catch (t: Throwable) {
-            t.printStackTrace()
+            println(t.stackTraceToString())
             throw t
         }
     }
@@ -111,10 +105,10 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
         require(m_adaptorConnection != null);
         require(m_proxyConnection != null);
 
-        m_adaptor = TestAdaptor(scope, m_adaptorConnection as Connection, OBJECT_PATH);
+        m_adaptor = TestAdaptor(m_adaptorConnection !!, OBJECT_PATH);
         m_adaptor?.registerAdaptor()
         // Destination parameter can be empty in case of direct connections
-        m_proxy = TestProxy(scope, m_proxyConnection as Connection, EMPTY_DESTINATION, OBJECT_PATH);
+        m_proxy = TestProxy(m_proxyConnection !!, EMPTY_DESTINATION, OBJECT_PATH);
         m_proxy?.registerProxy()
     }
 

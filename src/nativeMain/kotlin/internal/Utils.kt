@@ -27,11 +27,9 @@ inline fun invokeHandlerAndCatchErrors(
     try {
         callable()
     } catch (e: Error) {
-        e.printStackTrace()
         sd_bus_error_set(retError, e.name, e.message);
         return false
     } catch (t: Throwable) {
-        t.printStackTrace()
         sd_bus_error_set(retError, SDBUSCPP_ERROR_NAME, t.message ?: "Unknown error occurred");
         return false
     }

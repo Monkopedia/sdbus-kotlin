@@ -1,12 +1,13 @@
-@file:OptIn(ExperimentalForeignApi::class, ExperimentalCoroutinesApi::class)
+@file:OptIn(
+    ExperimentalForeignApi::class, ExperimentalCoroutinesApi::class,
+    ExperimentalNativeApi::class, ExperimentalNativeApi::class
+)
 
 package com.monkopedia.sdbus.internal
 
 import cnames.structs.sd_bus
 import cnames.structs.sd_bus_message
 import cnames.structs.sd_bus_slot
-import cnames.structs.sd_event
-import cnames.structs.sd_event_source
 import com.monkopedia.sdbus.header.BusName
 import com.monkopedia.sdbus.header.IConnection.PollData
 import com.monkopedia.sdbus.header.InterfaceName
@@ -25,23 +26,25 @@ import com.monkopedia.sdbus.header.adopt_message
 import com.monkopedia.sdbus.header.message_handler
 import com.monkopedia.sdbus.header.return_slot
 import com.monkopedia.sdbus.header.return_slot_t
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.internal.NativePtr.Companion.NULL
+import kotlin.native.ref.WeakReference
+import kotlin.native.ref.createCleaner
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.INFINITE
 import kotlin.time.Duration.Companion.microseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValuesRef
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
-import kotlinx.cinterop.cValuesOf
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
@@ -54,12 +57,11 @@ import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.runBlocking
 import platform.linux.EFD_CLOEXEC
 import platform.linux.EFD_NONBLOCK
 import platform.linux.eventfd
@@ -68,15 +70,13 @@ import platform.linux.eventfd_write
 import platform.posix.EINTR
 import platform.posix.EINVAL
 import platform.posix.POLLIN
-import platform.posix.UINT64_MAX
 import platform.posix.close
 import platform.posix.errno
 import platform.posix.poll
 import platform.posix.pollfd
-import platform.posix.uint32_t
+import platform.posix.uint64_t
 import platform.posix.uint64_tVar
-import sdbus.SD_EVENT_OFF
-import sdbus.SD_EVENT_ONESHOT
+import sdbus.UINT64_MAX
 import sdbus._SD_BUS_MESSAGE_TYPE_INVALID
 import sdbus.sd_bus_error
 import sdbus.sd_bus_interface_name_is_valid
@@ -85,19 +85,6 @@ import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_object_path_is_valid
 import sdbus.sd_bus_service_name_is_valid
 import sdbus.sd_bus_vtable
-import sdbus.sd_event_source_set_enabled
-import sdbus.sd_event_source_set_io_events
-import sdbus.sd_event_source_set_time
-import sdbus.uint64_t
-
-private val DeferScope.asCoroutineScope: CoroutineScope
-    get() {
-        return CoroutineScope(SupervisorJob()).also {
-            defer {
-                it.cancel()
-            }
-        }
-    }
 
 typealias Bus = CPointer<sd_bus>
 typealias BusFactory = (CPointer<CPointerVar<sd_bus>>) -> Int
@@ -128,34 +115,40 @@ inline fun SDBUS_CHECK_MEMBER_NAME(_NAME: String) = SDBUS_THROW_ERROR_IF(
     EINVAL
 )
 
-private fun DeferScope.openBus(sdbus: ISdBus, busFactory: BusFactory): BusPtr {
-    memScoped {
-        val bus = cValue<CPointerVar<sd_bus>>().getPointer(this)
-        val r = busFactory(bus);
+private fun openBus(sdbus: ISdBus, busFactory: BusFactory): BusPtr {
+    return run {
+        val arena = Arena()
+        val bus = cValue<CPointerVar<sd_bus>>().getPointer(arena)
+        val r = busFactory(bus)
         SDBUS_THROW_ERROR_IF(r < 0, "Failed to open bus", -r)
 
-        val busPtr = this@openBus.Reference(bus[0]) { sdbus.sd_bus_flush_close_unref(it) }
+        val busPtr = Reference(bus[0]) {
+            sdbus.sd_bus_flush_close_unref(it)
+            arena.clear()
+        }
         finishHandshake(sdbus, busPtr.value)
-        return busPtr;
+        busPtr
     }
 }
 
 
-private fun DeferScope.openPseudoBus(sdbus: ISdBus): BusPtr {
-    memScoped {
-        val bus = cValue<CPointerVar<sd_bus>>().getPointer(this)
+private fun openPseudoBus(sdbus: ISdBus): BusPtr {
+    val arena = Arena()
+    val bus = cValue<CPointerVar<sd_bus>>().getPointer(arena)
 
-        val r = sdbus.sd_bus_new(bus)
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to open pseudo bus", -r);
+    val r = sdbus.sd_bus_new(bus)
+    SDBUS_THROW_ERROR_IF(r < 0, "Failed to open pseudo bus", -r);
 
-        sdbus.sd_bus_start(bus[0]);
-        // It is expected that sd_bus_start has failed here, returning -EINVAL, due to having
-        // not set a bus address, but it will leave the bus in an OPENING state, which enables
-        // us to create plain D-Bus messages as a local data storage (for Variant, for example),
-        // without dependency on real IPC communication with the D-Bus broker daemon.
-        SDBUS_THROW_ERROR_IF(r < 0 && r != -EINVAL, "Failed to start pseudo bus", -r);
+    sdbus.sd_bus_start(bus[0]);
+    // It is expected that sd_bus_start has failed here, returning -EINVAL, due to having
+    // not set a bus address, but it will leave the bus in an OPENING state, which enables
+    // us to create plain D-Bus messages as a local data storage (for Variant, for example),
+    // without dependency on real IPC communication with the D-Bus broker daemon.
+    SDBUS_THROW_ERROR_IF(r < 0 && r != -EINVAL, "Failed to start pseudo bus", -r);
 
-        return this@openPseudoBus.Reference(bus[0]) { sdbus.sd_bus_close_unref(it) }
+    return Reference(bus[0]) {
+        sdbus.sd_bus_close_unref(it)
+        arena.clear()
     }
 }
 
@@ -183,22 +176,27 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 }
 
 class Connection private constructor(
-    initialScope: DeferScope,
     private val sdbus_: ISdBus,
-    bus: Unowned<BusPtr>,
-) : com.monkopedia.sdbus.header.Connection(initialScope), IConnection {
-    private val loopExitFd_: EventFd = EventFd(scope)
-    private val eventFd_: EventFd = EventFd(scope)
-    private var sdEvent_: Connection.SdEvent? = null
-    private val bus_: BusPtr = bus.own(scope)
+    bus: BusPtr
+) : IConnection {
+    private val bus_: BusPtr = bus
     private var asyncLoopThread_: Job? = null
     val floatingMatchRules_ = mutableListOf<Slot>()
+    private val eventThread = EventLoopThread(bus, sdbus_)
+    private val loopExit = eventThread.exitFd
+    private val cleaner = createCleaner(loopExit) { exit ->
+        println("Cleanup connection")
+        exit.notify()
+    }
+//    private val cleaner2 = createCleaner(floatingMatchRules_) { matches ->
+//        println("Cleanup 2 connection")
+//        matches.clear()
+//    }
 
-    constructor(initialScope: DeferScope, intf: ISdBus, factory: BusFactory)
-        : this(initialScope, intf, create { openBus(intf, factory) })
+    constructor(intf: ISdBus, factory: BusFactory) : this(intf, openBus(intf, factory))
 
-    override fun onScopeCleared() {
-        notifyEventLoopToExit()
+    suspend fun joinWithEventLoop() {
+        asyncLoopThread_?.join()
     }
 
     override fun requestName(name: ServiceName) {
@@ -209,7 +207,7 @@ class Connection private constructor(
 
         // In some cases we need to explicitly notify the event loop
         // to process messages that may have arrived while executing the call
-        wakeUpEventLoopIfMessagesInQueue();
+        eventThread.wakeUpEventLoopIfMessagesInQueue();
     }
 
     override fun releaseName(name: ServiceName) {
@@ -218,12 +216,11 @@ class Connection private constructor(
 
         // In some cases we need to explicitly notify the event loop
         // to process messages that may have arrived while executing the call
-        wakeUpEventLoopIfMessagesInQueue()
+        eventThread.wakeUpEventLoopIfMessagesInQueue()
     }
 
     override fun getUniqueName(): BusName {
         memScoped {
-
             val name = cValue<CPointerVar<ByteVar>>().getPointer(this)
             val r = sdbus_.sd_bus_get_unique_name(bus_.value, name);
             val value = name[0]?.toKString()
@@ -236,45 +233,25 @@ class Connection private constructor(
         }
     }
 
-    override suspend fun enterEventLoop() {
-        runCatching {
-            while (true) {
-                // Process one pending event
-                processPendingEvent();
-
-                // And go to poll(), which wakes us up right away
-                // if there's another pending event, or sleeps otherwise.
-                val success = waitForNextEvent();
-                if (!success) break
-            }
-        }.onFailure { it.printStackTrace() }
-        asyncLoopThread_ = null
-    }
-
     override fun enterEventLoopAsync() {
         if (asyncLoopThread_ == null) {
-            asyncLoopThread_ = scope.asCoroutineScope.launch(eventPool) {
-                enterEventLoop()
+            // TODO: Create local scope
+            val thiz = WeakReference(this)
+            asyncLoopThread_ = eventThread.launch(GlobalScope).also {
+                it.invokeOnCompletion {
+                    thiz.get()?.asyncLoopThread_ = null
+                }
             }
         }
     }
 
     override suspend fun leaveEventLoop() {
-        notifyEventLoopToExit();
+        eventThread.notifyEventLoopToExit();
         joinWithEventLoop();
     }
 
     override fun getEventLoopPollData(): PollData {
-        val pollData = ISdBus.PollData()
-        val r = sdbus_.sd_bus_get_poll_data(bus_.value, pollData);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus poll data", -r);
-
-        require(eventFd_.fd >= 0);
-
-        val timeout =
-            if (pollData.timeout_usec == UINT64_MAX) Duration.INFINITE else pollData.timeout_usec.toLong().microseconds;
-
-        return PollData(pollData.fd, pollData.events, timeout, eventFd_.fd);
+        return eventThread.getEventLoopPollData()
     }
 
     override fun addObjectManager(objectPath: ObjectPath) {
@@ -286,16 +263,19 @@ class Connection private constructor(
     override fun addObjectManager(
         objectPath: ObjectPath,
         return_slot: return_slot_t
-    ): Unowned<Slot> =
-        create {
-            val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
+    ): Slot = run {
+        val arena = Arena()
+        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(arena)
 
-            val r = sdbus_.sd_bus_add_object_manager(bus_.value, slot, objectPath.value)
+        val r = sdbus_.sd_bus_add_object_manager(bus_.value, slot, objectPath.value)
 
-            SDBUS_THROW_ERROR_IF(r < 0, "Failed to add object manager", -r);
+        SDBUS_THROW_ERROR_IF(r < 0, "Failed to add object manager", -r);
 
-            Reference(slot[0]) { sdbus_.sd_bus_slot_unref(it) }
+        Reference(slot[0]) {
+            sdbus_.sd_bus_slot_unref(it)
+            arena.clear()
         }
+    }
 
     override fun setMethodCallTimeout(timeout: Duration) {
         setMethodCallTimeout(timeout.inWholeMicroseconds.toULong())
@@ -318,37 +298,35 @@ class Connection private constructor(
     }
 
     override fun addMatch(match: String, callback: message_handler) {
-        floatingMatchRules_.add(addMatch(match, callback, return_slot).own(scope));
+        floatingMatchRules_.add(addMatch(match, callback, return_slot));
     }
 
     override fun addMatch(
         match: String,
         callback: message_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot> =
-        create {
-            val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-            val matchInfo = MatchInfo(callback, {}, this@Connection, null)
-            val stableRef = StableRef.create(matchInfo)
+    ): Slot = run {
+        val arena = Arena()
+        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(arena)
+        val matchInfo = MatchInfo(callback, {}, WeakReference(this@Connection))
+        val stableRef = StableRef.create(matchInfo)
+        val bus = sdbus_
+        val r = bus.sd_bus_add_match(
+            bus_.value,
+            slot,
+            match,
+            sdbus_match_callback,
+            stableRef.asCPointer()
+        );
+        SDBUS_THROW_ERROR_IF(r < 0, "Failed to add match $match", -r);
 
-            val r = sdbus_.sd_bus_add_match(
-                bus_.value,
-                slot,
-                match,
-                sdbus_match_callback,
-                stableRef.asCPointer()
-            );
-            SDBUS_THROW_ERROR_IF(r < 0, "Failed to add match $match", -r);
-
-            matchInfo.slot = this@Connection.scope.Reference(slot[0]) { }
-
-            Reference(matchInfo) {
-                @Suppress("UNCHECKED_CAST")
-                sdbus_.sd_bus_slot_unref(it.slot?.value as CValuesRef<sd_bus_slot>?)
-                stableRef.dispose()
-            }
-
+        Reference(matchInfo to slot[0]) { (_, ref) ->
+            bus.sd_bus_slot_unref(ref)
+            stableRef.dispose()
+            arena.clear()
         }
+
+    }
 
     override fun addMatchAsync(
         match: String,
@@ -356,7 +334,7 @@ class Connection private constructor(
         installCallback: message_handler
     ) {
         floatingMatchRules_.add(
-            addMatchAsync(match, callback, installCallback, return_slot).own(scope)
+            addMatchAsync(match, callback, installCallback, return_slot)
         )
     }
 
@@ -365,9 +343,10 @@ class Connection private constructor(
         callback: message_handler,
         installCallback: message_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot> = create {
-        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-        val matchInfo = MatchInfo(callback, installCallback, this@Connection, null)
+    ): Slot = run {
+        val arena = Arena()
+        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(arena)
+        val matchInfo = MatchInfo(callback, installCallback, WeakReference(this@Connection))
         val stableRef = StableRef.create(matchInfo)
 
         val r = sdbus_.sd_bus_add_match_async(
@@ -380,23 +359,12 @@ class Connection private constructor(
         );
         SDBUS_THROW_ERROR_IF(r < 0, "Failed to add match", -r);
 
-        matchInfo.slot = this@Connection.scope.Reference(slot[0]) { }
-
-        Reference(matchInfo) {
-            @Suppress("UNCHECKED_CAST")
-            sdbus_.sd_bus_slot_unref(it.slot?.value as CValuesRef<sd_bus_slot>?)
+        Reference(matchInfo to slot[0]) { (_, ref) ->
+            sdbus_.sd_bus_slot_unref(ref)
             stableRef.dispose()
         }
     }
 
-    override fun detachSdEventLoop() {
-        sdEvent_?.reset()
-    }
-
-    override fun getSdEventLoop(): CPointer<sd_event>? {
-        @Suppress("UNCHECKED_CAST")
-        return sdEvent_?.sdEvent?.value as? CPointer<sd_event>
-    }
 
     override fun getSdBusInterface(): ISdBus {
         return sdbus_
@@ -408,8 +376,9 @@ class Connection private constructor(
         vtable: CValuesRef<sd_bus_vtable>,
         userData: Any?,
         return_slot: return_slot_t
-    ): Unowned<Slot> = create {
-        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
+    ): Slot = let {
+        val arena = Arena()
+        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(arena)
         val ref = userData?.let { StableRef.create(it) }
 
         val r = sdbus_.sd_bus_add_object_vtable(
@@ -418,9 +387,18 @@ class Connection private constructor(
 
         SDBUS_THROW_ERROR_IF(r < 0, "Failed to register object vtable", -r);
 
-        Reference(cValuesOf(slot[0])) {
-            sdbus_.sd_bus_slot_unref(it.ptr[0])
+        val cPointer = slot[0]
+        println("Alloc $cPointer")
+//        val ptr = cValue<CPointerVar<sd_bus_slot>> {
+//            this.value = slot[0]
+//        }
+        Reference(cPointer) {
+//            memScoped {
+            println("De-alloc ${it}")
+            sdbus_.sd_bus_slot_unref(it)
+//            }
             ref?.dispose()
+            arena.clear()
         }
 
     }
@@ -498,7 +476,7 @@ class Connection private constructor(
         val reply = message.send(timeout)
 
         // Wake up event loop to process messages that may have arrived in the meantime...
-        wakeUpEventLoopIfMessagesInQueue()
+        eventThread.wakeUpEventLoopIfMessagesInQueue()
 
         return reply
     }
@@ -509,7 +487,7 @@ class Connection private constructor(
         userData: Any?,
         timeout: ULong,
         return_slot: return_slot_t
-    ): Unowned<Slot> {
+    ): Slot {
         // TODO: Think of ways of optimizing these three locking/unlocking of sdbus mutex (merge into one call?)
         val timeoutBefore = getEventLoopPollData().timeout ?: Duration.INFINITE
         val slot = message.send(callback, userData, timeout, return_slot_t);
@@ -518,7 +496,8 @@ class Connection private constructor(
         // An event loop may wait in poll with timeout `t1', while in another thread an async call is made with
         // timeout `t2'. If `t2' < `t1', then we have to wake up the event loop thread to update its poll timeout.
         if (timeoutAfter < timeoutBefore) {
-            notifyEventLoopToWakeUpFromPoll()
+            println("Notifying for wakeup")
+            eventThread.notifyEventLoopToWakeUpFromPoll()
         }
 
         return slot;
@@ -600,8 +579,9 @@ class Connection private constructor(
         callback: sd_bus_message_handler_t,
         userData: Any?,
         return_slot: return_slot_t
-    ): Unowned<Slot> = create {
-        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
+    ): Slot = run {
+        val arena = Arena()
+        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(arena)
         val ref = userData?.let { StableRef.create(it) }
 
         val r = sdbus_.sd_bus_match_signal(
@@ -620,124 +600,41 @@ class Connection private constructor(
         Reference(slot[0]) {
             sdbus_.sd_bus_slot_unref(it)
             ref?.dispose()
+            arena.clear()
         }
-    }
-
-    fun notifyEventLoopToExit() {
-        loopExitFd_.notify()
-    }
-
-    fun notifyEventLoopToWakeUpFromPoll() {
-        eventFd_.notify();
-    }
-
-    fun wakeUpEventLoopIfMessagesInQueue() {
-        // When doing a sync call, other D-Bus messages may have arrived, waiting in the read queue.
-        // In case an event loop is inside a poll in another thread, or an external event loop polls in the
-        // same thread but as an unrelated event source, then we need to wake up the poll explicitly so the
-        // event loop 1. processes all messages in the read queue, 2. updates poll timeout before next poll.
-        if (arePendingMessagesInReadQueue())
-            notifyEventLoopToWakeUpFromPoll();
-    }
-
-    suspend fun joinWithEventLoop() {
-        asyncLoopThread_?.join()
-    }
-
-    override fun processPendingEvent(): Boolean {
-        val bus = bus_.get();
-        require(bus != null);
-
-        val r = sdbus_.sd_bus_process(bus, null);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to process bus requests", -r);
-
-        // In correct use of sdbus-c++ API, r can be 0 only when processPendingEvent()
-        // is called from an external event loop as a reaction to event fd being signalled.
-        // If there are no more D-Bus messages to process, we know we have to clear event fd.
-        if (r == 0)
-            eventFd_.clear();
-
-        return r > 0;
-    }
-
-    suspend fun waitForNextEvent(): Boolean = memScoped {
-        require(loopExitFd_.fd >= 0)
-        require(eventFd_.fd >= 0)
-
-        val sdbusPollData = getEventLoopPollData();
-        val fdsCount = 3
-        val fds = allocArray<pollfd>(fdsCount) { index: Int ->
-            when (index) {
-                0 -> initFd(sdbusPollData.fd, sdbusPollData.events, 0)
-                1 -> initFd(eventFd_.fd, POLLIN.toShort(), 0)
-                else -> initFd(loopExitFd_.fd, POLLIN.toShort(), 0)
-            }
-        }
-
-        val timeout = sdbusPollData.getPollTimeout();
-        var r = poll(fds, fdsCount.convert(), timeout);
-
-        if (r < 0 && errno == EINTR)
-            return true // Try again
-
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to wait on the bus", -errno);
-
-        // Wake up notification, in order that we re-enter poll with freshly read PollData (namely, new poll timeout thereof)
-        if ((fds[1].revents.toInt() and POLLIN) != 0) {
-            val cleared = eventFd_?.clear()
-            SDBUS_THROW_ERROR_IF(
-                cleared != true,
-                "Failed to read from the event descriptor",
-                -errno
-            );
-            // Go poll() again, but with up-to-date timeout (which will wake poll() up right away if there are messages to process)
-            return waitForNextEvent()
-        }
-        // Loop exit notification
-        if ((fds[2].revents.toInt() and POLLIN) != 0) {
-            val cleared = loopExitFd_?.clear()
-            SDBUS_THROW_ERROR_IF(
-                cleared != true,
-                "Failed to read from the loop exit descriptor",
-                -errno
-            )
-            return false
-        }
-
-        return true
-    }
-
-    fun arePendingMessagesInReadQueue(): Boolean = memScoped {
-        val readQueueSize = cValue<uint64_tVar>().getPointer(this)
-
-        val r = sdbus_.sd_bus_get_n_queued_read(bus_.get(), readQueueSize);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get number of pending messages in read queue", -r);
-
-        return readQueueSize[0] > 0u;
     }
 
     override fun getCurrentlyProcessedMessage(): Message {
-        val sdbusMsg = sdbus_.sd_bus_get_current_message(bus_.get());
+        val sdbusMsg = sdbus_.sd_bus_get_current_message(bus_.get())
 
-        return Message(sdbusMsg!!, sdbus_);
+        return Message(sdbusMsg!!, sdbus_)
     }
 
-    class EventFd(scope: DeferScope, var fd: Int = 0) : ScopedObject(scope) {
-
-        init {
-            fd = eventfd(0, EFD_CLOEXEC or EFD_NONBLOCK)
-            SDBUS_THROW_ERROR_IF(fd < 0, "Failed to create event object", -errno)
+    class EventFd(fd: Int = 0) {
+        class FdHolder(var fd: Int) {
+            val shouldCleanup = fd == 0
+            init {
+                if (fd == 0) {
+                    fd = eventfd(0, EFD_CLOEXEC or EFD_NONBLOCK)
+                    SDBUS_THROW_ERROR_IF(fd < 0, "Failed to create event object", -errno)
+                }
+            }
         }
 
-        override fun onLeaveScopes() {
-            require(fd >= 0)
-            close(fd)
+        private val holder = FdHolder(fd)
+        var fd: Int by holder::fd
+        private val cleaner = createCleaner(holder) {
+            if (it.shouldCleanup) {
+                println("Running FD Cleaner ${it.fd}")
+                require(it.fd >= 0)
+                close(it.fd)
+            }
         }
 
         fun notify() {
             require(fd >= 0)
             val r = eventfd_write(fd, 1u)
-            SDBUS_THROW_ERROR_IF(r < 0, "Failed to notify event descriptor", -errno);
+            SDBUS_THROW_ERROR_IF(r < 0, "Failed to notify event descriptor", -errno)
         }
 
         fun clear(): Boolean = memScoped {
@@ -750,27 +647,147 @@ class Connection private constructor(
     }
 
 
-    data class MatchInfo(
+    private data class MatchInfo(
         val callback: message_handler,
         val installCallback: message_handler,
-        val connection: Connection,
-        var slot: Slot? = null,
+        val connection: WeakReference<Connection>
     )
 
-    // sd-event integration
-    class SdEvent(
-        sdEvent: Unowned<Slot>,
-        sdTimeEventSource: Unowned<Slot>,
-        sdIoEventSource: Unowned<Slot>,
-        sdInternalEventSource: Unowned<Slot>,
-        initialScope: DeferScope
-    ) : Scope(initialScope) {
-        val sdEvent: Slot = sdEvent.own(scope)
-        val sdTimeEventSource: Slot = sdTimeEventSource.own(scope)
-        val sdIoEventSource: Slot = sdIoEventSource.own(scope)
-        val sdInternalEventSource: Slot = sdInternalEventSource.own(scope)
+    class EventLoopThread(
+        private val bus_: BusPtr,
+        private val sdbus_: ISdBus
+    ) {
+        private val loopExitFd_: EventFd = EventFd()
+        private val eventFd_: EventFd = EventFd()
 
-        fun reset() {
+        val exitFd: EventFd
+            get() = EventFd(loopExitFd_.fd)
+
+        fun notifyEventLoopToExit() {
+            loopExitFd_.notify()
+        }
+
+        fun notifyEventLoopToWakeUpFromPoll() {
+            eventFd_.notify();
+        }
+
+        fun wakeUpEventLoopIfMessagesInQueue() {
+            // When doing a sync call, other D-Bus messages may have arrived, waiting in the read queue.
+            // In case an event loop is inside a poll in another thread, or an external event loop polls in the
+            // same thread but as an unrelated event source, then we need to wake up the poll explicitly so the
+            // event loop 1. processes all messages in the read queue, 2. updates poll timeout before next poll.
+            if (arePendingMessagesInReadQueue())
+                notifyEventLoopToWakeUpFromPoll();
+        }
+
+        val method : suspend CoroutineScope.() -> Unit = {
+            enterEventLoop()
+        }
+
+        suspend fun enterEventLoop() {
+            runCatching {
+                while (true) {
+                    // Process one pending event
+                    processPendingEvent();
+
+                    // And go to poll(), which wakes us up right away
+                    // if there's another pending event, or sleeps otherwise.
+                    val success = waitForNextEvent();
+                    if (!success) break
+                }
+            }.onFailure { println(it.stackTraceToString()) }
+        }
+
+        fun processPendingEvent(): Boolean {
+            val bus = bus_.get();
+            require(bus != null);
+
+            val r = sdbus_.sd_bus_process(bus, null);
+            SDBUS_THROW_ERROR_IF(r < 0, "Failed to process bus requests", -r);
+
+            // In correct use of sdbus-c++ API, r can be 0 only when processPendingEvent()
+            // is called from an external event loop as a reaction to event fd being signalled.
+            // If there are no more D-Bus messages to process, we know we have to clear event fd.
+            if (r == 0)
+                eventFd_.clear();
+
+            return r > 0;
+        }
+
+        suspend fun waitForNextEvent(): Boolean = memScoped {
+            require(loopExitFd_.fd >= 0)
+            require(eventFd_.fd >= 0)
+
+            val sdbusPollData = getEventLoopPollData();
+            val fdsCount = 3
+            val fds = allocArray<pollfd>(fdsCount) { index: Int ->
+                when (index) {
+                    0 -> initFd(sdbusPollData.fd, sdbusPollData.events, 0)
+                    1 -> initFd(eventFd_.fd, POLLIN.toShort(), 0)
+                    else -> initFd(loopExitFd_.fd, POLLIN.toShort(), 0)
+                }
+            }
+
+            val timeout = sdbusPollData.getPollTimeout();
+            var r = poll(fds, fdsCount.convert(), timeout);
+
+            if (r < 0 && errno == EINTR)
+                return true // Try again
+
+            SDBUS_THROW_ERROR_IF(r < 0, "Failed to wait on the bus", -errno);
+
+            // Wake up notification, in order that we re-enter poll with freshly read PollData (namely, new poll timeout thereof)
+            if ((fds[1].revents.toInt() and POLLIN) != 0) {
+                println("Wake up notification")
+                val cleared = eventFd_?.clear()
+                SDBUS_THROW_ERROR_IF(
+                    cleared != true,
+                    "Failed to read from the event descriptor",
+                    -errno
+                );
+                // Go poll() again, but with up-to-date timeout (which will wake poll() up right away if there are messages to process)
+                return waitForNextEvent()
+            }
+            // Loop exit notification
+            if ((fds[2].revents.toInt() and POLLIN) != 0) {
+                val cleared = loopExitFd_?.clear()
+                SDBUS_THROW_ERROR_IF(
+                    cleared != true,
+                    "Failed to read from the loop exit descriptor",
+                    -errno
+                )
+                return false
+            }
+
+            return true
+        }
+
+        fun getEventLoopPollData(): PollData {
+            val pollData = ISdBus.PollData()
+            val r = sdbus_.sd_bus_get_poll_data(bus_.value, pollData);
+            SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus poll data", -r);
+
+            require(eventFd_.fd >= 0);
+
+            val timeout =
+                if (pollData.timeout_usec == UINT64_MAX) Duration.INFINITE else pollData.timeout_usec.toLong().microseconds;
+
+            return PollData(pollData.fd, pollData.events, timeout, 0)//eventFd_.fd);
+        }
+
+        fun launch(scope: CoroutineScope): Job {
+            return scope.launch {
+                enterEventLoop()
+            }
+        }
+
+        fun arePendingMessagesInReadQueue(): Boolean = memScoped {
+            val readQueueSize = cValue<uint64_tVar>().getPointer(this)
+
+            val r = sdbus_.sd_bus_get_n_queued_read(bus_.get(), readQueueSize);
+            SDBUS_THROW_ERROR_IF(r < 0, "Failed to get number of pending messages in read queue", -r);
+
+            return readQueueSize[0] > 0u;
         }
     }
 
@@ -778,162 +795,64 @@ class Connection private constructor(
         val sdbus_match_install_callback =
             staticCFunction { sdbusMessage: CPointer<sd_bus_message>?, userData: COpaquePointer?, retError: CPointer<sd_bus_error>? ->
                 val ok = invokeHandlerAndCatchErrors(retError) {
-                    memScoped {
-                        val matchInfo = userData?.asStableRef<MatchInfo>()?.get()
-                        require(matchInfo != null);
+                    val matchInfo = userData?.asStableRef<MatchInfo>()?.get()
+                    require(matchInfo != null);
 
-                        val message = PlainMessage(
-                            sdbusMessage!!,
-                            matchInfo.connection.getSdBusInterface()
-                        )
-                        runBlocking {
-                            matchInfo.installCallback(message)
-                        }
-                    }
+                    val message = PlainMessage(
+                        sdbusMessage!!,
+                        matchInfo.connection.get()!!.getSdBusInterface()
+                    )
+                    matchInfo.installCallback(message)
                 }
                 if (ok) 0 else -1
             }
         val sdbus_match_callback =
             staticCFunction { sdbusMessage: CPointer<sd_bus_message>?, userData: COpaquePointer?, retError: CPointer<sd_bus_error>? ->
                 val ok = invokeHandlerAndCatchErrors(retError) {
-                    memScoped {
+                    val matchInfo = userData?.asStableRef<MatchInfo>()?.get()
+                    require(matchInfo != null);
 
-                        val matchInfo = userData?.asStableRef<MatchInfo>()?.get()
-                        require(matchInfo != null);
+                    val message = PlainMessage(
+                        sdbusMessage!!,
+                        matchInfo.connection.get()!!.getSdBusInterface()
+                    )
 
-                        val message = PlainMessage(
-                            sdbusMessage!!,
-                            matchInfo.connection.getSdBusInterface()
-                        )
-
-                        runBlocking {
-                            matchInfo.callback(message)
-                        }
-                    }
-
+                    matchInfo.callback(message)
                 }
                 if (ok) 0 else -1
             }
 
-
-        val onSdTimerEvent =
-            staticCFunction { s: CPointer<sd_event_source>? /*s*/, usec: uint64_t /*usec*/, userdata: COpaquePointer? ->
-                val connection = userdata?.asStableRef<Connection>()?.get()
-                require(connection != null);
-
-                connection.processPendingEvent();
-
-                1
-            }
-
-        val onSdIoEvent =
-            staticCFunction { s: CPointer<sd_event_source>?, fd: Int, revents: uint32_t, userdata: COpaquePointer? ->
-                val connection = userdata?.asStableRef<Connection>()?.get()
-                require(connection != null);
-
-                connection.processPendingEvent();
-
-                1
-            }
-
-        val onSdInternalEvent =
-            staticCFunction { s: CPointer<sd_event_source>?, fd: Int, revents: uint32_t, userdata: COpaquePointer? ->
-                val connection = userdata?.asStableRef<Connection>()?.get()
-                require(connection != null);
-
-                // It's not really necessary to processPendingEvent() here. We just clear the event fd.
-                // The sd-event loop will before the next poll call prepare callbacks for all event sources,
-                // including I/O bus fd. This will get up-to-date poll timeout, which will be zero if there
-                // are pending D-Bus messages in the read queue, which will immediately wake up next poll
-                // and go to onSdIoEvent() handler, which calls processPendingEvent(). Viola.
-                // For external event loops that only have access to public sdbus-c++ API, processPendingEvent()
-                // is the only option to clear event fd (it comes at a little extra cost but on the other hand
-                // the solution is simpler for clients -- we don't provide an extra method for just clearing
-                // the event fd. There is one method for both fd's -- and that's processPendingEvent().
-
-                // Kept here so that potential readers know what to do in their custom external event loops.
-                //(void)connection->processPendingEvent();
-
-                connection.eventFd_.clear();
-
-                1
-            }
-
-        val onSdEventPrepare =
-            staticCFunction { s: CPointer<sd_event_source>?, userdata: COpaquePointer? ->
-                val connection = userdata?.asStableRef<Connection>()?.get()
-                require(connection != null);
-
-                val sdbusPollData = connection.getEventLoopPollData();
-
-                // Set poll events to watch out for on I/O fd
-                @Suppress("UNCHECKED_CAST") val sdIoEventSource =
-                    connection.sdEvent_?.sdIoEventSource?.get() as? CValuesRef<sd_event_source>
-                var r =
-                    sd_event_source_set_io_events(sdIoEventSource, sdbusPollData.events.convert())
-                SDBUS_THROW_ERROR_IF(r < 0, "Failed to set poll events for IO event source", -r);
-
-                // Set poll events to watch out for on internal event fd
-                @Suppress("UNCHECKED_CAST") val sdInternalEventSource =
-                    connection.sdEvent_?.sdInternalEventSource?.get() as? CValuesRef<sd_event_source>
-                r = sd_event_source_set_io_events(sdInternalEventSource, POLLIN.convert());
-                SDBUS_THROW_ERROR_IF(
-                    r < 0,
-                    "Failed to set poll events for internal event source",
-                    -r
-                );
-
-                // Set current timeout to the time event source (it may be zero if there are messages in the sd-bus queues to be processed)
-                @Suppress("UNCHECKED_CAST") val sdTimeEventSource =
-                    connection.sdEvent_?.sdTimeEventSource?.get() as? CValuesRef<sd_event_source>
-                r = sd_event_source_set_time(
-                    sdTimeEventSource,
-                    (sdbusPollData.timeout?.inWholeMicroseconds ?: 0).convert()
-                );
-                SDBUS_THROW_ERROR_IF(r < 0, "Failed to set timeout for time event source", -r);
-                // In case the timeout is infinite, we disable the timer in the sd_event loop.
-                // This prevents a syscall error, where `timerfd_settime` returns `EINVAL`,
-                // because the value is too big. See #324 for details
-                r = sd_event_source_set_enabled(
-                    sdTimeEventSource,
-                    if (sdbusPollData.timeout != INFINITE) SD_EVENT_ONESHOT else SD_EVENT_OFF
-                );
-                SDBUS_THROW_ERROR_IF(r < 0, "Failed to enable time event source", -r);
-
-                1
-            }
-
         private val eventPool = newFixedThreadPoolContext(8, "EventThreads")
 
-        fun DeferScope.defaultConnection(intf: ISdBus) =
-            Connection(this, intf) { intf.sd_bus_open(it) }
+        fun defaultConnection(intf: ISdBus) =
+            Connection(intf) { intf.sd_bus_open(it) }
 
-        fun DeferScope.systemConnection(intf: ISdBus) =
-            Connection(this, intf) { intf.sd_bus_open_system(it) }
+        fun systemConnection(intf: ISdBus) =
+            Connection(intf) { intf.sd_bus_open_system(it) }
 
-        fun DeferScope.sessionConnection(intf: ISdBus) =
-            Connection(this, intf) { intf.sd_bus_open_user(it) }
+        fun sessionConnection(intf: ISdBus) =
+            Connection(intf) { intf.sd_bus_open_user(it) }
 
-        fun DeferScope.sessionConnection(intf: ISdBus, address: String) =
-            Connection(this, intf) { intf.sd_bus_open_user_with_address(it, address) }
+        fun sessionConnection(intf: ISdBus, address: String) =
+            Connection(intf) { intf.sd_bus_open_user_with_address(it, address) }
 
-        fun DeferScope.remoteConnection(intf: ISdBus, host: String) =
-            Connection(this, intf) { intf.sd_bus_open_system_remote(it, host) }
+        fun remoteConnection(intf: ISdBus, host: String) =
+            Connection(intf) { intf.sd_bus_open_system_remote(it, host) }
 
-        fun DeferScope.privateConnection(intf: ISdBus, address: String) =
-            Connection(this, intf) { intf.sd_bus_open_direct(it, address) }
+        fun privateConnection(intf: ISdBus, address: String) =
+            Connection(intf) { intf.sd_bus_open_direct(it, address) }
 
-        fun DeferScope.privateConnection(intf: ISdBus, fd: Int) =
-            Connection(this, intf) { intf.sd_bus_open_direct(it, fd) }
+        fun privateConnection(intf: ISdBus, fd: Int) =
+            Connection(intf) { intf.sd_bus_open_direct(it, fd) }
 
-        fun DeferScope.serverConnection(intf: ISdBus, fd: Int) =
-            Connection(this, intf) { intf.sd_bus_open_server(it, fd) }
+        fun serverConnection(intf: ISdBus, fd: Int) =
+            Connection(intf) { intf.sd_bus_open_server(it, fd) }
 
-        fun DeferScope.Connection(intf: ISdBus, bus: CPointer<sd_bus>) =
-            Connection(this, intf) { it.set(0, bus).let { 0 } }
+        fun Connection(intf: ISdBus, bus: CPointer<sd_bus>) =
+            Connection(intf) { it.set(0, bus).let { 0 } }
 
-        fun DeferScope.pseudoConnection(intf: ISdBus) =
-            Connection(this, intf, create { openPseudoBus(intf) })
+        fun pseudoConnection(intf: ISdBus) =
+            Connection(intf, openPseudoBus(intf))
 
     }
 

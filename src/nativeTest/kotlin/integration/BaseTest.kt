@@ -2,6 +2,8 @@
 
 package com.monkopedia.sdbus.integration
 
+import kotlin.native.runtime.GC
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlinx.cinterop.Arena
@@ -29,6 +31,7 @@ abstract class BaseTest {
         fixtures.toList().forEach { it.onBeforeTest() }
     }
 
+    @OptIn(NativeRuntimeApi::class)
     @AfterTest
     fun onAfterTest() {
         runCatching {
@@ -40,6 +43,8 @@ abstract class BaseTest {
                 it.onAfterTest()
             }
         }
+        GC.collect()
+        usleep(500000u)
     }
 
 }

@@ -12,7 +12,6 @@ import com.monkopedia.sdbus.header.createProxy
 import com.monkopedia.sdbus.header.dont_run_event_loop_thread
 import com.monkopedia.sdbus.header.registerMethod
 import com.monkopedia.sdbus.header.return_slot
-import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -217,7 +216,7 @@ class DBusMethodTests : BaseTest() {
     @Test
     fun FailsCallingMethodOnNonexistentDestination(): Unit = memScoped {
         val proxy =
-            TestProxy(this, ServiceName("sdbuscpp.destination.that.does.not.exist"), OBJECT_PATH);
+            TestProxy(ServiceName("sdbuscpp.destination.that.does.not.exist"), OBJECT_PATH);
         try {
             proxy.getInt()
             fail("Expected error")
@@ -228,7 +227,7 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun FailsCallingMethodOnNonexistentObject(): Unit = memScoped {
-        val proxy = TestProxy(this, SERVICE_NAME, ObjectPath("/sdbuscpp/path/that/does/not/exist"));
+        val proxy = TestProxy(SERVICE_NAME, ObjectPath("/sdbuscpp/path/that/does/not/exist"));
         try {
             proxy.getInt()
             fail("Expected error")
@@ -241,8 +240,8 @@ class DBusMethodTests : BaseTest() {
     fun CanReceiveSignalWhileMakingMethodCall(): Unit = memScoped {
         fixture.m_proxy!!.emitTwoSimpleSignals();
 
-        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSimpleSignal));
-        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSignalWithMap));
+        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSimpleSignal), "Got simple signal");
+        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSignalWithMap), "Got signal with map");
     }
 
     @Test
@@ -269,7 +268,7 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun CanCallMethodSynchronouslyWithoutAnEventLoopThread(): Unit = memScoped {
-        val proxy = TestProxy(this, SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread);
+        val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread);
 
         val multiplyRes = proxy.multiply(INT64_VALUE, DOUBLE_VALUE);
 
@@ -287,13 +286,13 @@ class DBusMethodTests : BaseTest() {
                 registerMethod("subtract").implementedAs { call { a: Int, b: Int -> a - b; } },
             ),
             return_slot
-        ).own(this)
+        )
 
 
         // The new remote vtable is registered as long as we keep vtableSlot, so remote method calls now should pass
-        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread).own(this)
+        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread)
         val result: Int =
-            proxy.callMethod("subtract").own(this).onInterface(interfaceName)
+            proxy.callMethod("subtract").onInterface(interfaceName)
                 .withArguments { call(10, 2) }
                 .readResult()
 
@@ -306,17 +305,17 @@ class DBusMethodTests : BaseTest() {
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2");
 
         memScoped {
-            obj.addVTable(interfaceName, listOf(
+            val slot = obj.addVTable(interfaceName, listOf(
                 registerMethod("add").implementedAs { call { a: Long, b: Double -> a + b; } },
                 registerMethod("subtract").implementedAs { call { a: Int, b: Int -> a - b; } }
-            ), return_slot).own(this)
+            ), return_slot)
         }
 
         // No such remote D-Bus method under given interface exists anymore...
-        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread).own(this)
+        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread)
         try {
             memScoped {
-                proxy.callMethod("subtract").own(this).onInterface(interfaceName)
+                proxy.callMethod("subtract").onInterface(interfaceName)
                     .withArguments { call(10, 2) }
             }
             fail("Method did not throw")

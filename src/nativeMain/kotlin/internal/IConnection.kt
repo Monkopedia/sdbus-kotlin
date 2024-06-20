@@ -29,7 +29,7 @@ interface IConnection : com.monkopedia.sdbus.header.IConnection {
         vtable: CValuesRef<sd_bus_vtable>,
         userData: Any?,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     fun createPlainMessage(): PlainMessage
     fun createMethodCall(
@@ -65,7 +65,7 @@ interface IConnection : com.monkopedia.sdbus.header.IConnection {
         userData: Any?,
         timeout: ULong,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     fun emitPropertiesChangedSignal(
         objectPath: ObjectPath,
@@ -92,12 +92,12 @@ interface IConnection : com.monkopedia.sdbus.header.IConnection {
         callback: sd_bus_message_handler_t,
         userData: Any?,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     companion object {
         fun createPseudoConnection(): IConnection {
             val intf = SdBus()
-            return create { pseudoConnection(intf) }.peek()
+            return  pseudoConnection(intf)
         }
 
         private var instance: IConnection? = null

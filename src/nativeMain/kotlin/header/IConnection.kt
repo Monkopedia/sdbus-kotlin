@@ -3,7 +3,6 @@
 package com.monkopedia.sdbus.header
 
 import cnames.structs.sd_bus
-import cnames.structs.sd_event
 import com.monkopedia.sdbus.internal.Connection.Companion.Connection
 import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.privateConnection
@@ -11,16 +10,12 @@ import com.monkopedia.sdbus.internal.Connection.Companion.remoteConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.serverConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
-import com.monkopedia.sdbus.internal.Scope
 import com.monkopedia.sdbus.internal.SdBus
 import com.monkopedia.sdbus.internal.Slot
-import com.monkopedia.sdbus.internal.Unowned
-import com.monkopedia.sdbus.internal.create
 import com.monkopedia.sdbus.internal.now
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion
 import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
 import sdbus.uint64_t
 
@@ -38,16 +33,6 @@ import sdbus.uint64_t
 interface IConnection {
 
     /*!
-     * @brief Enters I/O event loop on this bus connection
-     *
-     * The incoming D-Bus messages are processed in the loop. The method
-     * blocks indefinitely, until unblocked through leaveEventLoop().
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    suspend fun enterEventLoop()
-
-    /*!
      * @brief Enters I/O event loop on this bus connection in a separate thread
      *
      * The same as enterEventLoop, except that it doesn't block
@@ -63,20 +48,6 @@ interface IConnection {
      * @throws sdbus::Error in case of failure
      */
     suspend fun leaveEventLoop()
-
-    /*!
-     * @brief Detaches the bus connection from an sd-event event loop
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun detachSdEventLoop()
-
-    /*!
-     * @brief Gets current sd-event event loop for the bus connection
-     *
-     * @return Pointer to event loop object if attached, nullptr otherwise
-     */
-    fun getSdEventLoop(): CPointer<sd_event>?
 
     /*!
      * @brief Returns fd's, I/O events and timeout data to be used in an external event loop
@@ -111,30 +82,6 @@ interface IConnection {
      * @throws sdbus::Error in case of failure
      */
     fun getEventLoopPollData(): PollData
-
-    /*!
-     * @brief Processes a pending event
-     *
-     * @returns True if an event was processed, false if no operations were pending
-     *
-     * This function drives the D-Bus connection. It processes pending I/O events.
-     * Queued outgoing messages (or parts thereof) are sent out. Queued incoming
-     * messages are dispatched to registered callbacks. Timeouts are recalculated.
-     *
-     * It returns false when no operations were pending and true if a message was
-     * processed. When false is returned the caller should synchronously poll for
-     * I/O events before calling into processPendingEvent() again.
-     * Don't forget to call getEventLoopPollData() each time before the next poll.
-     *
-     * You don't need to directly call this method or getEventLoopPollData() method
-     * when using convenient, internal bus connection event loops through
-     * enterEventLoop() or enterEventLoopAsync() calls, or when the bus is
-     * connected to an sd-event event loop through attachSdEventLoop().
-     * It is invoked automatically when necessary.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun processPendingEvent(): Boolean
 
     /*!
      * @brief Provides access to the currently processed D-Bus message
@@ -214,7 +161,7 @@ interface IConnection {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addObjectManager(objectPath: ObjectPath, return_slot: return_slot_t): Unowned<Slot>
+    fun addObjectManager(objectPath: ObjectPath, return_slot: return_slot_t): Slot
 
     /*!
      * @brief Installs a floating match rule for messages received on this bus connection
@@ -260,7 +207,7 @@ interface IConnection {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addMatch(match: String, callback: message_handler, return_slot: return_slot_t): Unowned<Slot>
+    fun addMatch(match: String, callback: message_handler, return_slot: return_slot_t): Slot
 
     /*!
      * @brief Asynchronously installs a floating match rule for messages received on this bus connection
@@ -308,7 +255,7 @@ interface IConnection {
      */
     fun addMatchAsync(
         match: String, callback: message_handler, installCallback: message_handler, return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     /*!
      * @brief Retrieves the unique name of a connection. E.g. ":1.xx"
@@ -395,8 +342,6 @@ interface IConnection {
 
 }
 
-abstract class Connection(initialScope: DeferScope): Scope(initialScope), IConnection
-
 /*!
  * @brief Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.
  *
@@ -404,9 +349,7 @@ abstract class Connection(initialScope: DeferScope): Scope(initialScope), IConne
  *
  * @throws sdbus::Error in case of failure
  */
-fun createBusConnection(): Unowned<Connection> = create {
-    defaultConnection(SdBus())
-}
+fun createBusConnection(): IConnection = defaultConnection(SdBus())
 
 /*!
  * @brief Creates/opens D-Bus session bus connection with a name when in a user context, and a system bus connection with a name, otherwise.
@@ -416,9 +359,8 @@ fun createBusConnection(): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createBusConnection(name: ServiceName): Unowned<Connection> = create {
+fun createBusConnection(name: ServiceName): IConnection =
     defaultConnection(SdBus()).also { it.requestName(name) }
-}
 
 /*!
  * @brief Creates/opens D-Bus system bus connection
@@ -427,9 +369,7 @@ fun createBusConnection(name: ServiceName): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSystemBusConnection(): Unowned<Connection> = create {
-    systemConnection(SdBus())
-}
+fun createSystemBusConnection(): IConnection = systemConnection(SdBus())
 
 /*!
  * @brief Creates/opens D-Bus system bus connection with a name
@@ -439,9 +379,8 @@ fun createSystemBusConnection(): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSystemBusConnection(name: ServiceName): Unowned<Connection> = create {
+fun createSystemBusConnection(name: ServiceName): IConnection =
     defaultConnection(SdBus()).also { it.requestName(name) }
-}
 
 /*!
  * @brief Creates/opens D-Bus session bus connection
@@ -450,9 +389,7 @@ fun createSystemBusConnection(name: ServiceName): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSessionBusConnection(): Unowned<Connection> = create {
-    sessionConnection(SdBus())
-}
+fun createSessionBusConnection(): IConnection = sessionConnection(SdBus())
 
 /*!
  * @brief Creates/opens D-Bus session bus connection with a name
@@ -462,9 +399,8 @@ fun createSessionBusConnection(): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSessionBusConnection(name: ServiceName): Unowned<Connection> = create {
+fun createSessionBusConnection(name: ServiceName): IConnection =
     sessionConnection(SdBus()).also { it.requestName(name) }
-}
 
 /*!
  * @brief Creates/opens D-Bus session bus connection at a custom address
@@ -476,9 +412,8 @@ fun createSessionBusConnection(name: ServiceName): Unowned<Connection> = create 
  *
  * Consult manual pages for `sd_bus_set_address` of the underlying sd-bus library for more information.
  */
-fun createSessionBusConnectionWithAddress(address: String): Unowned<Connection> = create {
+fun createSessionBusConnectionWithAddress(address: String): IConnection =
     sessionConnection(SdBus(), address)
-}
 
 /*!
  * @brief Creates/opens D-Bus system connection on a remote host using ssh
@@ -488,9 +423,7 @@ fun createSessionBusConnectionWithAddress(address: String): Unowned<Connection> 
  *
  * @throws sdbus::Error in case of failure
  */
-fun createRemoteSystemBusConnection(host: String): Unowned<Connection> = create {
-    remoteConnection(SdBus(), host)
-}
+fun createRemoteSystemBusConnection(host: String): IConnection = remoteConnection(SdBus(), host)
 
 /*!
  * @brief Opens direct D-Bus connection at a custom address
@@ -500,9 +433,7 @@ fun createRemoteSystemBusConnection(host: String): Unowned<Connection> = create 
  *
  * @throws sdbus::Error in case of failure
  */
-fun createDirectBusConnection(adddress: String): Unowned<Connection> = create {
-    privateConnection(SdBus(), adddress)
-}
+fun createDirectBusConnection(address: String): IConnection = privateConnection(SdBus(), address)
 
 /*!
  * @brief Opens direct D-Bus connection at the given file descriptor
@@ -515,9 +446,7 @@ fun createDirectBusConnection(adddress: String): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createDirectBusConnection(fd: Int): Unowned<Connection> = create {
-    privateConnection(SdBus(), fd)
-}
+fun createDirectBusConnection(fd: Int): IConnection = privateConnection(SdBus(), fd)
 
 /*!
  * @brief Opens direct D-Bus connection at fd as a server
@@ -533,9 +462,7 @@ fun createDirectBusConnection(fd: Int): Unowned<Connection> = create {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createServerBus(fd: Int): Unowned<Connection> = create {
-    serverConnection(SdBus(), fd)
-}
+fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
 
 /*!
  * @brief Creates sdbus-c++ bus connection representation out of underlying sd_bus instance
@@ -564,6 +491,4 @@ fun createServerBus(fd: Int): Unowned<Connection> = create {
  * auto con = sdbus::createBusConnection(bus); // IConnection consumes sd_bus object
  * @endcode
  */
-fun createBusConnection(bus: CPointer<sd_bus>): Unowned<Connection> = create {
-    Connection(SdBus(), bus)
-}
+fun createBusConnection(bus: CPointer<sd_bus>): IConnection = Connection(SdBus(), bus)

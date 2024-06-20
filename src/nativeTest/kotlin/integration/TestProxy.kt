@@ -2,7 +2,6 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Connection
 import com.monkopedia.sdbus.header.Error
 import com.monkopedia.sdbus.header.IConnection
 import com.monkopedia.sdbus.header.IProxy
@@ -13,7 +12,6 @@ import com.monkopedia.sdbus.header.ObjectManagerProxy
 import com.monkopedia.sdbus.header.ObjectPath
 import com.monkopedia.sdbus.header.PendingAsyncCall
 import com.monkopedia.sdbus.header.PropertyName
-import com.monkopedia.sdbus.header.Proxy
 import com.monkopedia.sdbus.header.ServiceName
 import com.monkopedia.sdbus.header.SignalName
 import com.monkopedia.sdbus.header.Signature
@@ -28,7 +26,6 @@ import com.monkopedia.sdbus.header.setProperty
 import com.monkopedia.sdbus.header.toError
 import com.monkopedia.sdbus.header.with_future
 import com.monkopedia.sdbus.header.with_future_t
-import com.monkopedia.sdbus.internal.Scope
 import com.monkopedia.sdbus.internal.Slot
 import com.monkopedia.sdbus.internal.Unowned
 import kotlin.time.Duration
@@ -39,26 +36,18 @@ import kotlinx.cinterop.memScoped
 import sdbus.uint32_t
 
 class ObjectManagerTestProxy(
-    initialScope: DeferScope,
-    proxy: Unowned<Proxy>
-) : Scope(initialScope), ObjectManagerProxy {
-    override val m_proxy: IProxy = proxy.own(scope)
+    proxy: IProxy
+) : ObjectManagerProxy {
+    override val m_proxy: IProxy = proxy
 
     constructor(
-        scope: DeferScope,
         connection: IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
-    )
-        : this(scope, createProxy(connection, destination, objectPath))
+    ) : this(createProxy(connection, destination, objectPath))
 
     init {
         registerObjectManagerProxy()
-    }
-
-    override fun onScopeCleared() {
-        super.onScopeCleared()
-        m_proxy.unregister()
     }
 
     override fun onInterfacesAdded(
@@ -78,27 +67,24 @@ class ObjectManagerTestProxy(
 };
 
 
-class TestProxy private constructor(initialScope: DeferScope, proxy: Unowned<Proxy>) :
-    IntegrationTestsProxy(initialScope, proxy) {
+class TestProxy private constructor(proxy: IProxy) :
+    IntegrationTestsProxy(proxy) {
 
-    constructor(initialScope: DeferScope, destination: ServiceName, objectPath: ObjectPath) : this(
-        initialScope,
+    constructor(destination: ServiceName, objectPath: ObjectPath) : this(
         createProxy(destination, objectPath)
     )
 
     constructor(
-        initialScope: DeferScope,
         destination: ServiceName,
         objectPath: ObjectPath,
         dont_run_event_loop_thread: dont_run_event_loop_thread_t
-    ) : this(initialScope, createProxy(destination, objectPath, dont_run_event_loop_thread))
+    ) : this(createProxy(destination, objectPath, dont_run_event_loop_thread))
 
     constructor(
-        initialScope: DeferScope,
-        connection: Connection,
+        connection: IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
-    ) : this(initialScope, createProxy(connection, destination, objectPath))
+    ) : this(createProxy(connection, destination, objectPath))
 
     var m_SimpleSignals = 0;
     var m_gotSimpleSignal = atomic(false);
@@ -161,10 +147,9 @@ class TestProxy private constructor(initialScope: DeferScope, proxy: Unowned<Pro
         m_DoOperationClientSideAsyncReplyHandler = handler;
     }
 
-    fun doOperationWithTimeout(timeout: Duration, param: UInt): UInt = memScoped {
-        getProxy().callMethod("doOperation").own(this).onInterface(INTERFACE_NAME)
+    fun doOperationWithTimeout(timeout: Duration, param: UInt): UInt =
+        getProxy().callMethod("doOperation").onInterface(INTERFACE_NAME)
             .withTimeout(timeout).withArguments { call(param) }.readResult()
-    }
 
     fun doOperationClientSideAsync(param: UInt): PendingAsyncCall {
         return getProxy().callMethodAsync("doOperation")
@@ -179,7 +164,7 @@ class TestProxy private constructor(initialScope: DeferScope, proxy: Unowned<Pro
             }
     }
 
-    fun doOperationClientSideAsync(param: UInt, return_slot: return_slot_t): Unowned<Slot> {
+    fun doOperationClientSideAsync(param: UInt, return_slot: return_slot_t): Slot {
         return getProxy().callMethodAsync("doOperation")
             .onInterface(INTERFACE_NAME)
             .withArguments { call(param) }
@@ -196,10 +181,10 @@ class TestProxy private constructor(initialScope: DeferScope, proxy: Unowned<Pro
     }
 
     suspend fun doOperationClientSideAsync(param: uint32_t, with_future: with_future_t): UInt =
-            getProxy().callMethodAsync("doOperation")
-                .onInterface(INTERFACE_NAME)
-                .withArguments { call(param) }
-                .getResult<uint32_t>();
+        getProxy().callMethodAsync("doOperation")
+            .onInterface(INTERFACE_NAME)
+            .withArguments { call(param) }
+            .getResult<uint32_t>();
 
     suspend fun doOperationClientSideAsyncOnBasicAPILevel(param: UInt): MethodReply {
         val methodCall = getProxy().createMethodCall(
@@ -245,13 +230,13 @@ class TestProxy private constructor(initialScope: DeferScope, proxy: Unowned<Pro
     }
 
     fun callNonexistentMethod(): Int = memScoped {
-        return getProxy().callMethod("callNonexistentMethod").own(this).onInterface(INTERFACE_NAME)
+        return getProxy().callMethod("callNonexistentMethod").onInterface(INTERFACE_NAME)
             .readResult();
     }
 
-    fun callMethodOnNonexistentInterface(): Int = memScoped {
+    fun callMethodOnNonexistentInterface(): Int {
         val nonexistentInterfaceName = InterfaceName("sdbuscpp.interface.that.does.not.exist");
-        return getProxy().callMethod("someMethod").own(this).onInterface(nonexistentInterfaceName)
+        return getProxy().callMethod("someMethod").onInterface(nonexistentInterfaceName)
             .readResult()
     }
 
@@ -261,8 +246,8 @@ class TestProxy private constructor(initialScope: DeferScope, proxy: Unowned<Pro
 
 }
 
-class DummyProxy private constructor(initialScope: DeferScope, proxy: Unowned<Proxy>) :
-    IntegrationTestsProxy(initialScope, proxy) {
+class DummyProxy private constructor(initialScope: DeferScope, proxy: IProxy) :
+    IntegrationTestsProxy(proxy) {
 
     constructor(initialScope: DeferScope, destination: ServiceName, objectPath: ObjectPath) : this(
         initialScope,

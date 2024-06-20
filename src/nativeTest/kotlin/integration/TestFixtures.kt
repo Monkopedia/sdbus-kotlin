@@ -2,7 +2,7 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.IConnection
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
@@ -20,25 +20,31 @@ abstract class ConnectionTestFixture(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onBeforeTest() {
         m_objectManagerProxy = ObjectManagerTestProxy(
-            scope,
             s_proxyConnection,
             SERVICE_NAME,
             MANAGER_PATH
         );
-        m_proxy = TestProxy(scope, s_proxyConnection, SERVICE_NAME, OBJECT_PATH)
+        m_proxy = TestProxy(s_proxyConnection, SERVICE_NAME, OBJECT_PATH)
         m_proxy?.registerProxy()
 
         m_objectManagerAdaptor = ObjectManagerTestAdaptor(
-            scope,
             s_adaptorConnection,
             MANAGER_PATH
         )
 //        m_objectManagerAdaptor = std::make_unique<ObjectManagerTestAdaptor>(*s_adaptorConnection, MANAGER_PATH);
-        m_adaptor = TestAdaptor(scope, s_adaptorConnection, OBJECT_PATH)
+        m_adaptor = TestAdaptor(s_adaptorConnection, OBJECT_PATH)
         m_adaptor?.registerAdaptor()
     }
 
     override fun onScopeClosed() {
+        m_adaptor?.m_object?.unregister()
+        m_proxy?.m_proxy?.unregister()
+        m_objectManagerAdaptor?.m_object?.unregister()
+        m_objectManagerProxy?.m_proxy?.unregister()
+        m_adaptor = null
+        m_proxy = null
+        m_objectManagerProxy = null
+        m_objectManagerAdaptor = null
     }
 }
 

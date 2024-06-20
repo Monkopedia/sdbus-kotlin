@@ -7,6 +7,7 @@ import com.monkopedia.sdbus.header.Flags.GeneralFlags.METHOD_NO_REPLY
 import com.monkopedia.sdbus.header.Flags.GeneralFlags.PRIVILEGED
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
+import kotlinx.datetime.Clock
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
@@ -24,26 +25,30 @@ data class MethodVTableItem(
     inline fun implementedAs(callback: TypedMethodBuilder): MethodVTableItem =
         implementedAs(build(callback))
 
-    fun implementedAs(callback: TypedMethodCall): MethodVTableItem = apply {
+    fun implementedAs(callback: TypedMethodCall<*>): MethodVTableItem = apply {
         val inputType = callback.method.inputType
         inputSignature = Signature(inputType.joinToString("") { it.signature.value })
         outputSignature = Signature(callback.method.outputType.signature.value)
+        val start = Clock.System.now()
         callbackHandler = { call ->
-            val asyncCall = callback.asAsyncMethod()
-            runCatching {
-                val args = call.deserialize(callback.method)
-                asyncCall.handler.invoke(args)
-            }.fold(
-                onSuccess = { result ->
+            println("Async call handler ${Clock.System.now() - start}")
+            callback.invoke(call,
+                onSuccess = { type, result ->
+                    println("Async call success ${Clock.System.now() - start}")
                     call.createReply().also {
                         @Suppress("UNCHECKED_CAST")
-                        it.serialize(asyncCall.method.outputType as Typed<Any>, result!!)
+                        it.serialize(type, result)
                     }
                 },
                 onFailure = {
+                    println("Async call error ${it.stackTraceToString()} ${Clock.System.now() - start}")
                     call.createErrorReply(it.toError())
+                },
+                onResult = {
+                    it.send()
+                    println("Async call sent ${Clock.System.now() - start}")
                 }
-            ).send()
+            )
         }
     }
 

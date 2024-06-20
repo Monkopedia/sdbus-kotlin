@@ -1,8 +1,8 @@
-@file:OptIn(ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Connection
+import com.monkopedia.sdbus.header.IConnection
 import com.monkopedia.sdbus.header.IObject
 import com.monkopedia.sdbus.header.ManagedObjectAdaptor
 import com.monkopedia.sdbus.header.MemberName
@@ -16,43 +16,36 @@ import com.monkopedia.sdbus.header.UnixFd
 import com.monkopedia.sdbus.header.Variant
 import com.monkopedia.sdbus.header.createError
 import com.monkopedia.sdbus.header.createObject
-import com.monkopedia.sdbus.internal.Unowned
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.atomicfu.atomic
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.usleep
 
 class ObjectManagerTestAdaptor(
-    scope: DeferScope,
     override val m_object: IObject
 ) : ObjectManagerAdaptor {
     init {
         registerObjectManagerAdaptor()
-        scope.defer {
-            m_object.unregister()
-        }
     }
-    constructor(scope: DeferScope, connection: Connection, path: ObjectPath)
-    : this(scope, createObject(connection, path))
+    constructor(connection: IConnection, path: ObjectPath)
+    : this(createObject(connection, path))
 
 }
 
-class TestAdaptor(initialScope: DeferScope, connection: Connection, path: ObjectPath) :
-    IntegrationTestsAdaptor(initialScope, createObject(connection, path)), PropertiesAdaptor,
+class TestAdaptor(connection: IConnection, path: ObjectPath) :
+    IntegrationTestsAdaptor(createObject(connection, path)), PropertiesAdaptor,
     ManagedObjectAdaptor {
 //    public TestAdaptor(sdbus::IConnection& connection, sdbus::ObjectPath path);
 //    public ~TestAdaptor();
+        private val cleaner = createCleaner(m_object) {
+            it.unregister()
+    }
 
     override fun registerAdaptor() {
         super.registerAdaptor()
 //        m_object.addObjectManager();
-    }
-
-    override fun onScopeCleared() {
-        runCatching {
-            m_object.unregister()
-        }
     }
 
     override fun noArgNoReturn() {
@@ -241,8 +234,8 @@ class TestAdaptor(initialScope: DeferScope, connection: Connection, path: Object
     public var m_propertySetSender: String? = null;
 };
 
-class DummyTestAdaptor(initialScope: DeferScope, connection: Connection, path: ObjectPath) :
-    IntegrationTestsAdaptor(initialScope, createObject(connection, path)),
+class DummyTestAdaptor(connection: IConnection, path: ObjectPath) :
+    IntegrationTestsAdaptor(createObject(connection, path)),
     PropertiesAdaptor,
     ManagedObjectAdaptor {
     override fun noArgNoReturn() = Unit
@@ -255,7 +248,7 @@ class DummyTestAdaptor(initialScope: DeferScope, connection: Connection, path: O
 
     override fun multiplyWithNoReply(a: Long, b: Double) = Unit
 
-    override fun processVariant(variant: Variant): Variant = Variant(scope)
+    override fun processVariant(variant: Variant): Variant = Variant()
 
     override fun sumArrayItems(arg0: List<UShort>, arg1: Array<ULong>): UInt = 0u
 

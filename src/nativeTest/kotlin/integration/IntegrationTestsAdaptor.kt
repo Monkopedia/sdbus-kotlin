@@ -17,17 +17,15 @@ import com.monkopedia.sdbus.header.registerMethod
 import com.monkopedia.sdbus.header.registerProperty
 import com.monkopedia.sdbus.header.registerSignal
 import com.monkopedia.sdbus.header.setInterfaceFlags
-import com.monkopedia.sdbus.internal.Scope
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
+import kotlinx.coroutines.Dispatchers
 
-abstract class IntegrationTestsAdaptor(initialScope: DeferScope, override val m_object: IObject): Scope(initialScope), ObjectAdaptor {
+abstract class IntegrationTestsAdaptor(override val m_object: IObject) : ObjectAdaptor {
 
     open fun registerAdaptor() {
         m_object.addVTable(
             setInterfaceFlags().markAsDeprecated()
-            .withPropertyUpdateBehavior(EMITS_NO_SIGNAL),
+                .withPropertyUpdateBehavior(EMITS_NO_SIGNAL),
             registerMethod("noArgNoReturn").implementedAs { call { -> noArgNoReturn() } },
             registerMethod("getInt").withOutputParamNames("anInt")
                 .implementedAs { call { -> getInt() } },
@@ -60,22 +58,24 @@ abstract class IntegrationTestsAdaptor(initialScope: DeferScope, override val m_
             registerMethod("doOperation").withInputParamNames("arg0").withOutputParamNames("arg0")
                 .implementedAs {
                     call { arg0: UInt ->
-                        doOperation(arg0);
+                        doOperation(arg0)
                     }
                 },
             registerMethod("doOperationAsync").withInputParamNames("arg0")
                 .withOutputParamNames("arg0").implementedAs {
                     acall { arg0: UInt ->
-                        doOperationAsync(arg0)
-                    }
+                        println("Doop async")
+                        doOperationAsync(arg0).also {
+                            println("DoneAsync")
+                        }
+                    } withContext Dispatchers.Unconfined
                 },
             registerMethod("getSignature").withOutputParamNames("arg0")
                 .implementedAs { call { -> getSignature(); } },
             registerMethod("getObjPath").withOutputParamNames("arg0")
                 .implementedAs { call { -> getObjPath(); } },
             registerMethod("getUnixFd").withOutputParamNames("arg0")
-                .implementedAs { call { -> getUnixFd(); } }
-            ,
+                .implementedAs { call { -> getUnixFd(); } },
             registerMethod("throwError").implementedAs { call { -> throwError(); } },
             registerMethod("throwErrorWithNoReply").implementedAs { call { -> throwErrorWithNoReply(); } }
                 .withNoReply(),
@@ -123,21 +123,16 @@ abstract class IntegrationTestsAdaptor(initialScope: DeferScope, override val m_
         ).forInterface(INTERFACE_NAME);
     }
 
-    fun emitSimpleSignal() = memScoped {
-        m_object.emitSignal("simpleSignal").own(this).onInterface(INTERFACE_NAME);
-    }
+    fun emitSimpleSignal() =
+        m_object.emitSignal("simpleSignal").onInterface(INTERFACE_NAME).emit { call() }
 
-    fun emitSignalWithMap(aMap: Map<Int, String>) = memScoped {
-        m_object.emitSignal("signalWithMap").own(this).onInterface(INTERFACE_NAME)
-            .withArguments{ call(aMap) }
-    }
+    fun emitSignalWithMap(aMap: Map<Int, String>) =
+        m_object.emitSignal("signalWithMap").onInterface(INTERFACE_NAME)
+            .emit { call(aMap) }
 
-    fun emitSignalWithVariant(aVariant: Variant) = memScoped {
-
-        m_object.emitSignal("signalWithVariant").own(this).onInterface(INTERFACE_NAME)
-            .withArguments { call(aVariant) }
-    }
-
+    fun emitSignalWithVariant(aVariant: Variant) =
+        m_object.emitSignal("signalWithVariant").onInterface(INTERFACE_NAME)
+            .emit { call(aVariant) }
 
     protected abstract fun noArgNoReturn(): Unit
     protected abstract fun getInt(): Int
@@ -153,7 +148,7 @@ abstract class IntegrationTestsAdaptor(initialScope: DeferScope, override val m_
 //        protected abstract fun sumStructItems(const Struct<uint8_t, uint16_t>& arg0, const Struct<int32_t, int64_t>& arg1) : Int
     protected abstract fun sumArrayItems(arg0: List<UShort>, arg1: Array<ULong>): UInt
     protected abstract fun doOperation(arg0: UInt): UInt
-    protected abstract suspend fun doOperationAsync( arg0: UInt): UInt
+    protected abstract suspend fun doOperationAsync(arg0: UInt): UInt
     protected abstract fun getSignature(): Signature;
     protected abstract fun getObjPath(): ObjectPath;
     protected abstract fun getUnixFd(): UnixFd;

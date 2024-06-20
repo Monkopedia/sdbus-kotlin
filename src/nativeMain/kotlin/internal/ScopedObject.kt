@@ -1,10 +1,14 @@
-@file:OptIn(ExperimentalForeignApi::class, ExperimentalStdlibApi::class)
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalStdlibApi::class,
+    ExperimentalNativeApi::class
+)
 
 package com.monkopedia.sdbus.internal
 
 import com.monkopedia.sdbus.internal.ScopedObject.Companion.stdMove
 import com.monkopedia.sdbus.internal.ScopedObject.SharedPtr
 import com.monkopedia.sdbus.internal.ScopedObject.WeakPtr
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.cinterop.Arena
@@ -180,23 +184,25 @@ open class Scope : ScopedObject {
     open fun onScopeCleared() = Unit
 }
 
-fun <T> DeferScope.Reference(value: T, onLeaveScopes: (T) -> Unit) =
-    Reference(this, value, onLeaveScopes)
-
 class Reference<T>(
-    initialScope: DeferScope,
     val value: T,
-    val onLeaveScopes: (T) -> Unit,
-    val throwable: Throwable = Throwable()
-) : ScopedObject(initialScope) {
+    onLeaveScopes: (T) -> Unit
+//    val throwable: Throwable = Throwable()
+) {
+    private val resource = value to onLeaveScopes
     fun get(): T = value
+    private var extraReferences: MutableList<Reference<*>>? = null
 
-    override fun onLeaveScopes() {
-//        println("onLeaveScopes ${value?.let { it::class }} $value")
-//        println(throwable.stackTraceToString())
+    private val cleaner = createCleaner(resource) { (value, onLeaveScopes) ->
         onLeaveScopes.invoke(value)
     }
+    fun <R> freeAfter(value: Reference<R>): Slot {
+        (extraReferences ?: mutableListOf<Reference<*>>().also { extraReferences = it })
+            .add(value)
+        return this
+    }
 }
+
 
 object ScopeCapture {
     var lastDefer: (() -> Unit)? = null

@@ -10,6 +10,7 @@ import com.monkopedia.sdbus.internal.Slot
 import com.monkopedia.sdbus.internal.Unowned
 import com.monkopedia.sdbus.internal.create
 import kotlin.native.internal.NativePtr
+import kotlinx.cinterop.Arena
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -58,8 +59,10 @@ class MethodCall private constructor(msg_: CPointer<sd_bus_message>?, sdbus_: IS
         userData: Any?,
         timeout: uint64_t,
         t: return_slot_t
-    ): Unowned<Slot> = create {
-        val slot = cValuesOf(interpretCPointer<sd_bus_slot>(NativePtr.NULL)).getPointer(this)
+    ): Slot = run {
+        val arena = Arena()
+        val slot: CPointer<CPointerVar<sd_bus_slot>> =
+            cValue<CPointerVar<sd_bus_slot>>().getPointer(arena)
         val userDataRef = userData?.let { StableRef.create(it) }
 
         val r = sdbus_.sd_bus_call_async(
@@ -75,6 +78,7 @@ class MethodCall private constructor(msg_: CPointer<sd_bus_message>?, sdbus_: IS
         Reference(slot[0]) {
             sd_bus_slot_unref(it)
             userDataRef?.dispose()
+            arena.clear()
         }
     }
 

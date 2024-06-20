@@ -2,15 +2,15 @@
 
 package com.monkopedia.sdbus.header
 
+import com.monkopedia.sdbus.internal.Proxy
 import com.monkopedia.sdbus.internal.Proxy.AsyncCallInfo
-import com.monkopedia.sdbus.internal.Scope
 import com.monkopedia.sdbus.internal.ScopedObject.WeakPtr
 import com.monkopedia.sdbus.internal.Slot
 import com.monkopedia.sdbus.internal.Unowned
 import com.monkopedia.sdbus.internal.create
 import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.WeakReference
 import kotlin.time.Duration
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
 import platform.posix.EINVAL
@@ -199,7 +199,7 @@ interface IProxy {
         message: MethodCall,
         asyncReplyCallback: async_reply_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     /*!
      * @brief Calls method on the D-Bus object asynchronously, with custom timeout
@@ -257,7 +257,7 @@ interface IProxy {
         asyncReplyCallback: async_reply_handler,
         timeout: ULong,
         t: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     /*!
      * @brief Calls method on the D-Bus object asynchronously
@@ -352,7 +352,7 @@ interface IProxy {
         signalName: SignalName,
         signalHandler: signal_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     fun createMethodCall(interfaceName: String, methodName: String): MethodCall
 
@@ -367,7 +367,7 @@ interface IProxy {
         signalName: String,
         signalHandler: signal_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 };
 
 /********************************************/
@@ -381,7 +381,7 @@ interface IProxy {
  * It's safe to call its methods even after the Proxy has gone.
  *
  ***********************************************/
-class PendingAsyncCall internal constructor(private val target: WeakPtr<AsyncCallInfo>) {
+class PendingAsyncCall internal constructor(private val target: WeakReference<AsyncCallInfo>) {
 
     /*!
      * @brief Cancels the delivery of the pending asynchronous call result
@@ -390,8 +390,8 @@ class PendingAsyncCall internal constructor(private val target: WeakPtr<AsyncCal
      * async D-Bus method call result delivery. Does nothing if the call was
      * completed already, or if the originating Proxy object has gone meanwhile.
      */
-    fun cancel(): Unit = memScoped {
-        val asyncCallInfo = target.use(this) ?: return@memScoped
+    fun cancel(): Unit {
+        val asyncCallInfo = target.get() ?: return
         asyncCallInfo.proxy.erase(asyncCallInfo)
     }
 
@@ -404,7 +404,7 @@ class PendingAsyncCall internal constructor(private val target: WeakPtr<AsyncCal
      * have arrived and are currently being processed by the callback handler.
      */
     fun isPending(): Boolean {
-        return !target.expired
+        return target.get() != null
     }
 }
 
@@ -428,7 +428,7 @@ inline fun IProxy.callMethodAsync(
     noinline asyncReplyCallback: async_reply_handler,
     timeout: Duration,
     return_slot: return_slot_t
-): Unowned<Slot> {
+): Slot {
     return callMethodAsync(
         message,
         asyncReplyCallback,
@@ -465,16 +465,16 @@ inline suspend fun IProxy.callMethodAsync(
  *
  * @throws sdbus::Error in case of failure
  */
-inline fun IProxy.callMethod(methodName: MethodName): Unowned<MethodInvoker> {
-    return create { MethodInvoker(this, this@callMethod, methodName) }
+inline fun IProxy.callMethod(methodName: MethodName): MethodInvoker {
+    return MethodInvoker(this@callMethod, methodName)
 }
 
 
 /*!
  * @copydoc IProxy::callMethod(const MethodName&)
  */
-inline fun IProxy.callMethod(methodName: String): Unowned<MethodInvoker> {
-    return create { MethodInvoker(this, this@callMethod, methodName) }
+inline fun IProxy.callMethod(methodName: String): MethodInvoker {
+    return MethodInvoker(this@callMethod, methodName)
 }
 
 /*!
@@ -708,7 +708,6 @@ inline fun IProxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter {
     return AsyncAllPropertiesGetter(this);
 }
 
-abstract class Proxy(initialScope: DeferScope) : Scope(initialScope), IProxy
 
 /*!
  * @brief Creates a proxy object for a specific remote D-Bus object
@@ -736,7 +735,7 @@ fun createProxy(
     connection: IConnection,
     destination: ServiceName,
     objectPath: ObjectPath
-): Unowned<Proxy> {
+): IProxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     SDBUS_THROW_ERROR_IF(
         sdbusConnection == null,
@@ -744,9 +743,8 @@ fun createProxy(
         EINVAL
     );
 
-    return create {
-        com.monkopedia.sdbus.internal.Proxy(this, sdbusConnection!!, destination, objectPath)
-    }
+    return Proxy(sdbusConnection!!, destination, objectPath)
+
 }
 
 /*!
@@ -777,7 +775,7 @@ fun createProxy(
     destination: ServiceName,
     objectPath: ObjectPath,
     dont_run_event_loop_thread: dont_run_event_loop_thread_t
-): Unowned<Proxy> {
+): IProxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     SDBUS_THROW_ERROR_IF(
         sdbusConnection == null,
@@ -785,15 +783,12 @@ fun createProxy(
         EINVAL
     );
 
-    return create {
-        com.monkopedia.sdbus.internal.Proxy(
-            this,
-            sdbusConnection!!,
-            destination,
-            objectPath,
-            dont_run_event_loop_thread
-        )
-    }
+    return Proxy(
+        sdbusConnection!!,
+        destination,
+        objectPath,
+        dont_run_event_loop_thread
+    )
 }
 
 /*!
@@ -813,14 +808,14 @@ fun createProxy(
  * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(destination: ServiceName, objectPath: ObjectPath): Unowned<Proxy> {
-    return create {
-        val connection = createBusConnection().own(this)
+fun createProxy(destination: ServiceName, objectPath: ObjectPath): IProxy {
+    return memScoped {
+        val connection = createBusConnection()
 
         val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
         assert(sdbusConnection != null);
 
-        com.monkopedia.sdbus.internal.Proxy(this, sdbusConnection!!, destination, objectPath)
+        Proxy(sdbusConnection!!, destination, objectPath)
     }
 }
 
@@ -846,14 +841,13 @@ fun createProxy(
     destination: ServiceName,
     objectPath: ObjectPath,
     dont_run_event_loop_thread: dont_run_event_loop_thread_t
-): Unowned<Proxy> = create {
-    val connection = createBusConnection().own(this)
+): IProxy = memScoped {
+    val connection = createBusConnection()
 
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     assert(sdbusConnection != null);
 
-    com.monkopedia.sdbus.internal.Proxy(
-        this,
+    Proxy(
         sdbusConnection!!,
         destination,
         objectPath,

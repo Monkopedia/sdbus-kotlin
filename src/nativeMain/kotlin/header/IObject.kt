@@ -164,7 +164,7 @@ interface IObject {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addObjectManager(t: return_slot_t): Unowned<Slot>
+    fun addObjectManager(t: return_slot_t): Slot
 
     /*!
      * @brief Provides D-Bus connection used by the object
@@ -286,7 +286,7 @@ interface IObject {
         interfaceName: InterfaceName,
         vtable: List<VTableItem>,
         return_slot: return_slot_t
-    ): Unowned<Slot>
+    ): Slot
 
     /*!
      * @brief Creates a signal message
@@ -339,15 +339,15 @@ interface IObject {
  *
  * @throws sdbus::Error in case of failure
  */
-inline fun IObject.emitSignal(signalName: SignalName): Unowned<SignalEmitter> {
-    return create { SignalEmitter(this, this@emitSignal, signalName); }
+inline fun IObject.emitSignal(signalName: SignalName): SignalEmitter {
+    return SignalEmitter(this@emitSignal, signalName);
 }
 
 /*!
  * @copydoc IObject::emitSignal(const SignalName&)
  */
-inline fun IObject.emitSignal(signalName: String): Unowned<SignalEmitter> {
-    return create { SignalEmitter(this, this@emitSignal, signalName); }
+inline fun IObject.emitSignal(signalName: String): SignalEmitter {
+    return SignalEmitter(this@emitSignal, signalName);
 }
 
 //template <typename... VTableItems, typename>

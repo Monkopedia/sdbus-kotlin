@@ -33,12 +33,12 @@ import kotlinx.serialization.descriptors.StructureKind.OBJECT
 import kotlinx.serialization.descriptors.elementDescriptors
 
 // Callbacks from sdbus-c++
-typealias method_callback = suspend (msg: MethodCall) -> Unit
-typealias async_reply_handler = suspend (reply: MethodReply, error: Error?) -> Unit
-typealias signal_handler = suspend (signal: Signal) -> Unit
-typealias message_handler = suspend (msg: Message) -> Unit
-typealias property_set_callback = suspend (msg: PropertySetCall) -> Unit
-typealias property_get_callback = suspend (msg: PropertyGetReply) -> Unit
+typealias method_callback = (msg: MethodCall) -> Unit
+typealias async_reply_handler = (reply: MethodReply, error: Error?) -> Unit
+typealias signal_handler = (signal: Signal) -> Unit
+typealias message_handler = (msg: Message) -> Unit
+typealias property_set_callback = (msg: PropertySetCall) -> Unit
+typealias property_get_callback = (msg: PropertyGetReply) -> Unit
 
 // Type-erased RAII-style handle to callbacks/subscriptions registered to sdbus-c++
 //using Slot = std::unique_ptr<void, std::function<void(void*)>>;

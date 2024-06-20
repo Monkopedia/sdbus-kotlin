@@ -22,7 +22,6 @@ import com.monkopedia.sdbus.header.Signal
 import com.monkopedia.sdbus.header.SignalName
 import com.monkopedia.sdbus.header.SignalVTableItem
 import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.VTableAdder
 import com.monkopedia.sdbus.header.VTableItem
 import com.monkopedia.sdbus.header.method_callback
 import com.monkopedia.sdbus.header.property_get_callback
@@ -33,7 +32,7 @@ import com.monkopedia.sdbus.internal.Object.VTable.MethodItem
 import com.monkopedia.sdbus.internal.Object.VTable.PropertyItem
 import com.monkopedia.sdbus.internal.Object.VTable.SignalItem
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.math.sign
+import kotlin.native.ref.createCleaner
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.AutofreeScope
 import kotlinx.cinterop.ByteVar
@@ -41,20 +40,14 @@ import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.NativePlacement
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cstr
-import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
-import kotlinx.coroutines.runBlocking
 import platform.posix.EINVAL
 import sdbus.sd_bus_error
 import sdbus.sd_bus_error_set
@@ -62,31 +55,50 @@ import sdbus.sd_bus_vtable
 
 
 class Object(private val connection_: IConnection, private val objectPath_: ObjectPath) : IObject {
-    private var scope = Arena()
+    private class Allocs {
+        var objManager: Any? = null
+
+        fun unregister() {
+            objManager = null
+        }
+    }
+
+    private val allocs = Allocs()
+    private val cleaner = createCleaner(allocs) {
+        it.unregister()
+    }
+
+    override fun unregister() {
+        allocs.unregister()
+    }
 
     init {
         SDBUS_CHECK_OBJECT_PATH(objectPath_.value);
     }
 
     override fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>) {
-        addVTable(interfaceName, vtable, return_slot).own(scope)
+        allocs.objManager = addVTable(interfaceName, vtable, return_slot)
     }
 
     override fun addVTable(
         interfaceName: InterfaceName,
         vtable: List<VTableItem>,
         return_slot: return_slot_t
-    ): Unowned<Slot> = create {
+    ): Slot = memScoped {
         SDBUS_CHECK_INTERFACE_NAME(interfaceName.value);
 
         // 1st pass -- create vtable structure for internal sdbus-c++ purposes
         val internalVTable = createInternalVTable(interfaceName, vtable)
 
+        // Return vtable wrapped in a Slot object
+        val reference = Reference(internalVTable) {
+            it.clear()
+        }
         // 2nd pass -- from internal sdbus-c++ vtable, create vtable structure in format expected by underlying sd-bus library
         internalVTable.sdbusVTable = internalVTable.scope.createInternalSdBusVTable(internalVTable);
 
         // 3rd step -- register the vtable with sd-bus
-        internalVTable.slot = connection_.addObjectVTable(
+        val slot = connection_.addObjectVTable(
             objectPath_,
             internalVTable.interfaceName,
             internalVTable.sdbusVTable!!,
@@ -94,15 +106,7 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
             return_slot
         );
 
-        // Return vtable wrapped in a Slot object
-        Reference(internalVTable) {
-            it.clear()
-        }
-    }
-
-    override fun unregister() {
-        scope.clear()
-        scope = Arena()
+        reference.freeAfter(slot)
     }
 
     override fun createSignal(
@@ -158,10 +162,10 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
     }
 
     override fun addObjectManager() {
-        connection_.addObjectManager(objectPath_, return_slot).own(scope)
+        allocs.objManager = connection_.addObjectManager(objectPath_, return_slot)
     }
 
-    override fun addObjectManager(t: return_slot_t): Unowned<Slot> {
+    override fun addObjectManager(t: return_slot_t): Slot {
         return connection_.addObjectManager(objectPath_, return_slot)
     }
 
@@ -208,19 +212,14 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
         // Back-reference to the owning object from sd-bus callback handlers
         var obj: Object? = null
 
-        // This is intentionally the last member, because it must be destructed first,
-        // releasing callbacks above before the callbacks themselves are destructed.
-        var slot: Unowned<Slot>? = null
-            set(value) {
-                require(field == null) {
-                    "slot has already been set"
-                }
-                field = value
-                value?.own(scope)
-            }
+        init {
+            println("Alloc vtable")
+        }
 
         fun clear() {
+            println("Clear vtable")
             scope.clear()
+            obj = null
         }
 
         data class MethodItem(
@@ -430,19 +429,15 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
             assert(vtable != null);
             assert(vtable?.obj != null);
             val ok = invokeHandlerAndCatchErrors(retError) {
-                memScoped {
-                    val message = MethodCall(
-                        sdbusMessage!!,
-                        vtable!!.obj!!.connection_.getSdBusInterface()
-                    )
+                val message = MethodCall(
+                    sdbusMessage!!,
+                    vtable!!.obj!!.connection_.getSdBusInterface()
+                )
 
-                    val methodItem = findMethod(vtable, message.getMemberName()!!);
-                    assert(methodItem != null);
+                val methodItem = findMethod(vtable, message.getMemberName()!!);
+                assert(methodItem != null);
 
-                    runBlocking {
-                        methodItem!!.callback(message);
-                    }
-                }
+                methodItem!!.callback(message);
             }
 
             if (ok) 1 else -1
@@ -474,16 +469,12 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
                     );
                     return@staticCFunction 1;
                 }
-                memScoped {
-                    val reply = PropertyGetReply(
-                        sdbusReply!!,
-                        vtable.obj!!.connection_.getSdBusInterface()
-                    )
+                val reply = PropertyGetReply(
+                    sdbusReply!!,
+                    vtable.obj!!.connection_.getSdBusInterface()
+                )
 
-                    runBlocking {
-                        propertyItem.getCallback!!(reply);
-                    }
-                }
+                propertyItem.getCallback!!(reply);
             }
 
             if (ok) 1 else -1;
@@ -505,15 +496,11 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
             assert(propertyItem != null);
             assert(propertyItem!!.setCallback != null);
             val ok = invokeHandlerAndCatchErrors(retError) {
-                memScoped {
-                    val value = PropertySetCall(
-                        sdbusValue!!,
-                        vtable.obj!!.connection_.getSdBusInterface()
-                    )
-                    runBlocking {
-                        propertyItem.setCallback!!(value);
-                    }
-                }
+                val value = PropertySetCall(
+                    sdbusValue!!,
+                    vtable.obj!!.connection_.getSdBusInterface()
+                )
+                propertyItem.setCallback!!(value);
             };
 
             if (ok) 1 else -1

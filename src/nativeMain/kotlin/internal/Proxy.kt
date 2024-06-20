@@ -3,14 +3,11 @@
 package com.monkopedia.sdbus.internal
 
 import cnames.structs.sd_bus_message
-import com.monkopedia.sdbus.header.AsyncMethodInvoker
-import com.monkopedia.sdbus.header.Connection
 import com.monkopedia.sdbus.header.Error
 import com.monkopedia.sdbus.header.IProxy
 import com.monkopedia.sdbus.header.InterfaceName
 import com.monkopedia.sdbus.header.Message
 import com.monkopedia.sdbus.header.MethodCall
-import com.monkopedia.sdbus.header.MethodInvoker
 import com.monkopedia.sdbus.header.MethodName
 import com.monkopedia.sdbus.header.MethodReply
 import com.monkopedia.sdbus.header.ObjectPath
@@ -27,52 +24,63 @@ import com.monkopedia.sdbus.header.return_slot_t
 import com.monkopedia.sdbus.header.signal_handler
 import com.monkopedia.sdbus.header.with_future_t
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.time.Duration
+import kotlin.native.ref.WeakReference
+import kotlin.native.ref.createCleaner
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.channels.Channel.Factory
-import kotlinx.coroutines.runBlocking
 import platform.posix.EINVAL
 import sdbus.sd_bus_error
 import sdbus.sd_bus_message_get_error
-import sdbus.time
-import sdbus.uint64_t
 
 
-class Proxy constructor(
-    initialScope: DeferScope,
+class Proxy(
     private val connection_: IConnection,
     private val destination_: ServiceName,
     private val objectPath_: ObjectPath,
     @Suppress("UNUSED_PARAMETER") dont_run_event_loop_thread: dont_run_event_loop_thread_t
-) : com.monkopedia.sdbus.header.Proxy(initialScope), IProxy {
+) : IProxy {
+    private class Allocs {
+        val scope = Arena()
+        val floatingAsyncCallSlots_ = FloatingAsyncCallSlots()
+        val floatingSignalSlots_ = mutableListOf<Slot>()
+
+        fun unregister() {
+            floatingAsyncCallSlots_.clear()
+            floatingSignalSlots_.clear()
+            scope.clear()
+        }
+    }
+
+    private val allocs = Allocs()
+    private val cleaner = createCleaner(allocs) {
+        it.unregister()
+    }
+
+    override fun unregister() {
+        allocs.unregister()
+    }
+
     init {
         SDBUS_CHECK_SERVICE_NAME(destination_.value)
         SDBUS_CHECK_OBJECT_PATH(objectPath_.value)
-        (connection_ as Connection).useIn(scope)
     }
 
-    private val floatingAsyncCallSlots_ = FloatingAsyncCallSlots(scope)
-    private val floatingSignalSlots_ = MutableScopedList<Slot>(scope)
 
     constructor(
-        initialScope: DeferScope,
         connection: IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
-    ) : this(initialScope, connection, destination, objectPath, dont_run_event_loop_thread) {
+    ) : this(connection, destination, objectPath, dont_run_event_loop_thread) {
         connection.enterEventLoopAsync()
     }
 
@@ -111,26 +119,24 @@ class Proxy constructor(
             !message.isValid(), "Invalid async method call message provided", EINVAL
         );
 
-        val asyncCallInfo = create {
-            AsyncCallInfo(
-                this, callback = asyncReplyCallback, proxy = this@Proxy, floating = false
-            ).also { asyncCallInfo ->
-                connection_.callMethod(
-                    message, sdbus_async_reply_handler, asyncCallInfo, timeout, return_slot
-                ).own(asyncCallInfo.scope)
+        val asyncCallInfo = AsyncCallInfo(
+            callback = asyncReplyCallback, proxy = this@Proxy, floating = false
+        ).also { asyncCallInfo ->
+            asyncCallInfo.methodCall = connection_.callMethod(
+                message, sdbus_async_reply_handler, WeakReference(asyncCallInfo), timeout, return_slot
+            )
 
-                floatingAsyncCallSlots_.push_back(asyncCallInfo);
-            }
+            allocs.floatingAsyncCallSlots_.push_back(asyncCallInfo);
         }
 
 
-        return PendingAsyncCall(asyncCallInfo.weak());
+        return PendingAsyncCall(WeakReference(asyncCallInfo))
 
     }
 
     override fun callMethodAsync(
         message: MethodCall, asyncReplyCallback: async_reply_handler, return_slot: return_slot_t
-    ): Unowned<Slot> {
+    ): Slot {
         return callMethodAsync(message, asyncReplyCallback, 0u, return_slot)
     }
 
@@ -139,21 +145,20 @@ class Proxy constructor(
         asyncReplyCallback: async_reply_handler,
         timeout: ULong,
         return_slot: return_slot_t
-    ): Unowned<Slot> {
+    ): Slot {
         SDBUS_THROW_ERROR_IF(
             !message.isValid(), "Invalid async method call message provided", EINVAL
         )
 
-        val asyncCallInfo = createShared {
-            AsyncCallInfo(this, callback = asyncReplyCallback, proxy = this@Proxy, floating = true)
-        }
+        val asyncCallInfo =
+            AsyncCallInfo(callback = asyncReplyCallback, proxy = this@Proxy, floating = true)
 
-        connection_.callMethod(
-            message, sdbus_async_reply_handler, asyncCallInfo.get(), timeout, return_slot
-        ).own(asyncCallInfo.get().scope)
+        asyncCallInfo.methodCall = connection_.callMethod(
+            message, sdbus_async_reply_handler, WeakReference(asyncCallInfo), timeout, return_slot
+        )
 
-        return create {
-            Reference(asyncCallInfo.get()) { asyncCallInfo.release() }
+        return Reference(asyncCallInfo) {
+            asyncCallInfo.methodCall = null
         }
     }
 
@@ -189,14 +194,9 @@ class Proxy constructor(
     override fun registerSignalHandler(
         interfaceName: String, signalName: String, signalHandler: signal_handler
     ) {
-        memScoped {
-            val slot =
-                registerSignalHandler(interfaceName, signalName, signalHandler, return_slot).own(
-                        this
-                    )
+        val slot = registerSignalHandler(interfaceName, signalName, signalHandler, return_slot)
 
-            floatingSignalSlots_.add(slot)
-        }
+        allocs.floatingSignalSlots_.add(slot)
     }
 
     override fun registerSignalHandler(
@@ -204,7 +204,7 @@ class Proxy constructor(
         signalName: SignalName,
         signalHandler: signal_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot> {
+    ): Slot {
         return registerSignalHandler(
             interfaceName.value, signalName.value, signalHandler, return_slot
         )
@@ -215,34 +215,21 @@ class Proxy constructor(
         signalName: String,
         signalHandler: signal_handler,
         return_slot: return_slot_t
-    ): Unowned<Slot> {
+    ): Slot {
         SDBUS_CHECK_INTERFACE_NAME(interfaceName);
         SDBUS_CHECK_MEMBER_NAME(signalName);
 
-        val signalInfo = createShared {
-            SignalInfo(this, signalHandler, this@Proxy)
-        };
+        val signalInfo = SignalInfo(signalHandler, this@Proxy)
 
-        connection_.registerSignalHandler(
+        return connection_.registerSignalHandler(
             destination_.value,
             objectPath_.value,
             interfaceName,
             signalName,
             sdbus_signal_handler,
-            signalInfo.get(),
+            signalInfo,
             return_slot
-        ).own(signalInfo.get().scope)
-
-        return create {
-            Reference(signalInfo.get()) {
-                signalInfo.release()
-            }
-        }
-    }
-
-    override fun unregister() {
-        floatingAsyncCallSlots_.clear()
-        floatingSignalSlots_.clear()
+        )
     }
 
     override fun getConnection(): com.monkopedia.sdbus.header.IConnection {
@@ -258,7 +245,7 @@ class Proxy constructor(
     }
 
     internal fun erase(asyncCallInfo: Proxy.AsyncCallInfo) {
-        floatingAsyncCallSlots_.erase(asyncCallInfo)
+        allocs.floatingAsyncCallSlots_.erase(asyncCallInfo)
     }
 
     //    private:
@@ -277,52 +264,25 @@ class Proxy constructor(
 //    std::vector<Slot> floatingSignalSlots_;
 //
     class SignalInfo(
-        initialScope: CustomDeferScope,
         val callback: signal_handler,
         val proxy: Proxy,
-    ) : Scope(initialScope) {}
+    ) {
+        var signalHandler: Any? = null
+    }
 
-    class AsyncCallInfo : Scope {
-        val callback: async_reply_handler
-        val proxy: Proxy
-        val floating: Boolean
+    data class AsyncCallInfo(
+        val callback: async_reply_handler,
+        val proxy: Proxy,
+        val floating: Boolean,
         var finished: Boolean = false
-
-        constructor(
-            initialScope: CustomDeferScope,
-            callback: async_reply_handler,
-            proxy: Proxy,
-            floating: Boolean,
-            finished: Boolean = false,
-        ) : super(initialScope) {
-            this.callback = callback
-            this.proxy = proxy
-            this.floating = floating
-            this.finished = finished
-        }
-
-        constructor(
-            initialScope: DeferScope,
-            callback: async_reply_handler,
-            proxy: Proxy,
-            floating: Boolean,
-            finished: Boolean = false,
-        ) : super(initialScope) {
-            this.callback = callback
-            this.proxy = proxy
-            this.floating = floating
-            this.finished = finished
-        }
+    ) {
+        var methodCall: Any? = null
     }
 
     // Container keeping track of pending async calls
-    class FloatingAsyncCallSlots(initialScope: Arena) : Scope(initialScope) {
+    class FloatingAsyncCallSlots {
         private val lock = ReentrantLock()
-        private val asyncSlots = MutableScopedList<AsyncCallInfo>(scope)
-
-        override fun onScopeCleared() {
-            clear()
-        }
+        private val asyncSlots = mutableListOf<AsyncCallInfo>()
 
         fun push_back(asyncCallInfo: AsyncCallInfo) {
             lock.withLock {
@@ -332,6 +292,7 @@ class Proxy constructor(
 
         fun erase(info: AsyncCallInfo) {
             lock.withLock {
+                info.methodCall = null
                 info.finished = true
                 asyncSlots.remove(info)
             }
@@ -342,15 +303,15 @@ class Proxy constructor(
                 asyncSlots.clear()
             }
         }
-
     }
 
     companion object {
         val sdbus_async_reply_handler =
             staticCFunction { sdbusMessage: CPointer<sd_bus_message>?, userData: COpaquePointer?, retError: CPointer<sd_bus_error>? ->
-                val asyncCallInfo = userData?.asStableRef<Any>()?.get() as? AsyncCallInfo
-                assert(asyncCallInfo != null);
-                val proxy = asyncCallInfo!!.proxy;
+                val reference = userData?.asStableRef<Any>()?.get() as? WeakReference<AsyncCallInfo>
+                assert(reference != null);
+                val asyncCallInfo = reference?.get() ?: return@staticCFunction -1
+                val proxy = asyncCallInfo.proxy;
 
                 val ok = invokeHandlerAndCatchErrors(retError) {
 
@@ -362,23 +323,21 @@ class Proxy constructor(
                             )
 
                             val error = sd_bus_message_get_error(sdbusMessage);
-                            runBlocking {
-                                if (error == null) {
-                                    asyncCallInfo.callback(message, null);
-                                } else {
-                                    val exception = Error(
-                                        error.get(0).name?.toKString() ?: "",
-                                        error[0].message?.toKString() ?: ""
-                                    );
-                                    asyncCallInfo.callback(message, exception);
-                                }
+                            if (error == null) {
+                                asyncCallInfo.callback(message, null);
+                            } else {
+                                val exception = Error(
+                                    error.get(0).name?.toKString() ?: "",
+                                    error[0].message?.toKString() ?: ""
+                                );
+                                asyncCallInfo.callback(message, exception);
                             }
                         }
                         // We are removing the CallData item at the complete scope exit, after the callback has been invoked.
                         // We can't do it earlier (before callback invocation for example), because CallBack data (slot release)
                         // is the synchronization point between callback invocation and Proxy::unregister.
                     } finally {
-                        proxy.floatingAsyncCallSlots_.erase(asyncCallInfo);
+                        proxy.allocs.floatingAsyncCallSlots_.erase(asyncCallInfo);
                     };
                 }
 
@@ -395,9 +354,7 @@ class Proxy constructor(
                     val message = Signal(
                         sdbusMessage!!, signalInfo!!.proxy.connection_.getSdBusInterface()
                     );
-                    runBlocking {
-                        signalInfo!!.callback(message);
-                    }
+                    signalInfo!!.callback(message);
                 }
 
                 if (ok) 0 else -1;

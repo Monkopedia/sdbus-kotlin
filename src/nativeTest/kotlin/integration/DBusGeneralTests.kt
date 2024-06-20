@@ -5,6 +5,8 @@ package com.monkopedia.sdbus.integration
 import com.monkopedia.sdbus.header.Message
 import com.monkopedia.sdbus.header.createBusConnection
 import com.monkopedia.sdbus.header.return_slot
+import kotlin.native.runtime.GC
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -15,25 +17,25 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import platform.posix.size_t
-import platform.posix.sync
+import platform.posix.usleep
 
-class CppEventLoop : DBusGeneralTests() {
-}
 
 class AdaptorAndProxy {
     @Test
-    fun CanBeConstructedSuccessfully(): Unit = memScoped {
-        val connection = createBusConnection().own(this)
+    fun canBeConstructedSuccessfully(): Unit {
+        val connection = createBusConnection()
         connection.requestName(SERVICE_NAME);
 
-        val adaptor = TestAdaptor(this, connection, OBJECT_PATH);
-        val proxy = TestProxy(this, SERVICE_NAME, OBJECT_PATH);
+        val adaptor = TestAdaptor(connection, OBJECT_PATH);
+        val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH);
 
         connection.releaseName(SERVICE_NAME);
+        adaptor.m_object.unregister()
+        proxy.m_proxy.unregister()
     }
 }
 
-abstract class DBusGeneralTests : BaseTest() {
+class CppEventLoop : BaseTest() {
     private val fixture: ConnectionTestFixture = TestFixtureSdBusCppLoop(this)
 //    using ADirectConnection = TestFixtureWithDirectConnection;
 
@@ -42,15 +44,15 @@ abstract class DBusGeneralTests : BaseTest() {
     /*-------------------------------------*/
 
     @Test
-    fun `AConnection WillCallCallbackHandlerForIncomingMessageMatchingMatchRule`(): Unit =
+    fun willCallCallbackHandlerForIncomingMessageMatchingMatchRule(): Unit =
         memScoped {
             val matchRule = "sender='$SERVICE_NAME',path='$OBJECT_PATH'";
             var matchingMessageReceived = atomic(false)
-            s_proxyConnection.addMatch(matchRule, { msg ->
+            val slot = s_proxyConnection.addMatch(matchRule, { msg: Message ->
                 if (msg.getPath() == OBJECT_PATH.value) {
                     matchingMessageReceived.value = true;
                 }
-            }, return_slot).own(this)
+            }, return_slot)
 
             fixture.m_adaptor?.emitSimpleSignal();
 
@@ -58,17 +60,17 @@ abstract class DBusGeneralTests : BaseTest() {
         }
 
     @Test
-    fun `AConnection CanInstallMatchRuleAsynchronously`(): Unit = memScoped {
+    fun canInstallMatchRuleAsynchronously(): Unit = memScoped {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
         val matchingMessageReceived = atomic(false);
         val matchRuleInstalled = atomic(false);
-        s_proxyConnection.addMatchAsync(matchRule, { msg ->
+        val slot = s_proxyConnection.addMatchAsync(matchRule, { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) {
                 matchingMessageReceived.value = true;
             }
         }, {
             matchRuleInstalled.value = true;
-        }, return_slot).own(this)
+        }, return_slot)
 
         assertTrue(waitUntil(matchRuleInstalled));
 
@@ -77,27 +79,31 @@ abstract class DBusGeneralTests : BaseTest() {
         assertTrue(waitUntil(matchingMessageReceived));
     }
 
+    @OptIn(NativeRuntimeApi::class)
     @Test
-    fun `AConnection WillUnsubscribeMatchRuleWhenClientDestroysTheAssociatedSlot`(): Unit {
+    fun willUnsubscribeMatchRuleWhenClientDestroysTheAssociatedSlot(): Unit {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'";
         val matchingMessageReceived = atomic(false);
-        memScoped {
-            s_proxyConnection.addMatch(matchRule, { msg ->
+        {
+            val slot = s_proxyConnection.addMatch(matchRule, { msg: Message ->
                 if (msg.getPath() == OBJECT_PATH.value) matchingMessageReceived.value = true
-            }, return_slot).own(this)
-        }
+            }, return_slot)
+        }.invoke()
+        GC.collect()
+        usleep(5_000u)
 
         fixture.m_adaptor?.emitSimpleSignal();
 
         assertFalse(waitUntil(matchingMessageReceived, 1.seconds));
     }
 
+    @OptIn(NativeRuntimeApi::class)
     @Test
-    fun `AConnection CanAddFloatingMatchRule`(): Unit {
-        val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'";
+    fun canAddFloatingMatchRule(): Unit {
         val matchingMessageReceived = atomic(false)
-        memScoped {
-            val con = createBusConnection().own(this)
+        val internal = {
+            val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'";
+            val con = createBusConnection()
             con.enterEventLoopAsync();
             val callback = { msg: Message ->
                 if (msg.getPath() == OBJECT_PATH.value)
@@ -108,21 +114,24 @@ abstract class DBusGeneralTests : BaseTest() {
             assertTrue(waitUntil(matchingMessageReceived, 2.seconds));
             matchingMessageReceived.value = false;
         }
+        internal.invoke()
+        GC.collect()
+        usleep(5_000u)
         fixture.m_adaptor?.emitSimpleSignal();
 
         assertFalse(waitUntil(matchingMessageReceived, 1.seconds));
     }
 
     @Test
-    fun `AConnection WillNotPassToMatchCallbackMessagesThatDoNotMatchTheRule`(): Unit = memScoped {
+    fun willNotPassToMatchCallbackMessagesThatDoNotMatchTheRule(): Unit = memScoped {
         val matchRule = "type='signal',interface='${INTERFACE_NAME.value}',member='simpleSignal'";
         val numberOfMatchingMessages = atomic(0.convert<size_t>());
-        s_proxyConnection.addMatch(matchRule, { msg ->
+        val slot = s_proxyConnection.addMatch(matchRule, { msg: Message ->
             if (msg.getMemberName() == "simpleSignal") {
                 numberOfMatchingMessages.value++;
             }
-        }, return_slot).own(this)
-        val adaptor2 = TestAdaptor(this, s_adaptorConnection, OBJECT_PATH_2);
+        }, return_slot)
+        val adaptor2 = TestAdaptor(s_adaptorConnection, OBJECT_PATH_2);
 
         fixture.m_adaptor?.emitSignalWithMap(emptyMap());
         adaptor2.emitSimpleSignal();
@@ -133,8 +142,12 @@ abstract class DBusGeneralTests : BaseTest() {
     }
 
     // A simple direct connection test similar in nature to https://github.com/systemd/systemd/blob/main/src/libsystemd/sd-bus/test-bus-server.c
-    @Test fun `AConnection CanBeUsedBetweenClientAndServer`(): Unit = memScoped {
-        val v = fixture.m_proxy!!.sumArrayItems(listOf(1u.toUShort(), 7u.toUShort()), arrayOf(2u, 3u, 4u));
+    @Test
+    fun canBeUsedBetweenClientAndServer(): Unit = memScoped {
+        val v = fixture.m_proxy!!.sumArrayItems(
+            listOf(1u.toUShort(), 7u.toUShort()),
+            arrayOf(2u, 3u, 4u)
+        );
         fixture.m_adaptor?.emitSimpleSignal();
 
         // Make sure method call passes and emitted signal is received
@@ -147,12 +160,17 @@ class DirectConnectionTest : BaseTest() {
     private val fixture = TextFixtureWithDirectConnection(this)
 
     // A simple direct connection test similar in nature to https://github.com/systemd/systemd/blob/main/src/libsystemd/sd-bus/test-bus-server.c
-    @Test fun `ADirectConnection CanBeUsedBetweenClientAndServer`(): Unit = memScoped {
-        val v = fixture.m_proxy!!.sumArrayItems(listOf(1u.toUShort(), 7u.toUShort()), arrayOf(2u, 3u, 4u));
+    @Test
+    fun canBeUsedBetweenClientAndServer(): Unit {
+        val v = fixture.m_proxy!!.sumArrayItems(
+            listOf(1u.toUShort(), 7u.toUShort()),
+            arrayOf(2u, 3u, 4u)
+        );
         fixture.m_adaptor?.emitSimpleSignal();
 
         // Make sure method call passes and emitted signal is received
         assertEquals(1u + 7u + 2u + 3u + 4u, v);
         assertTrue(waitUntil(fixture.m_proxy!!.m_gotSimpleSignal));
+        println("Done with test")
     }
 }

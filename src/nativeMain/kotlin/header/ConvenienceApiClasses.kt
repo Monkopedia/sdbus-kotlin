@@ -2,15 +2,8 @@
 
 package com.monkopedia.sdbus.header
 
-import com.monkopedia.sdbus.internal.CustomDeferScope
-import com.monkopedia.sdbus.internal.Scope
 import com.monkopedia.sdbus.internal.Slot
-import com.monkopedia.sdbus.internal.Unowned
-import kotlin.math.sign
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 import kotlin.time.Duration
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
 import kotlinx.coroutines.CompletableDeferred
@@ -73,47 +66,26 @@ class VTableAdder(private val object_: IObject, private val vtable: List<VTableI
         forInterface(InterfaceName(interfaceName))
     }
 
-    fun forInterface(interfaceName: InterfaceName, return_slot: return_slot_t): Unowned<Slot> {
+    fun forInterface(interfaceName: InterfaceName, return_slot: return_slot_t): Slot {
         return object_.addVTable(interfaceName, vtable, return_slot)
     }
 
-    fun forInterface(interfaceName: String, return_slot: return_slot_t): Unowned<Slot> {
+    fun forInterface(interfaceName: String, return_slot: return_slot_t): Slot {
         return forInterface(InterfaceName(interfaceName), return_slot)
     }
 }
 
-class SignalEmitter : Scope {
+class SignalEmitter {
     private var signal_: Signal? = null
     private val object_: IObject
     private val signalName_: String
 
-    constructor(initialScope: CustomDeferScope, obj: IObject, signalName: String) : super(
-        initialScope
-    ) {
+    constructor(obj: IObject, signalName: String) {
         this.object_ = obj
         this.signalName_ = signalName
     }
 
-    constructor(initialScope: DeferScope, obj: IObject, signalName: String) : super(initialScope) {
-        this.object_ = obj
-        this.signalName_ = signalName
-    }
-
-    constructor(initialScope: CustomDeferScope, obj: IObject, signalName: SignalName) : this(
-        initialScope,
-        obj,
-        signalName.value
-    )
-
-    constructor(
-        initialScope: DeferScope,
-        obj: IObject,
-        signalName: SignalName
-    ) : this(initialScope, obj, signalName.value)
-
-    override fun onScopeCleared() {
-        object_.emitSignal(signal_ ?: return)
-    }
+    constructor(obj: IObject, signalName: SignalName) : this(obj, signalName.value)
 
     fun onInterface(interfaceName: InterfaceName): SignalEmitter {
         return onInterface(interfaceName.value)
@@ -123,16 +95,16 @@ class SignalEmitter : Scope {
         signal_ = object_.createSignal(interfaceName, signalName_)
     }
 
-    inline fun withArguments(builder: TypedArgumentsBuilder) =
-        withArguments(build(builder))
+    inline fun emit(builder: TypedArgumentsBuilder) = emit(build(builder))
 
-    fun withArguments(typedArgs: TypedArguments) {
+    fun emit(typedArgs: TypedArguments) {
         require(signal_ != null)
         signal_!!.serialize(typedArgs)
+        object_.emitSignal(signal_!!)
     }
 }
 
-class MethodInvoker : Scope {
+class MethodInvoker {
     private var timeout_: ULong = 0u
     private var method_: MethodCall? = null
     private val proxy: IProxy
@@ -140,39 +112,12 @@ class MethodInvoker : Scope {
     private var hasCalled = false
     private var exception: Throwable? = null
 
-    constructor(initialScope: CustomDeferScope, proxy: IProxy, methodName: String) : super(
-        initialScope
-    ) {
+    constructor(proxy: IProxy, methodName: String) {
         this.proxy = proxy
         this.methodName = methodName
     }
 
-    constructor(initialScope: DeferScope, proxy: IProxy, methodName: String) : super(initialScope) {
-        this.proxy = proxy
-        this.methodName = methodName
-    }
-
-    constructor(
-        initialScope: DeferScope,
-        proxy: IProxy,
-        methodName: MethodName
-    ) : this(initialScope, proxy, methodName.value)
-
-    override fun onScopeCleared() {
-        if (hasCalled || exception != null) {
-            return
-        }
-        memScoped {
-            try {
-                require(method_?.isValid() == true)
-                proxy.callMethod(method_!!, timeout_)
-                hasCalled = true
-            } catch (t: Throwable) {
-                exception = t
-                throw t
-            }
-        }
-    }
+    constructor(proxy: IProxy, methodName: MethodName) : this(proxy, methodName.value)
 
     fun onInterface(interfaceName: InterfaceName): MethodInvoker = onInterface(interfaceName.value)
     fun onInterface(interfaceName: String): MethodInvoker = apply {
@@ -201,13 +146,11 @@ class MethodInvoker : Scope {
 
     fun <T : Any> readResult(serializer: DeserializationStrategy<T>, module: SerializersModule): T {
         try {
-            memScoped {
-                require(method_?.isValid() == true)
-                val reply = proxy.callMethod(method_!!, timeout_)
-                hasCalled = true
+            require(method_?.isValid() == true)
+            val reply = proxy.callMethod(method_!!, timeout_)
+            hasCalled = true
 
-                return reply.deserialize(serializer, module)
-            }
+            return reply.deserialize(serializer, module)
         } catch (t: Throwable) {
             exception = t
             throw t
@@ -218,6 +161,19 @@ class MethodInvoker : Scope {
         require(method_?.isValid() == true)
 
         method_!!.dontExpectReply()
+        if (hasCalled || exception != null) {
+            return
+        }
+        memScoped {
+            try {
+                require(method_?.isValid() == true)
+                proxy.callMethod(method_!!, timeout_)
+                hasCalled = true
+            } catch (t: Throwable) {
+                exception = t
+                throw t
+            }
+        }
     }
 };
 
@@ -257,16 +213,16 @@ class AsyncMethodInvoker {
         method_!!.serialize(typedArgs)
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall): PendingAsyncCall {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
         require(method_?.isValid() == true)
 
         return proxy.callMethodAsync(method_!!, makeAsyncReplyHandler(callback), timeout_)
     }
 
-    inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder) =
+    inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder): PendingAsyncCall =
         uponReplyInvoke(build(callbackBuilder))
 
-    fun uponReplyInvoke(callback: TypedMethodCall, return_slot: return_slot_t): Unowned<Slot> {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
         require(method_?.isValid() == true)
 
         return proxy.callMethodAsync(
@@ -280,7 +236,7 @@ class AsyncMethodInvoker {
     inline fun uponReplyInvoke(
         crossinline callbackBuilder: TypedMethodBuilder,
         return_slot: return_slot_t
-    ) = uponReplyInvoke(build(callbackBuilder), return_slot)
+    ): Slot = uponReplyInvoke(build(callbackBuilder), return_slot)
 
     suspend inline fun <reified T> getResult(): T {
         val completable = CompletableDeferred<T>()
@@ -296,20 +252,12 @@ class AsyncMethodInvoker {
         return completable.await()
     }
 
-    fun makeAsyncReplyHandler(callback: TypedMethodCall): async_reply_handler {
+    fun makeAsyncReplyHandler(callback: TypedMethodCall<*>): async_reply_handler {
         return { reply, error ->
-            val asyncCall = callback.asAsyncMethod()
-            memScoped {
-                if (error != null) {
-                    asyncCall.errorCall?.invoke(error)
-                } else {
-                    try {
-                        val args = reply.deserialize(asyncCall.method)
-                        asyncCall.handler.invoke(args)
-                    } catch (t: Throwable) {
-                        asyncCall.errorCall?.invoke(t)
-                    }
-                }
+            if (error != null) {
+                callback.invoke(error)
+            } else {
+                callback.invoke(reply)
             }
         }
     }
@@ -332,16 +280,16 @@ class SignalSubscriber(
     }
 
     inline fun call(builder: TypedMethodBuilder): Unit = call(build(builder))
-    fun call(callback: TypedMethodCall) {
+    fun call(callback: TypedMethodCall<*>) {
         require(interfaceName_ != null)
 
         proxy.registerSignalHandler(interfaceName_!!, signalName, makeSignalHandler(callback))
     }
 
-    inline fun call(builder: TypedMethodBuilder, return_slot: return_slot_t): Unowned<Slot> =
+    inline fun call(builder: TypedMethodBuilder, return_slot: return_slot_t): Slot =
         call(build(builder), return_slot)
 
-    fun call(callback: TypedMethodCall, return_slot: return_slot_t): Unowned<Slot> {
+    fun call(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
         require(interfaceName_ != null)
 
         return proxy.registerSignalHandler(
@@ -352,17 +300,9 @@ class SignalSubscriber(
         )
     }
 
-    fun makeSignalHandler(callback: TypedMethodCall): signal_handler {
+    fun makeSignalHandler(callback: TypedMethodCall<*>): signal_handler {
         return { signal ->
-            val asyncCall = callback.asAsyncMethod()
-            memScoped {
-                try {
-                    val args = signal.deserialize(asyncCall.method)
-                    asyncCall.handler.invoke(args)
-                } catch (t: Throwable) {
-                    asyncCall.errorCall?.invoke(t)
-                }
-            }
+            callback.invoke(signal)
         }
     }
 }
@@ -388,7 +328,7 @@ class PropertyGetter(private val proxy: IProxy, private val propertyName: String
         signature: signature_of
     ): T {
         memScoped {
-            return proxy.callMethod("Get").own(this)
+            return proxy.callMethod("Get")
                 .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
                 .withArguments {
                     call(interfaceName, propertyName)
@@ -417,7 +357,7 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
     inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder) =
         uponReplyInvoke(build(callbackBuilder))
 
-    fun uponReplyInvoke(callback: TypedMethodCall): PendingAsyncCall {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("Get")
@@ -432,7 +372,7 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
         return_slot: return_slot_t
     ) = uponReplyInvoke(build(callbackBuilder), return_slot)
 
-    fun uponReplyInvoke(callback: TypedMethodCall, return_slot: return_slot_t): Unowned<Slot> {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("Get")
@@ -478,21 +418,23 @@ class PropertySetter(private val proxy: IProxy, private val propertyName: String
         interfaceName_ = interfaceName
     }
 
-    inline fun <reified T: Any> toValue(value: T) = memScoped {
+    inline fun <reified T : Any> toValue(value: T) = memScoped {
         toValue(Variant<T>(value))
     }
 
-    inline fun <reified T: Any> toValue(value: T, dont_expect_reply: dont_expect_reply_t) = memScoped {
-        toValue(Variant<T>(value), dont_expect_reply)
-    }
+    inline fun <reified T : Any> toValue(value: T, dont_expect_reply: dont_expect_reply_t) =
+        memScoped {
+            toValue(Variant<T>(value), dont_expect_reply)
+        }
 
     fun toValue(variant: Variant) {
         require(interfaceName_?.isNotEmpty() == true)
 
         memScoped {
-            proxy.callMethod("Set").own(this)
+            proxy.callMethod("Set")
                 .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
                 .withArguments { call(interfaceName_!!, propertyName, variant) }
+                .readResult<Unit>()
         }
     }
 
@@ -500,7 +442,7 @@ class PropertySetter(private val proxy: IProxy, private val propertyName: String
         require(interfaceName_?.isNotEmpty() == true)
 
         memScoped {
-            proxy.callMethod("Set").own(this)
+            proxy.callMethod("Set")
                 .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
                 .withArguments { call(interfaceName_!!, propertyName, variant) }
                 .dontExpectReply()
@@ -525,14 +467,14 @@ class AsyncPropertySetter(private val proxy: IProxy, private val propertyName: S
         interfaceName_ = interfaceName
     }
 
-    inline fun <reified T: Any> toValue(value: T) =
+    inline fun <reified T : Any> toValue(value: T) =
         toValue(typed<T>(), value)
 
-    fun <T: Any> toValue(type: Typed<T>, value: T): AsyncPropertySetter = apply {
+    fun <T : Any> toValue(type: Typed<T>, value: T): AsyncPropertySetter = apply {
         value_ = type to value
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall): PendingAsyncCall {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
 
         require(interfaceName_?.isNotEmpty() == true)
 
@@ -543,7 +485,7 @@ class AsyncPropertySetter(private val proxy: IProxy, private val propertyName: S
             .uponReplyInvoke(callback)
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall, return_slot: return_slot_t): Unowned<Slot> {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("Set")
@@ -578,7 +520,7 @@ class AllPropertiesGetter(val proxy: IProxy) {
     fun onInterface(interfaceName: String): Map<PropertyName, Variant> {
         memScoped {
             @Suppress("UNCHECKED_CAST")
-            return proxy.callMethod("GetAll").own(this)
+            return proxy.callMethod("GetAll")
                 .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
                 .withArguments { call(interfaceName) }
                 .readResult<Map<PropertyName, Variant>>()
@@ -601,7 +543,7 @@ class AsyncAllPropertiesGetter(private val proxy: IProxy) {
         interfaceName_ = interfaceName
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall): PendingAsyncCall {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("GetAll")
@@ -611,7 +553,7 @@ class AsyncAllPropertiesGetter(private val proxy: IProxy) {
             .uponReplyInvoke(callback)
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall, return_slot: return_slot_t): Unowned<Slot> {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("GetAll")

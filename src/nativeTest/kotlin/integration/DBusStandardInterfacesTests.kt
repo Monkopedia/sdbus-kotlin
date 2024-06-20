@@ -5,6 +5,8 @@ package com.monkopedia.sdbus.integration
 import com.monkopedia.sdbus.header.PropertiesProxy.Companion.Get
 import com.monkopedia.sdbus.header.PropertiesProxy.Companion.GetAsync
 import com.monkopedia.sdbus.header.Variant
+import kotlin.native.runtime.GC
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -19,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import platform.posix.F_OK
 import platform.posix.access
+import platform.posix.usleep
 
 class DBusStandardInterfacesTests : BaseTest() {
     private val fixture = TestFixtureSdBusCppLoop(this)
@@ -166,9 +169,12 @@ class DBusStandardInterfacesTests : BaseTest() {
         assertTrue(waitUntil(signalReceived));
     }
 
+    @OptIn(NativeRuntimeApi::class)
     @Test
     fun GetsZeroManagedObjectsIfHasNoSubPathObjects(): Unit = memScoped {
-        fixture.m_adaptor!!.onScopeCleared();
+        fixture.m_adaptor!!.m_object.unregister()
+        GC.collect()
+        usleep(5000u)
         val objectsInterfacesAndProperties = fixture.m_objectManagerProxy!!.getManagedObjects();
 
         assertEquals(0, objectsInterfacesAndProperties.size)
@@ -176,7 +182,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun GetsManagedObjectsSuccessfully(): Unit = memScoped {
-        val adaptor2 = TestAdaptor(this, s_adaptorConnection, OBJECT_PATH_2);
+        val adaptor2 = TestAdaptor(s_adaptorConnection, OBJECT_PATH_2);
         adaptor2.registerAdaptor()
         val objectsInterfacesAndProperties = fixture.m_objectManagerProxy!!.getManagedObjects();
 

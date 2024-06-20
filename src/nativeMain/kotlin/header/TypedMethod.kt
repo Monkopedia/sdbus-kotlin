@@ -13,7 +13,11 @@ import com.monkopedia.sdbus.header.TypedMethodBuilderContext.args8
 import com.monkopedia.sdbus.header.TypedMethodBuilderContext.args9
 import com.monkopedia.sdbus.header.TypedMethodCall.AsyncMethodCall
 import com.monkopedia.sdbus.header.TypedMethodCall.SyncMethodCall
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 
@@ -33,69 +37,109 @@ data class TypedMethod(
     val outputType: OutputType
 )
 
-sealed class TypedMethodCall {
+sealed class TypedMethodCall<T : TypedMethodCall<T>> {
 
     abstract val method: TypedMethod
     abstract val isAsync: Boolean
+
+    fun invoke(
+        args: Message,
+        onSuccess: T.(result: Typed<Any>, Any) -> Unit = { _, _ -> }
+    ) = invoke(args, onSuccess, {})
+
+    abstract fun <R> invoke(
+        args: Message,
+        onSuccess: T.(result: Typed<Any>, Any) -> R,
+        onFailure: T.(failure: Throwable) -> R,
+        onResult: T.(R) -> Unit = {}
+    )
+
+    abstract fun invoke(args: Throwable)
 
     data class SyncMethodCall(
         override val method: TypedMethod,
         val handler: (List<Any?>) -> Any?,
         val errorCall: ((Throwable?) -> Unit)? = null
-    ) : TypedMethodCall() {
+    ) : TypedMethodCall<SyncMethodCall>() {
         override val isAsync: Boolean
             get() = false
+
+        override fun <R> invoke(
+            args: Message,
+            onSuccess: SyncMethodCall.(result: Typed<Any>, Any) -> R,
+            onFailure: SyncMethodCall.(failure: Throwable) -> R,
+            onResult: SyncMethodCall.(R) -> Unit
+        ) {
+            runCatching {
+                val realArgs = args.deserialize(method)
+                handler(realArgs)!!
+            }.fold(
+                onSuccess = {
+                    @Suppress("UNCHECKED_CAST")
+                    onSuccess(method.outputType as Typed<Any>, it)
+                },
+                onFailure = {
+                    errorCall?.invoke(it)
+                    onFailure(it)
+                }
+            ).let { onResult(it) }
+        }
+
+        override fun invoke(args: Throwable) {
+            errorCall?.invoke(args)
+        }
     }
 
     data class AsyncMethodCall(
         override val method: TypedMethod,
         val handler: suspend (List<Any?>) -> Any?,
-        val errorCall: (suspend (Throwable?) -> Unit)? = null
-    ) : TypedMethodCall() {
+        val errorCall: (suspend (Throwable?) -> Unit)? = null,
+        val coroutineContext: CoroutineContext = EmptyCoroutineContext
+    ) : TypedMethodCall<AsyncMethodCall>() {
         override val isAsync: Boolean
             get() = true
+
+        infix fun withContext(coroutineContext: CoroutineContext) =
+            copy(coroutineContext = coroutineContext)
+
+        override fun <R> invoke(
+            args: Message,
+            onSuccess: AsyncMethodCall.(result: Typed<Any>, Any) -> R,
+            onFailure: AsyncMethodCall.(failure: Throwable) -> R,
+            onResult: AsyncMethodCall.(R) -> Unit
+        ) {
+            CoroutineScope(coroutineContext).launch {
+                runCatching {
+                    val realArgs = args.deserialize(method)
+                    handler(realArgs)!!
+                }.fold(
+                    onSuccess = {
+                        @Suppress("UNCHECKED_CAST")
+                        onSuccess(method.outputType as Typed<Any>, it)
+                    },
+                    onFailure = {
+                        errorCall?.invoke(it)
+                        onFailure(it)
+                    }
+                ).let { onResult(it) }
+            }
+        }
+
+        override fun invoke(args: Throwable) {
+            CoroutineScope(coroutineContext).launch {
+                errorCall?.invoke(args)
+            }
+        }
     }
 }
 
-fun TypedMethodCall.asAsyncMethod(): AsyncMethodCall {
+fun TypedMethodCall<*>.asAsyncMethod(): AsyncMethodCall {
     return when (this) {
         is AsyncMethodCall -> this
         is SyncMethodCall -> AsyncMethodCall(
             method = method,
             handler = { args -> this@asAsyncMethod.handler(args) },
             errorCall = { error -> this@asAsyncMethod.errorCall?.invoke(error) }
-        )
-    }
-}
-
-fun TypedMethodCall.whenComplete(function: () -> Unit): TypedMethodCall {
-    return when (this) {
-        is AsyncMethodCall -> copy(
-            handler = {
-                try {
-                    this@whenComplete.handler(it)
-                } finally {
-                    function()
-                }
-            },
-            errorCall = {
-                this@whenComplete.errorCall?.invoke(it)
-                function()
-            }
-        )
-
-        is SyncMethodCall -> copy(
-            handler = {
-                try {
-                    this@whenComplete.handler(it)
-                } finally {
-                    function()
-                }
-            },
-            errorCall = {
-                this@whenComplete.errorCall?.invoke(it)
-                function()
-            }
         )
     }
 }
@@ -113,16 +157,16 @@ data class TypedArguments(
     }
 }
 
-infix fun TypedMethodCall.onError(handler: (Throwable?) -> Unit) = when (this) {
+infix fun TypedMethodCall<*>.onError(handler: (Throwable?) -> Unit) = when (this) {
     is AsyncMethodCall -> copy(errorCall = { handler(it) })
     is SyncMethodCall -> copy(errorCall = handler)
 }
 
 
-typealias TypedMethodBuilder = TypedMethodBuilderContext.() -> TypedMethodCall
+typealias TypedMethodBuilder = TypedMethodBuilderContext.() -> TypedMethodCall<*>
 typealias TypedArgumentsBuilder = TypedArgumentsBuilderContext.() -> TypedArguments
 
-inline fun build(builder: TypedMethodBuilder): TypedMethodCall {
+inline fun build(builder: TypedMethodBuilder): TypedMethodCall<*> {
     return TypedMethodBuilderContext.builder()
 }
 
@@ -189,7 +233,7 @@ object TypedMethodBuilderContext {
             typed<J>()
         )
 
-    inline fun <reified R : Any> call(crossinline handler: () -> R): TypedMethodCall =
+    inline fun <reified R : Any> call(crossinline handler: () -> R): SyncMethodCall =
         SyncMethodCall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })
@@ -298,8 +342,8 @@ object TypedMethodBuilderContext {
             )
         })
 
-    inline fun <reified R : Any> acall(crossinline handler: () -> R): TypedMethodCall =
-        SyncMethodCall(TypedMethod(args(), typed<R>()), handler = {
+    inline fun <reified R : Any> acall(crossinline handler: () -> R): AsyncMethodCall =
+        AsyncMethodCall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })
 

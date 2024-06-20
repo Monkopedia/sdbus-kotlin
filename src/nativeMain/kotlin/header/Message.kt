@@ -112,9 +112,10 @@ open class Message protected constructor(
     @Suppress("UNUSED_PARAMETER") real: Int
 ) {
     private var isOk: Boolean = true
-    private val cleaner = createCleaner(this) {
-        if (it.msg_ != null) {
-            it.sdbus_.sd_bus_message_unref(it.msg_)
+    private val resource = msg_ to sdbus_
+    private val cleaner = createCleaner(resource) { (msg, sdbus) ->
+        if (msg != null) {
+            sdbus.sd_bus_message_unref(msg)
         }
     }
 

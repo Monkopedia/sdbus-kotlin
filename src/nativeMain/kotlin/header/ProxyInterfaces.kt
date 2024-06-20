@@ -53,7 +53,7 @@ class ProxyInterfaces<T : ProxyInterfaces<T>>(proxy: IProxy) : ProxyObjectHolder
         proxy.unregister();
     }
 
-    open class BaseCompanion<T : ProxyInterfaces<T>>(private val constructor: (Unowned<Proxy>) -> T) {
+    open class BaseCompanion<T : ProxyInterfaces<T>>(private val constructor: (IProxy) -> T) {
         /*!
          * @brief Creates native-like proxy object instance
          *

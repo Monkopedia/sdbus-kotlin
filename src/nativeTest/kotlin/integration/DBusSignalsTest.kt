@@ -26,8 +26,8 @@ class DBusSignalsTest : BaseTest() {
 
     @Test
     fun EmitsSimpleSignalToMultipleProxiesSuccesfully() = memScoped {
-        val proxy1 = TestProxy(this, s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
-        val proxy2 = TestProxy(this, s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
+        val proxy1 = TestProxy(s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
+        val proxy2 = TestProxy(s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
         proxy1.registerProxy()
         proxy2.registerProxy()
 
@@ -41,8 +41,8 @@ class DBusSignalsTest : BaseTest() {
     @Test
     fun ProxyDoesNotReceiveSignalFromOtherBusName() = memScoped {
         val otherBusName = ServiceName(SERVICE_NAME.value + "2");
-        val connection2 = createBusConnection(otherBusName).own(this)
-        val adaptor2 = TestAdaptor(this, connection2, OBJECT_PATH);
+        val connection2 = createBusConnection(otherBusName)
+        val adaptor2 = TestAdaptor(connection2, OBJECT_PATH);
 
         adaptor2.emitSimpleSignal();
 
@@ -112,8 +112,8 @@ class DBusSignalsTest : BaseTest() {
 
     @Test
     fun UnregistersSignalHandlerForSomeProxies() = memScoped {
-        val proxy1 = TestProxy(this, s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
-        val proxy2 = TestProxy(this, s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
+        val proxy1 = TestProxy(s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
+        val proxy2 = TestProxy(s_adaptorConnection, SERVICE_NAME, OBJECT_PATH);
         proxy1.registerProxy()
         proxy2.registerProxy()
 
