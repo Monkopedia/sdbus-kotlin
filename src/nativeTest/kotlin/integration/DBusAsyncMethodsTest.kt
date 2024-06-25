@@ -6,8 +6,6 @@ import com.monkopedia.sdbus.header.Error
 import com.monkopedia.sdbus.header.deserialize
 import com.monkopedia.sdbus.header.return_slot
 import com.monkopedia.sdbus.header.with_future
-import kotlin.native.runtime.GC
-import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -19,7 +17,6 @@ import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.atomicfu.atomic
-import kotlinx.cinterop.AutofreeScope
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
@@ -32,17 +29,13 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
 import platform.posix.size_t
-import platform.posix.usleep
 
 class DBusAsyncMethodsTest : BaseTest() {
     private val fixture = TestFixtureSdBusCppLoop(this)
-
 
     @Test
     fun ThrowsTimeoutErrorWhenClientSideAsyncMethodTimesOut(): Unit = runTest {
@@ -51,8 +44,11 @@ class DBusAsyncMethodsTest : BaseTest() {
             val promise = CompletableDeferred<UInt>()
             fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
                 println("Response $res $err ${Clock.System.now() - start}")
-                if (err == null) promise.complete(res);
-                else promise.completeExceptionally(err);
+                if (err == null) {
+                    promise.complete(res)
+                } else {
+                    promise.completeExceptionally(err)
+                }
             }
 
             start = Clock.System.now()
@@ -69,12 +65,12 @@ class DBusAsyncMethodsTest : BaseTest() {
                     "org.freedesktop.DBus.Error.Timeout",
                     "org.freedesktop.DBus.Error.NoReply"
                 ),
-                e.name,
-            );
+                e.name
+            )
             assertContains(
                 listOf("Connection timed out", "Method call timed out"),
-                e.errorMessage,
-            );
+                e.errorMessage
+            )
             val measuredTimeout = Clock.System.now() - start
             assertTrue(
                 measuredTimeout <= 50.milliseconds,
@@ -89,11 +85,11 @@ class DBusAsyncMethodsTest : BaseTest() {
         var invoke by atomic(false)
         var startedCount = MutableSharedFlow<Unit>()
         val call: suspend (UInt) -> Unit = { param ->
-            val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH);
+            val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH)
             startedCount.emit(Unit)
             while (!invoke) delay(1)
-            val result = proxy.doOperationAsync(param);
-            results.emit(result);
+            val result = proxy.doOperationAsync(param)
+            results.emit(result)
         }
         val pool = newFixedThreadPoolContext(3, "test-pool")
 
@@ -103,7 +99,7 @@ class DBusAsyncMethodsTest : BaseTest() {
             }
         }
         startedCount.take(3).collect()
-        invoke = true;
+        invoke = true
         invocations.joinAll()
 
         assertEquals(setOf(500u, 1000u, 1500u), results.take(3).toList().toSet())
@@ -112,111 +108,89 @@ class DBusAsyncMethodsTest : BaseTest() {
 
     @Test
     fun HandlesCorrectlyABulkOfParallelServerSideAsyncMethods(): Unit = runTest {
-        memScoped {
-            var resultCount by atomic(0.convert<size_t>());
-            var invoke by atomic(false)
-            var startedCount by atomic(0);
-            val call: suspend AutofreeScope.() -> Unit = {
-                val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH);
-                ++startedCount;
-                while (!invoke);
+        var resultCount by atomic(0.convert<size_t>())
+        var invoke by atomic(false)
+        var startedCount by atomic(0)
+        val call: suspend () -> Unit = {
+            val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH)
+            ++startedCount
+            while (!invoke);
 
-                var localResultCount = 0.convert<size_t>();
-                for (i in 0 until 500) {
-                    val result = proxy.doOperationAsync(i.mod(2).toUInt());
-                    if (result == i.mod(2).toUInt()) { // Correct return value?
-                        localResultCount++;
-                    }
-                }
-
-                resultCount += localResultCount;
-            };
-            val pool = newFixedThreadPoolContext(3, "test-pool")
-
-            val invocations = List(3) {
-                launch(pool) {
-                    memScoped { call() }
+            var localResultCount = 0.convert<size_t>()
+            for (i in 0 until 500) {
+                val result = proxy.doOperationAsync(i.mod(2).toUInt())
+                if (result == i.mod(2).toUInt()) { // Correct return value?
+                    localResultCount++
                 }
             }
-            while (startedCount != 3);
-            invoke = true;
-            invocations.joinAll()
 
-            assertEquals(1500.convert<size_t>(), resultCount);
-            pool.close()
+            resultCount += localResultCount
         }
+        val pool = newFixedThreadPoolContext(3, "test-pool")
+
+        val invocations = List(3) {
+            launch(pool) {
+                call()
+            }
+        }
+        while (startedCount != 3);
+        invoke = true
+        invocations.joinAll()
+
+        assertEquals(1500.convert<size_t>(), resultCount)
+        pool.close()
     }
 
     @Test
     fun InvokesMethodAsynchronouslyOnClientSide(): Unit = runTest {
         val promise = CompletableDeferred<UInt>()
         fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
-            if (err == null) promise.complete(res)
-            else promise.completeExceptionally(err)
+            if (err == null) {
+                promise.complete(res)
+            } else {
+                promise.completeExceptionally(err)
+            }
         }
 
-        fixture.m_proxy!!.doOperationClientSideAsync(100u);
+        fixture.m_proxy!!.doOperationClientSideAsync(100u)
 
-        assertEquals(100u, promise.await());
+        assertEquals(100u, promise.await())
     }
 
     @Test
     fun InvokesMethodAsynchronouslyOnClientSideWithFuture(): Unit = runTest {
-        val result = fixture.m_proxy!!.doOperationClientSideAsync(100u, with_future);
+        val result = fixture.m_proxy!!.doOperationClientSideAsync(100u, with_future)
 
-        assertEquals(100u, result);
+        assertEquals(100u, result)
     }
 
     @Test
     fun InvokesMethodAsynchronouslyOnClientSideWithFutureOnBasicAPILevel(): Unit = runTest {
-        memScoped {
-            val future = fixture.m_proxy!!.doOperationClientSideAsyncOnBasicAPILevel(100u)
+        val future = fixture.m_proxy!!.doOperationClientSideAsyncOnBasicAPILevel(100u)
 
-            val returnValue = future.deserialize<UInt>()
+        val returnValue = future.deserialize<UInt>()
 
-            assertEquals(100u, returnValue);
-        }
+        assertEquals(100u, returnValue)
     }
 
     @Test
-    fun AnswersThatAsyncCallIsPendingIfItIsInProgress(): Unit = memScoped {
+    fun AnswersThatAsyncCallIsPendingIfItIsInProgress() {
         fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err -> }
 
-        val call = fixture.m_proxy!!.doOperationClientSideAsync(1000u);
+        val call = fixture.m_proxy!!.doOperationClientSideAsync(1000u)
 
-        assertTrue(call.isPending());
+        assertTrue(call.isPending())
     }
 
     @Test
     fun CancelsPendingAsyncCallOnClientSide(): Unit = runTest {
-        memScoped {
-            val promise = CompletableDeferred<UInt>()
-            fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
-                promise.complete(1u);
-            }
-            val call = fixture.m_proxy!!.doOperationClientSideAsync(100u);
-
-            call.cancel();
-
-            assertNull(
-                withTimeoutOrNull(300.milliseconds) {
-                    promise.await()
-                }
-            )
-        }
-    }
-
-    @Test
-    fun CancelsPendingAsyncCallOnClientSideByDestroyingOwningSlot(): Unit = runTest {
         val promise = CompletableDeferred<UInt>()
         fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
-            promise.complete(1u);
+            promise.complete(1u)
         }
+        val call = fixture.m_proxy!!.doOperationClientSideAsync(100u)
 
-        memScoped {
-            fixture.m_proxy!!.doOperationClientSideAsync(100u, return_slot)
-            // Now the slot is destroyed, cancelling the async call
-        }
+        call.cancel()
 
         assertNull(
             withTimeoutOrNull(300.milliseconds) {
@@ -225,53 +199,64 @@ class DBusAsyncMethodsTest : BaseTest() {
         )
     }
 
-    @OptIn(NativeRuntimeApi::class)
     @Test
-    fun AnswersThatAsyncCallIsNotPendingAfterItHasBeenCancelled(): Unit = memScoped {
+    fun CancelsPendingAsyncCallOnClientSideByDestroyingOwningSlot(): Unit = runTest {
         val promise = CompletableDeferred<UInt>()
         fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
-            promise.complete(1u);
+            promise.complete(1u)
         }
-        val call = fixture.m_proxy!!.doOperationClientSideAsync(100u);
 
-        call.cancel();
-        GC.collect()
-        usleep(5000u)
+        fixture.m_proxy!!.doOperationClientSideAsync(100u, return_slot).release()
+        // Now the slot is destroyed, cancelling the async call
 
-        assertFalse(call.isPending());
+        assertNull(
+            withTimeoutOrNull(300.milliseconds) {
+                promise.await()
+            }
+        )
     }
 
-    @OptIn(NativeRuntimeApi::class)
+    @Test
+    fun AnswersThatAsyncCallIsNotPendingAfterItHasBeenCancelled() {
+        val promise = CompletableDeferred<UInt>()
+        fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
+            promise.complete(1u)
+        }
+        val call = fixture.m_proxy!!.doOperationClientSideAsync(100u)
+
+        call.cancel()
+
+        assertFalse(call.isPending())
+    }
+
     @Test
     fun AnswersThatAsyncCallIsNotPendingAfterItHasBeenCompleted(): Unit = runTest {
         val promise = CompletableDeferred<UInt>()
         fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
-            promise.complete(1u);
+            promise.complete(1u)
         }
 
-        val call = fixture.m_proxy!!.doOperationClientSideAsync(0u);
+        val call = fixture.m_proxy!!.doOperationClientSideAsync(0u)
         promise.await() // Wait for the call to finish
-        GC.collect()
-        usleep(5000u)
 
-        assertTrue(waitUntil({ !call.isPending(); }))
+        assertTrue(
+            waitUntil({
+                !call.isPending()
+            })
+        )
     }
-
-//    @Test
-//    fun AnswersThatDefaultConstructedAsyncCallIsNotPending(): Unit = memScoped {
-//        sdbus::PendingAsyncCall call;
-//
-//        assertFalse(call.isPending());
-//    }
 
     @Test
     fun ReturnsNonnullErrorWhenAsynchronousMethodCallFails(): Unit = runTest {
         val promise = CompletableDeferred<UInt>()
         fixture.m_proxy!!.installDoOperationClientSideAsyncReplyHandler { res, err ->
-            if (err == null) promise.complete(res);
-            else promise.completeExceptionally(err);
+            if (err == null) {
+                promise.complete(res)
+            } else {
+                promise.completeExceptionally(err)
+            }
         }
-        fixture.m_proxy!!.doErroneousOperationClientSideAsync();
+        fixture.m_proxy!!.doErroneousOperationClientSideAsync()
 
         try {
             promise.await()
@@ -284,12 +269,10 @@ class DBusAsyncMethodsTest : BaseTest() {
     @Test
     fun ThrowsErrorWhenClientSideAsynchronousMethodCallWithFutureFails(): Unit = runTest {
         try {
-            fixture.m_proxy!!.doErroneousOperationClientSideAsync(with_future);
+            fixture.m_proxy!!.doErroneousOperationClientSideAsync(with_future)
             fail("Expected exception")
         } catch (t: Error) {
             // Expected failure
         }
     }
-
-
 }

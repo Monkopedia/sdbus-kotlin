@@ -1,8 +1,9 @@
-@file:OptIn(ExperimentalForeignApi::class, NativeRuntimeApi::class)
+@file:OptIn(ExperimentalForeignApi::class)
 
 package com.monkopedia.sdbus
 
 import cnames.structs.sd_bus
+import com.monkopedia.sdbus.ConnectionTest.ConnectionCreationTest
 import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
@@ -16,18 +17,10 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.toCPointer
-import com.monkopedia.sdbus.ConnectionTest.ConnectionCreationTest
-import kotlin.native.runtime.GC
-import kotlin.native.runtime.NativeRuntimeApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.set
-import platform.posix.usleep
-
-typealias ADefaultBusConnection = ConnectionCreationTest;
-typealias ASystemBusConnection = ConnectionCreationTest;
-typealias ASessionBusConnection = ConnectionCreationTest;
+import kotlinx.cinterop.toCPointer
 
 class ConnectionTest {
 
@@ -79,18 +72,13 @@ class ConnectionTest {
         assertEquals("sd_bus_flush", calls[1].args[0])
     }
 
-    @OptIn(NativeRuntimeApi::class)
     @Test
     fun `ADefaultBusConnection ClosesAndUnrefsBusWhenDestructed`(): Unit {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open) answers openHandler
         }
         val calls = sdBusIntfMock_.record {
-            {
-                val con = defaultConnection(it)
-            }.invoke()
-            GC.collect()
-            usleep(5000u)
+            defaultConnection(it).release()
         }
         assertEquals(3, calls.size)
         assertEquals("sd_bus_flush_close_unref", calls[2].args[0])
@@ -102,11 +90,7 @@ class ConnectionTest {
             method(SdBusMock::sd_bus_open_system) answers openHandler
         }
         val calls = sdBusIntfMock_.record {
-            {
-                val con = systemConnection(it)
-            }.invoke()
-            GC.collect()
-            usleep(5000u)
+                systemConnection(it).release()
         }
         assertEquals(3, calls.size)
         assertEquals("sd_bus_flush_close_unref", calls[2].args[0])
@@ -118,11 +102,7 @@ class ConnectionTest {
             method(SdBusMock::sd_bus_open_user) answers openHandler
         }
         val calls = sdBusIntfMock_.record {
-            {
-                val con = sessionConnection(it)
-            }.invoke()
-            GC.collect()
-            usleep(5000u)
+            sessionConnection(it).release()
         }
         assertEquals(3, calls.size)
         assertEquals("sd_bus_flush_close_unref", calls[2].args[0])

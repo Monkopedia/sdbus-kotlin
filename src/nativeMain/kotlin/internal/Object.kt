@@ -17,7 +17,7 @@ import com.monkopedia.sdbus.header.PropertyGetReply
 import com.monkopedia.sdbus.header.PropertyName
 import com.monkopedia.sdbus.header.PropertySetCall
 import com.monkopedia.sdbus.header.PropertyVTableItem
-import com.monkopedia.sdbus.header.SDBUS_THROW_ERROR_IF
+import com.monkopedia.sdbus.header.sdbusRequire
 import com.monkopedia.sdbus.header.Signal
 import com.monkopedia.sdbus.header.SignalName
 import com.monkopedia.sdbus.header.SignalVTableItem
@@ -54,26 +54,27 @@ import sdbus.sd_bus_error_set
 import sdbus.sd_bus_vtable
 
 
-class Object(private val connection_: IConnection, private val objectPath_: ObjectPath) : IObject {
+internal class Object(private val connection_: IConnection, private val objectPath_: ObjectPath) : IObject {
     private class Allocs {
-        var objManager: Any? = null
+        var objManager: Slot? = null
 
-        fun unregister() {
+        fun release() {
+            objManager?.release()
             objManager = null
         }
     }
 
     private val allocs = Allocs()
     private val cleaner = createCleaner(allocs) {
-        it.unregister()
+        it.release()
     }
 
-    override fun unregister() {
-        allocs.unregister()
+    override fun release() {
+        allocs.release()
     }
 
     init {
-        SDBUS_CHECK_OBJECT_PATH(objectPath_.value);
+        checkObjectPath(objectPath_.value);
     }
 
     override fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>) {
@@ -85,7 +86,7 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
         vtable: List<VTableItem>,
         return_slot: return_slot_t
     ): Slot = memScoped {
-        SDBUS_CHECK_INTERFACE_NAME(interfaceName.value);
+        checkInterfaceName(interfaceName.value);
 
         // 1st pass -- create vtable structure for internal sdbus-c++ purposes
         val internalVTable = createInternalVTable(interfaceName, vtable)
@@ -121,7 +122,7 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
     }
 
     override fun emitSignal(message: Signal) {
-        SDBUS_THROW_ERROR_IF(!message.isValid(), "Invalid signal message provided", EINVAL);
+        sdbusRequire(!message.isValid(), "Invalid signal message provided", EINVAL);
 
         message.send();
     }
@@ -212,9 +213,6 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
         // Back-reference to the owning object from sd-bus callback handlers
         var obj: Object? = null
 
-        init {
-        }
-
         fun clear() {
             scope.clear()
             obj = null
@@ -273,7 +271,7 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
     }
 
     fun writeMethodRecordToVTable(method: MethodVTableItem, vtable: VTable) {
-        SDBUS_CHECK_MEMBER_NAME(method.name.value)
+        checkMemberName(method.name.value)
 
         vtable.methods.add(
             MethodItem(
@@ -290,7 +288,7 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
     }
 
     fun writeSignalRecordToVTable(signal: SignalVTableItem, vtable: VTable) {
-        SDBUS_CHECK_MEMBER_NAME(signal.name.value);
+        checkMemberName(signal.name.value);
 
         vtable.signals.add(
             SignalItem(
@@ -304,7 +302,7 @@ class Object(private val connection_: IConnection, private val objectPath_: Obje
     }
 
     fun writePropertyRecordToVTable(property: PropertyVTableItem, vtable: VTable) {
-        SDBUS_CHECK_MEMBER_NAME(property.name.value);
+        checkMemberName(property.name.value);
 
         vtable.properties.add(
             PropertyItem(

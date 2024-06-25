@@ -58,14 +58,12 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
         }
     }
 
-    override fun onScopeClosed() {
+    override fun onAfterTest() {
         runBlocking {
             println("Leaving event loop")
             m_proxyConnection?.leaveEventLoop();
             println("Leaving event loop 2")
             m_adaptorConnection?.leaveEventLoop();
-//            s_adaptorConnection.leaveEventLoop()
-//            s_proxyConnection.leaveEventLoop()
             println("Closing context")
             context.close()
             println("Nulling")

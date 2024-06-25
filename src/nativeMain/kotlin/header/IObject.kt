@@ -3,6 +3,7 @@
 package com.monkopedia.sdbus.header
 
 import com.monkopedia.sdbus.internal.Object
+import header.Resource
 import com.monkopedia.sdbus.internal.Slot
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.EINVAL
@@ -21,7 +22,7 @@ import platform.posix.EINVAL
  * signals, is thread-safe by design.
  *
  ***********************************************/
-interface IObject {
+interface IObject : Resource {
 
 //    /*!
 //     * @brief Adds a declaration of methods, properties and signals of the object at a given interface
@@ -190,18 +191,6 @@ interface IObject {
      * @return Currently processed D-Bus message
      */
     fun getCurrentlyProcessedMessage(): Message
-
-    /*!
-     * @brief Unregisters object's API and removes object from the bus
-     *
-     * This method unregisters the object, its interfaces, methods, signals and properties
-     * from the bus. Unregistration is done automatically also in object's destructor. This
-     * method makes sense if, in the process of object removal, we need to make sure that
-     * callbacks are unregistered explicitly before the final destruction of the object instance.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun unregister()
 
 //    /*!
 //     * @brief Adds a declaration of methods, properties and signals of the object at a given interface
@@ -415,7 +404,7 @@ inline fun IObject.addVTable(vararg vtable: VTableItem): VTableAdder {
  */
 fun createObject(connection: IConnection, objectPath: ObjectPath): IObject {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    SDBUS_THROW_ERROR_IF(
+    sdbusRequire(
         sdbusConnection == null,
         "Connection is not a real sdbus-c++ connection",
         EINVAL

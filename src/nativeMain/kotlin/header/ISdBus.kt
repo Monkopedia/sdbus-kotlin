@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
-package com.monkopedia.sdbus.internal
+package header
 
 import cnames.structs.sd_bus
 import cnames.structs.sd_bus_creds

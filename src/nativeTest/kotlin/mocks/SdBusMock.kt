@@ -6,8 +6,8 @@ import cnames.structs.sd_bus
 import cnames.structs.sd_bus_creds
 import cnames.structs.sd_bus_message
 import cnames.structs.sd_bus_slot
-import com.monkopedia.sdbus.internal.ISdBus
-import com.monkopedia.sdbus.internal.ISdBus.PollData
+import header.ISdBus
+import header.ISdBus.PollData
 import com.monkopedia.sdbus.mocks.Fake.Companion.invoke
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointer

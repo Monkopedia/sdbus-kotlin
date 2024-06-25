@@ -6,7 +6,8 @@ import cnames.structs.sd_bus
 import cnames.structs.sd_bus_creds
 import cnames.structs.sd_bus_message
 import cnames.structs.sd_bus_slot
-import com.monkopedia.sdbus.internal.ISdBus.PollData
+import header.ISdBus
+import header.ISdBus.PollData
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.cinterop.ByteVar
@@ -32,7 +33,7 @@ import sdbus.uint64_t
 import sdbus.uint64_tVar
 import sdbus.uint8_t
 
-class SdBus : ISdBus {
+internal class SdBus : ISdBus {
     private val lock = ReentrantLock()
 
     override fun sd_bus_message_ref(m: CValuesRef<sd_bus_message>?): CPointer<sd_bus_message>? =

@@ -4,6 +4,7 @@ package com.monkopedia.sdbus.header
 
 import com.monkopedia.sdbus.internal.Proxy
 import com.monkopedia.sdbus.internal.Proxy.AsyncCallInfo
+import header.Resource
 import com.monkopedia.sdbus.internal.Slot
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
@@ -27,8 +28,7 @@ import platform.posix.EINVAL
  * thread-safe by design.
  *
  ***********************************************/
-interface IProxy {
-
+interface IProxy : Resource {
 
     /*!
      * @brief Provides D-Bus connection used by the proxy
@@ -56,17 +56,6 @@ interface IProxy {
      * @return Currently processed D-Bus message
      */
     fun getCurrentlyProcessedMessage(): Message
-
-    /*!
-     * @brief Unregisters proxy's signal handlers and stops receiving replies to pending async calls
-     *
-     * Unregistration is done automatically also in proxy's destructor. This method makes
-     * sense if, in the process of proxy removal, we need to make sure that callbacks
-     * are unregistered explicitly before the final destruction of the proxy instance.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun unregister()
 
     /*!
      * @brief Creates a method call message
@@ -401,7 +390,7 @@ class PendingAsyncCall internal constructor(private val target: WeakReference<As
      * have arrived and are currently being processed by the callback handler.
      */
     fun isPending(): Boolean {
-        return target.get() != null
+        return target.get()?.finished == false
     }
 }
 
@@ -734,7 +723,7 @@ fun createProxy(
     objectPath: ObjectPath
 ): IProxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    SDBUS_THROW_ERROR_IF(
+    sdbusRequire(
         sdbusConnection == null,
         "Connection is not a real sdbus-c++ connection",
         EINVAL
@@ -774,7 +763,7 @@ fun createProxy(
     dont_run_event_loop_thread: dont_run_event_loop_thread_t
 ): IProxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    SDBUS_THROW_ERROR_IF(
+    sdbusRequire(
         sdbusConnection == null,
         "Connection is not a real sdbus-c++ connection",
         EINVAL

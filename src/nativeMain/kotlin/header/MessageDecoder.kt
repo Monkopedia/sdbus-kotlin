@@ -114,23 +114,33 @@ class MessageDecoder(
     }
 
     override fun decodeBoolean(): Boolean {
-        return target.readBoolean()
+        return target.readBoolean().also {
+            lastInline = null
+        }
     }
 
     override fun decodeByte(): Byte {
-        return target.readUByte().toByte()
+        return target.readUByte().toByte().also {
+            lastInline = null
+        }
     }
 
     override fun decodeChar(): Char {
-        return Char(target.readUByte().toInt())
+        return Char(target.readUByte().toInt()).also {
+            lastInline = null
+        }
     }
 
     override fun decodeDouble(): Double {
-        return target.readDouble()
+        return target.readDouble().also {
+            lastInline = null
+        }
     }
 
     override fun decodeFloat(): Float {
-        return target.readDouble().toFloat()
+        return target.readDouble().toFloat().also {
+            lastInline = null
+        }
     }
 
     override fun decodeShort(): Short {
@@ -162,6 +172,8 @@ class MessageDecoder(
             ObjectPath.SERIAL_NAME -> target.readObjectPath().value
             Signature.SERIAL_NAME -> target.readSignature().value
             else -> target.readString()
+        }.also {
+            lastInline = null
         }
     }
 
@@ -253,7 +265,9 @@ internal class ListDecoder<K, N : CVariable>(
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int = 0
 
     override fun decodeValue(): Any {
-        return list.removeFirst()!!
+        return list.removeFirst()!!.also {
+            lastInline = null
+        }
     }
 
     override fun decodeShort(): Short {
@@ -282,7 +296,9 @@ abstract class BaseMessageDecoder : AbstractDecoder() {
 
     protected var lastInline: SerialDescriptor? = null
     protected val isUnsigned: Boolean
-        get() = lastInline?.serialName?.replace("kotlin.", "") in unsignedNames
+        get() = (lastInline?.serialName?.replace("kotlin.", "") in unsignedNames).also {
+            lastInline = null
+        }
 
     override fun decodeInline(descriptor: SerialDescriptor): Decoder {
         lastInline = descriptor

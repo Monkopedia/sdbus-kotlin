@@ -71,7 +71,9 @@ class MessageEncoder(
 
     private var lastInline: SerialDescriptor? = null
     private val isUnsigned: Boolean
-        get() = lastInline?.serialName?.replace("kotlin.", "") in unsignedNames
+        get() = (lastInline?.serialName?.replace("kotlin.", "") in unsignedNames).also {
+            lastInline = null
+        }
     private val structureStack = SerialDescriptorStack()
 
     override fun encodeNotNullMark() {
@@ -151,14 +153,17 @@ class MessageEncoder(
 
     override fun encodeChar(value: Char) {
         target.append(value.code.toUByte())
+        lastInline = null
     }
 
     override fun encodeDouble(value: Double) {
         target.append(value)
+        lastInline = null
     }
 
     override fun encodeFloat(value: Float) {
         target.append(value.toDouble())
+        lastInline = null
     }
 
     override fun encodeShort(value: Short) {
@@ -191,6 +196,7 @@ class MessageEncoder(
             Signature.SERIAL_NAME -> target.appendSignature(value)
             else -> target.append(value)
         }
+        lastInline = null
     }
 
     override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {

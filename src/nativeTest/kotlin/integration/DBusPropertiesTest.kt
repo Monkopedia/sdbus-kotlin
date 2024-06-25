@@ -9,18 +9,17 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.fail
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 
 class DBusPropertiesTest : BaseTest() {
     private val fixture = TestFixtureSdBusCppLoop(this)
 
     @Test
-    fun ReadsReadOnlyPropertySuccesfully() = memScoped {
-        assertEquals(DEFAULT_STATE_VALUE, fixture.m_proxy!!.state());
+    fun readsReadOnlyPropertySuccesfully() {
+        assertEquals(DEFAULT_STATE_VALUE, fixture.m_proxy!!.state())
     }
 
     @Test
-    fun FailsWritingToReadOnlyProperty() = memScoped {
+    fun failsWritingToReadOnlyProperty() {
         try {
             fixture.m_proxy!!.setStateProperty("new_value")
             fail("Expected failure")
@@ -30,19 +29,20 @@ class DBusPropertiesTest : BaseTest() {
     }
 
     @Test
-    fun WritesAndReadsReadWritePropertySuccesfully() = memScoped {
-        val newActionValue = 5678u;
+    fun writesAndReadsReadWritePropertySuccesfully() {
+        val newActionValue = 5678u
 
-        fixture.m_proxy!!.action(newActionValue);
+        fixture.m_proxy!!.action(newActionValue)
 
-        assertEquals(newActionValue, fixture.m_proxy!!.action());
+        assertEquals(newActionValue, fixture.m_proxy!!.action())
     }
 
     @Test
-    fun CanAccessAssociatedPropertySetMessageInPropertySetHandler() = memScoped {
-        fixture.m_proxy!!.blocking(true); // This will save pointer to property get message on server side
+    fun canAccessAssociatedPropertySetMessageInPropertySetHandler() {
+        // This will save pointer to property get message on server side
+        fixture.m_proxy!!.blocking(true)
 
-        assertNotNull(fixture.m_adaptor!!.m_propertySetMsg);
-        assertFalse(fixture.m_adaptor!!.m_propertySetSender!!.isEmpty());
+        assertNotNull(fixture.m_adaptor!!.m_propertySetMsg)
+        assertFalse(fixture.m_adaptor!!.m_propertySetSender!!.isEmpty())
     }
 }

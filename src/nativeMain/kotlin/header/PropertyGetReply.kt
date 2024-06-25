@@ -3,13 +3,9 @@
 package com.monkopedia.sdbus.header
 
 import cnames.structs.sd_bus_message
-import com.monkopedia.sdbus.internal.ISdBus
-import kotlin.native.internal.NativePtr
-import kotlin.native.internal.NativePtr.Companion
+import header.ISdBus
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.interpretCPointer
 
 class PropertyGetReply private constructor(
     msg_: CPointer<sd_bus_message>?,

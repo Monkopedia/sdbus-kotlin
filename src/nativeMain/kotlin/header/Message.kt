@@ -4,7 +4,7 @@ package com.monkopedia.sdbus.header
 
 import cnames.structs.sd_bus_creds
 import cnames.structs.sd_bus_message
-import com.monkopedia.sdbus.internal.ISdBus
+import header.ISdBus
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.internal.NativePtr.Companion.NULL
 import kotlin.native.ref.createCleaner
@@ -136,7 +136,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(if (item) 1 else 0).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_BOOLEAN.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a bool value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a bool value", -r);
     }
 
     internal fun append(item: Short): Unit = memScoped {
@@ -144,7 +144,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<int16_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_INT16.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a int16_t value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a int16_t value", -r);
     }
 
     internal fun append(item: Int): Unit = memScoped {
@@ -152,7 +152,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<int32_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_INT32.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a int32_t value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a int32_t value", -r);
     }
 
     internal fun append(item: Long): Unit = memScoped {
@@ -160,7 +160,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<int64_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_INT64.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a int64_t value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a int64_t value", -r);
     }
 
     internal fun append(item: UByte): Unit = memScoped {
@@ -168,7 +168,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<uint8_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_BYTE.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a byte value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a byte value", -r);
     }
 
     internal fun append(item: UShort): Unit = memScoped {
@@ -176,7 +176,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<uint16_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_UINT16.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a uint16_t value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a uint16_t value", -r);
     }
 
     internal fun append(item: UInt): Unit = memScoped {
@@ -184,7 +184,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<uint32_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_UINT32.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a uint32_t value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a uint32_t value", -r);
     }
 
     internal fun append(item: ULong): Unit = memScoped {
@@ -192,7 +192,7 @@ open class Message protected constructor(
         val itemP = cValuesOf(item.convert<uint64_t>()).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_UINT64.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a uint64_t value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a uint64_t value", -r);
     }
 
     internal fun append(item: Double): Unit = memScoped {
@@ -200,45 +200,45 @@ open class Message protected constructor(
         val itemP = cValuesOf(item).getPointer(this)
 
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_DOUBLE.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a double value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a double value", -r);
     }
 
     internal fun append(item: String): Unit {
         debugPrint { "append string $item" }
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_STRING.convert(), item.cstr)
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize a string value", -r);
+        sdbusRequire(r < 0, "Failed to serialize a string value", -r);
     }
 
     internal fun appendObjectPath(item: String): Unit {
         debugPrint { "append object path $item" }
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_OBJECT_PATH.convert(), item.cstr);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize an ObjectPath value", -r);
+        sdbusRequire(r < 0, "Failed to serialize an ObjectPath value", -r);
     }
 
     internal fun append(item: ObjectPath): Unit {
         debugPrint { "append object path $item" }
         val r =
             sd_bus_message_append_basic(msg_, SD_BUS_TYPE_OBJECT_PATH.convert(), item.value.cstr);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize an ObjectPath value", -r);
+        sdbusRequire(r < 0, "Failed to serialize an ObjectPath value", -r);
     }
 
     internal fun append(item: Signature): Unit {
         debugPrint { "append signature $item" }
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_SIGNATURE.convert(), item.value.cstr);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize an Signature value", -r);
+        sdbusRequire(r < 0, "Failed to serialize an Signature value", -r);
     }
 
     internal fun appendSignature(item: String): Unit {
         debugPrint { "append signature $item" }
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_SIGNATURE.convert(), item.cstr);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize an Signature value", -r);
+        sdbusRequire(r < 0, "Failed to serialize an Signature value", -r);
     }
 
     internal fun append(item: UnixFd): Unit = memScoped {
         debugPrint { "append unix fd $item" }
         val itemP = cValuesOf(item.fd).getPointer(this)
         val r = sd_bus_message_append_basic(msg_, SD_BUS_TYPE_UNIX_FD.convert(), itemP);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize an UnixFd value", -r);
+        sdbusRequire(r < 0, "Failed to serialize an UnixFd value", -r);
     }
 
     internal fun readBoolean(): Boolean = memScoped {
@@ -248,7 +248,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a bool value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a bool value", -r);
 
         return intItem[0] != 0;
     }
@@ -260,7 +260,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a int16 value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a int16 value", -r);
 
         return intItem[0]
     }
@@ -272,7 +272,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a int32 value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a int32 value", -r);
 
         return intItem[0];
     }
@@ -284,7 +284,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a int64 value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a int64 value", -r);
 
         return intItem[0];
     }
@@ -296,7 +296,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a byte value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a byte value", -r);
 
         return intItem[0];
     }
@@ -308,7 +308,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a uint16 value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a uint16 value", -r);
 
         return intItem[0];
     }
@@ -320,7 +320,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a uint32 value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a uint32 value", -r);
 
         return intItem[0];
     }
@@ -332,7 +332,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a uint64 value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a uint64 value", -r);
 
         return intItem[0];
     }
@@ -344,7 +344,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a double value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a double value", -r);
 
         return intItem[0];
     }
@@ -358,7 +358,7 @@ open class Message protected constructor(
             return ""
         }
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a string value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a string value", -r);
 
         return intItem[0]?.toKString()!!
     }
@@ -372,7 +372,7 @@ open class Message protected constructor(
             return ObjectPath("")
         }
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a ObjectPath value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a ObjectPath value", -r);
 
         return ObjectPath(intItem[0]?.toKString()!!)
     }
@@ -386,7 +386,7 @@ open class Message protected constructor(
             return Signature("")
         }
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a Signature value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a Signature value", -r);
 
         return Signature(intItem[0]?.toKString()!!)
     }
@@ -400,7 +400,7 @@ open class Message protected constructor(
             return UnixFd(0)
         }
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize a bool value", -r);
+        sdbusRequire(r < 0, "Failed to deserialize a bool value", -r);
 
         return UnixFd(intItem[0])
     }
@@ -416,49 +416,49 @@ open class Message protected constructor(
     internal fun openContainer(signature: String): Unit {
         debugPrint { "Open container $msg_ $signature ${SD_BUS_TYPE_ARRAY}" }
         val r = sd_bus_message_open_container(msg_, SD_BUS_TYPE_ARRAY.convert(), signature);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to open a container", -r);
+        sdbusRequire(r < 0, "Failed to open a container", -r);
     }
 
     internal fun closeContainer(): Unit {
         debugPrint { "Close container" }
         val r = sd_bus_message_close_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to close a container", -r);
+        sdbusRequire(r < 0, "Failed to close a container", -r);
     }
 
     internal fun openDictEntry(signature: String): Unit {
         debugPrint { "Open dict entry $msg_ $signature ${SD_BUS_TYPE_DICT_ENTRY}" }
         val r = sd_bus_message_open_container(msg_, SD_BUS_TYPE_DICT_ENTRY.convert(), signature);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to open a dictionary entry", -r);
+        sdbusRequire(r < 0, "Failed to open a dictionary entry", -r);
     }
 
     internal fun closeDictEntry(): Unit {
         debugPrint { "Close dict entry" }
         val r = sd_bus_message_close_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to close a dictionary entry", -r);
+        sdbusRequire(r < 0, "Failed to close a dictionary entry", -r);
     }
 
     internal fun openVariant(signature: String): Unit {
         debugPrint { "Open variant $signature" }
         val r = sd_bus_message_open_container(msg_, SD_BUS_TYPE_VARIANT.convert(), signature);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to open a variant", -r);
+        sdbusRequire(r < 0, "Failed to open a variant", -r);
     }
 
     internal fun closeVariant(): Unit {
         debugPrint { "Close variant" }
         val r = sd_bus_message_close_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to close a variant", -r);
+        sdbusRequire(r < 0, "Failed to close a variant", -r);
     }
 
     internal fun openStruct(signature: String): Unit {
         debugPrint { "Open struct $signature" }
         val r = sd_bus_message_open_container(msg_, SD_BUS_TYPE_STRUCT.convert(), signature);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to open a struct", -r);
+        sdbusRequire(r < 0, "Failed to open a struct", -r);
     }
 
     internal fun closeStruct(): Unit {
         debugPrint { "Close struct" }
         val r = sd_bus_message_close_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to close a struct", -r);
+        sdbusRequire(r < 0, "Failed to close a struct", -r);
     }
 
     internal fun enterContainer(signature: String): Unit {
@@ -467,13 +467,13 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to enter a container", -r);
+        sdbusRequire(r < 0, "Failed to enter a container", -r);
     }
 
     internal fun exitContainer(): Unit {
         debugPrint { "Exit container" }
         val r = sd_bus_message_exit_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to exit a container", -r);
+        sdbusRequire(r < 0, "Failed to exit a container", -r);
 
     }
 
@@ -483,13 +483,13 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to enter a dictionary entry", -r);
+        sdbusRequire(r < 0, "Failed to enter a dictionary entry", -r);
     }
 
     internal fun exitDictEntry(): Unit {
         debugPrint { "Exit dict entry" }
         val r = sd_bus_message_exit_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to exit a dictionary entry", -r);
+        sdbusRequire(r < 0, "Failed to exit a dictionary entry", -r);
     }
 
     internal fun enterVariant(signature: String): Unit {
@@ -499,13 +499,13 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to enter a variant", -r);
+        sdbusRequire(r < 0, "Failed to enter a variant", -r);
     }
 
     internal fun exitVariant(): Unit {
         debugPrint { "Exit variant" }
         val r = sd_bus_message_exit_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to exit a variant", -r);
+        sdbusRequire(r < 0, "Failed to exit a variant", -r);
     }
 
     internal fun enterStruct(signature: String): Unit {
@@ -514,19 +514,19 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to enter a struct", -r);
+        sdbusRequire(r < 0, "Failed to enter a struct", -r);
     }
 
     internal fun exitStruct(): Unit {
         debugPrint { "Exit struct" }
         val r = sd_bus_message_exit_container(msg_);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to exit a struct", -r);
+        sdbusRequire(r < 0, "Failed to exit a struct", -r);
     }
 
     internal fun appendArray(type: Char, ptr: CPointer<*>, size: size_t): Unit {
         debugPrint { "append array $type $size" }
         val r = sd_bus_message_append_array(msg_, type.code.toByte(), ptr, size);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to serialize an array", -r);
+        sdbusRequire(r < 0, "Failed to serialize an array", -r);
     }
 
     internal fun readArray(
@@ -539,7 +539,7 @@ open class Message protected constructor(
         if (r == 0)
             isOk = false;
 
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to deserialize an array", -r);
+        sdbusRequire(r < 0, "Failed to deserialize an array", -r);
     }
 
     internal operator fun invoke(): Boolean = isOk
@@ -571,7 +571,7 @@ open class Message protected constructor(
         val typeSignature = cValuesOf(0.toByte()).getPointer(this)
         val contentsSignature = cValuesOf(interpretCPointer<ByteVar>(NULL)).getPointer(this)
         val r: Int = sd_bus_message_peek_type(msg_, typeSignature, contentsSignature);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to peek message type", -r);
+        sdbusRequire(r < 0, "Failed to peek message type", -r);
         val type = typeSignature[0].toInt().toChar().takeIf { r > 0 }
 
         return type to contentsSignature[0]?.toKString();
@@ -584,19 +584,19 @@ open class Message protected constructor(
 
     fun copyTo(destination: Message, complete: Boolean) {
         val r = sd_bus_message_copy(destination.msg_, msg_, if (complete) 1 else 0)
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to copy the message", -r)
+        sdbusRequire(r < 0, "Failed to copy the message", -r)
     }
 
     fun seal() {
         val messageCookie = 1;
         val sealTimeout = 0;
         val r = sd_bus_message_seal(msg_, messageCookie.convert(), sealTimeout.convert());
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to seal the message", -r);
+        sdbusRequire(r < 0, "Failed to seal the message", -r);
     }
 
     fun rewind(complete: Boolean) {
         val r = sd_bus_message_rewind(msg_, if (complete) 1 else 0);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to rewind the message", -r);
+        sdbusRequire(r < 0, "Failed to rewind the message", -r);
     }
 
     fun getCredsPid(): pid_t = memScoped {
@@ -605,7 +605,7 @@ open class Message protected constructor(
 
         val pid = cValuesOf(0.convert<pid_t>()).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_pid(creds[0], pid);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred pid", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred pid", -r);
         return pid[0]
     }
 
@@ -615,7 +615,7 @@ open class Message protected constructor(
 
         val uid = cValuesOf((-1).convert<uid_t>()).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_uid(creds[0], uid);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred uid", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred uid", -r);
         return uid[0]
     }
 
@@ -625,7 +625,7 @@ open class Message protected constructor(
 
         val euid = cValuesOf((-1).convert<uid_t>()).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_euid(creds[0], euid);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred euid", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred euid", -r);
         return euid[0]
     }
 
@@ -635,7 +635,7 @@ open class Message protected constructor(
 
         val gid = cValuesOf((-1).convert<gid_t>()).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_gid(creds[0], gid);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred gid", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred gid", -r);
         return gid[0];
     }
 
@@ -645,7 +645,7 @@ open class Message protected constructor(
 
         val egid = cValuesOf((-1).convert<gid_t>()).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_egid(creds[0], egid);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred egid", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred egid", -r);
         return egid[0]
     }
 
@@ -655,7 +655,7 @@ open class Message protected constructor(
 
         val cGids = cValuesOf(interpretCPointer<gid_tVar>(NULL)).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_supplementary_gids(creds[0], cGids);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred supplementary gids", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred supplementary gids", -r);
 
         return List(r) {
             cGids[0]!![it]
@@ -668,7 +668,7 @@ open class Message protected constructor(
 
         val cLabel = cValuesOf(interpretCPointer<ByteVar>(NULL)).getPointer(this)
         val r = sdbus_.sd_bus_creds_get_selinux_context(creds[0], cLabel);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus cred selinux context", -r);
+        sdbusRequire(r < 0, "Failed to get bus cred selinux context", -r);
         return cLabel[0]?.toKString()!!
     }
 
@@ -677,7 +677,7 @@ open class Message protected constructor(
         defer { sdbus_.sd_bus_creds_unref(creds[0]); };
 
         val r = sdbus_.sd_bus_query_sender_creds(msg_, mask, creds);
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to get bus creds", -r);
+        sdbusRequire(r < 0, "Failed to get bus creds", -r);
         return creds
     }
 }

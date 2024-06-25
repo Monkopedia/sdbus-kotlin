@@ -12,7 +12,7 @@ import com.monkopedia.sdbus.header.MethodName
 import com.monkopedia.sdbus.header.MethodReply
 import com.monkopedia.sdbus.header.ObjectPath
 import com.monkopedia.sdbus.header.PendingAsyncCall
-import com.monkopedia.sdbus.header.SDBUS_THROW_ERROR_IF
+import com.monkopedia.sdbus.header.sdbusRequire
 import com.monkopedia.sdbus.header.ServiceName
 import com.monkopedia.sdbus.header.Signal
 import com.monkopedia.sdbus.header.SignalName
@@ -28,7 +28,6 @@ import kotlin.native.ref.WeakReference
 import kotlin.native.ref.createCleaner
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.withLock
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -43,36 +42,35 @@ import sdbus.sd_bus_error
 import sdbus.sd_bus_message_get_error
 
 
-class Proxy(
+internal class Proxy(
     private val connection_: IConnection,
     private val destination_: ServiceName,
     private val objectPath_: ObjectPath,
     @Suppress("UNUSED_PARAMETER") dont_run_event_loop_thread: dont_run_event_loop_thread_t
 ) : IProxy {
     private class Allocs {
-        val scope = Arena()
         val floatingAsyncCallSlots_ = FloatingAsyncCallSlots()
         val floatingSignalSlots_ = mutableListOf<Slot>()
 
-        fun unregister() {
+        fun release() {
             floatingAsyncCallSlots_.clear()
+            floatingSignalSlots_.forEach { it.release() }
             floatingSignalSlots_.clear()
-            scope.clear()
         }
     }
 
     private val allocs = Allocs()
     private val cleaner = createCleaner(allocs) {
-        it.unregister()
+        it.release()
     }
 
-    override fun unregister() {
-        allocs.unregister()
+    override fun release() {
+        allocs.release()
     }
 
     init {
-        SDBUS_CHECK_SERVICE_NAME(destination_.value)
-        SDBUS_CHECK_OBJECT_PATH(objectPath_.value)
+        checkServiceName(destination_.value)
+        checkObjectPath(objectPath_.value)
     }
 
 
@@ -101,7 +99,7 @@ class Proxy(
     }
 
     override fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
-        SDBUS_THROW_ERROR_IF(!message.isValid(), "Invalid method call message provided", EINVAL);
+        sdbusRequire(!message.isValid(), "Invalid method call message provided", EINVAL);
 
         return connection_.callMethod(message, timeout)
     }
@@ -115,7 +113,7 @@ class Proxy(
     override fun callMethodAsync(
         message: MethodCall, asyncReplyCallback: async_reply_handler, timeout: ULong
     ): PendingAsyncCall {
-        SDBUS_THROW_ERROR_IF(
+        sdbusRequire(
             !message.isValid(), "Invalid async method call message provided", EINVAL
         );
 
@@ -146,7 +144,7 @@ class Proxy(
         timeout: ULong,
         return_slot: return_slot_t
     ): Slot {
-        SDBUS_THROW_ERROR_IF(
+        sdbusRequire(
             !message.isValid(), "Invalid async method call message provided", EINVAL
         )
 
@@ -216,8 +214,8 @@ class Proxy(
         signalHandler: signal_handler,
         return_slot: return_slot_t
     ): Slot {
-        SDBUS_CHECK_INTERFACE_NAME(interfaceName);
-        SDBUS_CHECK_MEMBER_NAME(signalName);
+        checkInterfaceName(interfaceName);
+        checkMemberName(signalName);
 
         val signalInfo = SignalInfo(signalHandler, this@Proxy)
 
@@ -276,7 +274,7 @@ class Proxy(
         val floating: Boolean,
         var finished: Boolean = false
     ) {
-        var methodCall: Any? = null
+        var methodCall: Slot? = null
     }
 
     // Container keeping track of pending async calls
@@ -292,6 +290,7 @@ class Proxy(
 
         fun erase(info: AsyncCallInfo) {
             lock.withLock {
+                info.methodCall?.release()
                 info.methodCall = null
                 info.finished = true
                 asyncSlots.remove(info)
@@ -300,6 +299,7 @@ class Proxy(
 
         fun clear() {
             lock.withLock {
+                asyncSlots.forEach { it.methodCall?.release() }
                 asyncSlots.clear()
             }
         }

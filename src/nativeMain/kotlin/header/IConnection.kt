@@ -13,11 +13,11 @@ import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
 import com.monkopedia.sdbus.internal.SdBus
 import com.monkopedia.sdbus.internal.Slot
 import com.monkopedia.sdbus.internal.now
+import header.Resource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
-import sdbus.uint64_t
 
 /********************************************/
 /**
@@ -30,7 +30,7 @@ import sdbus.uint64_t
  * this class are thread-aware, but not thread-safe.
  *
  ***********************************************/
-interface IConnection {
+interface IConnection : Resource {
 
     /*!
      * @brief Enters I/O event loop on this bus connection in a separate thread
@@ -110,7 +110,7 @@ interface IConnection {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun setMethodCallTimeout(timeout: uint64_t)
+    fun setMethodCallTimeout(timeout: ULong)
 
     /*!
      * @copydoc IConnection::setMethodCallTimeout(uint64_t)
@@ -126,7 +126,7 @@ interface IConnection {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun getMethodCallTimeout(): uint64_t
+    fun getMethodCallTimeout(): ULong
 
     /*!
      * @brief Adds an ObjectManager at the specified D-Bus object path

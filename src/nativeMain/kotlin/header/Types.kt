@@ -2,13 +2,8 @@
 
 package com.monkopedia.sdbus.header
 
-import com.monkopedia.sdbus.header.BusName.Companion.serializer
 import com.monkopedia.sdbus.header.PlainMessage.Companion.createPlainMessage
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.createCleaner
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
@@ -18,9 +13,7 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveKind.INT
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.SerialKind
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule

@@ -4,7 +4,7 @@ package com.monkopedia.sdbus.header
 
 import cnames.structs.sd_bus_message
 import com.monkopedia.sdbus.internal.IConnection.Companion.getPseudoConnectionInstance
-import com.monkopedia.sdbus.internal.ISdBus
+import header.ISdBus
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 

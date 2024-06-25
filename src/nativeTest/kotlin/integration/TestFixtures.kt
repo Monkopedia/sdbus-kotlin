@@ -1,12 +1,11 @@
-@file:OptIn(ExperimentalForeignApi::class)
 
 package com.monkopedia.sdbus.integration
 
-import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import platform.posix.usleep
 
 abstract class ConnectionTestFixture(test: BaseTest) : BaseTestFixture(test) {
 
@@ -36,15 +35,16 @@ abstract class ConnectionTestFixture(test: BaseTest) : BaseTestFixture(test) {
         m_adaptor?.registerAdaptor()
     }
 
-    override fun onScopeClosed() {
-        m_adaptor?.m_object?.unregister()
-        m_proxy?.m_proxy?.unregister()
-        m_objectManagerAdaptor?.m_object?.unregister()
-        m_objectManagerProxy?.m_proxy?.unregister()
+    override fun onAfterTest() {
+        m_adaptor?.m_object?.release()
+        m_proxy?.m_proxy?.release()
+        m_objectManagerAdaptor?.m_object?.release()
+        m_objectManagerProxy?.m_proxy?.release()
         m_adaptor = null
         m_proxy = null
         m_objectManagerProxy = null
         m_objectManagerAdaptor = null
+        usleep(1000u)
     }
 }
 
@@ -60,8 +60,8 @@ class TestFixtureSdBusCppLoop(test: BaseTest) : ConnectionTestFixture(test) {
         super.onBeforeTest()
     }
 
-    override fun onScopeClosed() {
-        super.onScopeClosed()
+    override fun onAfterTest() {
+        super.onAfterTest()
         s_adaptorConnection.releaseName(SERVICE_NAME)
         runBlocking {
             s_adaptorConnection.leaveEventLoop();

@@ -14,12 +14,16 @@ import com.monkopedia.sdbus.header.Signal
 import com.monkopedia.sdbus.header.SignalName
 import com.monkopedia.sdbus.header.return_slot_t
 import com.monkopedia.sdbus.internal.Connection.Companion.pseudoConnection
+import header.ISdBus
+import header.Resource
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
 
-interface IConnection : com.monkopedia.sdbus.header.IConnection {
+typealias Slot = Resource
+
+internal interface IConnection : com.monkopedia.sdbus.header.IConnection {
 
     fun getSdBusInterface(): ISdBus
 
@@ -29,7 +33,7 @@ interface IConnection : com.monkopedia.sdbus.header.IConnection {
         vtable: CValuesRef<sd_bus_vtable>,
         userData: Any?,
         return_slot: return_slot_t
-    ): Slot
+    ): Reference<*>
 
     fun createPlainMessage(): PlainMessage
     fun createMethodCall(

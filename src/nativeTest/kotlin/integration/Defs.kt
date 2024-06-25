@@ -30,8 +30,9 @@ val DIRECT_CONNECTION_SOCKET_PATH =
     ((getenv("TMPDIR")?.toKString() ?: "/tmp") + "/sdbus-cpp-direct-connection-test")
 
 val UINT8_VALUE: UByte = (1u)
-val INT16_VALUE: UShort = (21u)
+val UINT16_VALUE: UShort = (21u).toUShort()
 val UINT32_VALUE: UInt = (42u)
+val INT16_VALUE: Short = (21).toShort()
 val INT32_VALUE: Int = (-42)
 val INT64_VALUE: Long = (-1024)
 

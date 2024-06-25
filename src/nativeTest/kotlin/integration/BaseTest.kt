@@ -2,13 +2,9 @@
 
 package com.monkopedia.sdbus.integration
 
-import kotlin.native.runtime.GC
-import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.posix.usleep
 
 abstract class BaseTest {
 
@@ -31,7 +27,6 @@ abstract class BaseTest {
         fixtures.toList().forEach { it.onBeforeTest() }
     }
 
-    @OptIn(NativeRuntimeApi::class)
     @AfterTest
     fun onAfterTest() {
         runCatching {
@@ -43,8 +38,6 @@ abstract class BaseTest {
                 it.onAfterTest()
             }
         }
-        GC.collect()
-        usleep(500000u)
     }
 
 }
@@ -55,16 +48,8 @@ interface TestFixture {
 }
 
 abstract class BaseTestFixture(test: BaseTest) : TestFixture {
-    val scope = Arena()
-
     init {
+        @Suppress("LeakingThis")
         test.addFixture(this)
     }
-
-    final override fun onAfterTest() {
-        onScopeClosed()
-        scope.clear()
-    }
-
-    abstract fun onScopeClosed()
 }

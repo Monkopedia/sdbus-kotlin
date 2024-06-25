@@ -3,7 +3,7 @@
 package com.monkopedia.sdbus.header
 
 import cnames.structs.sd_bus_message
-import com.monkopedia.sdbus.internal.ISdBus
+import header.ISdBus
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 
@@ -25,6 +25,6 @@ class MethodReply private constructor(
 
     fun send() {
         val r = sdbus_.sd_bus_send(null, msg_, null)
-        SDBUS_THROW_ERROR_IF(r < 0, "Failed to send reply", -r)
+        sdbusRequire(r < 0, "Failed to send reply", -r)
     }
 }
