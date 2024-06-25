@@ -12,7 +12,7 @@ import sdbus.sd_bus_error
 import sdbus.sd_bus_error_free
 import sdbus.sd_bus_error_set_errno
 
-class Error(val name: String, val errorMessage: String) : Exception("$name: $errorMessage")
+class Error(val name: String, val errorMessage: String = "") : Exception("$name: $errorMessage")
 
 fun Throwable.toError() = (this as? Error) ?: Error(message ?: toString(), stackTraceToString())
 

@@ -30,6 +30,7 @@ import kotlinx.serialization.descriptors.StructureKind.LIST
 import kotlinx.serialization.descriptors.StructureKind.MAP
 import kotlinx.serialization.descriptors.StructureKind.OBJECT
 import kotlinx.serialization.descriptors.elementDescriptors
+import kotlinx.serialization.serializer
 
 // Callbacks from sdbus-c++
 typealias method_callback = (msg: MethodCall) -> Unit
@@ -194,9 +195,7 @@ fun signature_of(type: KType): signature_of {
             )
         }
 
-        else -> {
-            error("Structs not built yet for $type - ${type.classifier}.")
-        }
+        else -> serializer(type).descriptor.asSignature
     }
 }
 

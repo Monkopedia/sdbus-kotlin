@@ -1,9 +1,8 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
-package com.monkopedia.sdbus
+package com.monkopedia.sdbus.unit
 
 import cnames.structs.sd_bus
-import com.monkopedia.sdbus.ConnectionTest.ConnectionCreationTest
 import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection

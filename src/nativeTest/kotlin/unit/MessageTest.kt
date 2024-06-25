@@ -1,16 +1,15 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
-package com.monkopedia.sdbus
+package com.monkopedia.sdbus.unit
 
-import com.monkopedia.sdbus.MessageTest.ComplexTypeForMessageValue
 import com.monkopedia.sdbus.header.Error
-import com.monkopedia.sdbus.header.ObjectPath
 import com.monkopedia.sdbus.header.PlainMessage
 import com.monkopedia.sdbus.header.Signature
 import com.monkopedia.sdbus.header.UnixFd
 import com.monkopedia.sdbus.header.Variant
 import com.monkopedia.sdbus.header.deserialize
 import com.monkopedia.sdbus.header.serialize
+import com.monkopedia.sdbus.unit.MessageTest.ComplexTypeForMessageValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
