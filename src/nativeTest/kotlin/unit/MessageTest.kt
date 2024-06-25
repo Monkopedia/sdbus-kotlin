@@ -3,6 +3,7 @@
 package com.monkopedia.sdbus.unit
 
 import com.monkopedia.sdbus.header.Error
+import com.monkopedia.sdbus.header.ObjectPath
 import com.monkopedia.sdbus.header.PlainMessage
 import com.monkopedia.sdbus.header.Signature
 import com.monkopedia.sdbus.header.UnixFd
@@ -17,7 +18,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 import kotlinx.serialization.Serializable
 
 typealias ComplexType = Map<ULong, ComplexTypeForMessageValue>
@@ -31,24 +31,12 @@ class MessageTest {
     /*-------------------------------------*/
 
     @Test
-    fun `AMessage CanBeDefaultConstructed`(): Unit = memScoped {
+    fun `AMessage CanBeDefaultConstructed`() {
         ASSERT_NO_THROW(PlainMessage.createPlainMessage())
     }
 
-//    @Test fun `AMessage IsInvalidAfterDefaultConstructed`(): Unit = memScoped {
-//        sdbus::PlainMessage msg;
-//
-//        assertFalse(msg.isValid());
-//    }
-
-//    @Test fun `AMessage IsValidWhenConstructedAsRealMessage`(): Unit = memScoped
-//    {
-//        val msg = createPlainMessage()
-//        assertTrue(msg.isValid());
-//    }
-
     @Test
-    fun `AMessage CreatesShallowCopyWhenCopyConstructed`(): Unit = memScoped {
+    fun `AMessage CreatesShallowCopyWhenCopyConstructed`() {
         val msg = PlainMessage.createPlainMessage()
         msg.serialize("I am a string")
         msg.seal()
@@ -67,7 +55,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CreatesDeepCopyWhenEplicitlyCopied`(): Unit = memScoped {
+    fun `AMessage CreatesDeepCopyWhenEplicitlyCopied`() {
         val msg = PlainMessage.createPlainMessage()
         msg.serialize("I am a string")
         msg.seal()
@@ -82,14 +70,14 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage IsEmptyWhenContainsNoValue`(): Unit = memScoped {
+    fun `AMessage IsEmptyWhenContainsNoValue`() {
         val msg = PlainMessage.createPlainMessage()
 
         assertTrue(msg.isEmpty())
     }
 
     @Test
-    fun `AMessage IsNotEmptyWhenContainsAValue`(): Unit = memScoped {
+    fun `AMessage IsNotEmptyWhenContainsAValue`() {
         val msg = PlainMessage.createPlainMessage()
         msg.serialize("I am a string")
 
@@ -97,7 +85,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryASimpleInteger`(): Unit = memScoped {
+    fun `AMessage CanCarryASimpleInteger`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = 5
@@ -111,7 +99,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryAStringAsAStringView`(): Unit = memScoped {
+    fun `AMessage CanCarryAStringAsAStringView`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = "Hello"
@@ -125,7 +113,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryAUnixFd`(): Unit = memScoped {
+    fun `AMessage CanCarryAUnixFd`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = UnixFd(0)
@@ -139,7 +127,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryAVariant`(): Unit = memScoped {
+    fun `AMessage CanCarryAVariant`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = Variant(3.14)
@@ -153,7 +141,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryACollectionOfEmbeddedVariants`(): Unit = memScoped {
+    fun `AMessage CanCarryACollectionOfEmbeddedVariants`() {
         val msg = PlainMessage.createPlainMessage()
 
         val value = listOf(Variant("hello"), Variant(3.14))
@@ -178,7 +166,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryDBusArrayOfTrivialTypesGivenAsStdVector`(): Unit = memScoped {
+    fun `AMessage CanCarryDBusArrayOfTrivialTypesGivenAsStdVector`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = listOf(3545342, 43643532, 324325)
@@ -192,7 +180,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryDBusArrayOfNontrivialTypesGivenAsStdVector`(): Unit = memScoped {
+    fun `AMessage CanCarryDBusArrayOfNontrivialTypesGivenAsStdVector`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = listOf(Signature("s"), Signature("u"), Signature("b"))
@@ -206,7 +194,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryDBusArrayOfTrivialTypesGivenAsStdArray`(): Unit = memScoped {
+    fun `AMessage CanCarryDBusArrayOfTrivialTypesGivenAsStdArray`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = arrayOf(3545342, 43643532, 324325)
@@ -220,7 +208,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarrySignature`(): Unit = memScoped {
+    fun `AMessage CanCarrySignature`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = Signature("s")
@@ -234,7 +222,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryDBusArrayOfNontrivialTypesGivenAsStdArray`(): Unit = memScoped {
+    fun `AMessage CanCarryDBusArrayOfNontrivialTypesGivenAsStdArray`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = arrayOf(Signature("s"), Signature("u"), Signature("b"))
@@ -248,7 +236,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryAnEnumValue`(): Unit = memScoped {
+    fun `AMessage CanCarryAnEnumValue`() {
         if (false) {
 //            val msg = createPlainMessage()
 //
@@ -269,84 +257,8 @@ class MessageTest {
         }
     }
 
-//    #ifdef __cpp_lib_span
-//    @Test
-//    fun `AMessage CanCarryDBusArrayOfTrivialTypesGivenAsStdSpan`(): Unit = memScoped {
-//        val msg = createPlainMessage()
-//
-//        const std ::array < int, 3> sourceArray{ 3545342, 43643532, 324325 };
-//        const std ::span dataWritten { sourceArray };
-//
-//        msg.serialize(dataWritten)
-//        msg.seal();
-//
-//        std::array < int, 3> destinationArray;
-//        val dataRead = msg.deserialize < std::span > ()
-//
-//        assertEquals(
-//            std::vector(dataWritten.begin(), dataWritten.end()),
-//            std::vector(dataRead.begin(), dataRead.end())
-//        )
-//    }
-//
-//    @Test
-//    fun `AMessage CanCarryDBusArrayOfNontrivialTypesGivenAsStdSpan`(): Unit = memScoped
-//    {
-//        val msg = createPlainMessage()
-//
-//        const std ::array sourceArray { sdbus::Signature{ "s" }, sdbus::Signature{ "u" }, sdbus::Signature{ "b" } };
-//        const std ::span dataWritten { sourceArray };
-//
-//        msg.serialize(dataWritten)
-//        msg.seal();
-//
-//        std::array < sdbus::Signature, 3> destinationArray;
-//        val dataRead = msg.deserialize < std::span > ()
-//
-//        assertEquals(
-//            std::vector(dataWritten.begin(), dataWritten.end()),
-//            std::vector(dataRead.begin(), dataRead.end())
-//        )
-//    }
-//    #endif
-
-//    @Test
-//    fun `AMessage ThrowsWhenDestinationStdArrayIsTooSmallDuringDeserialization`(): Unit = memScoped {
-//        val msg = createPlainMessage()
-//
-//        const std ::vector<int> dataWritten { 3545342, 43643532, 324325, 89789, 15343 };
-//
-//        msg.serialize(dataWritten)
-//        msg.seal();
-//
-//        std::array < int, 3> dataRead;
-//        try {
-//            msg.deserialize(typeOf<Array<Int>>)
-//        }
-//        ASSERT_THROW(msg > > dataRead, sdbus::Error);
-//    }
-
-//    #ifdef __cpp_lib_span
-//    @Test
-//    fun `AMessage ThrowsWhenDestinationStdSpanIsTooSmallDuringDeserialization`(): Unit = memScoped {
-//        val msg = createPlainMessage()
-//
-//        const std ::array < int, 3> dataWritten{ 3545342, 43643532, 324325 };
-//
-//        msg.serialize(dataWritten)
-//        msg.seal();
-//
-//        std::array < int, 2> destinationArray;
-//        std::span dataRead { destinationArray };
-//        try {
-//            msg.deserialize
-//        }
-//        ASSERT_THROW(msg > > dataRead, sdbus::Error);
-//    }
-//    #endif
-
     @Test
-    fun `AMessage CanCarryADictionary`(): Unit = memScoped {
+    fun `AMessage CanCarryADictionary`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = mapOf(1 to "one", 2 to "two")
@@ -362,7 +274,7 @@ class MessageTest {
 
     @Serializable
     data class InnerComplexType(
-//        val path: ObjectPath,
+        val path: ObjectPath,
         val b: Boolean,
         val s: Short,
         val map: Map<Int, String>
@@ -376,7 +288,7 @@ class MessageTest {
     )
 
     @Test
-    fun `AMessage CanCarryAComplexType`(): Unit = memScoped {
+    fun `AMessage CanCarryAComplexType`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = mapOf(
@@ -385,7 +297,7 @@ class MessageTest {
                     mapOf(
                         5.toUByte() to listOf(
                             InnerComplexType(
-//                                ObjectPath("/some/object"),
+                                ObjectPath("/some/object"),
                                 true,
                                 45,
                                 mapOf(6 to "hello", 7 to "world")
@@ -406,7 +318,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanPeekASimpleType`(): Unit = memScoped {
+    fun `AMessage CanPeekASimpleType`() {
         val msg = PlainMessage.createPlainMessage()
         msg.serialize(123)
         msg.seal()
@@ -418,7 +330,7 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanPeekContainerContents`(): Unit = memScoped {
+    fun `AMessage CanPeekContainerContents`() {
         val msg = PlainMessage.createPlainMessage()
         msg.serialize(mapOf(1 to "one", 2 to "two"))
         msg.seal()
@@ -430,14 +342,12 @@ class MessageTest {
     }
 
     @Test
-    fun `AMessage CanCarryDBusArrayGivenAsCustomType`(): Unit = memScoped {
+    fun `AMessage CanCarryDBusArrayGivenAsCustomType`() {
         val msg = PlainMessage.createPlainMessage()
 
         val dataWritten = listOf(3545342.toLong(), 43643532.toLong(), 324325.toLong())
-        // custom::MyType t;
 
         msg.serialize(dataWritten)
-        // msg << t;
         msg.seal()
 
         val dataRead = msg.deserialize<List<Long>>()
@@ -445,28 +355,7 @@ class MessageTest {
         assertEquals(dataWritten, dataRead)
     }
 
-    @Test
-    fun `AMessage CanCarryDBusStructGivenAsCustomType`(): Unit = memScoped {
-        val msg = PlainMessage.createPlainMessage()
-
-        if (false) {
-//        const my ::Struct dataWritten { 3545342, "hello"s, { 3.14, 2.4568546 }, my::Enum::Value2 };
-//
-//        msg.serialize(dataWritten)
-//        msg.seal();
-//
-//        val dataRead = msg.deserialize < my::Struct > ()
-//
-//        assertEquals(dataWritten, dataRead)
-        }
-    }
-
-//    class AMessage : public ::testing::TestWithParam<std::variant<int32_t, std::string, my::Struct>>
-//    {
-//    };
-
-    fun `AMessage ThrowsWhenDestinationStdVariantHasWrongTypeDuringDeserialization`(): Unit =
-        memScoped {
+    fun `AMessage ThrowsWhenDestinationStdVariantHasWrongTypeDuringDeserialization`() {
             val msg = PlainMessage.createPlainMessage()
 
             val dataWritten = Variant(5)
@@ -482,9 +371,4 @@ class MessageTest {
                 // Expected exception
             }
         }
-
-//    INSTANTIATE_TEST_SUITE_P( StringIntStruct
-//    , AMessage
-//    , ::testing::Values("hello"s, 1, my::Struct
-//    {}));
 }

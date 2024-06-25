@@ -19,7 +19,6 @@ import platform.posix.close
 private const val ANY_UINT64: ULong = 84578348354u
 private const val ANY_DOUBLE: Double = 3.14
 private typealias TypesComplexType = Map<ULong, List<Pair<String, Double>>>
-private typealias TypesListType = List<Pair<String, Double>>
 private typealias TypeWithVariants = List<Pair<Variant, Double>>
 
 class TypesTest {

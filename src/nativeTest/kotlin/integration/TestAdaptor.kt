@@ -2,7 +2,6 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.github.ajalt.clikt.sources.MapValueSource
 import com.monkopedia.sdbus.header.IConnection
 import com.monkopedia.sdbus.header.IObject
 import com.monkopedia.sdbus.header.ManagedObjectAdaptor
@@ -18,7 +17,6 @@ import com.monkopedia.sdbus.header.Variant
 import com.monkopedia.sdbus.header.createError
 import com.monkopedia.sdbus.header.createObject
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.concurrent.freeze
 import kotlin.native.ref.createCleaner
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.atomicfu.atomic
@@ -38,15 +36,8 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
     IntegrationTestsAdaptor(createObject(connection, path)),
     PropertiesAdaptor,
     ManagedObjectAdaptor {
-    //    public TestAdaptor(sdbus::IConnection& connection, sdbus::ObjectPath path);
-//    public ~TestAdaptor();
     private val cleaner = createCleaner(m_object) {
         it.release()
-    }
-
-    override fun registerAdaptor() {
-        super.registerAdaptor()
-//        m_object.addObjectManager();
     }
 
     override fun noArgNoReturn() {
@@ -73,17 +64,16 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
         return Variant(value.toInt())
     }
 
-    override fun getMapOfVariants(x: List<Int>, y: Pair<Variant, Variant>): Map<Int, Variant> {
-        return x.associateWith { if (it <= 0) y.first else y.second }
-    }
+    override fun getMapOfVariants(x: List<Int>, y: Pair<Variant, Variant>): Map<Int, Variant> =
+        x.associateWith {
+            if (it <= 0) y.first else y.second
+        }
 
-    override fun getStructInStruct(): StructOfStruct {
-        return StructOfStruct(STRING_VALUE, StructMap(mapOf(INT32_VALUE to INT32_VALUE)))
-    }
+    override fun getStructInStruct(): StructOfStruct =
+        StructOfStruct(STRING_VALUE, StructMap(mapOf(INT32_VALUE to INT32_VALUE)))
 
-    override fun sumStructItems(arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long>): Int {
-        return ((arg0.first + arg0.second).toInt() + (arg1.first.toLong() + arg1.second)).toInt()
-    }
+    override fun sumStructItems(arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long>): Int =
+        ((arg0.first + arg0.second).toInt() + (arg1.first.toLong() + arg1.second)).toInt()
 
     override fun sumArrayItems(arg0: List<UShort>, arg1: Array<ULong>): UInt =
         (arg0.sum() + arg1.sum()).toUInt()
@@ -117,42 +107,22 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
 
     override fun getUnixFd(): UnixFd = UnixFd(UNIX_FD_VALUE)
 
-    override fun getComplex(): Map<ULong, ComplexMapValue> {
-        return mapOf(
-            0u.toULong() to ComplexMapValue(
-                mapOf(23u.toUByte() to listOf(ComplexStruct(ObjectPath("/object/path"), false, Variant(3.14), mapOf(0 to "zero")))),
-                Signature("a{t(a{ya(obva{is})}gs)}"),
-                ""
-            )
+    override fun getComplex(): Map<ULong, ComplexMapValue> = mapOf(
+        0u.toULong() to ComplexMapValue(
+            mapOf(
+                23u.toUByte() to listOf(
+                    ComplexStruct(
+                        ObjectPath("/object/path"),
+                        false,
+                        Variant(3.14),
+                        mapOf(0 to "zero")
+                    )
+                )
+            ),
+            Signature("a{t(a{ya(obva{is})}gs)}"),
+            ""
         )
-    }
-//    std::unordered_map<uint64_t, sdbus::Struct<std::map<uint8_t, std::vector<sdbus::Struct<sdbus::ObjectPath, bool, sdbus::Variant, std::map<int32_t, std::string>>>>, sdbus::Signature, std::string>> TestAdaptor::getComplex()
-//    {
-//        return { // unordered_map
-//            {
-//                0,  // uint_64_t
-//                {   // struct
-//                    {   // map
-//                        {
-//                            23,  // uint8_t
-//                            {   // vector
-//                                {   // struct
-//                                    sdbus::ObjectPath{"/object/path"}, // object path
-//                                    false,
-//                                    Variant{3.14},
-//                                    {   // map
-//                                        {0, "zero"}
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    },
-//                    sdbus::Signature{"a{t(a{ya(obva{is})}gs)}"}, // signature
-//                    std::string{}
-//                }
-//            }
-//        };
-//    }
+    )
 
     override fun throwError() {
         m_wasThrowErrorCalled.value = true
@@ -189,11 +159,6 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
         m_blocking = value
     }
 
-//    fun emitSignalWithoutRegistration(const sdbus::Struct<std::string, sdbus::Struct<sdbus::Signature>>& s)
-//    {
-//        getObject().emitSignal("signalWithoutRegistration").onInterface(sdbus::test::INTERFACE_NAME).withArguments(s);
-//    }
-
     private val m_state = DEFAULT_STATE_VALUE
     private var m_action = DEFAULT_ACTION_VALUE
     private var m_blocking = DEFAULT_BLOCKING_VALUE
@@ -209,55 +174,3 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
     public var m_propertySetSender: String? = null
 }
 
-class DummyTestAdaptor(connection: IConnection, path: ObjectPath) :
-    IntegrationTestsAdaptor(createObject(connection, path)),
-    PropertiesAdaptor,
-    ManagedObjectAdaptor {
-    override fun noArgNoReturn() = Unit
-
-    override fun getInt(): Int = 0
-
-    override fun getTuple(): Pair<UInt, String> = 0u to ""
-
-    override fun multiply(a: Long, b: Double): Double = 0.0
-
-    override fun multiplyWithNoReply(a: Long, b: Double) = Unit
-
-    override fun processVariant(variant: Variant): Variant = Variant()
-
-    override fun sumArrayItems(arg0: List<UShort>, arg1: Array<ULong>): UInt = 0u
-
-    override fun doOperation(arg0: UInt): UInt = 0u
-
-    override fun sumStructItems(arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long>): Int = 0
-    override fun getMapOfVariants(x: List<Int>, y: Pair<Variant, Variant>): Map<Int, Variant> = emptyMap()
-    override fun getStructInStruct(): StructOfStruct = StructOfStruct("", StructMap(mapOf()))
-    override fun getInts16FromStruct(arg0: IntStruct): List<Short> = emptyList()
-    override fun getComplex(): Map<ULong, ComplexMapValue> = emptyMap()
-
-    override suspend fun doOperationAsync(arg0: UInt) = arg0
-
-    override fun getSignature(): Signature = Signature("")
-
-    override fun getObjPath(): ObjectPath = ObjectPath("")
-
-    override fun getUnixFd(): UnixFd = UnixFd(0)
-
-    override fun throwError() = Unit
-
-    override fun throwErrorWithNoReply() = Unit
-
-    override fun doPrivilegedStuff() = Unit
-
-    override fun emitTwoSimpleSignals() = Unit
-
-    override fun action(): UInt = 0u
-
-    override fun action(value: UInt) = Unit
-
-    override fun blocking(): Boolean = false
-
-    override fun blocking(value: Boolean) = Unit
-
-    override fun state(): String = ""
-}

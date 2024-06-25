@@ -11,8 +11,6 @@ abstract class ConnectionTestFixture(test: BaseTest) : BaseTestFixture(test) {
 
     private var m_objectManagerAdaptor: ObjectManagerTestAdaptor? = null
 
-    //    var m_adaptorConnection: IConnection? = null
-//    var m_proxyConnection: IConnection? = null
     var m_adaptor: TestAdaptor? = null
     var m_proxy: TestProxy? = null
     var m_objectManagerProxy: ObjectManagerTestProxy? = null
@@ -30,7 +28,6 @@ abstract class ConnectionTestFixture(test: BaseTest) : BaseTestFixture(test) {
             s_adaptorConnection,
             MANAGER_PATH
         )
-//        m_objectManagerAdaptor = std::make_unique<ObjectManagerTestAdaptor>(*s_adaptorConnection, MANAGER_PATH);
         m_adaptor = TestAdaptor(s_adaptorConnection, OBJECT_PATH)
         m_adaptor?.registerAdaptor()
     }

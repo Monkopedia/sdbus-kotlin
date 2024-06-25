@@ -8,13 +8,8 @@ import com.monkopedia.sdbus.header.PropertyName
 import com.monkopedia.sdbus.header.ServiceName
 import com.monkopedia.sdbus.header.Signature
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
 import platform.posix.getenv
-import sdbus.int16_t
-import sdbus.int32_t
-import sdbus.uint32_t
-import sdbus.uint8_t
 
 
 val INTERFACE_NAME = InterfaceName("org.sdbuscpp.integrationtests")

@@ -23,15 +23,6 @@ import kotlinx.cinterop.toCPointer
 
 class ConnectionTest {
 
-    class ConnectionCreationTest //: public ::testing::Test
-
-    //    {
-//        protected:
-//        ConnectionCreationTest() = default;
-//
-//        std::unique_ptr<NiceMock<SdBusMock>> sdBusIntfMock_ = std::make_unique<NiceMock<SdBusMock>>();
-//        sd_bus* fakeBusPtr_ = reinterpret_cast<sd_bus*>(1);
-//    };
     val sdBusIntfMock_ = SdBusMock().withDefaults()
     val fakeBusPtr_ = 1.toLong().toCPointer<sd_bus>()
 
@@ -42,7 +33,7 @@ class ConnectionTest {
     }
 
     @Test
-    fun `ADefaultBusConnection OpensAndFlushesBusWhenCreated`(): Unit = memScoped {
+    fun `ADefaultBusConnection OpensAndFlushesBusWhenCreated`() {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open) answers openHandler
         }
@@ -52,7 +43,7 @@ class ConnectionTest {
     }
 
     @Test
-    fun `ASystemBusConnection OpensAndFlushesBusWhenCreated`(): Unit = memScoped {
+    fun `ASystemBusConnection OpensAndFlushesBusWhenCreated`() {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open_system) answers openHandler
         }
@@ -62,7 +53,7 @@ class ConnectionTest {
     }
 
     @Test
-    fun `ASessionBusConnection OpensAndFlushesBusWhenCreated`(): Unit = memScoped {
+    fun `ASessionBusConnection OpensAndFlushesBusWhenCreated`() {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open_user) answers openHandler
         }
@@ -72,7 +63,7 @@ class ConnectionTest {
     }
 
     @Test
-    fun `ADefaultBusConnection ClosesAndUnrefsBusWhenDestructed`(): Unit {
+    fun `ADefaultBusConnection ClosesAndUnrefsBusWhenDestructed`() {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open) answers openHandler
         }
@@ -84,19 +75,19 @@ class ConnectionTest {
     }
 
     @Test
-    fun `ASystemBusConnection ClosesAndUnrefsBusWhenDestructed`(): Unit {
+    fun `ASystemBusConnection ClosesAndUnrefsBusWhenDestructed`() {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open_system) answers openHandler
         }
         val calls = sdBusIntfMock_.record {
-                systemConnection(it).release()
+            systemConnection(it).release()
         }
         assertEquals(3, calls.size)
         assertEquals("sd_bus_flush_close_unref", calls[2].args[0])
     }
 
     @Test
-    fun `ASessionBusConnection ClosesAndUnrefsBusWhenDestructed`(): Unit {
+    fun `ASessionBusConnection ClosesAndUnrefsBusWhenDestructed`() {
         sdBusIntfMock_.configure {
             method(SdBusMock::sd_bus_open_user) answers openHandler
         }
@@ -108,179 +99,83 @@ class ConnectionTest {
     }
 
     @Test
-    fun `ADefaultBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`(): Unit =
-        memScoped {
-            sdBusIntfMock_.configure {
-                method(SdBusMock::sd_bus_open) returns -1
-            }
-            try {
-                val calls = sdBusIntfMock_.record { defaultConnection(it) }
-                fail("Expected failure, not $calls")
-            } catch (t: Throwable) {
-                // Expected failure
-            }
+    fun `ADefaultBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`() {
+        sdBusIntfMock_.configure {
+            method(SdBusMock::sd_bus_open) returns -1
         }
+        try {
+            val calls = sdBusIntfMock_.record { defaultConnection(it) }
+            fail("Expected failure, not $calls")
+        } catch (t: Throwable) {
+            // Expected failure
+        }
+    }
 
     @Test
-    fun `ASystemBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`(): Unit =
-        memScoped {
-            sdBusIntfMock_.configure {
-                method(SdBusMock::sd_bus_open_system) returns -1
-            }
-            try {
-                val calls = sdBusIntfMock_.record { systemConnection(it) }
-                fail("Expected failure, not $calls")
-            } catch (t: Throwable) {
-                // Expected failure
-            }
+    fun `ASystemBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`() {
+        sdBusIntfMock_.configure {
+            method(SdBusMock::sd_bus_open_system) returns -1
         }
+        try {
+            val calls = sdBusIntfMock_.record { systemConnection(it) }
+            fail("Expected failure, not $calls")
+        } catch (t: Throwable) {
+            // Expected failure
+        }
+    }
 
     @Test
-    fun `ASessionBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`(): Unit =
-        memScoped {
-            sdBusIntfMock_.configure {
-                method(SdBusMock::sd_bus_open_user) returns -1
-            }
-            try {
-                val calls = sdBusIntfMock_.record { sessionConnection(it) }
-                fail("Expected failure, not $calls")
-            } catch (t: Throwable) {
-                // Expected failure
-            }
+    fun `ASessionBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`() {
+        sdBusIntfMock_.configure {
+            method(SdBusMock::sd_bus_open_user) returns -1
         }
+        try {
+            val calls = sdBusIntfMock_.record { sessionConnection(it) }
+            fail("Expected failure, not $calls")
+        } catch (t: Throwable) {
+            // Expected failure
+        }
+    }
 
     @Test
-    fun `ADefaultBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`(): Unit =
-        memScoped {
-            sdBusIntfMock_.configure {
-                method(SdBusMock::sd_bus_open) answers openHandler
-                method(SdBusMock::sd_bus_flush) returns -1
-            }
-            try {
-                val calls = sdBusIntfMock_.record { defaultConnection(it) }
-                fail("Expected failure, not $calls")
-            } catch (t: Throwable) {
-                // Expected failure
-            }
+    fun `ADefaultBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`() {
+        sdBusIntfMock_.configure {
+            method(SdBusMock::sd_bus_open) answers openHandler
+            method(SdBusMock::sd_bus_flush) returns -1
         }
+        try {
+            val calls = sdBusIntfMock_.record { defaultConnection(it) }
+            fail("Expected failure, not $calls")
+        } catch (t: Throwable) {
+            // Expected failure
+        }
+    }
 
     @Test
-    fun `ASystemBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`(): Unit =
-        memScoped {
-            sdBusIntfMock_.configure {
-                method(SdBusMock::sd_bus_open_system) answers openHandler
-                method(SdBusMock::sd_bus_flush) returns -1
-            }
-            try {
-                val calls = sdBusIntfMock_.record { systemConnection(it) }
-                fail("Expected failure, not $calls")
-            } catch (t: Throwable) {
-                // Expected failure
-            }
+    fun `ASystemBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`() {
+        sdBusIntfMock_.configure {
+            method(SdBusMock::sd_bus_open_system) answers openHandler
+            method(SdBusMock::sd_bus_flush) returns -1
         }
+        try {
+            val calls = sdBusIntfMock_.record { systemConnection(it) }
+            fail("Expected failure, not $calls")
+        } catch (t: Throwable) {
+            // Expected failure
+        }
+    }
 
     @Test
-    fun `ASessionBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`(): Unit =
-        memScoped {
-            sdBusIntfMock_.configure {
-                method(SdBusMock::sd_bus_open_user) answers openHandler
-                method(SdBusMock::sd_bus_flush) returns -1
-            }
-            try {
-                val calls = sdBusIntfMock_.record { sessionConnection(it) }
-                fail("Expected failure, not $calls")
-            } catch (t: Throwable) {
-                // Expected failure
-            }
+    fun `ASessionBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`() {
+        sdBusIntfMock_.configure {
+            method(SdBusMock::sd_bus_open_user) answers openHandler
+            method(SdBusMock::sd_bus_flush) returns -1
         }
-
-////    namespace {
-//        template <typename _BusTypeTag>
-//        class AConnectionNameRequest : public ::testing::Test
-//        {
-//            protected:
-//            void setUpBusOpenExpectation();
-//            std::unique_ptr<Connection> makeConnection();
-//
-//            void SetUp() override
-//                {
-//                    setUpBusOpenExpectation();
-//                    ON_CALL(*sdBusIntfMock_, sd_bus_flush(_)).WillByDefault(Return(1));
-//                    ON_CALL(*sdBusIntfMock_, sd_bus_flush_close_unref(_)).WillByDefault(Return(fakeBusPtr_));
-//                    con_ = makeConnection();
-//                }
-//
-//            NiceMock<SdBusMock>* sdBusIntfMock_ = new NiceMock<SdBusMock>(); // con_ below will assume ownership
-//            sd_bus* fakeBusPtr_ = reinterpret_cast<sd_bus*>(1);
-//            std::unique_ptr<Connection> con_;
-//        };
-//
-//        template<> void AConnectionNameRequest<Connection::default_bus_t>::setUpBusOpenExpectation()
-//        {
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_open(_)).WillOnce(DoAll(SetArgPointee<0>(fakeBusPtr_), Return(1)));
-//        }
-//        template<> void AConnectionNameRequest<Connection::system_bus_t>::setUpBusOpenExpectation()
-//        {
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_open_system(_)).WillOnce(DoAll(SetArgPointee<0>(fakeBusPtr_), Return(1)));
-//        }
-//        template<> void AConnectionNameRequest<Connection::session_bus_t>::setUpBusOpenExpectation()
-//        {
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_open_user(_)).WillOnce(DoAll(SetArgPointee<0>(fakeBusPtr_), Return(1)));
-//        }
-//        template<> void AConnectionNameRequest<Connection::custom_session_bus_t>::setUpBusOpenExpectation()
-//        {
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_open_user_with_address(_, _)).WillOnce(DoAll(SetArgPointee<0>(fakeBusPtr_), Return(1)));
-//        }
-//        template<> void AConnectionNameRequest<Connection::remote_system_bus_t>::setUpBusOpenExpectation()
-//        {
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_open_system_remote(_, _)).WillOnce(DoAll(SetArgPointee<0>(fakeBusPtr_), Return(1)));
-//        }
-//        template<> void AConnectionNameRequest<Connection::pseudo_bus_t>::setUpBusOpenExpectation()
-//        {
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_new(_)).WillOnce(DoAll(SetArgPointee<0>(fakeBusPtr_), Return(1)));
-//            // `sd_bus_start` for pseudo connection shall return an error value, remember this is a fake connection...
-//            EXPECT_CALL(*sdBusIntfMock_, sd_bus_start(fakeBusPtr_)).WillOnce(Return(-EINVAL));
-//        }
-//        template <typename _BusTypeTag>
-//        std::unique_ptr<Connection> AConnectionNameRequest<_BusTypeTag>::makeConnection()
-//        {
-//            return std::make_unique<Connection>(std::unique_ptr<NiceMock<SdBusMock>>(sdBusIntfMock_), _BusTypeTag{});
-//        }
-//        template<> std::unique_ptr<Connection> AConnectionNameRequest<Connection::custom_session_bus_t>::makeConnection()
-//        {
-//            return std::make_unique<Connection>(std::unique_ptr<NiceMock<SdBusMock>>(sdBusIntfMock_), Connection::custom_session_bus, "custom session bus");
-//        }
-//        template<> std::unique_ptr<Connection> AConnectionNameRequest<Connection::remote_system_bus_t>::makeConnection()
-//        {
-//            return std::make_unique<Connection>(std::unique_ptr<NiceMock<SdBusMock>>(sdBusIntfMock_), Connection::remote_system_bus, "some host");
-//        }
-//
-//        typedef ::testing::Types< Connection::default_bus_t
-//        , Connection::system_bus_t
-//        , Connection::session_bus_t
-//        , Connection::custom_session_bus_t
-//        , Connection::remote_system_bus_t
-//        , Connection::pseudo_bus_t
-//        > BusTypeTags;
-//
-//        TYPED_TEST_SUITE(AConnectionNameRequest, BusTypeTags);
-//    }
-//
-//    TYPED_TEST(AConnectionNameRequest, DoesNotThrowOnSuccess)
-//    {
-//        EXPECT_CALL(*this->sdBusIntfMock_, sd_bus_request_name(_, _, _)).WillOnce(Return(1));
-//        sdbus::ConnectionName name{"org.sdbuscpp.somename"};
-//
-//        this->con_->requestName(name);
-//    }
-//
-//    TYPED_TEST(AConnectionNameRequest, ThrowsOnFail)
-//    {
-//        sdbus::ConnectionName name{"org.sdbuscpp.somename"};
-//
-//        EXPECT_CALL(*this->sdBusIntfMock_, sd_bus_request_name(_, _, _)).WillOnce(Return(-1));
-//
-//        ASSERT_THROW(this->con_->requestName(name), sdbus::Error);
-//    }
-////}
+        try {
+            val calls = sdBusIntfMock_.record { sessionConnection(it) }
+            fail("Expected failure, not $calls")
+        } catch (t: Throwable) {
+            // Expected failure
+        }
+    }
 }

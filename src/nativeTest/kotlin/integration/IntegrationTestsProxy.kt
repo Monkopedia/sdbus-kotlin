@@ -30,8 +30,6 @@ abstract class IntegrationTestsProxy(proxy: IProxy) :
     PeerProxy {
     private var simpleSignalHandler: Slot? = null
     override val m_proxy: IProxy = proxy
-//    private val cleaner = createCleaner(this) {
-//    }
 
     fun getProxy(): IProxy = m_proxy
 
@@ -90,14 +88,6 @@ abstract class IntegrationTestsProxy(proxy: IProxy) :
             .readResult<Variant>()
     }
 
-    //    std::variant<int32_t, double, std::string> processVariant(const std::variant<int32_t, double, std::string>& variant)
-//    {
-//        std::variant < int32_t, double, std::string> result;
-//        m_proxy.callMethod("processVariant").onInterface(INTERFACE_NAME).withArguments(variant)
-//            .storeResultsTo(result);
-//        return result;
-//    }
-//
     fun getMapOfVariants(x: List<Int>, y: Pair<Variant, Variant>): Map<Int, Variant> =
         m_proxy.callMethod("getMapOfVariants").onInterface(INTERFACE_NAME)
             .withArguments { call(x, y) }

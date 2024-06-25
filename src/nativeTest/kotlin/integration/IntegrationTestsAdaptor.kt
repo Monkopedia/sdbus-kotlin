@@ -15,7 +15,6 @@ import com.monkopedia.sdbus.header.registerMethod
 import com.monkopedia.sdbus.header.registerProperty
 import com.monkopedia.sdbus.header.registerSignal
 import com.monkopedia.sdbus.header.setInterfaceFlags
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 

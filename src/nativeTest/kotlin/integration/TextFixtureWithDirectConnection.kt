@@ -46,67 +46,50 @@ val s_adaptorConnection = createBusConnection()
 @ThreadLocal
 val s_proxyConnection = createBusConnection()
 
-
 class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onBeforeTest() {
         super.onBeforeTest()
-        val sock = openUnixSocket();
+        val sock = openUnixSocket()
         runBlocking {
-            createClientAndServerConnections(sock);
-            createAdaptorAndProxyObjects();
+            createClientAndServerConnections(sock)
+            createAdaptorAndProxyObjects()
         }
     }
 
     override fun onAfterTest() {
         runBlocking {
-            println("Leaving event loop")
-            m_proxyConnection?.leaveEventLoop();
-            println("Leaving event loop 2")
-            m_adaptorConnection?.leaveEventLoop();
-            println("Closing context")
+            m_proxyConnection?.leaveEventLoop()
+            m_adaptorConnection?.leaveEventLoop()
             context.close()
-            println("Nulling")
             m_proxyConnection = null
             m_adaptorConnection = null
         }
-        println("Done")
     }
 
-    suspend fun CoroutineScope.createClientAndServerConnections(sock: Int) {
+    private suspend fun CoroutineScope.createClientAndServerConnections(sock: Int) {
         val job = launch(context) {
-            try {
-                val fd = accept(sock, null, null);
-                val set = fcntl(fd, F_SETFD, /*SOCK_NONBLOCK|*/SOCK_CLOEXEC)
-                m_adaptorConnection = createServerBus(fd)
-                // This is necessary so that createDirectBusConnection() below does not block
-                m_adaptorConnection?.enterEventLoopAsync();
-            } catch (t: Throwable) {
-                println(t.stackTraceToString())
-                throw t
-            }
+            val fd = accept(sock, null, null)
+            val set = fcntl(fd, F_SETFD, /*SOCK_NONBLOCK|*/SOCK_CLOEXEC)
+            m_adaptorConnection = createServerBus(fd)
+            // This is necessary so that createDirectBusConnection() below does not block
+            m_adaptorConnection?.enterEventLoopAsync()
         }
-        try {
-
         m_proxyConnection =
             createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
-        m_proxyConnection?.enterEventLoopAsync();
+        m_proxyConnection?.enterEventLoopAsync()
 
-        job.join();
-        } catch (t: Throwable) {
-            println(t.stackTraceToString())
-            throw t
-        }
+        job.join()
     }
 
     fun createAdaptorAndProxyObjects() {
-        require(m_adaptorConnection != null);
-        require(m_proxyConnection != null);
+        require(m_adaptorConnection != null)
+        require(m_proxyConnection != null)
 
-        m_adaptor = TestAdaptor(m_adaptorConnection !!, OBJECT_PATH);
+        m_adaptor = TestAdaptor(m_adaptorConnection!!, OBJECT_PATH)
         m_adaptor?.registerAdaptor()
         // Destination parameter can be empty in case of direct connections
-        m_proxy = TestProxy(m_proxyConnection !!, EMPTY_DESTINATION, OBJECT_PATH);
+        m_proxy = TestProxy(m_proxyConnection!!, EMPTY_DESTINATION, OBJECT_PATH)
         m_proxy?.registerProxy()
     }
 
@@ -118,50 +101,53 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
 
     companion object {
         fun openUnixSocket(): Int = memScoped {
-            val sock = socket(AF_UNIX, SOCK_STREAM or SOCK_CLOEXEC, 0);
+            val sock = socket(AF_UNIX, SOCK_STREAM or SOCK_CLOEXEC, 0)
             require(sock >= 0) {
                 "Create socket failed"
             }
 
             val sa = cValue<sockaddr_un>().getPointer(this)
-            memset(sa, 0, sizeOf<sockaddr_un>().convert());
+            memset(sa, 0, sizeOf<sockaddr_un>().convert())
             sa[0].sun_family = AF_UNIX.convert()
             val size = sizeOf<sockaddr_un>() - sizeOf<sa_family_tVar>()
-            snprintf(sa[0].sun_path, size.convert(), "%s", DIRECT_CONNECTION_SOCKET_PATH.cstr);
+            snprintf(sa[0].sun_path, size.convert(), "%s", DIRECT_CONNECTION_SOCKET_PATH.cstr)
 
+            unlink(DIRECT_CONNECTION_SOCKET_PATH)
 
-            unlink(DIRECT_CONNECTION_SOCKET_PATH);
-
-            umask(0u);
-            var r = bind(sock, sa.reinterpret(), sizeOf<sockaddr_un>().convert())// sa[0].sun_path.toKString().length.convert());
+            umask(0u)
+            var r = bind(
+                sock,
+                sa.reinterpret(),
+                sizeOf<sockaddr_un>().convert()
+            ) // sa[0].sun_path.toKString().length.convert())
             require(r >= 0) {
                 "Bind failed $r"
             }
 
-            r = listen(sock, 5);
+            r = listen(sock, 5)
             require(r >= 0) {
                 "Listen failed $r"
             }
 
-
-            return sock;
+            return sock
         }
-    };
+    }
 }
 
 inline fun waitUntil(fnc: () -> Boolean, timeout: Duration = 5.seconds): Boolean {
     var elapsed = 0.seconds
     val step = 5.milliseconds
     do {
-        usleep(step.inWholeMicroseconds.toUInt());
-        elapsed += step;
-        if (elapsed > timeout)
+        usleep(step.inWholeMicroseconds.toUInt())
+        elapsed += step
+        if (elapsed > timeout) {
             return false
-    } while (!fnc());
+        }
+    } while (!fnc())
 
-    return true;
+    return true
 }
 
-inline fun waitUntil(flag: AtomicBoolean, timeout: Duration = 5.seconds): Boolean {
-    return waitUntil({ flag.value }, timeout);
-}
+inline fun waitUntil(flag: AtomicBoolean, timeout: Duration = 5.seconds): Boolean = waitUntil({
+    flag.value
+}, timeout)

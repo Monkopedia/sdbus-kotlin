@@ -12,12 +12,11 @@ import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 
 class PollDataTest {
 
     @Test
-    fun `PollData ReturnsZeroRelativeTimeoutForZeroAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsZeroRelativeTimeoutForZeroAbsoluteTimeout`() {
         val pd = PollData(timeout = 0.microseconds);
 
         val relativeTimeout = pd.getRelativeTimeout();
@@ -26,7 +25,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsZeroPollTimeoutForZeroAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsZeroPollTimeoutForZeroAbsoluteTimeout`() {
         val pd = PollData(timeout = 0.microseconds);
 
         val pollTimeout = pd.getPollTimeout();
@@ -35,7 +34,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsInfiniteRelativeTimeoutForInfiniteAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsInfiniteRelativeTimeoutForInfiniteAbsoluteTimeout`() {
         val pd = PollData(timeout = Duration.INFINITE);
 
         val relativeTimeout = pd.getRelativeTimeout();
@@ -44,7 +43,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsNegativePollTimeoutForInfiniteAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsNegativePollTimeoutForInfiniteAbsoluteTimeout`() {
         val pd = PollData(timeout = Duration.INFINITE);
 
         val pollTimeout = pd.getPollTimeout();
@@ -53,7 +52,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsZeroRelativeTimeoutForPastAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsZeroRelativeTimeoutForPastAbsoluteTimeout`() {
         val past = now() - 10.seconds;
         val pd = PollData(timeout = past)
 
@@ -63,7 +62,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsZeroPollTimeoutForPastAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsZeroPollTimeoutForPastAbsoluteTimeout`() {
         val past = now() - 10.seconds;
         val pd = PollData(timeout = past)
 
@@ -73,7 +72,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsCorrectRelativeTimeoutForFutureAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsCorrectRelativeTimeoutForFutureAbsoluteTimeout`() {
         val future = now() + 1.seconds;
         val pd = PollData(timeout = future)
 
@@ -83,7 +82,7 @@ class PollDataTest {
     }
 
     @Test
-    fun `PollData ReturnsCorrectPollTimeoutForFutureAbsoluteTimeout`(): Unit = memScoped {
+    fun `PollData ReturnsCorrectPollTimeoutForFutureAbsoluteTimeout`() {
         val future = now() + 1.seconds;
         val pd = PollData(timeout = future)
 

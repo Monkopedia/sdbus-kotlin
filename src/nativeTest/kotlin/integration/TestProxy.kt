@@ -29,9 +29,7 @@ import com.monkopedia.sdbus.header.with_future_t
 import com.monkopedia.sdbus.internal.Slot
 import kotlin.time.Duration
 import kotlinx.atomicfu.atomic
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 import sdbus.uint32_t
 
 class ObjectManagerTestProxy(
@@ -85,14 +83,11 @@ class TestProxy private constructor(proxy: IProxy) :
         objectPath: ObjectPath
     ) : this(createProxy(connection, destination, objectPath))
 
-    var m_SimpleSignals = 0;
     var m_gotSimpleSignal = atomic(false);
     var m_gotSignalWithMap = atomic(false);
     var m_mapFromSignal = emptyMap<Int, String>()
     var m_gotSignalWithVariant = atomic(false);
     var m_variantFromSignal = 0.0
-    var m_gotSignalWithSignature = atomic(false);
-    var m_signatureFromSignal = emptyMap<String, Signature>()
 
     var m_DoOperationClientSideAsyncReplyHandler: ((UInt, Error?) -> Unit)? = null
     var m_onPropertiesChangedHandler: ((InterfaceName, Map<PropertyName, Variant>, List<PropertyName>) -> Unit)? =
@@ -118,13 +113,6 @@ class TestProxy private constructor(proxy: IProxy) :
         m_variantFromSignal = aVariant.get<Double>();
         m_gotSignalWithVariant.value = true;
     }
-
-//    void onSignalWithoutRegistration(const sdbus::Struct<std::string, sdbus::Struct<sdbus::Signature>>& s)
-//    {
-//        // Static cast to std::string is a workaround for gcc 11.4 false positive warning (which later gcc versions nor Clang emit)
-//        m_signatureFromSignal[std::get<0>(s)] = static_cast<std::string>(std::get<0>(std::get<1>(s)));
-//        m_gotSignalWithSignature = true;
-//    }
 
     fun onDoOperationReply(returnValue: UInt, error: Error?) {
         m_DoOperationClientSideAsyncReplyHandler?.invoke(returnValue, error);
@@ -208,7 +196,7 @@ class TestProxy private constructor(proxy: IProxy) :
             }
     }
 
-    suspend fun doErroneousOperationClientSideAsync(with_future: with_future_t): Unit = memScoped {
+    suspend fun doErroneousOperationClientSideAsync(with_future: with_future_t): Unit {
         getProxy().callMethodAsync("throwError")
             .onInterface(INTERFACE_NAME)
             .getResult<Unit>();
@@ -228,7 +216,7 @@ class TestProxy private constructor(proxy: IProxy) :
             };
     }
 
-    fun callNonexistentMethod(): Int = memScoped {
+    fun callNonexistentMethod(): Int {
         return getProxy().callMethod("callNonexistentMethod").onInterface(INTERFACE_NAME)
             .readResult();
     }
@@ -239,28 +227,9 @@ class TestProxy private constructor(proxy: IProxy) :
             .readResult()
     }
 
-    fun setStateProperty(value: String) = memScoped {
+    fun setStateProperty(value: String) {
         getProxy().setProperty("state").onInterface(INTERFACE_NAME).toValue(value);
     }
 
 }
 
-class DummyProxy private constructor(initialScope: DeferScope, proxy: IProxy) :
-    IntegrationTestsProxy(proxy) {
-
-    constructor(initialScope: DeferScope, destination: ServiceName, objectPath: ObjectPath) : this(
-        initialScope,
-        createProxy(destination, objectPath)
-    )
-
-    override fun onSimpleSignal() {
-    }
-
-    override fun onSignalWithMap(aMap: Map<Int, String>) {
-    }
-
-    override fun onSignalWithVariant(aVariant: Variant) {
-    }
-
-
-}
