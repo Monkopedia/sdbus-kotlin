@@ -69,4 +69,3 @@ internal fun createSdBusVTableWritablePropertyItem(
     cValue { sd_bus_writable_property(ptr, member, signature, getter, setter, flags) }
 
 internal fun createSdBusVTableEndItem(): CValue<sd_bus_vtable> = cValue { sd_bus_vtable_end(ptr) }
-

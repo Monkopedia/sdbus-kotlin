@@ -3,6 +3,7 @@
 package com.monkopedia.sdbus.internal
 
 import cnames.structs.sd_bus_message
+import com.monkopedia.sdbus.AsyncReplyHandler
 import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.InterfaceName
@@ -12,16 +13,16 @@ import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
-import com.monkopedia.sdbus.sdbusRequire
+import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
+import com.monkopedia.sdbus.SignalHandler
 import com.monkopedia.sdbus.SignalName
-import com.monkopedia.sdbus.AsyncReplyHandler
 import com.monkopedia.sdbus.dont_run_event_loop_thread
 import com.monkopedia.sdbus.dont_run_event_loop_thread_t
 import com.monkopedia.sdbus.return_slot
 import com.monkopedia.sdbus.return_slot_t
-import com.monkopedia.sdbus.SignalHandler
+import com.monkopedia.sdbus.sdbusRequire
 import com.monkopedia.sdbus.with_future_t
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
@@ -41,16 +42,15 @@ import platform.posix.EINVAL
 import sdbus.sd_bus_error
 import sdbus.sd_bus_message_get_error
 
-
 internal class Proxy(
-    private val connection_: IConnection,
-    private val destination_: ServiceName,
-    private val objectPath_: ObjectPath,
+    private val connection: IConnection,
+    private val destination: ServiceName,
+    private val path: ObjectPath,
     @Suppress("UNUSED_PARAMETER") dont_run_event_loop_thread: dont_run_event_loop_thread_t
 ) : IProxy {
     private class Allocs {
         val floatingAsyncCallSlots_ = FloatingAsyncCallSlots()
-        val floatingSignalSlots_ = mutableListOf<Slot>()
+        val floatingSignalSlots_ = mutableListOf<Resource>()
 
         fun release() {
             floatingAsyncCallSlots_.clear()
@@ -69,10 +69,9 @@ internal class Proxy(
     }
 
     init {
-        checkServiceName(destination_.value)
-        checkObjectPath(objectPath_.value)
+        checkServiceName(destination.value)
+        checkObjectPath(path.value)
     }
-
 
     constructor(
         connection: IConnection,
@@ -83,76 +82,83 @@ internal class Proxy(
     }
 
     override fun createMethodCall(
-        interfaceName: InterfaceName, methodName: MethodName
-    ): MethodCall {
-        return connection_.createMethodCall(destination_, objectPath_, interfaceName, methodName)
-    }
+        interfaceName: InterfaceName,
+        methodName: MethodName
+    ): MethodCall = connection.createMethodCall(destination, path, interfaceName, methodName)
 
-    override fun createMethodCall(interfaceName: String, methodName: String): MethodCall {
-        return connection_.createMethodCall(
-            destination_.value, objectPath_.value, interfaceName, methodName
-        )
-    }
+    override fun createMethodCall(interfaceName: String, methodName: String): MethodCall =
+        connection.createMethodCall(destination.value, path.value, interfaceName, methodName)
 
-    override fun callMethod(message: MethodCall): MethodReply {
-        return callMethod(message, 0u)
-    }
+    override fun callMethod(message: MethodCall): MethodReply = callMethod(message, 0u)
 
     override fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
         sdbusRequire(!message.isValid, "Invalid method call message provided", EINVAL)
 
-        return connection_.callMethod(message, timeout)
+        return connection.callMethod(message, timeout)
     }
 
     override fun callMethodAsync(
-        message: MethodCall, asyncReplyCallback: AsyncReplyHandler
-    ): PendingAsyncCall {
-        return callMethodAsync(message, asyncReplyCallback, 0u)
-    }
+        message: MethodCall,
+        asyncReplyCallback: AsyncReplyHandler
+    ): PendingAsyncCall = callMethodAsync(message, asyncReplyCallback, 0u)
 
     override fun callMethodAsync(
-        message: MethodCall, asyncReplyCallback: AsyncReplyHandler, timeout: ULong
+        message: MethodCall,
+        asyncReplyCallback: AsyncReplyHandler,
+        timeout: ULong
     ): PendingAsyncCall {
         sdbusRequire(
-            !message.isValid, "Invalid async method call message provided", EINVAL
+            !message.isValid,
+            "Invalid async method call message provided",
+            EINVAL
         )
 
         val asyncCallInfo = AsyncCallInfo(
-            callback = asyncReplyCallback, proxy = this@Proxy, floating = false
+            callback = asyncReplyCallback,
+            proxy = this@Proxy,
+            floating = false
         ).also { asyncCallInfo ->
-            asyncCallInfo.methodCall = connection_.callMethod(
-                message, sdbus_async_reply_handler, WeakReference(asyncCallInfo), timeout, return_slot
+            asyncCallInfo.methodCall = connection.callMethod(
+                message,
+                sdbus_async_reply_handler,
+                WeakReference(asyncCallInfo),
+                timeout,
+                return_slot
             )
 
-            allocs.floatingAsyncCallSlots_.push_back(asyncCallInfo)
+            allocs.floatingAsyncCallSlots_.pushBack(asyncCallInfo)
         }
 
-
         return PendingAsyncCall(WeakReference(asyncCallInfo))
-
     }
 
     override fun callMethodAsync(
-        message: MethodCall, asyncReplyCallback: AsyncReplyHandler, return_slot: return_slot_t
-    ): Slot {
-        return callMethodAsync(message, asyncReplyCallback, 0u, return_slot)
-    }
+        message: MethodCall,
+        asyncReplyCallback: AsyncReplyHandler,
+        return_slot: return_slot_t
+    ): Resource = callMethodAsync(message, asyncReplyCallback, 0u, return_slot)
 
     override fun callMethodAsync(
         message: MethodCall,
         asyncReplyCallback: AsyncReplyHandler,
         timeout: ULong,
         return_slot: return_slot_t
-    ): Slot {
+    ): Resource {
         sdbusRequire(
-            !message.isValid, "Invalid async method call message provided", EINVAL
+            !message.isValid,
+            "Invalid async method call message provided",
+            EINVAL
         )
 
         val asyncCallInfo =
             AsyncCallInfo(callback = asyncReplyCallback, proxy = this@Proxy, floating = true)
 
-        asyncCallInfo.methodCall = connection_.callMethod(
-            message, sdbus_async_reply_handler, WeakReference(asyncCallInfo), timeout, return_slot
+        asyncCallInfo.methodCall = connection.callMethod(
+            message,
+            sdbus_async_reply_handler,
+            WeakReference(asyncCallInfo),
+            timeout,
+            return_slot
         )
 
         return Reference(asyncCallInfo) {
@@ -161,36 +167,35 @@ internal class Proxy(
     }
 
     override suspend fun callMethodAsync(
-        message: MethodCall, with_future: with_future_t
-    ): MethodReply {
-        return callMethodAsync(message, 0u, with_future)
-    }
+        message: MethodCall,
+        with_future: with_future_t
+    ): MethodReply = callMethodAsync(message, 0u, with_future)
 
     override suspend fun callMethodAsync(
-        message: MethodCall, timeout: ULong, with_future: with_future_t
+        message: MethodCall,
+        timeout: ULong,
+        with_future: with_future_t
     ): MethodReply {
         val deferred = CompletableDeferred<MethodReply>()
 
-        callMethodAsync(message, { reply, error ->
-            if (error != null) {
-                deferred.completeExceptionally(error)
-            } else {
-                deferred.complete(reply)
-            }
-        }, timeout)
+        callMethodAsync(message, deferred.asAsyncReplyHandler, timeout)
 
         return deferred.await()
     }
 
 
     override fun registerSignalHandler(
-        interfaceName: InterfaceName, signalName: SignalName, signalHandler: SignalHandler
+        interfaceName: InterfaceName,
+        signalName: SignalName,
+        signalHandler: SignalHandler
     ) {
         registerSignalHandler(interfaceName.value, signalName.value, signalHandler)
     }
 
     override fun registerSignalHandler(
-        interfaceName: String, signalName: String, signalHandler: SignalHandler
+        interfaceName: String,
+        signalName: String,
+        signalHandler: SignalHandler
     ) {
         val slot = registerSignalHandler(interfaceName, signalName, signalHandler, return_slot)
 
@@ -202,26 +207,27 @@ internal class Proxy(
         signalName: SignalName,
         signalHandler: SignalHandler,
         return_slot: return_slot_t
-    ): Slot {
-        return registerSignalHandler(
-            interfaceName.value, signalName.value, signalHandler, return_slot
-        )
-    }
+    ): Resource = registerSignalHandler(
+        interfaceName.value,
+        signalName.value,
+        signalHandler,
+        return_slot
+    )
 
     override fun registerSignalHandler(
         interfaceName: String,
         signalName: String,
         signalHandler: SignalHandler,
         return_slot: return_slot_t
-    ): Slot {
+    ): Resource {
         checkInterfaceName(interfaceName)
         checkMemberName(signalName)
 
         val signalInfo = SignalInfo(signalHandler, this@Proxy)
 
-        return connection_.registerSignalHandler(
-            destination_.value,
-            objectPath_.value,
+        return connection.registerSignalHandler(
+            destination.value,
+            path.value,
             interfaceName,
             signalName,
             sdbus_signal_handler,
@@ -230,26 +236,17 @@ internal class Proxy(
         )
     }
 
-    override fun getConnection(): com.monkopedia.sdbus.IConnection {
-        return connection_
-    }
+    override fun getConnection(): com.monkopedia.sdbus.IConnection = connection
 
-    override fun getObjectPath(): ObjectPath {
-        return objectPath_
-    }
+    override fun getObjectPath(): ObjectPath = path
 
-    override fun getCurrentlyProcessedMessage(): Message {
-        return connection_.getCurrentlyProcessedMessage()
-    }
+    override fun getCurrentlyProcessedMessage(): Message = connection.getCurrentlyProcessedMessage()
 
-    internal fun erase(asyncCallInfo: Proxy.AsyncCallInfo) {
+    internal fun erase(asyncCallInfo: AsyncCallInfo) {
         allocs.floatingAsyncCallSlots_.erase(asyncCallInfo)
     }
 
-    class SignalInfo(
-        val callback: SignalHandler,
-        val proxy: Proxy,
-    )
+    class SignalInfo(val callback: SignalHandler, val proxy: Proxy)
 
     data class AsyncCallInfo(
         val callback: AsyncReplyHandler,
@@ -257,7 +254,7 @@ internal class Proxy(
         val floating: Boolean,
         var finished: Boolean = false
     ) {
-        var methodCall: Slot? = null
+        var methodCall: Resource? = null
     }
 
     // Container keeping track of pending async calls
@@ -265,7 +262,7 @@ internal class Proxy(
         private val lock = ReentrantLock()
         private val asyncSlots = mutableListOf<AsyncCallInfo>()
 
-        fun push_back(asyncCallInfo: AsyncCallInfo) {
+        fun pushBack(asyncCallInfo: AsyncCallInfo) {
             lock.withLock {
                 asyncSlots.add(asyncCallInfo)
             }
@@ -290,7 +287,12 @@ internal class Proxy(
 
     companion object {
         val sdbus_async_reply_handler =
-            staticCFunction { sdbusMessage: CPointer<sd_bus_message>?, userData: COpaquePointer?, retError: CPointer<sd_bus_error>? ->
+            staticCFunction {
+                    sdbusMessage: CPointer<sd_bus_message>?,
+                    userData: COpaquePointer?,
+                    retError: CPointer<sd_bus_error>?
+                ->
+                @Suppress("UNCHECKED_CAST")
                 val reference = userData?.asStableRef<Any>()?.get() as? WeakReference<AsyncCallInfo>
                 assert(reference != null)
                 val asyncCallInfo = reference?.get() ?: return@staticCFunction -1
@@ -302,7 +304,8 @@ internal class Proxy(
                         memScoped {
 
                             val message = MethodReply(
-                                sdbusMessage!!, proxy.connection_.getSdBusInterface()
+                                sdbusMessage!!,
+                                proxy.connection.getSdBusInterface()
                             )
 
                             val error = sd_bus_message_get_error(sdbusMessage)
@@ -328,20 +331,33 @@ internal class Proxy(
             }
 
         val sdbus_signal_handler =
-            staticCFunction { sdbusMessage: CPointer<sd_bus_message>?, userData: COpaquePointer?, retError: CPointer<sd_bus_error>? ->
+            staticCFunction {
+                    sdbusMessage: CPointer<sd_bus_message>?,
+                    userData: COpaquePointer?,
+                    retError: CPointer<sd_bus_error>?
+                ->
                 val signalInfo = userData?.asStableRef<Any>()?.get() as? SignalInfo
                 assert(signalInfo != null)
 
                 val ok = invokeHandlerAndCatchErrors(retError) {
                     // TODO: Hide Message factory invocation under Connection API (tell, don't ask principle), then we can remove getSdBusInterface()
                     val message = Signal(
-                        sdbusMessage!!, signalInfo!!.proxy.connection_.getSdBusInterface()
+                        sdbusMessage!!,
+                        signalInfo!!.proxy.connection.getSdBusInterface()
                     )
-                    signalInfo!!.callback(message)
+                    signalInfo.callback(message)
                 }
 
                 if (ok) 0 else -1
             }
-
     }
 }
+
+val CompletableDeferred<MethodReply>.asAsyncReplyHandler: AsyncReplyHandler
+    get() = { reply, error ->
+        if (error != null) {
+            completeExceptionally(error)
+        } else {
+            complete(reply)
+        }
+    }

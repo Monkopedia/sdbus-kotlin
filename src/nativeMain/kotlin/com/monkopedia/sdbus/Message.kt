@@ -5,6 +5,8 @@ package com.monkopedia.sdbus
 import cnames.structs.sd_bus_creds
 import cnames.structs.sd_bus_message
 import com.monkopedia.sdbus.internal.ISdBus
+import com.monkopedia.sdbus.internal.MessageDecoder
+import com.monkopedia.sdbus.internal.MessageEncoder
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.internal.NativePtr.Companion.NULL
 import kotlin.native.ref.createCleaner

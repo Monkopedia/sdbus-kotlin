@@ -3,8 +3,6 @@
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.internal.Object
-import com.monkopedia.sdbus.Resource
-import com.monkopedia.sdbus.internal.Slot
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.EINVAL
 
@@ -129,7 +127,7 @@ interface IObject : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addObjectManager(t: return_slot_t): Slot
+    fun addObjectManager(t: return_slot_t): Resource
 
     /*!
      * @brief Provides D-Bus connection used by the object
@@ -212,7 +210,7 @@ interface IObject : Resource {
         interfaceName: InterfaceName,
         vtable: List<VTableItem>,
         return_slot: return_slot_t
-    ): Slot
+    ): Resource
 
     /*!
      * @brief Creates a signal message

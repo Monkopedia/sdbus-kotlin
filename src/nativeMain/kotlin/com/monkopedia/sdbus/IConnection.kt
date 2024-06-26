@@ -3,7 +3,6 @@
 package com.monkopedia.sdbus
 
 import cnames.structs.sd_bus
-import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.internal.Connection.Companion.Connection
 import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.privateConnection
@@ -12,7 +11,6 @@ import com.monkopedia.sdbus.internal.Connection.Companion.serverConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
 import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
 import com.monkopedia.sdbus.internal.SdBus
-import com.monkopedia.sdbus.internal.Slot
 import com.monkopedia.sdbus.internal.now
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion
@@ -161,7 +159,7 @@ interface IConnection : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addObjectManager(objectPath: ObjectPath, return_slot: return_slot_t): Slot
+    fun addObjectManager(objectPath: ObjectPath, return_slot: return_slot_t): Resource
 
     /*!
      * @brief Installs a floating match rule for messages received on this bus connection
@@ -207,7 +205,7 @@ interface IConnection : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addMatch(match: String, callback: MessageHandler, return_slot: return_slot_t): Slot
+    fun addMatch(match: String, callback: MessageHandler, return_slot: return_slot_t): Resource
 
     /*!
      * @brief Asynchronously installs a floating match rule for messages received on this bus connection
@@ -255,7 +253,7 @@ interface IConnection : Resource {
      */
     fun addMatchAsync(
         match: String, callback: MessageHandler, installCallback: MessageHandler, return_slot: return_slot_t
-    ): Slot
+    ): Resource
 
     /*!
      * @brief Retrieves the unique name of a connection. E.g. ":1.xx"

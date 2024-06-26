@@ -9,18 +9,16 @@ import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PlainMessage
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalName
-import com.monkopedia.sdbus.return_slot_t
 import com.monkopedia.sdbus.internal.Connection.Companion.pseudoConnection
-import com.monkopedia.sdbus.Resource
+import com.monkopedia.sdbus.return_slot_t
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
-
-typealias Slot = Resource
 
 internal interface IConnection : com.monkopedia.sdbus.IConnection {
 
@@ -55,11 +53,7 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
         signalName: SignalName
     ): Signal
 
-    fun createSignal(
-        objectPath: String,
-        interfaceName: String,
-        signalName: String
-    ): Signal
+    fun createSignal(objectPath: String, interfaceName: String, signalName: String): Signal
 
     fun callMethod(message: MethodCall, timeout: ULong): MethodReply
     fun callMethod(
@@ -68,7 +62,7 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
         userData: Any?,
         timeout: ULong,
         return_slot: return_slot_t
-    ): Slot
+    ): Resource
 
     fun emitPropertiesChangedSignal(
         objectPath: ObjectPath,
@@ -95,19 +89,18 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
         callback: sd_bus_message_handler_t,
         userData: Any?,
         return_slot: return_slot_t
-    ): Slot
+    ): Resource
 
     companion object {
         fun createPseudoConnection(): IConnection {
             val intf = SdBus()
-            return  pseudoConnection(intf)
+            return pseudoConnection(intf)
         }
 
         private var instance: IConnection? = null
 
-        fun getPseudoConnectionInstance(): IConnection {
-            return instance ?: createPseudoConnection().also { instance = it }
+        fun getPseudoConnectionInstance(): IConnection = instance ?: createPseudoConnection().also {
+            instance = it
         }
     }
-};
-
+}

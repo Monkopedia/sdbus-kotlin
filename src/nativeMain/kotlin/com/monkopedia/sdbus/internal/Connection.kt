@@ -12,17 +12,18 @@ import com.monkopedia.sdbus.BusName
 import com.monkopedia.sdbus.IConnection.PollData
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
+import com.monkopedia.sdbus.MessageHandler
 import com.monkopedia.sdbus.MethodCall
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PlainMessage
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.adopt_message
-import com.monkopedia.sdbus.MessageHandler
 import com.monkopedia.sdbus.return_slot
 import com.monkopedia.sdbus.return_slot_t
 import com.monkopedia.sdbus.sdbusRequire
@@ -165,13 +166,13 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 }
 
 internal class Connection private constructor(
-    private val sdbus_: ISdBus,
+    private val sdbus: ISdBus,
     bus: BusPtr
 ) : IConnection {
-    private val bus_: BusPtr = bus
-    private var asyncLoopThread_: Job? = null
-    val floatingMatchRules_ = mutableListOf<Slot>()
-    private val eventThread = EventLoopThread(bus, sdbus_)
+    private val bus: BusPtr = bus
+    private var asyncLoopThread: Job? = null
+    val floatingMatchRules = mutableListOf<Resource>()
+    private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
         it.notify()
     }
@@ -181,22 +182,22 @@ internal class Connection private constructor(
 
     override fun release() {
         loopExitResource.release()
-        floatingMatchRules_.forEach { it.release() }
-        floatingMatchRules_.clear()
-        bus_.release()
+        floatingMatchRules.forEach { it.release() }
+        floatingMatchRules.clear()
+        bus.release()
         released = true
     }
 
     suspend fun joinWithEventLoop() {
         require(!released) { "Connection has already been released" }
-        asyncLoopThread_?.join()
+        asyncLoopThread?.join()
     }
 
     override fun requestName(name: ServiceName) {
         require(!released) { "Connection has already been released" }
         checkServiceName(name.value)
 
-        val r = sdbus_.sd_bus_request_name(bus_.value, name.value, 0u)
+        val r = sdbus.sd_bus_request_name(bus.value, name.value, 0u)
         sdbusRequire(r < 0, "Failed to request bus name", -r)
 
         // In some cases we need to explicitly notify the event loop
@@ -206,7 +207,7 @@ internal class Connection private constructor(
 
     override fun releaseName(name: ServiceName) {
         require(!released) { "Connection has already been released" }
-        val r = sdbus_.sd_bus_release_name(bus_.value, name.value)
+        val r = sdbus.sd_bus_release_name(bus.value, name.value)
         sdbusRequire(r < 0, "Failed to release bus name", -r)
 
         // In some cases we need to explicitly notify the event loop
@@ -218,7 +219,7 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         memScoped {
             val name = cValue<CPointerVar<ByteVar>>().getPointer(this)
-            val r = sdbus_.sd_bus_get_unique_name(bus_.value, name)
+            val r = sdbus.sd_bus_get_unique_name(bus.value, name)
             val value = name[0]?.toKString()
             sdbusRequire(
                 r < 0 || value == null,
@@ -231,12 +232,12 @@ internal class Connection private constructor(
 
     override fun enterEventLoopAsync() {
         require(!released) { "Connection has already been released" }
-        if (asyncLoopThread_ == null) {
+        if (asyncLoopThread == null) {
             // TODO: Create local scope
             val thiz = WeakReference(this)
-            asyncLoopThread_ = eventThread.launch(GlobalScope).also {
+            asyncLoopThread = eventThread.launch(GlobalScope).also {
                 it.invokeOnCompletion {
-                    thiz.get()?.asyncLoopThread_ = null
+                    thiz.get()?.asyncLoopThread = null
                 }
             }
         }
@@ -255,7 +256,7 @@ internal class Connection private constructor(
 
     override fun addObjectManager(objectPath: ObjectPath) {
         require(!released) { "Connection has already been released" }
-        val r = sdbus_.sd_bus_add_object_manager(bus_.value, null, objectPath.value)
+        val r = sdbus.sd_bus_add_object_manager(bus.value, null, objectPath.value)
 
         sdbusRequire(r < 0, "Failed to add object manager", -r)
     }
@@ -267,12 +268,12 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
 
-        val r = sdbus_.sd_bus_add_object_manager(bus_.value, slot, objectPath.value)
+        val r = sdbus.sd_bus_add_object_manager(bus.value, slot, objectPath.value)
 
         sdbusRequire(r < 0, "Failed to add object manager", -r)
 
         Reference(slot[0]) {
-            sdbus_.sd_bus_slot_unref(it)
+            sdbus.sd_bus_slot_unref(it)
         }
     }
 
@@ -283,7 +284,7 @@ internal class Connection private constructor(
 
     override fun setMethodCallTimeout(timeout: ULong) {
         require(!released) { "Connection has already been released" }
-        val r = sdbus_.sd_bus_set_method_call_timeout(bus_.value, timeout)
+        val r = sdbus.sd_bus_set_method_call_timeout(bus.value, timeout)
 
         sdbusRequire(r < 0, "Failed to set method call timeout", -r)
     }
@@ -292,7 +293,7 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val timeout = cValue<uint64_tVar>().getPointer(this)
 
-        val r = sdbus_.sd_bus_get_method_call_timeout(bus_.value, timeout)
+        val r = sdbus.sd_bus_get_method_call_timeout(bus.value, timeout)
 
         sdbusRequire(r < 0, "Failed to get method call timeout", -r)
 
@@ -301,21 +302,21 @@ internal class Connection private constructor(
 
     override fun addMatch(match: String, callback: MessageHandler) {
         require(!released) { "Connection has already been released" }
-        floatingMatchRules_.add(addMatch(match, callback, return_slot))
+        floatingMatchRules.add(addMatch(match, callback, return_slot))
     }
 
     override fun addMatch(
         match: String,
         callback: MessageHandler,
         return_slot: return_slot_t
-    ): Slot = memScoped {
+    ): Resource = memScoped {
         require(!released) { "Connection has already been released" }
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
         val matchInfo = MatchInfo(callback, {}, WeakReference(this@Connection))
         val stableRef = StableRef.create(matchInfo)
-        val bus = sdbus_
+        val bus = sdbus
         val r = bus.sd_bus_add_match(
-            bus_.value,
+            this@Connection.bus.value,
             slot,
             match,
             sdbus_match_callback,
@@ -336,7 +337,7 @@ internal class Connection private constructor(
         installCallback: MessageHandler
     ) {
         require(!released) { "Connection has already been released" }
-        floatingMatchRules_.add(
+        floatingMatchRules.add(
             addMatchAsync(match, callback, installCallback, return_slot)
         )
     }
@@ -346,14 +347,14 @@ internal class Connection private constructor(
         callback: MessageHandler,
         installCallback: MessageHandler,
         return_slot: return_slot_t
-    ): Slot = memScoped {
+    ): Resource = memScoped {
         require(!released) { "Connection has already been released" }
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
         val matchInfo = MatchInfo(callback, installCallback, WeakReference(this@Connection))
         val stableRef = StableRef.create(matchInfo)
 
-        val r = sdbus_.sd_bus_add_match_async(
-            bus_.value,
+        val r = sdbus.sd_bus_add_match_async(
+            bus.value,
             slot,
             match,
             sdbus_match_callback,
@@ -363,14 +364,14 @@ internal class Connection private constructor(
         sdbusRequire(r < 0, "Failed to add match", -r)
 
         Reference(matchInfo to slot[0]) { (_, ref) ->
-            sdbus_.sd_bus_slot_unref(ref)
+            sdbus.sd_bus_slot_unref(ref)
             stableRef.dispose()
         }
     }
 
 
     override fun getSdBusInterface(): ISdBus {
-        return sdbus_
+        return sdbus
     }
 
     override fun addObjectVTable(
@@ -384,15 +385,15 @@ internal class Connection private constructor(
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
         val ref = userData?.let { StableRef.create(it) }
 
-        val r = sdbus_.sd_bus_add_object_vtable(
-            bus_.get(), slot, objectPath.value, interfaceName.value, vtable, ref?.asCPointer()
+        val r = sdbus.sd_bus_add_object_vtable(
+            bus.get(), slot, objectPath.value, interfaceName.value, vtable, ref?.asCPointer()
         )
 
         sdbusRequire(r < 0, "Failed to register object vtable", -r)
 
         val cPointer = slot[0]
         Reference(cPointer) {
-            sdbus_.sd_bus_slot_unref(it)
+            sdbus.sd_bus_slot_unref(it)
             ref?.dispose()
         }
     }
@@ -402,11 +403,11 @@ internal class Connection private constructor(
         val sdbusMsg = cValue<CPointerVar<sd_bus_message>>().getPointer(this)
 
         val r =
-            sdbus_.sd_bus_message_new(bus_.get(), sdbusMsg, _SD_BUS_MESSAGE_TYPE_INVALID.convert())
+            sdbus.sd_bus_message_new(bus.get(), sdbusMsg, _SD_BUS_MESSAGE_TYPE_INVALID.convert())
 
         sdbusRequire(r < 0, "Failed to create a plain message", -r)
 
-        PlainMessage(sdbusMsg[0]!!, sdbus_, adopt_message)
+        PlainMessage(sdbusMsg[0]!!, sdbus, adopt_message)
     }
 
     override fun createMethodCall(
@@ -426,8 +427,8 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val sdbusMsg = cValue<CPointerVar<sd_bus_message>>().getPointer(this)
 
-        val r = sdbus_.sd_bus_message_new_method_call(
-            bus_.get(),
+        val r = sdbus.sd_bus_message_new_method_call(
+            bus.get(),
             sdbusMsg,
             destination.takeIf { it.isNotEmpty() },
             objectPath,
@@ -437,7 +438,7 @@ internal class Connection private constructor(
 
         sdbusRequire(r < 0, "Failed to create method call", -r)
 
-        MethodCall(sdbusMsg[0]!!, sdbus_, adopt_message)
+        MethodCall(sdbusMsg[0]!!, sdbus, adopt_message)
     }
 
     override fun createSignal(
@@ -454,8 +455,8 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val sdbusMsg = cValue<CPointerVar<sd_bus_message>>().getPointer(this)
 
-        val r = sdbus_.sd_bus_message_new_signal(
-            bus_.get(),
+        val r = sdbus.sd_bus_message_new_signal(
+            bus.get(),
             sdbusMsg,
             objectPath,
             interfaceName,
@@ -464,7 +465,7 @@ internal class Connection private constructor(
 
         sdbusRequire(r < 0, "Failed to create signal", -r)
 
-        Signal(sdbusMsg[0]!!, sdbus_, adopt_message)
+        Signal(sdbusMsg[0]!!, sdbus, adopt_message)
     }
 
     override fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
@@ -485,7 +486,7 @@ internal class Connection private constructor(
         userData: Any?,
         timeout: ULong,
         return_slot: return_slot_t
-    ): Slot {
+    ): Resource {
         require(!released) { "Connection has already been released" }
         // TODO: Think of ways of optimizing these three locking/unlocking of sdbus mutex (merge into one call?)
         val timeoutBefore = getEventLoopPollData().timeout ?: Duration.INFINITE
@@ -515,8 +516,8 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val names = if (propNames.isNotEmpty()) toStrv(propNames.map { it.value }) else null
 
-        val r = sdbus_.sd_bus_emit_properties_changed_strv(
-            bus_.get(),
+        val r = sdbus.sd_bus_emit_properties_changed_strv(
+            bus.get(),
             objectPath,
             interfaceName,
             names
@@ -527,7 +528,7 @@ internal class Connection private constructor(
 
     override fun emitInterfacesAddedSignal(objectPath: ObjectPath) {
         require(!released) { "Connection has already been released" }
-        val r = sdbus_.sd_bus_emit_object_added(bus_.get(), objectPath.value)
+        val r = sdbus.sd_bus_emit_object_added(bus.get(), objectPath.value)
 
         sdbusRequire(
             r < 0,
@@ -543,7 +544,7 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val names = if (interfaces.isNotEmpty()) toStrv(interfaces.map { it.value }) else null
 
-        val r = sdbus_.sd_bus_emit_interfaces_added_strv(bus_.get(), objectPath.value, names)
+        val r = sdbus.sd_bus_emit_interfaces_added_strv(bus.get(), objectPath.value, names)
 
         sdbusRequire(r < 0, "Failed to emit InterfacesAdded signal", -r)
 
@@ -551,7 +552,7 @@ internal class Connection private constructor(
 
     override fun emitInterfacesRemovedSignal(objectPath: ObjectPath) {
         require(!released) { "Connection has already been released" }
-        val r = sdbus_.sd_bus_emit_object_removed(bus_.get(), objectPath.value)
+        val r = sdbus.sd_bus_emit_object_removed(bus.get(), objectPath.value)
 
         sdbusRequire(
             r < 0,
@@ -567,7 +568,7 @@ internal class Connection private constructor(
         require(!released) { "Connection has already been released" }
         val names = if (interfaces.isNotEmpty()) toStrv(interfaces.map { it.value }) else null
 
-        val r = sdbus_.sd_bus_emit_interfaces_removed_strv(bus_.get(), objectPath.value, names)
+        val r = sdbus.sd_bus_emit_interfaces_removed_strv(bus.get(), objectPath.value, names)
 
         sdbusRequire(r < 0, "Failed to emit InterfacesRemoved signal", -r)
     }
@@ -580,13 +581,13 @@ internal class Connection private constructor(
         callback: sd_bus_message_handler_t,
         userData: Any?,
         return_slot: return_slot_t
-    ): Slot = memScoped {
+    ): Resource = memScoped {
         require(!released) { "Connection has already been released" }
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
         val ref = userData?.let { StableRef.create(it) }
 
-        val r = sdbus_.sd_bus_match_signal(
-            bus_.get(),
+        val r = sdbus.sd_bus_match_signal(
+            bus.get(),
             slot,
             sender.takeIf { it.isNotEmpty() },
             objectPath.takeIf { it.isNotEmpty() },
@@ -599,16 +600,16 @@ internal class Connection private constructor(
         sdbusRequire(r < 0, "Failed to register signal handler", -r)
 
         Reference(slot[0]) {
-            sdbus_.sd_bus_slot_unref(it)
+            sdbus.sd_bus_slot_unref(it)
             ref?.dispose()
         }
     }
 
     override fun getCurrentlyProcessedMessage(): Message {
         require(!released) { "Connection has already been released" }
-        val sdbusMsg = sdbus_.sd_bus_get_current_message(bus_.get())
+        val sdbusMsg = sdbus.sd_bus_get_current_message(bus.get())
 
-        return Message(sdbusMsg!!, sdbus_)
+        return Message(sdbusMsg!!, sdbus)
     }
 
     class EventFd(fd: Int = 0) {

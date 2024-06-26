@@ -2,7 +2,6 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.Slot
 import kotlin.time.Duration
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
@@ -22,11 +21,11 @@ class VTableAdder(private val object_: IObject, private val vtable: List<VTableI
         forInterface(InterfaceName(interfaceName))
     }
 
-    fun forInterface(interfaceName: InterfaceName, return_slot: return_slot_t): Slot {
+    fun forInterface(interfaceName: InterfaceName, return_slot: return_slot_t): Resource {
         return object_.addVTable(interfaceName, vtable, return_slot)
     }
 
-    fun forInterface(interfaceName: String, return_slot: return_slot_t): Slot {
+    fun forInterface(interfaceName: String, return_slot: return_slot_t): Resource {
         return forInterface(InterfaceName(interfaceName), return_slot)
     }
 }
@@ -178,7 +177,7 @@ class AsyncMethodInvoker {
     inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder): PendingAsyncCall =
         uponReplyInvoke(build(callbackBuilder))
 
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
         require(method_?.isValid == true)
 
         return proxy.callMethodAsync(
@@ -192,7 +191,7 @@ class AsyncMethodInvoker {
     inline fun uponReplyInvoke(
         crossinline callbackBuilder: TypedMethodBuilder,
         return_slot: return_slot_t
-    ): Slot = uponReplyInvoke(build(callbackBuilder), return_slot)
+    ): Resource = uponReplyInvoke(build(callbackBuilder), return_slot)
 
     suspend inline fun <reified T> getResult(): T {
         val completable = CompletableDeferred<T>()
@@ -242,10 +241,10 @@ class SignalSubscriber(
         proxy.registerSignalHandler(interfaceName_!!, signalName, makeSignalHandler(callback))
     }
 
-    inline fun call(builder: TypedMethodBuilder, return_slot: return_slot_t): Slot =
+    inline fun call(builder: TypedMethodBuilder, return_slot: return_slot_t): Resource =
         call(build(builder), return_slot)
 
-    fun call(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
+    fun call(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
         require(interfaceName_ != null)
 
         return proxy.registerSignalHandler(
@@ -332,7 +331,7 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
         return_slot: return_slot_t
     ) = uponReplyInvoke(build(callbackBuilder), return_slot)
 
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("Get")
@@ -445,7 +444,7 @@ class AsyncPropertySetter(private val proxy: IProxy, private val propertyName: S
             .uponReplyInvoke(callback)
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("Set")
@@ -513,7 +512,7 @@ class AsyncAllPropertiesGetter(private val proxy: IProxy) {
             .uponReplyInvoke(callback)
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Slot {
+    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("GetAll")

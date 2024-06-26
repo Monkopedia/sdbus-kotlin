@@ -3,7 +3,6 @@
 package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Error
-import com.monkopedia.sdbus.IConnection
 import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
@@ -12,9 +11,9 @@ import com.monkopedia.sdbus.ObjectManagerProxy
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
-import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.callMethodAsync
@@ -26,7 +25,6 @@ import com.monkopedia.sdbus.setProperty
 import com.monkopedia.sdbus.toError
 import com.monkopedia.sdbus.with_future
 import com.monkopedia.sdbus.with_future_t
-import com.monkopedia.sdbus.internal.Slot
 import kotlin.time.Duration
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -151,7 +149,7 @@ class TestProxy private constructor(proxy: IProxy) :
             }
     }
 
-    fun doOperationClientSideAsync(param: UInt, return_slot: return_slot_t): Slot {
+    fun doOperationClientSideAsync(param: UInt, return_slot: return_slot_t): Resource {
         return proxy.callMethodAsync("doOperation")
             .onInterface(INTERFACE_NAME)
             .withArguments { call(param) }

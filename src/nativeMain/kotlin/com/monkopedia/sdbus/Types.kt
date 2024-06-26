@@ -2,7 +2,6 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner

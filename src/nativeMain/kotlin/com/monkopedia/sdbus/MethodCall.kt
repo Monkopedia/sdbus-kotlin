@@ -6,7 +6,6 @@ import cnames.structs.sd_bus_message
 import cnames.structs.sd_bus_slot
 import com.monkopedia.sdbus.internal.ISdBus
 import com.monkopedia.sdbus.internal.Reference
-import com.monkopedia.sdbus.internal.Slot
 import kotlin.native.internal.NativePtr
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
@@ -56,7 +55,7 @@ class MethodCall private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdB
         userData: Any?,
         timeout: ULong,
         t: return_slot_t
-    ): Slot = memScoped {
+    ): Resource = memScoped {
         val slot: CPointer<CPointerVar<sd_bus_slot>> =
             cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
         val userDataRef = userData?.let { StableRef.create(it) }

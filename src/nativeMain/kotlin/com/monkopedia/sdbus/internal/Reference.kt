@@ -9,7 +9,6 @@ import kotlin.native.ref.createCleaner
 internal class Reference<T>(
     val value: T,
     onLeaveScopes: (T) -> Unit
-//    val throwable: Throwable = Throwable()
 ): Resource {
     private val resource = value to singleCall(onLeaveScopes)
 
@@ -25,7 +24,7 @@ internal class Reference<T>(
         resource.second(resource.first)
     }
 
-    internal fun <R> freeAfter(value: Reference<R>): Slot {
+    internal fun <R> freeAfter(value: Reference<R>): Resource {
         (extraReferences ?: mutableListOf<Reference<*>>().also { extraReferences = it })
             .add(value)
         return this

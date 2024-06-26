@@ -26,20 +26,20 @@ internal inline fun invokeHandlerAndCatchErrors(
     try {
         callable()
     } catch (e: Error) {
-        sd_bus_error_set(retError, e.name, e.message);
+        sd_bus_error_set(retError, e.name, e.message)
         return false
     } catch (t: Throwable) {
-        sd_bus_error_set(retError, SDBUSCPP_ERROR_NAME, t.message ?: "Unknown error occurred");
+        sd_bus_error_set(retError, SDBUSCPP_ERROR_NAME, t.message ?: "Unknown error occurred")
         return false
     }
 
     return true
 }
 
-internal inline fun now(): Duration = memScoped{
+internal inline fun now(): Duration = memScoped {
     val ts = cValue<timespec>().getPointer(this)
     val r = clock_gettime(CLOCK_MONOTONIC, ts)
-    sdbusRequire(r < 0, "clock_gettime failed: ", -errno);
+    sdbusRequire(r < 0, "clock_gettime failed: ", -errno)
 
     return ts[0].tv_nsec.nanoseconds + ts[0].tv_sec.seconds
 }

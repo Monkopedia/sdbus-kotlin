@@ -2,10 +2,8 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.internal.Proxy
 import com.monkopedia.sdbus.internal.Proxy.AsyncCallInfo
-import com.monkopedia.sdbus.internal.Slot
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlin.time.Duration
@@ -185,7 +183,7 @@ interface IProxy : Resource {
         message: MethodCall,
         asyncReplyCallback: AsyncReplyHandler,
         return_slot: return_slot_t
-    ): Slot
+    ): Resource
 
     /*!
      * @brief Calls method on the D-Bus object asynchronously, with custom timeout
@@ -243,7 +241,7 @@ interface IProxy : Resource {
         asyncReplyCallback: AsyncReplyHandler,
         timeout: ULong,
         t: return_slot_t
-    ): Slot
+    ): Resource
 
     /*!
      * @brief Calls method on the D-Bus object asynchronously
@@ -331,7 +329,7 @@ interface IProxy : Resource {
         signalName: SignalName,
         signalHandler: SignalHandler,
         return_slot: return_slot_t
-    ): Slot
+    ): Resource
 
     fun createMethodCall(interfaceName: String, methodName: String): MethodCall
 
@@ -346,7 +344,7 @@ interface IProxy : Resource {
         signalName: String,
         signalHandler: SignalHandler,
         return_slot: return_slot_t
-    ): Slot
+    ): Resource
 }
 
 /********************************************/
@@ -402,7 +400,7 @@ inline fun IProxy.callMethodAsync(
     noinline asyncReplyCallback: AsyncReplyHandler,
     timeout: Duration,
     return_slot: return_slot_t
-): Slot = callMethodAsync(
+): Resource = callMethodAsync(
     message,
     asyncReplyCallback,
     timeout.inWholeMicroseconds.toULong(),

@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalForeignApi::class)
+@file:Suppress("LocalVariableName")
 
 package com.monkopedia.sdbus.internal
 

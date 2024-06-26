@@ -10,27 +10,28 @@ import com.monkopedia.sdbus.InterfaceFlagsVTableItem
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodCall
+import com.monkopedia.sdbus.MethodCallback
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodVTableItem
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PropertyGetCallback
 import com.monkopedia.sdbus.PropertyGetReply
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.PropertySetCall
+import com.monkopedia.sdbus.PropertySetCallback
 import com.monkopedia.sdbus.PropertyVTableItem
+import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.SignalVTableItem
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.VTableItem
-import com.monkopedia.sdbus.MethodCallback
-import com.monkopedia.sdbus.PropertyGetCallback
-import com.monkopedia.sdbus.PropertySetCallback
-import com.monkopedia.sdbus.return_slot
-import com.monkopedia.sdbus.return_slot_t
-import com.monkopedia.sdbus.sdbusRequire
 import com.monkopedia.sdbus.internal.Object.VTable.MethodItem
 import com.monkopedia.sdbus.internal.Object.VTable.PropertyItem
 import com.monkopedia.sdbus.internal.Object.VTable.SignalItem
+import com.monkopedia.sdbus.return_slot
+import com.monkopedia.sdbus.return_slot_t
+import com.monkopedia.sdbus.sdbusRequire
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 import kotlinx.cinterop.Arena
@@ -53,10 +54,9 @@ import sdbus.sd_bus_error
 import sdbus.sd_bus_error_set
 import sdbus.sd_bus_vtable
 
-internal class Object(private val connection: IConnection, private val path: ObjectPath) :
-    IObject {
+internal class Object(private val connection: IConnection, private val path: ObjectPath) : IObject {
     private class Allocs {
-        var objManager: Slot? = null
+        var objManager: Resource? = null
 
         fun release() {
             objManager?.release()
@@ -85,7 +85,7 @@ internal class Object(private val connection: IConnection, private val path: Obj
         interfaceName: InterfaceName,
         vtable: List<VTableItem>,
         return_slot: return_slot_t
-    ): Slot = memScoped {
+    ): Resource = memScoped {
         checkInterfaceName(interfaceName.value)
 
         // 1st pass -- create vtable structure for internal sdbus-c++ purposes
@@ -161,15 +161,14 @@ internal class Object(private val connection: IConnection, private val path: Obj
         allocs.objManager = connection.addObjectManager(path, return_slot)
     }
 
-    override fun addObjectManager(t: return_slot_t): Slot =
+    override fun addObjectManager(t: return_slot_t): Resource =
         connection.addObjectManager(path, return_slot)
 
     override fun getConnection(): com.monkopedia.sdbus.IConnection = connection
 
     override fun getObjectPath(): ObjectPath = path
 
-    override fun getCurrentlyProcessedMessage(): Message =
-        connection.getCurrentlyProcessedMessage()
+    override fun getCurrentlyProcessedMessage(): Message = connection.getCurrentlyProcessedMessage()
 
     //    private:
     // A vtable record comprising methods, signals, properties, flags.

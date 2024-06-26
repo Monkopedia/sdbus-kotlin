@@ -6,19 +6,19 @@ import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PeerProxy
 import com.monkopedia.sdbus.PropertiesProxy
+import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.callMethodAsync
 import com.monkopedia.sdbus.getProperty
-import com.monkopedia.sdbus.return_slot
-import com.monkopedia.sdbus.setProperty
-import com.monkopedia.sdbus.uponSignal
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.ComplexMapValue
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.StructOfStruct
-import com.monkopedia.sdbus.internal.Slot
+import com.monkopedia.sdbus.return_slot
+import com.monkopedia.sdbus.setProperty
+import com.monkopedia.sdbus.uponSignal
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -28,7 +28,7 @@ import kotlinx.cinterop.memScoped
 abstract class IntegrationTestsProxy(override val proxy: IProxy) :
     PropertiesProxy,
     PeerProxy {
-    private var simpleSignalHandler: Slot? = null
+    private var simpleSignalHandler: Resource? = null
 
     fun registerProxy() {
         val thiz = WeakReference(this)

@@ -2,7 +2,6 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.Slot
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
 
@@ -118,7 +117,7 @@ interface PropertiesProxy : ProxyHolder {
         value: Variant,
         callback: TypedMethodCall<*>,
         return_slot: return_slot_t
-    ): Slot = proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
+    ): Resource = proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
         .uponReplyInvoke(callback, return_slot)
 
     suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
