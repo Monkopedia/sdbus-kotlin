@@ -2,11 +2,11 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.InterfaceName
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.PropertyName
-import com.monkopedia.sdbus.header.ServiceName
-import com.monkopedia.sdbus.header.Signature
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.ServiceName
+import com.monkopedia.sdbus.Signature
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import platform.posix.getenv

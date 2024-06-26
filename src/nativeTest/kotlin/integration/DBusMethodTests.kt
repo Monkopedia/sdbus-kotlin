@@ -2,16 +2,16 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Error
-import com.monkopedia.sdbus.header.InterfaceName
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.ServiceName
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.callMethod
-import com.monkopedia.sdbus.header.createProxy
-import com.monkopedia.sdbus.header.dont_run_event_loop_thread
-import com.monkopedia.sdbus.header.registerMethod
-import com.monkopedia.sdbus.header.return_slot
+import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.ServiceName
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.callMethod
+import com.monkopedia.sdbus.createProxy
+import com.monkopedia.sdbus.dont_run_event_loop_thread
+import com.monkopedia.sdbus.registerMethod
+import com.monkopedia.sdbus.return_slot
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -282,7 +282,7 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canRegisterAdditionalVTableDynamicallyAtAnyTime() {
-        val obj = fixture.m_adaptor!!.m_object
+        val obj = fixture.m_adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
         val vtableSlot = obj.addVTable(
             interfaceName,
@@ -314,7 +314,7 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canUnregisterAdditionallyRegisteredVTableAtAnyTime() {
-        val obj = fixture.m_adaptor!!.m_object
+        val obj = fixture.m_adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
 
         val slot = obj.addVTable(

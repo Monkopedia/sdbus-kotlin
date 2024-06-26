@@ -1,12 +1,12 @@
 package com.monkopedia.sdbus.unit
 
-import com.monkopedia.sdbus.header.Error
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.PlainMessage.Companion.createPlainMessage
-import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.UnixFd
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.containsValueOfType
+import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
+import com.monkopedia.sdbus.Signature
+import com.monkopedia.sdbus.UnixFd
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.containsValueOfType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -36,7 +36,7 @@ class TypesTest {
     fun aVariant_ContainsNoValueAfterDefaultConstructed() {
         val v = Variant()
 
-        assertTrue(v.isEmpty())
+        assertTrue(v.isEmpty)
     }
 
     @Test
@@ -58,7 +58,7 @@ class TypesTest {
     fun aVariant_IsNotEmptyWhenContainsAValue() {
         val v = Variant("hello")
 
-        assertFalse(v.isEmpty())
+        assertFalse(v.isEmpty)
     }
 
     @Test

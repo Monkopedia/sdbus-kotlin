@@ -2,9 +2,9 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.ServiceName
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.createBusConnection
+import com.monkopedia.sdbus.ServiceName
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.createBusConnection
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -40,7 +40,7 @@ class DBusSignalsTest : BaseTest() {
     @Test
     fun proxyDoesNotReceiveSignalFromOtherBusName() {
         val otherBusName = ServiceName(SERVICE_NAME.value + "2")
-        val connection2 = createBusConnection(otherBusName)
+        val connection2 = com.monkopedia.sdbus.createBusConnection(otherBusName)
         val adaptor2 = TestAdaptor(connection2, OBJECT_PATH)
 
         adaptor2.emitSimpleSignal()

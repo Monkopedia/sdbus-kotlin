@@ -1,14 +1,13 @@
 package unit
 
-import com.monkopedia.sdbus.header.BusName
-import com.monkopedia.sdbus.header.InterfaceName
-import com.monkopedia.sdbus.header.MemberName
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.UnixFd
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.signature_of
-import com.monkopedia.sdbus.unit.ComplexType
+import com.monkopedia.sdbus.BusName
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.MemberName
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.Signature
+import com.monkopedia.sdbus.UnixFd
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.signatureOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
@@ -34,7 +33,7 @@ private typealias ComplexTypeCheck = Map< ULong, B>
 class TypTraitsTest {
 
     inline fun <reified T> assertType(value: String) {
-        assertEquals(value, signature_of<T>().value)
+        assertEquals(value, signatureOf<T>().value)
     }
 
     @Serializable

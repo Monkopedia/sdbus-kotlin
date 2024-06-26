@@ -2,7 +2,7 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Error
+import com.monkopedia.sdbus.Error
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

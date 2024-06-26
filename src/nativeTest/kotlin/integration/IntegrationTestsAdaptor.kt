@@ -1,27 +1,27 @@
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE
-import com.monkopedia.sdbus.header.Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
-import com.monkopedia.sdbus.header.Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL
-import com.monkopedia.sdbus.header.IObject
-import com.monkopedia.sdbus.header.ObjectAdaptor
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.UnixFd
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.addVTable
-import com.monkopedia.sdbus.header.emitSignal
-import com.monkopedia.sdbus.header.registerMethod
-import com.monkopedia.sdbus.header.registerProperty
-import com.monkopedia.sdbus.header.registerSignal
-import com.monkopedia.sdbus.header.setInterfaceFlags
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL
+import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.ObjectAdaptor
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.Signature
+import com.monkopedia.sdbus.UnixFd
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.addVTable
+import com.monkopedia.sdbus.emitSignal
+import com.monkopedia.sdbus.registerMethod
+import com.monkopedia.sdbus.registerProperty
+import com.monkopedia.sdbus.registerSignal
+import com.monkopedia.sdbus.setInterfaceFlags
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 
-abstract class IntegrationTestsAdaptor(override val m_object: IObject) : ObjectAdaptor {
+abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdaptor {
 
     open fun registerAdaptor() {
-        m_object.addVTable(
+        obj.addVTable(
             setInterfaceFlags().markAsDeprecated()
                 .withPropertyUpdateBehavior(EMITS_NO_SIGNAL),
             registerMethod("noArgNoReturn").implementedAs { call { -> noArgNoReturn() } },
@@ -134,14 +134,14 @@ abstract class IntegrationTestsAdaptor(override val m_object: IObject) : ObjectA
     }
 
     fun emitSimpleSignal() =
-        m_object.emitSignal("simpleSignal").onInterface(INTERFACE_NAME).emit { call() }
+        obj.emitSignal("simpleSignal").onInterface(INTERFACE_NAME).emit { call() }
 
     fun emitSignalWithMap(aMap: Map<Int, String>) =
-        m_object.emitSignal("signalWithMap").onInterface(INTERFACE_NAME)
+        obj.emitSignal("signalWithMap").onInterface(INTERFACE_NAME)
             .emit { call(aMap) }
 
     fun emitSignalWithVariant(aVariant: Variant) =
-        m_object.emitSignal("signalWithVariant").onInterface(INTERFACE_NAME)
+        obj.emitSignal("signalWithVariant").onInterface(INTERFACE_NAME)
             .emit { call(aVariant) }
 
     protected abstract fun noArgNoReturn(): Unit

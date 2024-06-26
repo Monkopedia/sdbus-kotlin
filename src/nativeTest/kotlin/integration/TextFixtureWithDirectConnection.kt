@@ -2,10 +2,10 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.IConnection
-import com.monkopedia.sdbus.header.createBusConnection
-import com.monkopedia.sdbus.header.createDirectBusConnection
-import com.monkopedia.sdbus.header.createServerBus
+import com.monkopedia.sdbus.IConnection
+import com.monkopedia.sdbus.createBusConnection
+import com.monkopedia.sdbus.createDirectBusConnection
+import com.monkopedia.sdbus.createServerBus
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -41,10 +41,10 @@ import platform.posix.unlink
 import platform.posix.usleep
 
 @ThreadLocal
-val s_adaptorConnection = createBusConnection()
+val s_adaptorConnection = com.monkopedia.sdbus.createBusConnection()
 
 @ThreadLocal
-val s_proxyConnection = createBusConnection()
+val s_proxyConnection = com.monkopedia.sdbus.createBusConnection()
 
 class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
 
@@ -71,12 +71,12 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
         val job = launch(context) {
             val fd = accept(sock, null, null)
             val set = fcntl(fd, F_SETFD, /*SOCK_NONBLOCK|*/SOCK_CLOEXEC)
-            m_adaptorConnection = createServerBus(fd)
+            m_adaptorConnection = com.monkopedia.sdbus.createServerBus(fd)
             // This is necessary so that createDirectBusConnection() below does not block
             m_adaptorConnection?.enterEventLoopAsync()
         }
         m_proxyConnection =
-            createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
+            com.monkopedia.sdbus.createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
         m_proxyConnection?.enterEventLoopAsync()
 
         job.join()
@@ -94,8 +94,8 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
     }
 
     private val context = newFixedThreadPoolContext(4, "test-context")
-    var m_adaptorConnection: IConnection? = null
-    var m_proxyConnection: IConnection? = null
+    var m_adaptorConnection: com.monkopedia.sdbus.IConnection? = null
+    var m_proxyConnection: com.monkopedia.sdbus.IConnection? = null
     var m_adaptor: TestAdaptor? = null
     var m_proxy: TestProxy? = null
 

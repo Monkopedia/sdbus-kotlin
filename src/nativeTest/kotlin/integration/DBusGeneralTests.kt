@@ -2,9 +2,9 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Message
-import com.monkopedia.sdbus.header.createBusConnection
-import com.monkopedia.sdbus.header.return_slot
+import com.monkopedia.sdbus.Message
+import com.monkopedia.sdbus.createBusConnection
+import com.monkopedia.sdbus.return_slot
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,15 +18,15 @@ import platform.posix.size_t
 class AdaptorAndProxy {
     @Test
     fun canBeConstructedSuccessfully() {
-        val connection = createBusConnection()
+        val connection = com.monkopedia.sdbus.createBusConnection()
         connection.requestName(SERVICE_NAME)
 
         val adaptor = TestAdaptor(connection, OBJECT_PATH)
         val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH)
 
         connection.releaseName(SERVICE_NAME)
-        adaptor.m_object.release()
-        proxy.m_proxy.release()
+        adaptor.obj.release()
+        proxy.proxy.release()
     }
 }
 
@@ -92,7 +92,7 @@ class CppEventLoop : BaseTest() {
     fun canAddFloatingMatchRule() {
         val matchingMessageReceived = atomic(false)
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
-        val con = createBusConnection()
+        val con = com.monkopedia.sdbus.createBusConnection()
         con.enterEventLoopAsync()
         val callback = { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) {

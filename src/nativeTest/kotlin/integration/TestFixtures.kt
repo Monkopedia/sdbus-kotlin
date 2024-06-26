@@ -2,7 +2,6 @@
 package com.monkopedia.sdbus.integration
 
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import platform.posix.usleep
@@ -33,10 +32,10 @@ abstract class ConnectionTestFixture(test: BaseTest) : BaseTestFixture(test) {
     }
 
     override fun onAfterTest() {
-        m_adaptor?.m_object?.release()
-        m_proxy?.m_proxy?.release()
-        m_objectManagerAdaptor?.m_object?.release()
-        m_objectManagerProxy?.m_proxy?.release()
+        m_adaptor?.obj?.release()
+        m_proxy?.proxy?.release()
+        m_objectManagerAdaptor?.obj?.release()
+        m_objectManagerProxy?.proxy?.release()
         m_adaptor = null
         m_proxy = null
         m_objectManagerProxy = null

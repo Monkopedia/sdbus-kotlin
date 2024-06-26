@@ -2,30 +2,30 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Error
-import com.monkopedia.sdbus.header.IConnection
-import com.monkopedia.sdbus.header.IProxy
-import com.monkopedia.sdbus.header.InterfaceName
-import com.monkopedia.sdbus.header.Message
-import com.monkopedia.sdbus.header.MethodReply
-import com.monkopedia.sdbus.header.ObjectManagerProxy
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.PendingAsyncCall
-import com.monkopedia.sdbus.header.PropertyName
-import com.monkopedia.sdbus.header.ServiceName
-import com.monkopedia.sdbus.header.SignalName
-import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.callMethod
-import com.monkopedia.sdbus.header.callMethodAsync
-import com.monkopedia.sdbus.header.createProxy
-import com.monkopedia.sdbus.header.dont_run_event_loop_thread_t
-import com.monkopedia.sdbus.header.onError
-import com.monkopedia.sdbus.header.return_slot_t
-import com.monkopedia.sdbus.header.setProperty
-import com.monkopedia.sdbus.header.toError
-import com.monkopedia.sdbus.header.with_future
-import com.monkopedia.sdbus.header.with_future_t
+import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.IConnection
+import com.monkopedia.sdbus.IProxy
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.Message
+import com.monkopedia.sdbus.MethodReply
+import com.monkopedia.sdbus.ObjectManagerProxy
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PendingAsyncCall
+import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.ServiceName
+import com.monkopedia.sdbus.SignalName
+import com.monkopedia.sdbus.Signature
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.callMethod
+import com.monkopedia.sdbus.callMethodAsync
+import com.monkopedia.sdbus.createProxy
+import com.monkopedia.sdbus.dont_run_event_loop_thread_t
+import com.monkopedia.sdbus.onError
+import com.monkopedia.sdbus.return_slot_t
+import com.monkopedia.sdbus.setProperty
+import com.monkopedia.sdbus.toError
+import com.monkopedia.sdbus.with_future
+import com.monkopedia.sdbus.with_future_t
 import com.monkopedia.sdbus.internal.Slot
 import kotlin.time.Duration
 import kotlinx.atomicfu.atomic
@@ -35,10 +35,10 @@ import sdbus.uint32_t
 class ObjectManagerTestProxy(
     proxy: IProxy
 ) : ObjectManagerProxy {
-    override val m_proxy: IProxy = proxy
+    override val proxy: IProxy = proxy
 
     constructor(
-        connection: IConnection,
+        connection: com.monkopedia.sdbus.IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
     ) : this(createProxy(connection, destination, objectPath))
@@ -78,7 +78,7 @@ class TestProxy private constructor(proxy: IProxy) :
     ) : this(createProxy(destination, objectPath, dont_run_event_loop_thread))
 
     constructor(
-        connection: IConnection,
+        connection: com.monkopedia.sdbus.IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
     ) : this(createProxy(connection, destination, objectPath))
@@ -98,7 +98,7 @@ class TestProxy private constructor(proxy: IProxy) :
 
 
     override fun onSimpleSignal() {
-        m_signalMsg = getProxy().getCurrentlyProcessedMessage()
+        m_signalMsg = proxy.getCurrentlyProcessedMessage()
         m_signalName = m_signalMsg!!.getMemberName()?.let(::SignalName)
 
         m_gotSimpleSignal.value = true;
@@ -135,11 +135,11 @@ class TestProxy private constructor(proxy: IProxy) :
     }
 
     fun doOperationWithTimeout(timeout: Duration, param: UInt): UInt =
-        getProxy().callMethod("doOperation").onInterface(INTERFACE_NAME)
+        proxy.callMethod("doOperation").onInterface(INTERFACE_NAME)
             .withTimeout(timeout).withArguments { call(param) }.readResult()
 
     fun doOperationClientSideAsync(param: UInt): PendingAsyncCall {
-        return getProxy().callMethodAsync("doOperation")
+        return proxy.callMethodAsync("doOperation")
             .onInterface(INTERFACE_NAME)
             .withArguments { call(param) }
             .uponReplyInvoke {
@@ -152,7 +152,7 @@ class TestProxy private constructor(proxy: IProxy) :
     }
 
     fun doOperationClientSideAsync(param: UInt, return_slot: return_slot_t): Slot {
-        return getProxy().callMethodAsync("doOperation")
+        return proxy.callMethodAsync("doOperation")
             .onInterface(INTERFACE_NAME)
             .withArguments { call(param) }
             .uponReplyInvoke(
@@ -168,23 +168,23 @@ class TestProxy private constructor(proxy: IProxy) :
     }
 
     suspend fun doOperationClientSideAsync(param: uint32_t, with_future: with_future_t): UInt =
-        getProxy().callMethodAsync("doOperation")
+        proxy.callMethodAsync("doOperation")
             .onInterface(INTERFACE_NAME)
             .withArguments { call(param) }
             .getResult<uint32_t>();
 
     suspend fun doOperationClientSideAsyncOnBasicAPILevel(param: UInt): MethodReply {
-        val methodCall = getProxy().createMethodCall(
+        val methodCall = proxy.createMethodCall(
             INTERFACE_NAME,
             "doOperation"
         )
         methodCall.append(param);
 
-        return getProxy().callMethodAsync(methodCall, with_future)
+        return proxy.callMethodAsync(methodCall, with_future)
     }
 
     fun doErroneousOperationClientSideAsync() {
-        getProxy().callMethodAsync("throwError")
+        proxy.callMethodAsync("throwError")
             .onInterface(INTERFACE_NAME)
             .uponReplyInvoke {
                 call {
@@ -197,13 +197,13 @@ class TestProxy private constructor(proxy: IProxy) :
     }
 
     suspend fun doErroneousOperationClientSideAsync(with_future: with_future_t): Unit {
-        getProxy().callMethodAsync("throwError")
+        proxy.callMethodAsync("throwError")
             .onInterface(INTERFACE_NAME)
             .getResult<Unit>();
     }
 
     fun doOperationClientSideAsyncWithTimeout(timeout: Duration, param: UInt) {
-        getProxy().callMethodAsync("doOperation")
+        proxy.callMethodAsync("doOperation")
             .onInterface(INTERFACE_NAME)
             .withTimeout(timeout)
             .withArguments { call(param) }
@@ -217,18 +217,18 @@ class TestProxy private constructor(proxy: IProxy) :
     }
 
     fun callNonexistentMethod(): Int {
-        return getProxy().callMethod("callNonexistentMethod").onInterface(INTERFACE_NAME)
+        return proxy.callMethod("callNonexistentMethod").onInterface(INTERFACE_NAME)
             .readResult();
     }
 
     fun callMethodOnNonexistentInterface(): Int {
         val nonexistentInterfaceName = InterfaceName("sdbuscpp.interface.that.does.not.exist");
-        return getProxy().callMethod("someMethod").onInterface(nonexistentInterfaceName)
+        return proxy.callMethod("someMethod").onInterface(nonexistentInterfaceName)
             .readResult()
     }
 
     fun setStateProperty(value: String) {
-        getProxy().setProperty("state").onInterface(INTERFACE_NAME).toValue(value);
+        proxy.setProperty("state").onInterface(INTERFACE_NAME).toValue(value);
     }
 
 }

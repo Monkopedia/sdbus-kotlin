@@ -2,10 +2,10 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.Error
-import com.monkopedia.sdbus.header.deserialize
-import com.monkopedia.sdbus.header.return_slot
-import com.monkopedia.sdbus.header.with_future
+import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.deserialize
+import com.monkopedia.sdbus.return_slot
+import com.monkopedia.sdbus.with_future
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals

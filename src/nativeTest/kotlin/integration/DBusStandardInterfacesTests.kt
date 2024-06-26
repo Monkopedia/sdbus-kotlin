@@ -2,9 +2,9 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.PropertiesProxy.Companion.Get
-import com.monkopedia.sdbus.header.PropertiesProxy.Companion.GetAsync
-import com.monkopedia.sdbus.header.Variant
+import com.monkopedia.sdbus.PropertiesProxy.Companion.get
+import com.monkopedia.sdbus.PropertiesProxy.Companion.getAsync
+import com.monkopedia.sdbus.Variant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -24,7 +24,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun pingsViaPeerInterface() {
-        fixture.m_proxy!!.Ping()
+        fixture.m_proxy!!.ping()
     }
 
     @Test
@@ -37,20 +37,20 @@ class DBusStandardInterfacesTests : BaseTest() {
             )
         }
 
-        fixture.m_proxy!!.GetMachineId()
+        fixture.m_proxy!!.getMachineId()
     }
 
     @Test
     fun getsPropertyViaPropertiesInterface() {
         assertEquals(
             DEFAULT_STATE_VALUE,
-            fixture.m_proxy!!.Get(INTERFACE_NAME.value, "state")
+            fixture.m_proxy!!.get(INTERFACE_NAME.value, "state")
         )
     }
 
     @Test
     fun getsPropertyAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
-        val future: String = fixture.m_proxy!!.GetAsync(INTERFACE_NAME.value, "state")
+        val future: String = fixture.m_proxy!!.getAsync(INTERFACE_NAME.value, "state")
 
         assertEquals(DEFAULT_STATE_VALUE, future)
     }
@@ -59,7 +59,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     fun setsPropertyViaPropertiesInterface() {
         val newActionValue = 2345u
 
-        fixture.m_proxy!!.Set(INTERFACE_NAME.value, "action", Variant(newActionValue))
+        fixture.m_proxy!!.set(INTERFACE_NAME.value, "action", Variant(newActionValue))
 
         assertEquals(newActionValue, fixture.m_proxy!!.action())
     }
@@ -68,7 +68,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     fun setsPropertyAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
         val newActionValue = 2347u
 
-        fixture.m_proxy!!.SetAsync(
+        fixture.m_proxy!!.setAsync(
             INTERFACE_NAME.value,
             "action",
             Variant(newActionValue)
@@ -79,7 +79,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun getsAllPropertiesViaPropertiesInterface() {
-        val properties = fixture.m_proxy!!.GetAll(INTERFACE_NAME)
+        val properties = fixture.m_proxy!!.getAll(INTERFACE_NAME)
 
         assertEquals(3, properties.size)
         assertEquals(
@@ -98,7 +98,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun getsAllPropertiesAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
-        val properties = fixture.m_proxy!!.GetAllAsync(INTERFACE_NAME)
+        val properties = fixture.m_proxy!!.getAllAsync(INTERFACE_NAME)
 
         assertEquals(3, properties.size)
         assertEquals(
@@ -158,7 +158,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun getsZeroManagedObjectsIfHasNoSubPathObjects() {
-        fixture.m_adaptor!!.m_object.release()
+        fixture.m_adaptor!!.obj.release()
         val objectsInterfacesAndProperties = fixture.m_objectManagerProxy!!.getManagedObjects()
 
         assertEquals(0, objectsInterfacesAndProperties.size)

@@ -2,20 +2,20 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.header.IConnection
-import com.monkopedia.sdbus.header.IObject
-import com.monkopedia.sdbus.header.ManagedObjectAdaptor
-import com.monkopedia.sdbus.header.MemberName
-import com.monkopedia.sdbus.header.Message
-import com.monkopedia.sdbus.header.MethodName
-import com.monkopedia.sdbus.header.ObjectManagerAdaptor
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.PropertiesAdaptor
-import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.UnixFd
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.createError
-import com.monkopedia.sdbus.header.createObject
+import com.monkopedia.sdbus.IConnection
+import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.ManagedObjectAdaptor
+import com.monkopedia.sdbus.MemberName
+import com.monkopedia.sdbus.Message
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.ObjectManagerAdaptor
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PropertiesAdaptor
+import com.monkopedia.sdbus.Signature
+import com.monkopedia.sdbus.UnixFd
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.createError
+import com.monkopedia.sdbus.createObject
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 import kotlin.time.Duration.Companion.milliseconds
@@ -23,20 +23,20 @@ import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.usleep
 
-class ObjectManagerTestAdaptor(override val m_object: IObject) : ObjectManagerAdaptor {
+class ObjectManagerTestAdaptor(override val obj: IObject) : ObjectManagerAdaptor {
     init {
         registerObjectManagerAdaptor()
     }
 
-    constructor(connection: IConnection, path: ObjectPath) :
+    constructor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath) :
         this(createObject(connection, path))
 }
 
-class TestAdaptor(connection: IConnection, path: ObjectPath) :
+class TestAdaptor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath) :
     IntegrationTestsAdaptor(createObject(connection, path)),
     PropertiesAdaptor,
     ManagedObjectAdaptor {
-    private val cleaner = createCleaner(m_object) {
+    private val cleaner = createCleaner(obj) {
         it.release()
     }
 
@@ -81,14 +81,14 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
     override fun doOperation(param: UInt): UInt {
         usleep(param * 1000u)
 
-        m_methodCallMsg = m_object.getCurrentlyProcessedMessage()
+        m_methodCallMsg = obj.getCurrentlyProcessedMessage()
         m_methodName = m_methodCallMsg!!.getMemberName()?.let(::MemberName)
 
         return param
     }
 
     override suspend fun doOperationAsync(param: UInt): UInt {
-        m_methodCallMsg = m_object.getCurrentlyProcessedMessage()
+        m_methodCallMsg = obj.getCurrentlyProcessedMessage()
         m_methodName = m_methodCallMsg!!.getMemberName()?.let(::MemberName)
 
         if (param == 0u) {
@@ -153,7 +153,7 @@ class TestAdaptor(connection: IConnection, path: ObjectPath) :
     override fun blocking(): Boolean = m_blocking
 
     override fun blocking(value: Boolean) {
-        m_propertySetMsg = m_object.getCurrentlyProcessedMessage()
+        m_propertySetMsg = obj.getCurrentlyProcessedMessage()
         m_propertySetSender = m_propertySetMsg!!.getSender()
 
         m_blocking = value

@@ -2,14 +2,14 @@
 
 package com.monkopedia.sdbus.unit
 
-import com.monkopedia.sdbus.header.Error
-import com.monkopedia.sdbus.header.ObjectPath
-import com.monkopedia.sdbus.header.PlainMessage
-import com.monkopedia.sdbus.header.Signature
-import com.monkopedia.sdbus.header.UnixFd
-import com.monkopedia.sdbus.header.Variant
-import com.monkopedia.sdbus.header.deserialize
-import com.monkopedia.sdbus.header.serialize
+import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PlainMessage
+import com.monkopedia.sdbus.Signature
+import com.monkopedia.sdbus.UnixFd
+import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.deserialize
+import com.monkopedia.sdbus.serialize
 import com.monkopedia.sdbus.unit.MessageTest.ComplexTypeForMessageValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -73,7 +73,7 @@ class MessageTest {
     fun `AMessage IsEmptyWhenContainsNoValue`() {
         val msg = PlainMessage.createPlainMessage()
 
-        assertTrue(msg.isEmpty())
+        assertTrue(msg.isEmpty)
     }
 
     @Test
@@ -81,7 +81,7 @@ class MessageTest {
         val msg = PlainMessage.createPlainMessage()
         msg.serialize("I am a string")
 
-        assertFalse(msg.isEmpty())
+        assertFalse(msg.isEmpty)
     }
 
     @Test
