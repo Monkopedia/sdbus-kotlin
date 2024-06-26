@@ -29,8 +29,6 @@ import com.monkopedia.sdbus.VTableItem
 import com.monkopedia.sdbus.internal.Object.VTable.MethodItem
 import com.monkopedia.sdbus.internal.Object.VTable.PropertyItem
 import com.monkopedia.sdbus.internal.Object.VTable.SignalItem
-import com.monkopedia.sdbus.return_slot
-import com.monkopedia.sdbus.return_slot_t
 import com.monkopedia.sdbus.sdbusRequire
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
@@ -49,6 +47,8 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import platform.posix.EINVAL
 import sdbus.sd_bus_error
 import sdbus.sd_bus_error_set
@@ -56,11 +56,11 @@ import sdbus.sd_bus_vtable
 
 internal class Object(private val connection: IConnection, private val path: ObjectPath) : IObject {
     private class Allocs {
-        var objManager: Resource? = null
+        var objManagers = MutableStateFlow<List<Resource>>(emptyList())
 
         fun release() {
-            objManager?.release()
-            objManager = null
+            objManagers.value.forEach { it.release() }
+            objManagers.value = emptyList()
         }
     }
 
@@ -77,14 +77,9 @@ internal class Object(private val connection: IConnection, private val path: Obj
         checkObjectPath(path.value)
     }
 
-    override fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>) {
-        allocs.objManager = addVTable(interfaceName, vtable, return_slot)
-    }
-
     override fun addVTable(
         interfaceName: InterfaceName,
         vtable: List<VTableItem>,
-        return_slot: return_slot_t
     ): Resource = memScoped {
         checkInterfaceName(interfaceName.value)
 
@@ -103,11 +98,12 @@ internal class Object(private val connection: IConnection, private val path: Obj
             path,
             internalVTable.interfaceName,
             internalVTable.sdbusVTable!!,
-            internalVTable,
-            return_slot
+            internalVTable
         )
 
-        reference.freeAfter(slot)
+        reference.freeAfter(slot).also { slot ->
+            allocs.objManagers.update { it + slot }
+        }
     }
 
     override fun createSignal(interfaceName: InterfaceName, signalName: SignalName): Signal =
@@ -157,12 +153,9 @@ internal class Object(private val connection: IConnection, private val path: Obj
         connection.emitInterfacesRemovedSignal(path, interfaces)
     }
 
-    override fun addObjectManager() {
-        allocs.objManager = connection.addObjectManager(path, return_slot)
+    override fun addObjectManager(): Resource = connection.addObjectManager(path).also { slot ->
+        allocs.objManagers.update { it + slot }
     }
-
-    override fun addObjectManager(t: return_slot_t): Resource =
-        connection.addObjectManager(path, return_slot)
 
     override fun getConnection(): com.monkopedia.sdbus.IConnection = connection
 

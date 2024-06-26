@@ -4,7 +4,6 @@ package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.createBusConnection
-import com.monkopedia.sdbus.return_slot
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,7 +17,7 @@ import platform.posix.size_t
 class AdaptorAndProxy {
     @Test
     fun canBeConstructedSuccessfully() {
-        val connection = com.monkopedia.sdbus.createBusConnection()
+        val connection = createBusConnection()
         connection.requestName(SERVICE_NAME)
 
         val adaptor = TestAdaptor(connection, OBJECT_PATH)
@@ -41,11 +40,11 @@ class CppEventLoop : BaseTest() {
     fun willCallCallbackHandlerForIncomingMessageMatchingMatchRule() {
         val matchRule = "sender='$SERVICE_NAME',path='$OBJECT_PATH'"
         var matchingMessageReceived = atomic(false)
-        val slot = s_proxyConnection.addMatch(matchRule, { msg: Message ->
+        val slot = s_proxyConnection.addMatch(matchRule) { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) {
                 matchingMessageReceived.value = true
             }
-        }, return_slot)
+        }
 
         fixture.m_adaptor?.emitSimpleSignal()
 
@@ -64,7 +63,7 @@ class CppEventLoop : BaseTest() {
             }
         }, {
             matchRuleInstalled.value = true
-        }, return_slot)
+        })
 
         assertTrue(waitUntil(matchRuleInstalled))
 
@@ -78,9 +77,9 @@ class CppEventLoop : BaseTest() {
     fun willUnsubscribeMatchRuleWhenClientDestroysTheAssociatedSlot() {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
         val matchingMessageReceived = atomic(false)
-        val slot = s_proxyConnection.addMatch(matchRule, { msg: Message ->
+        val slot = s_proxyConnection.addMatch(matchRule) { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) matchingMessageReceived.value = true
-        }, return_slot)
+        }
         slot.release()
 
         fixture.m_adaptor?.emitSimpleSignal()
@@ -92,7 +91,7 @@ class CppEventLoop : BaseTest() {
     fun canAddFloatingMatchRule() {
         val matchingMessageReceived = atomic(false)
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
-        val con = com.monkopedia.sdbus.createBusConnection()
+        val con = createBusConnection()
         con.enterEventLoopAsync()
         val callback = { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) {
@@ -113,11 +112,11 @@ class CppEventLoop : BaseTest() {
     fun willNotPassToMatchCallbackMessagesThatDoNotMatchTheRule() {
         val matchRule = "type='signal',interface='${INTERFACE_NAME.value}',member='simpleSignal'"
         val numberOfMatchingMessages = atomic(0.convert<size_t>())
-        val slot = s_proxyConnection.addMatch(matchRule, { msg: Message ->
+        val slot = s_proxyConnection.addMatch(matchRule) { msg: Message ->
             if (msg.getMemberName() == "simpleSignal") {
                 numberOfMatchingMessages.value++
             }
-        }, return_slot)
+        }
         val adaptor2 = TestAdaptor(s_adaptorConnection, OBJECT_PATH_2)
 
         fixture.m_adaptor?.emitSignalWithMap(emptyMap())

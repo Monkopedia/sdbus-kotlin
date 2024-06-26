@@ -11,7 +11,6 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
-
 class VTableAdder(private val object_: IObject, private val vtable: List<VTableItem>) {
     fun forInterface(interfaceName: InterfaceName) {
         object_.addVTable(interfaceName, vtable)
@@ -19,14 +18,6 @@ class VTableAdder(private val object_: IObject, private val vtable: List<VTableI
 
     fun forInterface(interfaceName: String) {
         forInterface(InterfaceName(interfaceName))
-    }
-
-    fun forInterface(interfaceName: InterfaceName, return_slot: return_slot_t): Resource {
-        return object_.addVTable(interfaceName, vtable, return_slot)
-    }
-
-    fun forInterface(interfaceName: String, return_slot: return_slot_t): Resource {
-        return forInterface(InterfaceName(interfaceName), return_slot)
     }
 }
 
@@ -42,9 +33,7 @@ class SignalEmitter {
 
     constructor(obj: IObject, signalName: SignalName) : this(obj, signalName.value)
 
-    fun onInterface(interfaceName: InterfaceName): SignalEmitter {
-        return onInterface(interfaceName.value)
-    }
+    fun onInterface(interfaceName: InterfaceName): SignalEmitter = onInterface(interfaceName.value)
 
     fun onInterface(interfaceName: String): SignalEmitter = apply {
         signal_ = object_.createSignal(interfaceName, signalName_)
@@ -130,7 +119,7 @@ class MethodInvoker {
             }
         }
     }
-};
+}
 
 class AsyncMethodInvoker {
     private var timeout_: ULong = 0u
@@ -177,22 +166,6 @@ class AsyncMethodInvoker {
     inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder): PendingAsyncCall =
         uponReplyInvoke(build(callbackBuilder))
 
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
-        require(method_?.isValid == true)
-
-        return proxy.callMethodAsync(
-            method_!!,
-            makeAsyncReplyHandler(callback),
-            timeout_,
-            return_slot
-        )
-    }
-
-    inline fun uponReplyInvoke(
-        crossinline callbackBuilder: TypedMethodBuilder,
-        return_slot: return_slot_t
-    ): Resource = uponReplyInvoke(build(callbackBuilder), return_slot)
-
     suspend inline fun <reified T> getResult(): T {
         val completable = CompletableDeferred<T>()
 
@@ -207,22 +180,16 @@ class AsyncMethodInvoker {
         return completable.await()
     }
 
-    fun makeAsyncReplyHandler(callback: TypedMethodCall<*>): AsyncReplyHandler {
-        return { reply, error ->
-            if (error != null) {
-                callback.invoke(error)
-            } else {
-                callback.invoke(reply)
-            }
+    fun makeAsyncReplyHandler(callback: TypedMethodCall<*>): AsyncReplyHandler = { reply, error ->
+        if (error != null) {
+            callback.invoke(error)
+        } else {
+            callback.invoke(reply)
         }
     }
-
 }
 
-class SignalSubscriber(
-    private val proxy: IProxy,
-    private val signalName: String
-) {
+class SignalSubscriber(private val proxy: IProxy, private val signalName: String) {
     private var interfaceName_: String? = null
 
     constructor(proxy: IProxy, signalName: SignalName) : this(proxy, signalName.value)
@@ -234,31 +201,19 @@ class SignalSubscriber(
         interfaceName_ = interfaceName
     }
 
-    inline fun call(builder: TypedMethodBuilder): Unit = call(build(builder))
-    fun call(callback: TypedMethodCall<*>) {
-        require(interfaceName_ != null)
-
-        proxy.registerSignalHandler(interfaceName_!!, signalName, makeSignalHandler(callback))
-    }
-
-    inline fun call(builder: TypedMethodBuilder, return_slot: return_slot_t): Resource =
-        call(build(builder), return_slot)
-
-    fun call(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
+    inline fun call(builder: TypedMethodBuilder): Resource = call(build(builder))
+    fun call(callback: TypedMethodCall<*>): Resource {
         require(interfaceName_ != null)
 
         return proxy.registerSignalHandler(
             interfaceName_!!,
             signalName,
-            makeSignalHandler(callback),
-            return_slot
+            makeSignalHandler(callback)
         )
     }
 
-    fun makeSignalHandler(callback: TypedMethodCall<*>): SignalHandler {
-        return { signal ->
-            callback.invoke(signal)
-        }
+    fun makeSignalHandler(callback: TypedMethodCall<*>): SignalHandler = { signal ->
+        callback.invoke(signal)
     }
 }
 
@@ -267,7 +222,10 @@ class PropertyGetter(private val proxy: IProxy, private val propertyName: String
     inline fun <reified T : Any> onInterface(interfaceName: InterfaceName): T {
         val serializer = serializer<T>()
         val module = serializersModuleOf(serializer)
-        return onInterface(interfaceName.value, serializer, module,
+        return onInterface(
+            interfaceName.value,
+            serializer,
+            module,
             signatureOf<T>()
         )
     }
@@ -275,7 +233,10 @@ class PropertyGetter(private val proxy: IProxy, private val propertyName: String
     inline fun <reified T : Any> onInterface(interfaceName: String): T {
         val serializer = serializer<T>()
         val module = serializersModuleOf(serializer)
-        return onInterface(interfaceName, serializer, module,
+        return onInterface(
+            interfaceName,
+            serializer,
+            module,
             signatureOf<T>()
         )
     }
@@ -298,7 +259,7 @@ class PropertyGetter(private val proxy: IProxy, private val propertyName: String
     }
 
     companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties";
+        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }
 }
 
@@ -326,21 +287,6 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
             .uponReplyInvoke(callback)
     }
 
-    inline fun uponReplyInvoke(
-        crossinline callbackBuilder: TypedMethodBuilder,
-        return_slot: return_slot_t
-    ) = uponReplyInvoke(build(callbackBuilder), return_slot)
-
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
-        require(interfaceName_?.isNotEmpty() == true)
-
-        val shared = proxy.callMethodAsync("Get")
-        return shared
-            .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
-            .withArguments { call(interfaceName_!!, propertyName) }
-            .uponReplyInvoke(callback, return_slot)
-    }
-
     suspend inline fun <reified T : Any> get(): T {
         val serializer = serializer<T>()
         val module = serializersModuleOf(serializer)
@@ -363,11 +309,9 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
     }
 
     companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties";
-
+        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }
 }
-
 
 class PropertySetter(private val proxy: IProxy, private val propertyName: String) {
     private var interfaceName_: String? = null
@@ -377,40 +321,25 @@ class PropertySetter(private val proxy: IProxy, private val propertyName: String
         interfaceName_ = interfaceName
     }
 
-    inline fun <reified T : Any> toValue(value: T) = memScoped {
-        toValue(Variant<T>(value))
+    inline fun <reified T : Any> toValue(value: T, dontExpectReply: Boolean = false) {
+        toValue(Variant<T>(value), dontExpectReply = dontExpectReply)
     }
 
-    inline fun <reified T : Any> toValue(value: T, dont_expect_reply: dont_expect_reply_t) =
-        memScoped {
-            toValue(Variant<T>(value), dont_expect_reply)
-        }
-
-    fun toValue(variant: Variant) {
+    fun toValue(variant: Variant, dontExpectReply: Boolean = false) {
         require(interfaceName_?.isNotEmpty() == true)
 
-        memScoped {
-            proxy.callMethod("Set")
-                .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
-                .withArguments { call(interfaceName_!!, propertyName, variant) }
-                .readResult<Unit>()
-        }
-    }
-
-    fun toValue(variant: Variant, dont_expect_reply: dont_expect_reply_t) {
-        require(interfaceName_?.isNotEmpty() == true)
-
-        memScoped {
-            proxy.callMethod("Set")
-                .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
-                .withArguments { call(interfaceName_!!, propertyName, variant) }
-                .dontExpectReply()
+        val call = proxy.callMethod("Set")
+            .onInterface(DBUS_PROPERTIES_INTERFACE_NAME)
+            .withArguments { call(interfaceName_!!, propertyName, variant) }
+        if (dontExpectReply) {
+            call.dontExpectReply()
+        } else {
+            call.readResult<Unit>()
         }
     }
 
     companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties";
-
+        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }
 }
 
@@ -426,15 +355,13 @@ class AsyncPropertySetter(private val proxy: IProxy, private val propertyName: S
         interfaceName_ = interfaceName
     }
 
-    inline fun <reified T : Any> toValue(value: T) =
-        toValue(typed<T>(), value)
+    inline fun <reified T : Any> toValue(value: T) = toValue(typed<T>(), value)
 
     fun <T : Any> toValue(type: Typed<T>, value: T): AsyncPropertySetter = apply {
         value_ = type to value
     }
 
     fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
-
         require(interfaceName_?.isNotEmpty() == true)
 
         val shared = proxy.callMethodAsync("Set")
@@ -442,16 +369,6 @@ class AsyncPropertySetter(private val proxy: IProxy, private val propertyName: S
             .onInterface(PropertySetter.DBUS_PROPERTIES_INTERFACE_NAME)
             .withArguments { call(interfaceName_!!, propertyName) + (value_!!) }
             .uponReplyInvoke(callback)
-    }
-
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
-        require(interfaceName_?.isNotEmpty() == true)
-
-        val shared = proxy.callMethodAsync("Set")
-        return shared
-            .onInterface(PropertySetter.DBUS_PROPERTIES_INTERFACE_NAME)
-            .withArguments { call(interfaceName_!!, propertyName) + (value_!!) }
-            .uponReplyInvoke(callback, return_slot)
     }
 
     suspend fun getResult() {
@@ -468,12 +385,10 @@ class AsyncPropertySetter(private val proxy: IProxy, private val propertyName: S
     companion object {
         const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }
-};
+}
 
 class AllPropertiesGetter(val proxy: IProxy) {
-    fun onInterface(
-        interfaceName: InterfaceName
-    ): Map<PropertyName, Variant> =
+    fun onInterface(interfaceName: InterfaceName): Map<PropertyName, Variant> =
         onInterface(interfaceName.value)
 
     fun onInterface(interfaceName: String): Map<PropertyName, Variant> {
@@ -484,11 +399,10 @@ class AllPropertiesGetter(val proxy: IProxy) {
                 .withArguments { call(interfaceName) }
                 .readResult<Map<PropertyName, Variant>>()
         }
-
     }
 
     companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties";
+        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }
 }
 
@@ -512,16 +426,6 @@ class AsyncAllPropertiesGetter(private val proxy: IProxy) {
             .uponReplyInvoke(callback)
     }
 
-    fun uponReplyInvoke(callback: TypedMethodCall<*>, return_slot: return_slot_t): Resource {
-        require(interfaceName_?.isNotEmpty() == true)
-
-        val shared = proxy.callMethodAsync("GetAll")
-        return shared
-            .onInterface(PropertySetter.DBUS_PROPERTIES_INTERFACE_NAME)
-            .withArguments { call(interfaceName_!!) }
-            .uponReplyInvoke(callback, return_slot)
-    }
-
     suspend fun getResult(): Map<PropertyName, Variant> {
         require(interfaceName_?.isNotEmpty() == true)
         memScoped {
@@ -533,7 +437,6 @@ class AsyncAllPropertiesGetter(private val proxy: IProxy) {
     }
 
     companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties";
+        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }
-};
-
+}

@@ -14,7 +14,6 @@ import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.internal.Connection.Companion.pseudoConnection
-import com.monkopedia.sdbus.return_slot_t
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import sdbus.sd_bus_message_handler_t
@@ -29,7 +28,6 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
         interfaceName: InterfaceName,
         vtable: CValuesRef<sd_bus_vtable>,
         userData: Any?,
-        return_slot: return_slot_t
     ): Reference<*>
 
     fun createPlainMessage(): PlainMessage
@@ -60,8 +58,7 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
         message: MethodCall,
         callback: sd_bus_message_handler_t,
         userData: Any?,
-        timeout: ULong,
-        return_slot: return_slot_t
+        timeout: ULong
     ): Resource
 
     fun emitPropertiesChangedSignal(
@@ -87,8 +84,7 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
         interfaceName: String,
         signalName: String,
         callback: sd_bus_message_handler_t,
-        userData: Any?,
-        return_slot: return_slot_t
+        userData: Any?
     ): Resource
 
     companion object {

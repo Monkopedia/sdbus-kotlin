@@ -7,23 +7,13 @@ import com.monkopedia.sdbus.internal.ISdBus
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 
-class Signal private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdBus, real: Int) :
-    Message(msg, sdbus, real) {
+class Signal internal constructor(
+    msg: CPointer<sd_bus_message>?,
+    sdbus: ISdBus,
+    adoptMessage: Boolean = false
+) : Message(msg, sdbus, adoptMessage) {
 
-    internal constructor(sdbus: ISdBus) :
-        this(null, sdbus, 0)
-
-    internal constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdBus) : this(msg, sdbus, 0) {
-        if (msg != null) {
-            sdbus.sd_bus_message_ref(msg)
-        }
-    }
-
-    internal constructor(
-        msg: CPointer<sd_bus_message>,
-        sdbus: ISdBus,
-        adopt_message: adopt_message_t
-    ) : this(msg, sdbus, 0)
+    internal constructor(sdbus: ISdBus) : this(null, sdbus)
 
     constructor (o: Signal) : this(o.msg, o.sdbus)
 

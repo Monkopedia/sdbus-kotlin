@@ -113,7 +113,7 @@ interface IConnection : Resource {
     /*!
      * @copydoc IConnection::setMethodCallTimeout(uint64_t)
      */
-    fun setMethodCallTimeout(timeout: Duration);
+    fun setMethodCallTimeout(timeout: Duration)
 
     /*!
      * @brief Gets general method call timeout
@@ -125,23 +125,6 @@ interface IConnection : Resource {
      * @throws sdbus::Error in case of failure
      */
     fun getMethodCallTimeout(): ULong
-
-    /*!
-     * @brief Adds an ObjectManager at the specified D-Bus object path
-     * @param[in] objectPath Object path at which the ObjectManager interface shall be installed
-     *
-     * Creates an ObjectManager interface at the specified object path on
-     * the connection. This is a convenient way to interrogate a connection
-     * to see what objects it has.
-     *
-     * This call creates a floating registration. The ObjectManager will
-     * be there for the object path until the connection is destroyed.
-     *
-     * Another, recommended way to add object managers is directly through IObject API.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun addObjectManager(objectPath: ObjectPath)
 
     /*!
      * @brief Adds an ObjectManager at the specified D-Bus object path
@@ -159,30 +142,7 @@ interface IConnection : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addObjectManager(objectPath: ObjectPath, return_slot: return_slot_t): Resource
-
-    /*!
-     * @brief Installs a floating match rule for messages received on this bus connection
-     *
-     * @param[in] match Match expression to filter incoming D-Bus message
-     * @param[in] callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
-     *
-     * The method installs a match rule for messages received on the specified bus connection.
-     * The syntax of the match rule expression passed in match is described in the D-Bus specification.
-     * The specified handler function callback is called for each incoming message matching the specified
-     * expression. The match is installed synchronously when connected to a bus broker, i.e. the call
-     * sends a control message requesting the match to be added to the broker and waits until the broker
-     * confirms the match has been installed successfully.
-     *
-     * The method installs a floating match rule for messages received on the specified bus connection.
-     * Floating means that the bus connection object owns the match rule, i.e. lifetime of the match rule
-     * is bound to the lifetime of the bus connection.
-     *
-     * For more information, consult `man sd_bus_add_match`.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun addMatch(match: String, callback: MessageHandler)
+    fun addObjectManager(objectPath: ObjectPath): Resource
 
     /*!
      * @brief Installs a match rule for messages received on this bus connection
@@ -205,30 +165,7 @@ interface IConnection : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addMatch(match: String, callback: MessageHandler, return_slot: return_slot_t): Resource
-
-    /*!
-     * @brief Asynchronously installs a floating match rule for messages received on this bus connection
-     *
-     * @param[in] match Match expression to filter incoming D-Bus message
-     * @param[in] callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
-     * @param[in] installCallback Callback handler to be called upon processing an inbound D-Bus message matching the rule
-     *
-     * This method operates the same as `addMatch()` above, just that it installs the match rule asynchronously,
-     * in a non-blocking fashion. A request is sent to the broker, but the call does not wait for a response.
-     * The `installCallback' callable is called when the response is later received, with the response message
-     * from the broker as parameter. If it's an empty function object, a default implementation is used that
-     * terminates the bus connection should installing the match fail.
-     *
-     * The method installs a floating match rule for messages received on the specified bus connection.
-     * Floating means that the bus connection object owns the match rule, i.e. lifetime of the match rule
-     * is bound to the lifetime of the bus connection.
-     *
-     * For more information, consult `man sd_bus_add_match_async`.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun addMatchAsync(match: String, callback: MessageHandler, installCallback: MessageHandler)
+    fun addMatch(match: String, callback: MessageHandler): Resource
 
     /*!
      * @brief Asynchronously installs a match rule for messages received on this bus connection
@@ -252,7 +189,9 @@ interface IConnection : Resource {
      * @throws sdbus::Error in case of failure
      */
     fun addMatchAsync(
-        match: String, callback: MessageHandler, installCallback: MessageHandler, return_slot: return_slot_t
+        match: String,
+        callback: MessageHandler,
+        installCallback: MessageHandler
     ): Resource
 
     /*!
@@ -308,7 +247,7 @@ interface IConnection : Resource {
         /*!
          * An additional event fd to be monitored by the event loop for POLLIN events.
          */
-        val eventFd: Int = 0,
+        val eventFd: Int = 0
     ) {
 
         /*!
@@ -331,13 +270,15 @@ interface IConnection : Resource {
          *         An integer in milliseconds otherwise.
          */
         fun getPollTimeout(): Int {
-            val relativeTimeout = getRelativeTimeout();
+            val relativeTimeout = getRelativeTimeout()
 
-            return if (relativeTimeout == Duration.INFINITE) -1
-            else relativeTimeout.inWholeMilliseconds.toInt()
+            return if (relativeTimeout == Duration.INFINITE) {
+                -1
+            } else {
+                relativeTimeout.inWholeMilliseconds.toInt()
+            }
         }
     }
-
 }
 
 /*!

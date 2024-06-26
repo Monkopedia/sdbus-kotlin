@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class, NativeRuntimeApi::class)
 
 package com.monkopedia.sdbus.integration
 
@@ -9,10 +9,9 @@ import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.createProxy
-import com.monkopedia.sdbus.dont_run_event_loop_thread
-import com.monkopedia.sdbus.registerMethod
-import com.monkopedia.sdbus.return_slot
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
+import com.monkopedia.sdbus.registerMethod
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -273,7 +272,7 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canCallMethodSynchronouslyWithoutAnEventLoopThread() {
-        val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread)
+        val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
 
         val multiplyRes = proxy.multiply(INT64_VALUE, DOUBLE_VALUE)
 
@@ -297,12 +296,11 @@ class DBusMethodTests : BaseTest() {
                         a - b
                     }
                 }
-            ),
-            return_slot
+            )
         )
 
         // The new remote vtable is registered as long as we keep vtableSlot, so remote method calls now should pass
-        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread)
+        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
         val result: Int =
             proxy.callMethod("subtract").onInterface(interfaceName)
                 .withArguments { call(10, 2) }
@@ -330,13 +328,12 @@ class DBusMethodTests : BaseTest() {
                         a - b
                     }
                 }
-            ),
-            return_slot
+            )
         )
         slot.release()
 
         // No such remote D-Bus method under given interface exists anymore...
-        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dont_run_event_loop_thread)
+        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
         try {
             proxy.callMethod("subtract").onInterface(interfaceName)
                 .withArguments { call(10, 2) }

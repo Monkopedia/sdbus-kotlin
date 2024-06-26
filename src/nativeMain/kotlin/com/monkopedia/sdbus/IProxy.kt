@@ -33,7 +33,7 @@ interface IProxy : Resource {
      *
      * @return Reference to the D-Bus connection
      */
-    fun getConnection(): com.monkopedia.sdbus.IConnection
+    fun getConnection(): IConnection
 
     /*!
      * @brief Returns object path of the underlying DBus object
@@ -158,34 +158,6 @@ interface IProxy : Resource {
     ): PendingAsyncCall
 
     /*!
-     * @brief Calls method on the D-Bus object asynchronously
-     *
-     * @param[in] message Message representing an async method call
-     * @param[in] asyncReplyCallback Handler for the async reply
-     * @return RAII-style slot handle representing the ownership of the async call
-     *
-     * This is a callback-based way of asynchronously calling a remote D-Bus method.
-     *
-     * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided async reply handler will get invoked from the context of the bus
-     * connection I/O event loop thread.
-     *
-     * A slot (an owning handle) is returned for the async call. Lifetime of the call is bound to the lifetime of the slot.
-     * The slot can be used to cancel the method call at a later time by simply destroying it.
-     *
-     * The default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
-     *
-     * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun callMethodAsync(
-        message: MethodCall,
-        asyncReplyCallback: AsyncReplyHandler,
-        return_slot: return_slot_t
-    ): Resource
-
-    /*!
      * @brief Calls method on the D-Bus object asynchronously, with custom timeout
      *
      * @param[in] message Message representing an async method call
@@ -214,36 +186,6 @@ interface IProxy : Resource {
     ): PendingAsyncCall
 
     /*!
-     * @brief Calls method on the D-Bus object asynchronously, with custom timeout
-     *
-     * @param[in] message Message representing an async method call
-     * @param[in] asyncReplyCallback Handler for the async reply
-     * @param[in] timeout Method call timeout (in microseconds)
-     * @return RAII-style slot handle representing the ownership of the async call
-     *
-     * This is a callback-based way of asynchronously calling a remote D-Bus method.
-     *
-     * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided async reply handler will get invoked from the context of the bus
-     * connection I/O event loop thread.
-     *
-     * A slot (an owning handle) is returned for the async call. Lifetime of the call is bound to the lifetime of the slot.
-     * The slot can be used to cancel the method call at a later time by simply destroying it.
-     *
-     * If timeout is zero, the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
-     *
-     * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun callMethodAsync(
-        message: MethodCall,
-        asyncReplyCallback: AsyncReplyHandler,
-        timeout: ULong,
-        t: return_slot_t
-    ): Resource
-
-    /*!
      * @brief Calls method on the D-Bus object asynchronously
      *
      * @param[in] message Message representing an async method call
@@ -262,7 +204,7 @@ interface IProxy : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    suspend fun callMethodAsync(message: MethodCall, with_future: with_future_t): MethodReply
+    suspend fun callMethodAsync(message: MethodCall): MethodReply
 
     /*!
      * @brief Calls method on the D-Bus object asynchronously, with custom timeout
@@ -284,29 +226,7 @@ interface IProxy : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    suspend fun callMethodAsync(message: MethodCall, timeout: ULong, t: with_future_t): MethodReply
-
-    /*!
-     * @brief Registers a handler for the desired signal emitted by the D-Bus object
-     *
-     * @param[in] interfaceName Name of an interface that the signal belongs to
-     * @param[in] signalName Name of the signal
-     * @param[in] signalHandler Callback that implements the body of the signal handler
-     *
-     * A signal can be subscribed to at any time during proxy lifetime. The subscription
-     * is active immediately after the call, and stays active for the entire lifetime
-     * of the Proxy object.
-     *
-     * To be able to unsubscribe from the signal at a later time, use the registerSignalHandler()
-     * overload with request_slot tag.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun registerSignalHandler(
-        interfaceName: InterfaceName,
-        signalName: SignalName,
-        signalHandler: SignalHandler
-    )
+    suspend fun callMethodAsync(message: MethodCall, timeout: ULong): MethodReply
 
     /*!
      * @brief Registers a handler for the desired signal emitted by the D-Bus object
@@ -328,7 +248,6 @@ interface IProxy : Resource {
         interfaceName: InterfaceName,
         signalName: SignalName,
         signalHandler: SignalHandler,
-        return_slot: return_slot_t
     ): Resource
 
     fun createMethodCall(interfaceName: String, methodName: String): MethodCall
@@ -336,14 +255,7 @@ interface IProxy : Resource {
     fun registerSignalHandler(
         interfaceName: String,
         signalName: String,
-        signalHandler: SignalHandler
-    )
-
-    fun registerSignalHandler(
-        interfaceName: String,
-        signalName: String,
         signalHandler: SignalHandler,
-        return_slot: return_slot_t
     ): Resource
 }
 
@@ -358,7 +270,7 @@ interface IProxy : Resource {
  * It's safe to call its methods even after the Proxy has gone.
  *
  ***********************************************/
-class PendingAsyncCall internal constructor(private val target: WeakReference<AsyncCallInfo>) {
+class PendingAsyncCall internal constructor(private val target: WeakReference<AsyncCallInfo>) : Resource {
 
     /*!
      * @brief Cancels the delivery of the pending asynchronous call result
@@ -368,6 +280,11 @@ class PendingAsyncCall internal constructor(private val target: WeakReference<As
      * completed already, or if the originating Proxy object has gone meanwhile.
      */
     fun cancel() {
+        val asyncCallInfo = target.get() ?: return
+        asyncCallInfo.proxy.erase(asyncCallInfo)
+    }
+
+    override fun release() {
         val asyncCallInfo = target.get() ?: return
         asyncCallInfo.proxy.erase(asyncCallInfo)
     }
@@ -395,23 +312,10 @@ inline fun IProxy.callMethodAsync(
 ): PendingAsyncCall =
     callMethodAsync(message, asyncReplyCallback, timeout.inWholeMicroseconds.toULong())
 
-inline fun IProxy.callMethodAsync(
-    message: MethodCall,
-    noinline asyncReplyCallback: AsyncReplyHandler,
-    timeout: Duration,
-    return_slot: return_slot_t
-): Resource = callMethodAsync(
-    message,
-    asyncReplyCallback,
-    timeout.inWholeMicroseconds.toULong(),
-    return_slot
-)
-
 suspend inline fun IProxy.callMethodAsync(
     message: MethodCall,
-    timeout: Duration,
-    with_future: with_future_t
-): MethodReply = callMethodAsync(message, timeout.inWholeMicroseconds.toULong(), with_future)
+    timeout: Duration
+): MethodReply = callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
 
 /*!
  * @brief Calls method on the D-Bus object
@@ -677,7 +581,7 @@ inline fun IProxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPr
  * auto proxy = sdbus::createProxy(connection, "com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(connection: com.monkopedia.sdbus.IConnection, destination: ServiceName, objectPath: ObjectPath): IProxy {
+fun createProxy(connection: IConnection, destination: ServiceName, objectPath: ObjectPath, dontRunEventLoopThread: Boolean = false): IProxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     sdbusRequire(
         sdbusConnection == null,
@@ -685,51 +589,7 @@ fun createProxy(connection: com.monkopedia.sdbus.IConnection, destination: Servi
         EINVAL
     )
 
-    return Proxy(sdbusConnection!!, destination, objectPath)
-}
-
-/*!
- * @brief Creates a proxy object for a specific remote D-Bus object
- *
- * @param[in] connection D-Bus connection to be used by the proxy object
- * @param[in] destination Bus name that provides the remote D-Bus object
- * @param[in] objectPath Path of the remote D-Bus object
- * @return Pointer to the object proxy instance
- *
- * The provided connection will be used by the proxy to issue calls against the object.
- * The Object proxy becomes an exclusive owner of this connection, but will not start
- * an event loop thread on this connection. This is cheap construction and is suitable
- * for short-lived proxies created just to execute simple synchronous D-Bus calls and
- * then destroyed. Such blocking request-reply calls will work without an event loop
- * (but signals, async calls, etc. won't).
- *
- * The destination parameter may be an empty string (useful e.g. in case of direct
- * D-Bus connections to a custom server bus).
- *
- * Code example:
- * @code
- * auto proxy = sdbus::createProxy(std::move(connection), "com.kistler.foo", "/com/kistler/foo", sdbus::dont_run_event_loop_thread);
- * @endcode
- */
-fun createProxy(
-    connection: com.monkopedia.sdbus.IConnection,
-    destination: ServiceName,
-    objectPath: ObjectPath,
-    dont_run_event_loop_thread: dont_run_event_loop_thread_t
-): IProxy {
-    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    sdbusRequire(
-        sdbusConnection == null,
-        "Connection is not a real sdbus-c++ connection",
-        EINVAL
-    )
-
-    return Proxy(
-        sdbusConnection!!,
-        destination,
-        objectPath,
-        dont_run_event_loop_thread
-    )
+    return Proxy(sdbusConnection!!, destination, objectPath, dontRunEventLoopThread = dontRunEventLoopThread)
 }
 
 /*!
@@ -749,47 +609,11 @@ fun createProxy(
  * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(destination: ServiceName, objectPath: ObjectPath): IProxy = memScoped {
-    val connection = com.monkopedia.sdbus.createBusConnection()
+fun createProxy(destination: ServiceName, objectPath: ObjectPath, dontRunEventLoopThread: Boolean = false): IProxy = memScoped {
+    val connection = createBusConnection()
 
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     assert(sdbusConnection != null)
 
-    Proxy(sdbusConnection!!, destination, objectPath)
-}
-
-/*!
- * @brief Creates a proxy object for a specific remote D-Bus object
- *
- * @param[in] destination Bus name that provides the remote D-Bus object
- * @param[in] objectPath Path of the remote D-Bus object
- * @return Pointer to the object proxy instance
- *
- * No D-Bus connection is provided here, so the object proxy will create and manage
- * his own connection, but it will not start an event loop thread. This is cheap
- * construction and is suitable for short-lived proxies created just to execute simple
- * synchronous D-Bus calls and then destroyed. Such blocking request-reply calls
- * will work without an event loop (but signals, async calls, etc. won't).
- *
- * Code example:
- * @code
- * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo", sdbus::dont_run_event_loop_thread );
- * @endcode
- */
-fun createProxy(
-    destination: ServiceName,
-    objectPath: ObjectPath,
-    dont_run_event_loop_thread: dont_run_event_loop_thread_t
-): IProxy = memScoped {
-    val connection = com.monkopedia.sdbus.createBusConnection()
-
-    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    assert(sdbusConnection != null)
-
-    Proxy(
-        sdbusConnection!!,
-        destination,
-        objectPath,
-        dont_run_event_loop_thread
-    )
+    Proxy(sdbusConnection!!, destination, objectPath, dontRunEventLoopThread = dontRunEventLoopThread)
 }

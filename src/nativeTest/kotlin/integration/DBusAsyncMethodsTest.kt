@@ -4,8 +4,6 @@ package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.deserialize
-import com.monkopedia.sdbus.return_slot
-import com.monkopedia.sdbus.with_future
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -19,7 +17,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
-import kotlinx.cinterop.memScoped
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -159,7 +156,7 @@ class DBusAsyncMethodsTest : BaseTest() {
 
     @Test
     fun invokesMethodAsynchronouslyOnClientSideWithFuture(): Unit = runTest {
-        val result = fixture.m_proxy!!.doOperationClientSideAsync(100u, with_future)
+        val result = fixture.m_proxy!!.awaitOperationClientSideAsync(100u)
 
         assertEquals(100u, result)
     }
@@ -206,7 +203,7 @@ class DBusAsyncMethodsTest : BaseTest() {
             promise.complete(1u)
         }
 
-        fixture.m_proxy!!.doOperationClientSideAsync(100u, return_slot).release()
+        fixture.m_proxy!!.doOperationClientSideAsync(100u).release()
         // Now the slot is destroyed, cancelling the async call
 
         assertNull(
@@ -269,7 +266,7 @@ class DBusAsyncMethodsTest : BaseTest() {
     @Test
     fun throwsErrorWhenClientSideAsynchronousMethodCallWithFutureFails(): Unit = runTest {
         try {
-            fixture.m_proxy!!.doErroneousOperationClientSideAsync(with_future)
+            fixture.m_proxy!!.awaitErroneousOperationClientSideAsync()
             fail("Expected exception")
         } catch (t: Error) {
             // Expected failure

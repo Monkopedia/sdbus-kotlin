@@ -28,22 +28,13 @@ import sdbus.sd_bus_message_set_expect_reply
 import sdbus.sd_bus_slot_unref
 import sdbus.uint64_t
 
-class MethodCall private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdBus, real: Int) :
-    Message(msg, sdbus, real) {
+class MethodCall internal constructor(
+    msg: CPointer<sd_bus_message>?,
+    sdbus: ISdBus,
+    adoptMessage: Boolean = false
+) : Message(msg, sdbus, adoptMessage) {
 
-    internal constructor(sdbus: ISdBus) :
-        this(null, sdbus, 0)
-
-    internal constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdBus) :
-        this(msg, sdbus, 0) {
-        sdbus.sd_bus_message_ref(msg)
-    }
-
-    internal constructor(
-        msg: CPointer<sd_bus_message>,
-        sdbus: ISdBus,
-        adopt_message: adopt_message_t
-    ) : this(msg, sdbus, 0)
+    internal constructor(sdbus: ISdBus) : this(null, sdbus)
 
     constructor (o: MethodCall) : this(o.msg, o.sdbus)
 
@@ -53,8 +44,7 @@ class MethodCall private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdB
     fun send(
         callback: sd_bus_message_handler_t,
         userData: Any?,
-        timeout: ULong,
-        t: return_slot_t
+        timeout: ULong
     ): Resource = memScoped {
         val slot: CPointer<CPointerVar<sd_bus_slot>> =
             cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
@@ -81,7 +71,7 @@ class MethodCall private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdB
         val r = sdbus.sd_bus_message_new_method_return(msg, sdbusReply)
         sdbusRequire(r < 0, "Failed to create method reply", -r)
 
-        MethodReply(sdbusReply[0]!!, sdbus, adopt_message)
+        MethodReply(sdbusReply[0]!!, sdbus, adoptMessage = true)
     }
 
     fun createErrorReply(error: Error): MethodReply = memScoped {
@@ -93,7 +83,7 @@ class MethodCall private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdB
         val r = sdbus.sd_bus_message_new_method_error(msg, sdbusErrorReply, sdbusError)
         sdbusRequire(r < 0, "Failed to create method error reply", -r)
 
-        MethodReply(sdbusErrorReply[0]!!, sdbus, adopt_message)
+        MethodReply(sdbusErrorReply[0]!!, sdbus, adoptMessage = true)
     }
 
     var dontExpectReply: Boolean
@@ -122,7 +112,7 @@ class MethodCall private constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdB
 
         sdbusRequire(r < 0, "Failed to call method", -r)
 
-        MethodReply(sdbusReply[0]!!, sdbus, adopt_message)
+        MethodReply(sdbusReply[0]!!, sdbus, adoptMessage = true)
     }
 
     private fun MemScope.sdBusNullError() = cValue<sd_bus_error> {

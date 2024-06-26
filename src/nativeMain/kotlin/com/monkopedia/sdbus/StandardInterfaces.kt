@@ -74,32 +74,24 @@ interface PropertiesProxy : ProxyHolder {
         invalidatedProperties: List<PropertyName>
     ) = Unit
 
-    fun set(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) {
-        proxy.setProperty(propertyName).onInterface(interfaceName).toValue(value)
-    }
-
-    fun set(interfaceName: String, propertyName: String, value: Variant) {
-        proxy.setProperty(propertyName).onInterface(interfaceName).toValue(value)
-    }
-
     fun set(
         interfaceName: InterfaceName,
         propertyName: PropertyName,
         value: Variant,
-        dont_expect_reply: dont_expect_reply_t
+        dontExpectReply: Boolean = false
     ) {
         proxy.setProperty(propertyName).onInterface(interfaceName)
-            .toValue(value, dont_expect_reply)
+            .toValue(value, dontExpectReply = dontExpectReply)
     }
 
     fun set(
         interfaceName: String,
         propertyName: String,
         value: Variant,
-        dont_expect_reply: dont_expect_reply_t
+        dontExpectReply: Boolean = false
     ) {
         proxy.setProperty(propertyName).onInterface(interfaceName)
-            .toValue(value, dont_expect_reply)
+            .toValue(value, dontExpectReply = dontExpectReply)
     }
 
     fun setAsync(
@@ -110,15 +102,6 @@ interface PropertiesProxy : ProxyHolder {
     ): PendingAsyncCall =
         proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
             .uponReplyInvoke(callback)
-
-    fun setAsync(
-        interfaceName: InterfaceName,
-        propertyName: PropertyName,
-        value: Variant,
-        callback: TypedMethodCall<*>,
-        return_slot: return_slot_t
-    ): Resource = proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
-        .uponReplyInvoke(callback, return_slot)
 
     suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
         proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)

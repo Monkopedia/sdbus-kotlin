@@ -16,7 +16,6 @@ import com.monkopedia.sdbus.getProperty
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.ComplexMapValue
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.StructOfStruct
-import com.monkopedia.sdbus.return_slot
 import com.monkopedia.sdbus.setProperty
 import com.monkopedia.sdbus.uponSignal
 import kotlin.experimental.ExperimentalNativeApi
@@ -33,7 +32,7 @@ abstract class IntegrationTestsProxy(override val proxy: IProxy) :
     fun registerProxy() {
         val thiz = WeakReference(this)
         simpleSignalHandler = proxy.uponSignal("simpleSignal").onInterface(INTERFACE_NAME)
-            .call({ call { -> thiz.get()?.onSimpleSignal() ?: Unit } }, return_slot)
+            .call({ call { -> thiz.get()?.onSimpleSignal() ?: Unit } })
         proxy.uponSignal("signalWithMap").onInterface(INTERFACE_NAME)
             .call { call { aMap: Map<Int, String> -> thiz.get()?.onSignalWithMap(aMap) ?: Unit } }
         proxy.uponSignal("signalWithVariant").onInterface(INTERFACE_NAME)
@@ -148,7 +147,7 @@ abstract class IntegrationTestsProxy(override val proxy: IProxy) :
     fun reRegisterSimpleSignalHandler() {
         val thiz = WeakReference(this)
         simpleSignalHandler = proxy.uponSignal("simpleSignal").onInterface(INTERFACE_NAME)
-            .call({ call { -> thiz.get()?.onSimpleSignal() ?: Unit } }, return_slot)
+            .call({ call { -> thiz.get()?.onSimpleSignal() ?: Unit } })
     }
 
     fun action(): UInt = proxy.getProperty("action").onInterface(INTERFACE_NAME)

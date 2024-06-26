@@ -22,7 +22,6 @@ import platform.posix.EINVAL
  ***********************************************/
 interface IObject : Resource {
 
-
     /*!
      * @brief Emits PropertyChanged signal for specified properties under a given interface of this object path
      *
@@ -102,20 +101,6 @@ interface IObject : Resource {
     /*!
      * @brief Adds an ObjectManager interface at the path of this D-Bus object
      *
-     * Creates an ObjectManager interface at the specified object path on
-     * the connection. This is a convenient way to interrogate a connection
-     * to see what objects it has.
-     *
-     * This call creates a so-called floating registration. This means that
-     * the ObjectManager interface stays there for the lifetime of the object.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun addObjectManager()
-
-    /*!
-     * @brief Adds an ObjectManager interface at the path of this D-Bus object
-     *
      * @return Slot handle owning the registration
      *
      * Creates an ObjectManager interface at the specified object path on
@@ -127,14 +112,14 @@ interface IObject : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addObjectManager(t: return_slot_t): Resource
+    fun addObjectManager(): Resource
 
     /*!
      * @brief Provides D-Bus connection used by the object
      *
      * @return Reference to the D-Bus connection
      */
-    fun getConnection(): com.monkopedia.sdbus.IConnection
+    fun getConnection(): IConnection
 
     /*!
      * @brief Returns object path of the underlying DBus object
@@ -172,31 +157,6 @@ interface IObject : Resource {
      * Consult manual pages for the underlying `sd_bus_add_object_vtable` function for more information.
      *
      * The method can be called at any time during object's lifetime. For each vtable an internal
-     * registration slot is created and its lifetime is tied to the lifetime of the Object instance.
-     *
-     * The function provides strong exception guarantee. The state of the object remains
-     * unmodified in face of an exception.
-     *
-     * @throws sdbus::Error in case of failure
-     */
-    fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>)
-
-    /*!
-     * @brief Adds a declaration of methods, properties and signals of the object at a given interface
-     *
-     * @param[in] interfaceName Name of an interface the the vtable is registered for
-     * @param[in] vtable A list of individual descriptions in the form of VTable item instances
-     *
-     * This method is used to declare attributes for the object under the given interface.
-     * The `vtable' parameter may contain method declarations (using MethodVTableItem struct),
-     * property declarations (using PropertyVTableItem struct), signal declarations (using
-     * SignalVTableItem struct), or global interface flags (using InterfaceFlagsVTableItem struct).
-     *
-     * An interface can have any number of vtables attached to it.
-     *
-     * Consult manual pages for the underlying `sd_bus_add_object_vtable` function for more information.
-     *
-     * The method can be called at any time during object's lifetime. For each vtable an internal
      * registration slot is created and is returned to the caller. The returned slot should be destroyed
      * when the vtable is not needed anymore. This allows for "dynamic" object API where vtables
      * can be added or removed by the user at runtime.
@@ -206,11 +166,7 @@ interface IObject : Resource {
      *
      * @throws sdbus::Error in case of failure
      */
-    fun addVTable(
-        interfaceName: InterfaceName,
-        vtable: List<VTableItem>,
-        return_slot: return_slot_t
-    ): Resource
+    fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>): Resource
 
     /*!
      * @brief Creates a signal message
@@ -239,7 +195,7 @@ interface IObject : Resource {
     fun emitSignal(message: Signal)
 
     fun createSignal(interfaceName: String, signalName: String): Signal
-};
+}
 
 // Out-of-line member definitions
 
@@ -263,16 +219,14 @@ interface IObject : Resource {
  *
  * @throws sdbus::Error in case of failure
  */
-inline fun IObject.emitSignal(signalName: SignalName): SignalEmitter {
-    return SignalEmitter(this@emitSignal, signalName);
-}
+inline fun IObject.emitSignal(signalName: SignalName): SignalEmitter =
+    SignalEmitter(this@emitSignal, signalName)
 
 /*!
  * @copydoc IObject::emitSignal(const SignalName&)
  */
-inline fun IObject.emitSignal(signalName: String): SignalEmitter {
-    return SignalEmitter(this@emitSignal, signalName);
-}
+inline fun IObject.emitSignal(signalName: String): SignalEmitter =
+    SignalEmitter(this@emitSignal, signalName)
 
 /*!
  * @brief Adds a declaration of methods, properties and signals of the object at a given interface
@@ -305,9 +259,8 @@ inline fun IObject.emitSignal(signalName: String): SignalEmitter {
  *
  * @throws sdbus::Error in case of failure
  */
-inline fun IObject.addVTable(vararg vtable: VTableItem): VTableAdder {
-    return VTableAdder(this, vtable.toList());
-}
+inline fun IObject.addVTable(vararg vtable: VTableItem): VTableAdder =
+    VTableAdder(this, vtable.toList())
 
 /*!
  * @brief Creates instance representing a D-Bus object
@@ -327,13 +280,13 @@ inline fun IObject.addVTable(vararg vtable: VTableItem): VTableAdder {
  * auto proxy = sdbus::createObject(connection, "/com/kistler/foo");
  * @endcode
  */
-fun createObject(connection: com.monkopedia.sdbus.IConnection, objectPath: ObjectPath): IObject {
+fun createObject(connection: IConnection, objectPath: ObjectPath): IObject {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     sdbusRequire(
         sdbusConnection == null,
         "Connection is not a real sdbus-c++ connection",
         EINVAL
-    );
+    )
 
-    return Object(sdbusConnection!!, objectPath);
+    return Object(sdbusConnection!!, objectPath)
 }

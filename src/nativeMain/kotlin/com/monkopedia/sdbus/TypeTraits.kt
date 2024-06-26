@@ -49,32 +49,6 @@ typealias MessageHandler = (msg: Message) -> Unit
 typealias PropertySetCallback = (msg: PropertySetCall) -> Unit
 typealias PropertyGetCallback = (msg: PropertyGetReply) -> Unit
 
-// // Tag specifying that an owning handle (so-called slot) of the logical resource shall be provided to the client
-data object return_slot_t
-
-val return_slot inline get() = return_slot_t
-
-// // Tag denoting the assumption that the caller has already obtained message ownership
-data object adopt_message_t
-
-val adopt_message inline get() = adopt_message_t
-
-// // Tag specifying that the proxy shall not run an event loop thread on its D-Bus connection.
-// // Such proxies are typically created to carry out a simple synchronous D-Bus call(s) and then are destroyed.
-data object dont_run_event_loop_thread_t
-
-val dont_run_event_loop_thread inline get() = dont_run_event_loop_thread_t
-
-// // Tag denoting an asynchronous call that returns std::future as a handle
-data object with_future_t
-
-val with_future inline get() = with_future_t
-
-// // Tag denoting a call where the reply shouldn't be waited for
-data object dont_expect_reply_t
-
-val dont_expect_reply inline get() = dont_expect_reply_t
-
 inline fun <reified T> signatureOf(): SdbusSig = signatureOf(typeOf<T>())
 
 val SerialDescriptor.asSignature: SdbusSig

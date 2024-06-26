@@ -112,7 +112,7 @@ private inline fun debugPrint(msg: () -> String) {
 open class Message internal constructor(
     protected val msg: CPointer<sd_bus_message>?,
     internal val sdbus: ISdBus,
-    @Suppress("UNUSED_PARAMETER") real: Int
+    adoptMessage: Boolean = false
 ) {
     private var isOk: Boolean = true
     private val resource = msg to sdbus
@@ -122,20 +122,17 @@ open class Message internal constructor(
         }
     }
 
-    internal constructor(sdbus: ISdBus) : this(null, sdbus, 0)
-
-    internal constructor(msg: CPointer<sd_bus_message>?, sdbus: ISdBus) : this(msg, sdbus, 0) {
-        msg?.let {
-            this.sdbus.sd_bus_message_ref(msg)
+    init {
+        if (!adoptMessage) {
+            msg?.let {
+                this.sdbus.sd_bus_message_ref(msg)
+            }
         }
     }
 
+    internal constructor(sdbus: ISdBus) : this(null, sdbus)
+
     constructor (o: Message) : this(o.msg, o.sdbus)
-    internal constructor(
-        msg: CPointer<sd_bus_message>,
-        sdbus: ISdBus,
-        adopt_message: adopt_message_t
-    ) : this(msg, sdbus, 0)
 
     internal fun append(item: Boolean): Unit = memScoped {
         debugPrint { "append boolean $item" }
