@@ -1,5 +1,10 @@
 # sdbus-kotlin
 
+![GitHub License](https://img.shields.io/github/license/monkopedia/sdbus-kotlin)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.0.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/kotlin-sdbus/0.1.0)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin/0.1.0/pom)
+[![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/sdbus-kotlin/com.monkopedia.sdbus/index.html)
+
 sdbus-kotlin is a direct port of sdbus-c++ to kotlin/native. Once the port completed, some
 kotlinization of the APIs has begun, but is definitely not complete or API stable. sdbus-kotlin
 also contains a code generator, which will generate kotlin adaptors or proxies for dbus xml
