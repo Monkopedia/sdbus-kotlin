@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.Variant
 import kotlin.Boolean
@@ -50,6 +51,6 @@ public interface Adapter1 {
   public suspend fun connectDevice(properties: Map<String, Variant>)
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.Adapter1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.Adapter1")
   }
 }

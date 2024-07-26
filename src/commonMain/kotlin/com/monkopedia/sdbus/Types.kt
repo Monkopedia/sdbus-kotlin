@@ -56,7 +56,8 @@ class Variant constructor() {
         )
     }
 
-    fun <T : Any> get(
+    @PublishedApi
+    internal fun <T : Any> get(
         type: DeserializationStrategy<T>,
         module: SerializersModule,
         signature: SdbusSig

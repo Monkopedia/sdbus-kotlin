@@ -1,5 +1,6 @@
 package org.foo
 
+import com.monkopedia.sdbus.InterfaceName
 import kotlin.Boolean
 import kotlin.String
 
@@ -13,6 +14,6 @@ public interface Background {
   public suspend fun setBackground(name: String): Boolean
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.foo.Background"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.foo.Background")
   }
 }

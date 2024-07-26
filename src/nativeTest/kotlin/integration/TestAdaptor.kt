@@ -2,7 +2,7 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ManagedObjectAdaptor
 import com.monkopedia.sdbus.MemberName
 import com.monkopedia.sdbus.Message
@@ -21,16 +21,16 @@ import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.usleep
 
-class ObjectManagerTestAdaptor(val obj: IObject) {
+class ObjectManagerTestAdaptor(val obj: Object) {
     init {
         obj.addObjectManager()
     }
 
-    constructor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath) :
+    constructor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath) :
         this(createObject(connection, path))
 }
 
-class TestAdaptor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath) :
+class TestAdaptor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath) :
     IntegrationTestsAdaptor(createObject(connection, path)),
     PropertiesAdaptor,
     ManagedObjectAdaptor {
@@ -48,8 +48,8 @@ class TestAdaptor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath
     override fun multiply(a: Long, b: Double): Double = a * b
 
     override fun multiplyWithNoReply(a: Long, b: Double) {
-        m_multiplyResult = a * b
-        m_wasMultiplyCalled.value = true
+        multiplyResult = a * b
+        wasMultiplyCalled.value = true
     }
 
     override fun getInts16FromStruct(arg0: IntStruct): List<Short> = buildList {
@@ -79,15 +79,15 @@ class TestAdaptor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath
     override fun doOperation(param: UInt): UInt {
         usleep(param * 1000u)
 
-        m_methodCallMsg = obj.getCurrentlyProcessedMessage()
-        m_methodName = m_methodCallMsg!!.getMemberName()?.let(::MemberName)
+        methodCallMsg = obj.currentlyProcessedMessage
+        methodName = methodCallMsg!!.getMemberName()?.let(::MemberName)
 
         return param
     }
 
     override suspend fun doOperationAsync(param: UInt): UInt {
-        m_methodCallMsg = obj.getCurrentlyProcessedMessage()
-        m_methodName = m_methodCallMsg!!.getMemberName()?.let(::MemberName)
+        methodCallMsg = obj.currentlyProcessedMessage
+        methodName = methodCallMsg!!.getMemberName()?.let(::MemberName)
 
         if (param == 0u) {
             // Don't sleep and return the result from this thread
@@ -123,7 +123,7 @@ class TestAdaptor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath
     )
 
     override fun throwError() {
-        m_wasThrowErrorCalled.value = true
+        wasThrowErrorCalled.value = true
         throw createError(1, "A test error occurred")
     }
 
@@ -140,35 +140,35 @@ class TestAdaptor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath
         emitSignalWithMap(emptyMap())
     }
 
-    override fun state(): String = m_state
+    override fun state(): String = state
 
-    override fun action(): UInt = m_action
+    override fun action(): UInt = action
 
     override fun action(value: UInt) {
-        m_action = value
+        action = value
     }
 
-    override fun blocking(): Boolean = m_blocking
+    override fun blocking(): Boolean = blocking
 
     override fun blocking(value: Boolean) {
-        m_propertySetMsg = obj.getCurrentlyProcessedMessage()
-        m_propertySetSender = m_propertySetMsg!!.getSender()
+        propertySetMessage = obj.currentlyProcessedMessage
+        propertySetSender = propertySetMessage!!.getSender()
 
-        m_blocking = value
+        blocking = value
     }
 
-    private val m_state = DEFAULT_STATE_VALUE
-    private var m_action = DEFAULT_ACTION_VALUE
-    private var m_blocking = DEFAULT_BLOCKING_VALUE
+    private val state = DEFAULT_STATE_VALUE
+    private var action = DEFAULT_ACTION_VALUE
+    private var blocking = DEFAULT_BLOCKING_VALUE
 
     // For dont-expect-reply method call verifications
-    public var m_wasMultiplyCalled = atomic(false)
-    public var m_multiplyResult = 0.0
-    public var m_wasThrowErrorCalled = atomic(false)
+    var wasMultiplyCalled = atomic(false)
+    var multiplyResult = 0.0
+    var wasThrowErrorCalled = atomic(false)
 
-    public var m_methodCallMsg: Message? = null
-    public var m_methodName: MethodName? = null
-    public var m_propertySetMsg: Message? = null
-    public var m_propertySetSender: String? = null
+    var methodCallMsg: Message? = null
+    var methodName: MethodName? = null
+    var propertySetMessage: Message? = null
+    var propertySetSender: String? = null
 }
 

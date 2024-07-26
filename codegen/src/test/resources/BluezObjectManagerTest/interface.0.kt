@@ -1,5 +1,6 @@
 package org.freedesktop.DBus
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.Variant
 import kotlin.String
@@ -11,6 +12,6 @@ public interface ObjectManager {
   public suspend fun getManagedObjects(): Map<ObjectPath, Map<String, Map<String, Variant>>>
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.freedesktop.DBus.ObjectManager"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.freedesktop.DBus.ObjectManager")
   }
 }

@@ -6,10 +6,7 @@ import com.monkopedia.sdbus.Resource
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 
-internal class Reference<T>(
-    val value: T,
-    onLeaveScopes: (T) -> Unit
-): Resource {
+internal class Reference<T>(val value: T, onLeaveScopes: (T) -> Unit) : Resource {
     private val resource = value to singleCall(onLeaveScopes)
 
     fun get(): T = value

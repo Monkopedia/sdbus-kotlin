@@ -2,17 +2,17 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.Proxy
+import com.monkopedia.sdbus.internal.ProxyImpl
 import kotlin.experimental.ExperimentalNativeApi
 import kotlinx.cinterop.memScoped
 import platform.posix.EINVAL
 
-    /*!
- * @brief Creates a proxy object for a specific remote D-Bus object
+    /**
+ * Creates a proxy object for a specific remote D-Bus object
  *
- * @param[in] connection D-Bus connection to be used by the proxy object
- * @param[in] destination Bus name that provides the remote D-Bus object
- * @param[in] objectPath Path of the remote D-Bus object
+ * @param connection D-Bus connection to be used by the proxy object
+ * @param destination Bus name that provides the remote D-Bus object
+ * @param objectPath Path of the remote D-Bus object
  * @return Pointer to the proxy object instance
  *
  * The provided connection will be used by the proxy to issue calls against the object,
@@ -30,19 +30,19 @@ import platform.posix.EINVAL
  * @endcode
  */
     actual fun createProxy(
-        connection: IConnection,
+        connection: Connection,
         destination: ServiceName,
         objectPath: ObjectPath,
         dontRunEventLoopThread: Boolean
-    ): IProxy {
-        val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
+    ): Proxy {
+        val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
         sdbusRequire(
             sdbusConnection == null,
             "Connection is not a real sdbus-c++ connection",
             EINVAL
         )
 
-        return Proxy(
+        return ProxyImpl(
             sdbusConnection!!,
             destination,
             objectPath,
@@ -50,11 +50,11 @@ import platform.posix.EINVAL
         )
     }
 
-    /*!
-     * @brief Creates a proxy object for a specific remote D-Bus object
+    /**
+     * Creates a proxy object for a specific remote D-Bus object
      *
-     * @param[in] destination Bus name that provides the remote D-Bus object
-     * @param[in] objectPath Path of the remote D-Bus object
+     * @param destination Bus name that provides the remote D-Bus object
+     * @param objectPath Path of the remote D-Bus object
      * @return Pointer to the object proxy instance
      *
      * No D-Bus connection is provided here, so the object proxy will create and manage
@@ -71,13 +71,13 @@ import platform.posix.EINVAL
         destination: ServiceName,
         objectPath: ObjectPath,
         dontRunEventLoopThread: Boolean
-    ): IProxy = memScoped {
+    ): Proxy = memScoped {
         val connection = createBusConnection()
 
-        val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
+        val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
         assert(sdbusConnection != null)
 
-        Proxy(
+        ProxyImpl(
             sdbusConnection!!,
             destination,
             objectPath,

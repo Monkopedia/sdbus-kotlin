@@ -3,7 +3,6 @@
 package com.monkopedia.sdbus.internal
 
 import cnames.structs.sd_bus_message
-import com.monkopedia.sdbus.AsyncCallInfo
 import com.monkopedia.sdbus.AsyncReplyHandler
 import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
@@ -36,12 +35,12 @@ import platform.posix.EINVAL
 import sdbus.sd_bus_error
 import sdbus.sd_bus_message_get_error
 
-internal class Proxy(
-    private val connection: IConnection,
+internal class ProxyImpl(
+    override val connection: InternalConnection,
     private val destination: ServiceName,
-    private val path: ObjectPath,
+    override val objectPath: ObjectPath,
     dontRunEventLoopThread: Boolean = false
-) : com.monkopedia.sdbus.IProxy {
+) : com.monkopedia.sdbus.Proxy {
     private class Allocs {
         val floatingAsyncCallSlots = FloatingAsyncCallSlots()
         val floatingSignalSlots = mutableListOf<Resource>()
@@ -64,7 +63,7 @@ internal class Proxy(
 
     init {
         checkServiceName(destination.value)
-        checkObjectPath(path.value)
+        checkObjectPath(objectPath.value)
         if (!dontRunEventLoopThread) {
             connection.enterEventLoopAsync()
         }
@@ -73,10 +72,7 @@ internal class Proxy(
     override fun createMethodCall(
         interfaceName: InterfaceName,
         methodName: MethodName
-    ): MethodCall = connection.createMethodCall(destination, path, interfaceName, methodName)
-
-    override fun createMethodCall(interfaceName: String, methodName: String): MethodCall =
-        connection.createMethodCall(destination.value, path.value, interfaceName, methodName)
+    ): MethodCall = connection.createMethodCall(destination, objectPath, interfaceName, methodName)
 
     override fun callMethod(message: MethodCall): MethodReply = callMethod(message, 0u)
 
@@ -104,7 +100,7 @@ internal class Proxy(
 
         val asyncCallInfo = AsyncCallInfo(
             callback = asyncReplyCallback,
-            proxy = this@Proxy,
+            proxy = this@ProxyImpl,
             floating = false
         ).also { asyncCallInfo ->
             asyncCallInfo.methodCall = connection.callMethod(
@@ -135,27 +131,17 @@ internal class Proxy(
         interfaceName: InterfaceName,
         signalName: SignalName,
         signalHandler: SignalHandler
-    ): Resource = registerSignalHandler(
-        interfaceName.value,
-        signalName.value,
-        signalHandler
-    )
-
-    override fun registerSignalHandler(
-        interfaceName: String,
-        signalName: String,
-        signalHandler: SignalHandler
     ): Resource {
-        checkInterfaceName(interfaceName)
-        checkMemberName(signalName)
+        checkInterfaceName(interfaceName.value)
+        checkMemberName(signalName.value)
 
-        val signalInfo = SignalInfo(signalHandler, this@Proxy)
+        val signalInfo = SignalInfo(signalHandler, this@ProxyImpl)
 
         return connection.registerSignalHandler(
             destination.value,
-            path.value,
-            interfaceName,
-            signalName,
+            objectPath.value,
+            interfaceName.value,
+            signalName.value,
             sdbus_signal_handler,
             signalInfo
         ).also { slot ->
@@ -163,20 +149,17 @@ internal class Proxy(
         }
     }
 
-    override fun getConnection(): com.monkopedia.sdbus.IConnection = connection
-
-    override fun getObjectPath(): ObjectPath = path
-
-    override fun getCurrentlyProcessedMessage(): Message = connection.getCurrentlyProcessedMessage()
+    override val currentlyProcessedMessage: Message
+        get() = connection.currentlyProcessedMessage
 
     internal fun erase(asyncCallInfo: AsyncCallInfo) {
         allocs.floatingAsyncCallSlots.erase(asyncCallInfo)
     }
 
-    class SignalInfo(val callback: SignalHandler, val proxy: Proxy)
+    class SignalInfo(val callback: SignalHandler, val proxyImpl: ProxyImpl)
 
     // Container keeping track of pending async calls
-    class FloatingAsyncCallSlots {
+    internal class FloatingAsyncCallSlots {
         private val lock = ReentrantLock()
         private val asyncSlots = mutableListOf<AsyncCallInfo>()
 
@@ -223,7 +206,7 @@ internal class Proxy(
 
                             val message = MethodReply(
                                 sdbusMessage!!,
-                                (proxy as Proxy).connection.getSdBusInterface()
+                                (proxy as ProxyImpl).connection.getSdBusInterface()
                             )
 
                             val error = sd_bus_message_get_error(sdbusMessage)
@@ -241,7 +224,7 @@ internal class Proxy(
                         // We can't do it earlier (before callback invocation for example), because CallBack data (slot release)
                         // is the synchronization point between callback invocation and Proxy::unregister.
                     } finally {
-                        (proxy as Proxy).allocs.floatingAsyncCallSlots.erase(asyncCallInfo)
+                        (proxy as ProxyImpl).allocs.floatingAsyncCallSlots.erase(asyncCallInfo)
                     }
                 }
 
@@ -261,7 +244,7 @@ internal class Proxy(
                     // TODO: Hide Message factory invocation under Connection API (tell, don't ask principle), then we can remove getSdBusInterface()
                     val message = Signal(
                         sdbusMessage!!,
-                        signalInfo!!.proxy.connection.getSdBusInterface()
+                        signalInfo!!.proxyImpl.connection.getSdBusInterface()
                     )
                     signalInfo.callback(message)
                 }

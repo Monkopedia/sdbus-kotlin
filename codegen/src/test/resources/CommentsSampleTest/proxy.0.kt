@@ -1,20 +1,19 @@
 package org.freedesktop.DBus
 
-import com.monkopedia.sdbus.IProxy
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Proxy
+import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethodAsync
 import com.monkopedia.sdbus.signalFlow
-import kotlin.OptIn
 import kotlin.String
-import kotlin.experimental.ExperimentalNativeApi
 import kotlinx.coroutines.flow.Flow
 
-@OptIn(ExperimentalNativeApi::class)
 public class PropertiesProxy(
-  public val proxy: IProxy,
+  public val proxy: Proxy,
 ) : Properties {
   public val propertiesChanged: Flow<PropertiesChanged> =
-      proxy.signalFlow(Properties.Companion.INTERFACE_NAME, "PropertiesChanged") {
+      proxy.signalFlow(Properties.Companion.INTERFACE_NAME, SignalName("PropertiesChanged")) {
         call(::PropertiesChanged)
       }
 
@@ -22,6 +21,7 @@ public class PropertiesProxy(
   }
 
   override suspend fun `get`(interfaceName: String, propertyName: String): Variant =
-        proxy.callMethodAsync(Properties.Companion.INTERFACE_NAME, "Get") { call(interfaceName,
-        propertyName) }
+      proxy.callMethodAsync(Properties.Companion.INTERFACE_NAME, MethodName("Get")) {
+    call(interfaceName, propertyName)
+  }
 }

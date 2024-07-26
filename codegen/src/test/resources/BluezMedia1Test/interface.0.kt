@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.Variant
 import kotlin.String
@@ -17,6 +18,6 @@ public interface Media1 {
   public suspend fun unregisterPlayer(player: ObjectPath)
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.Media1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.Media1")
   }
 }

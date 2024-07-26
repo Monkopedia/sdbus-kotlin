@@ -3,13 +3,13 @@
 package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Error
-import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
+import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
-import com.monkopedia.sdbus.ObjectManagerProxy
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
@@ -26,89 +26,58 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
-class ObjectManagerTestProxy(proxy: com.monkopedia.sdbus.IProxy) : ObjectManagerProxy {
-    override val proxy: com.monkopedia.sdbus.IProxy = proxy
-
-    constructor(
-        connection: com.monkopedia.sdbus.IConnection,
-        destination: ServiceName,
-        objectPath: ObjectPath
-    ) : this(com.monkopedia.sdbus.createProxy(connection, destination, objectPath))
-
-    init {
-        registerObjectManagerProxy()
-    }
-
-    override fun onInterfacesAdded(
-        objectPath: ObjectPath,
-        interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
-    ) {
-        m_onInterfacesAddedHandler?.invoke(objectPath, interfacesAndProperties)
-    }
-
-    override fun onInterfacesRemoved(objectPath: ObjectPath, interfaces: List<InterfaceName>) {
-        m_onInterfacesRemovedHandler?.invoke(objectPath, interfaces)
-    }
-
-    var m_onInterfacesAddedHandler: (
-        (ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>) -> Unit
-    )? =
-        null
-    var m_onInterfacesRemovedHandler: ((ObjectPath, List<InterfaceName>) -> Unit)? = null
-}
-
-class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : IntegrationTestsProxy(proxy) {
+class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy) {
 
     constructor(destination: ServiceName, objectPath: ObjectPath) : this(
-        com.monkopedia.sdbus.createProxy(destination, objectPath)
+        createProxy(destination, objectPath)
     )
 
     constructor(
         destination: ServiceName,
         objectPath: ObjectPath,
         dontRunEventLoopThread: Boolean = false
-    ) : this(com.monkopedia.sdbus.createProxy(destination, objectPath, dontRunEventLoopThread))
+    ) : this(createProxy(destination, objectPath, dontRunEventLoopThread))
 
     constructor(
-        connection: com.monkopedia.sdbus.IConnection,
+        connection: com.monkopedia.sdbus.Connection,
         destination: ServiceName,
         objectPath: ObjectPath
-    ) : this(com.monkopedia.sdbus.createProxy(connection, destination, objectPath))
+    ) : this(createProxy(connection, destination, objectPath))
 
-    var m_gotSimpleSignal = atomic(false)
-    var m_gotSignalWithMap = atomic(false)
-    var m_mapFromSignal = emptyMap<Int, String>()
-    var m_gotSignalWithVariant = atomic(false)
-    var m_variantFromSignal = 0.0
+    var gotSimpleSignal = atomic(false)
+    var gotSignalWithMap = atomic(false)
+    var mapFromSignal = emptyMap<Int, String>()
+    var gotSignalWithVariant = atomic(false)
+    var variantFromSignal = 0.0
 
-    var m_DoOperationClientSideAsyncReplyHandler: ((UInt, Error?) -> Unit)? = null
-    var m_onPropertiesChangedHandler: (
+    var doOperationClientSideAsyncReplyHandler: ((UInt, Error?) -> Unit)? = null
+    var propertiesChangedHandler: (
         (InterfaceName, Map<PropertyName, Variant>, List<PropertyName>) -> Unit
     )? =
         null
 
-    var m_signalMsg: Message? = null
-    var m_signalName: SignalName? = null
+    var signalMsg: Message? = null
+    var signalName: SignalName? = null
 
     override fun onSimpleSignal() {
-        m_signalMsg = proxy.getCurrentlyProcessedMessage()
-        m_signalName = m_signalMsg!!.getMemberName()?.let(::SignalName)
+        signalMsg = proxy.currentlyProcessedMessage
+        signalName = signalMsg!!.getMemberName()?.let(::SignalName)
 
-        m_gotSimpleSignal.value = true
+        gotSimpleSignal.value = true
     }
 
     override fun onSignalWithMap(aMap: Map<Int, String>) {
-        m_mapFromSignal = aMap
-        m_gotSignalWithMap.value = true
+        mapFromSignal = aMap
+        gotSignalWithMap.value = true
     }
 
     override fun onSignalWithVariant(aVariant: Variant) {
-        m_variantFromSignal = aVariant.get<Double>()
-        m_gotSignalWithVariant.value = true
+        variantFromSignal = aVariant.get<Double>()
+        gotSignalWithVariant.value = true
     }
 
     fun onDoOperationReply(returnValue: UInt, error: Error?) {
-        m_DoOperationClientSideAsyncReplyHandler?.invoke(returnValue, error)
+        doOperationClientSideAsyncReplyHandler?.invoke(returnValue, error)
     }
 
     override fun onPropertiesChanged(
@@ -116,7 +85,7 @@ class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : Integr
         changedProperties: Map<PropertyName, Variant>,
         invalidatedProperties: List<PropertyName>
     ) {
-        m_onPropertiesChangedHandler?.invoke(
+        propertiesChangedHandler?.invoke(
             interfaceName,
             changedProperties,
             invalidatedProperties
@@ -124,18 +93,18 @@ class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : Integr
     }
 
     fun installDoOperationClientSideAsyncReplyHandler(handler: (UInt, Error?) -> Unit) {
-        m_DoOperationClientSideAsyncReplyHandler = handler
+        doOperationClientSideAsyncReplyHandler = handler
     }
 
     fun doOperationWithTimeout(timeout: Duration, param: UInt): UInt =
-        proxy.callMethod(INTERFACE_NAME, "doOperation") {
+        proxy.callMethod(INTERFACE_NAME, MethodName("doOperation")) {
             timeoutDuration = timeout
             call(param)
         }
 
     fun doOperationClientSideAsync(param: UInt): Job = GlobalScope.launch {
         val result = runCatching {
-            proxy.callMethodAsync<UInt>(INTERFACE_NAME, "doOperation") {
+            proxy.callMethodAsync<UInt>(INTERFACE_NAME, MethodName("doOperation")) {
                 call(param)
             }
         }
@@ -148,12 +117,12 @@ class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : Integr
     }
 
     suspend fun awaitOperationClientSideAsync(param: UInt): UInt =
-        proxy.callMethodAsync(INTERFACE_NAME, "doOperation") { call(param) }
+        proxy.callMethodAsync(INTERFACE_NAME, MethodName("doOperation")) { call(param) }
 
     suspend fun doOperationClientSideAsyncOnBasicAPILevel(param: UInt): MethodReply {
         val methodCall = proxy.createMethodCall(
             INTERFACE_NAME,
-            "doOperation"
+            MethodName("doOperation")
         )
         methodCall.append(param)
 
@@ -162,7 +131,7 @@ class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : Integr
 
     fun doErroneousOperationClientSideAsync() = GlobalScope.launch {
         val result = runCatching {
-            proxy.callMethodAsync<UInt>(INTERFACE_NAME, "throwError") { call() }
+            proxy.callMethodAsync<UInt>(INTERFACE_NAME, MethodName("throwError")) { call() }
         }
         ensureActive()
         result.onSuccess {
@@ -173,12 +142,12 @@ class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : Integr
     }
 
     suspend fun awaitErroneousOperationClientSideAsync(): Unit =
-        proxy.callMethodAsync(INTERFACE_NAME, "throwError") {}
+        proxy.callMethodAsync(INTERFACE_NAME, MethodName("throwError")) {}
 
     fun doOperationClientSideAsyncWithTimeout(timeout: Duration, param: UInt) {
         GlobalScope.launch {
             val result = runCatching {
-                proxy.callMethodAsync<UInt>(INTERFACE_NAME, "doOperation") {
+                proxy.callMethodAsync<UInt>(INTERFACE_NAME, MethodName("doOperation")) {
                     timeoutDuration = timeout
                     call(param)
                 }
@@ -192,14 +161,15 @@ class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : Integr
         }
     }
 
-    fun callNonexistentMethod(): Int = proxy.callMethod(INTERFACE_NAME, "callNonexistentMethod") {}
+    fun callNonexistentMethod(): Int =
+        proxy.callMethod(INTERFACE_NAME, MethodName("callNonexistentMethod")) {}
 
     fun callMethodOnNonexistentInterface(): Int {
         val nonexistentInterfaceName = InterfaceName("sdbuscpp.interface.that.does.not.exist")
-        return proxy.callMethod(nonexistentInterfaceName, "someMethod") {}
+        return proxy.callMethod(nonexistentInterfaceName, MethodName("someMethod")) {}
     }
 
     fun setStateProperty(value: String) {
-        proxy.setProperty(INTERFACE_NAME, "state", value)
+        proxy.setProperty(INTERFACE_NAME, PropertyName("state"), value)
     }
 }

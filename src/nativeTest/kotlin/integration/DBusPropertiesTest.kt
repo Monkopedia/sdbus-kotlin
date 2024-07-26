@@ -15,13 +15,13 @@ class DBusPropertiesTest : BaseTest() {
 
     @Test
     fun readsReadOnlyPropertySuccesfully() {
-        assertEquals(DEFAULT_STATE_VALUE, fixture.m_proxy!!.state())
+        assertEquals(DEFAULT_STATE_VALUE, fixture.proxy!!.state())
     }
 
     @Test
     fun failsWritingToReadOnlyProperty() {
         try {
-            fixture.m_proxy!!.setStateProperty("new_value")
+            fixture.proxy!!.setStateProperty("new_value")
             fail("Expected failure")
         } catch (t: Error) {
             // Expected failure
@@ -32,17 +32,17 @@ class DBusPropertiesTest : BaseTest() {
     fun writesAndReadsReadWritePropertySuccesfully() {
         val newActionValue = 5678u
 
-        fixture.m_proxy!!.action(newActionValue)
+        fixture.proxy!!.action(newActionValue)
 
-        assertEquals(newActionValue, fixture.m_proxy!!.action())
+        assertEquals(newActionValue, fixture.proxy!!.action())
     }
 
     @Test
     fun canAccessAssociatedPropertySetMessageInPropertySetHandler() {
         // This will save pointer to property get message on server side
-        fixture.m_proxy!!.blocking(true)
+        fixture.proxy!!.blocking(true)
 
-        assertNotNull(fixture.m_adaptor!!.m_propertySetMsg)
-        assertFalse(fixture.m_adaptor!!.m_propertySetSender!!.isEmpty())
+        assertNotNull(fixture.adaptor!!.propertySetMessage)
+        assertFalse(fixture.adaptor!!.propertySetSender!!.isEmpty())
     }
 }

@@ -13,13 +13,13 @@ import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalName
-import com.monkopedia.sdbus.internal.Connection.Companion.pseudoConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.pseudoConnection
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
 
-internal interface IConnection : com.monkopedia.sdbus.IConnection {
+internal interface InternalConnection : com.monkopedia.sdbus.Connection {
 
     fun getSdBusInterface(): ISdBus
 
@@ -88,14 +88,14 @@ internal interface IConnection : com.monkopedia.sdbus.IConnection {
     ): Resource
 
     companion object {
-        fun createPseudoConnection(): IConnection {
+        fun createPseudoConnection(): InternalConnection {
             val intf = SdBus()
             return pseudoConnection(intf)
         }
 
-        private var instance: IConnection? = null
+        private var instance: InternalConnection? = null
 
-        fun getPseudoConnectionInstance(): IConnection = instance ?: createPseudoConnection().also {
+        fun getPseudoConnectionInstance(): InternalConnection = instance ?: createPseudoConnection().also {
             instance = it
         }
     }

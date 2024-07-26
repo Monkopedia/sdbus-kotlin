@@ -1,37 +1,36 @@
 package org.foo
 
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
+import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.emitSignal
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.signal
-import kotlin.OptIn
 import kotlin.Unit
-import kotlin.experimental.ExperimentalNativeApi
 
-@OptIn(ExperimentalNativeApi::class)
 public abstract class BackgroundAdaptor(
-  protected val obj: IObject,
+  public val obj: Object,
 ) : Background {
   public override fun register() {
     obj.addVTable(Background.Companion.INTERFACE_NAME) {
-      method("refreshBackground") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("refreshBackground")) {
         acall(this@BackgroundAdaptor::refreshBackground)
       }
-      method("currentBackground") {
-        inputParamNames = listOf()
+      method(MethodName("currentBackground")) {
         acall(this@BackgroundAdaptor::currentBackground)
       }
-      method("setBackground") {
+      method(MethodName("setBackground")) {
         inputParamNames = listOf("name")
         acall(this@BackgroundAdaptor::setBackground)
       }
-      signal("backgroundChanged") {
+      signal(SignalName("backgroundChanged")) {
       }
     }
   }
 
-  public suspend fun onBackgroundChanged(): Unit = obj.emitSignal("backgroundChanged") { call() }
+  public suspend fun onBackgroundChanged(): Unit =
+      obj.emitSignal(Background.Companion.INTERFACE_NAME, SignalName("backgroundChanged")) {
+    call()
+  }
 }

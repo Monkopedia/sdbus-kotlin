@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import kotlin.String
 
 public interface NetworkServer1 {
@@ -10,6 +11,6 @@ public interface NetworkServer1 {
   public suspend fun unregister(uuid: String)
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.NetworkServer1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.NetworkServer1")
   }
 }

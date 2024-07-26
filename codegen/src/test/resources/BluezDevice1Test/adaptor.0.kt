@@ -1,115 +1,104 @@
 package org.bluez
 
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
+import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.prop
-import kotlin.OptIn
-import kotlin.experimental.ExperimentalNativeApi
 
-@OptIn(ExperimentalNativeApi::class)
 public abstract class Device1Adaptor(
-  protected val obj: IObject,
+  public val obj: Object,
 ) : Device1 {
   public override fun register() {
     obj.addVTable(Device1.Companion.INTERFACE_NAME) {
-      method("Connect") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("Connect")) {
         acall(this@Device1Adaptor::connect)
       }
-      method("Disconnect") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("Disconnect")) {
         acall(this@Device1Adaptor::disconnect)
       }
-      method("ConnectProfile") {
+      method(MethodName("ConnectProfile")) {
         inputParamNames = listOf("uuid")
-        outputParamNames = listOf()
         acall(this@Device1Adaptor::connectProfile)
       }
-      method("DisconnectProfile") {
+      method(MethodName("DisconnectProfile")) {
         inputParamNames = listOf("uuid")
-        outputParamNames = listOf()
         acall(this@Device1Adaptor::disconnectProfile)
       }
-      method("Pair") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("Pair")) {
         acall(this@Device1Adaptor::pair)
       }
-      method("CancelPairing") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("CancelPairing")) {
         acall(this@Device1Adaptor::cancelPairing)
       }
-      prop("Address") {
+      prop(PropertyName("Address")) {
         with(this@Device1Adaptor::address)
       }
-      prop("AddressType") {
+      prop(PropertyName("AddressType")) {
         with(this@Device1Adaptor::addressType)
       }
-      prop("Name") {
+      prop(PropertyName("Name")) {
         with(this@Device1Adaptor::name)
       }
-      prop("Icon") {
+      prop(PropertyName("Icon")) {
         with(this@Device1Adaptor::icon)
       }
-      prop("Class") {
+      prop(PropertyName("Class")) {
         with(this@Device1Adaptor::`class`)
       }
-      prop("Appearance") {
+      prop(PropertyName("Appearance")) {
         with(this@Device1Adaptor::appearance)
       }
-      prop("UUIDs") {
+      prop(PropertyName("UUIDs")) {
         with(this@Device1Adaptor::uUIDs)
       }
-      prop("Paired") {
+      prop(PropertyName("Paired")) {
         with(this@Device1Adaptor::paired)
       }
-      prop("Connected") {
+      prop(PropertyName("Connected")) {
         with(this@Device1Adaptor::connected)
       }
-      prop("Trusted") {
+      prop(PropertyName("Trusted")) {
         with(this@Device1Adaptor::trusted)
       }
-      prop("Blocked") {
+      prop(PropertyName("Blocked")) {
         with(this@Device1Adaptor::blocked)
       }
-      prop("WakeAllowed") {
+      prop(PropertyName("WakeAllowed")) {
         with(this@Device1Adaptor::wakeAllowed)
       }
-      prop("Alias") {
+      prop(PropertyName("Alias")) {
         with(this@Device1Adaptor::alias)
       }
-      prop("Adapter") {
+      prop(PropertyName("Adapter")) {
         with(this@Device1Adaptor::adapter)
       }
-      prop("LegacyPairing") {
+      prop(PropertyName("LegacyPairing")) {
         with(this@Device1Adaptor::legacyPairing)
       }
-      prop("Modalias") {
+      prop(PropertyName("Modalias")) {
         with(this@Device1Adaptor::modalias)
       }
-      prop("RSSI") {
+      prop(PropertyName("RSSI")) {
         with(this@Device1Adaptor::rSSI)
       }
-      prop("TxPower") {
+      prop(PropertyName("TxPower")) {
         with(this@Device1Adaptor::txPower)
       }
-      prop("ManufacturerData") {
+      prop(PropertyName("ManufacturerData")) {
         with(this@Device1Adaptor::manufacturerData)
       }
-      prop("ServiceData") {
+      prop(PropertyName("ServiceData")) {
         with(this@Device1Adaptor::serviceData)
       }
-      prop("ServicesResolved") {
+      prop(PropertyName("ServicesResolved")) {
         with(this@Device1Adaptor::servicesResolved)
       }
-      prop("AdvertisingFlags") {
+      prop(PropertyName("AdvertisingFlags")) {
         with(this@Device1Adaptor::advertisingFlags)
       }
-      prop("AdvertisingData") {
+      prop(PropertyName("AdvertisingData")) {
         with(this@Device1Adaptor::advertisingData)
       }
     }

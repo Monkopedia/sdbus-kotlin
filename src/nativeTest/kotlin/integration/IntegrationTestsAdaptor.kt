@@ -5,9 +5,13 @@ package com.monkopedia.sdbus.integration
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ObjectAdaptor
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
@@ -20,7 +24,7 @@ import com.monkopedia.sdbus.signal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 
-abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdaptor {
+abstract class IntegrationTestsAdaptor(override val obj: Object) : ObjectAdaptor {
 
     open fun registerAdaptor() {
         obj.addVTable(INTERFACE_NAME) {
@@ -28,23 +32,23 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
                 isDeprecated = true
                 +EMITS_NO_SIGNAL
             }
-            method("noArgNoReturn") { call { -> noArgNoReturn() } }
-            method("getInt") {
+            method(MethodName("noArgNoReturn")) { call { -> noArgNoReturn() } }
+            method(MethodName("getInt")) {
                 outputParamNames = listOf("anInt")
                 call { -> getInt() }
             }
-            method("getTuple") {
+            method(MethodName("getTuple")) {
                 outputParamNames = listOf("arg0", "arg1")
                 call { -> getTuple() }
             }
-            method("multiply") {
+            method(MethodName("multiply")) {
                 inputParamNames = listOf("a", "b")
                 outputParamNames = listOf("result")
                 call { a: Long, b: Double ->
                     multiply(a, b)
                 }
             }
-            method("multiplyWithNoReply") {
+            method(MethodName("multiplyWithNoReply")) {
                 inputParamNames = listOf("a", "b")
                 isDeprecated = true
                 hasNoReply = true
@@ -52,28 +56,28 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
                     multiplyWithNoReply(a, b)
                 }
             }
-            method("processVariant") {
+            method(MethodName("processVariant")) {
                 inputParamNames = listOf("variant")
                 outputParamNames = listOf("result")
                 call { variant: Variant ->
                     processVariant(variant)
                 }
             }
-            method("sumArrayItems") {
+            method(MethodName("sumArrayItems")) {
                 inputParamNames = listOf("arg0", "arg1")
                 outputParamNames = listOf("arg0")
                 call { arg0: List<UShort>, arg1: Array<ULong> ->
                     sumArrayItems(arg0, arg1)
                 }
             }
-            method("doOperation") {
+            method(MethodName("doOperation")) {
                 inputParamNames = listOf("arg0")
                 outputParamNames = listOf("arg0")
                 call { arg0: UInt ->
                     doOperation(arg0)
                 }
             }
-            method("doOperationAsync") {
+            method(MethodName("doOperationAsync")) {
                 inputParamNames = listOf("arg0")
                 outputParamNames = listOf("arg0")
                 implementedAs(
@@ -82,80 +86,80 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
                     } withContext Dispatchers.Unconfined
                 )
             }
-            method("getSignature") {
+            method(MethodName("getSignature")) {
                 outputParamNames = listOf("arg0")
                 call { -> getSignature() }
             }
-            method("getObjPath") {
+            method(MethodName("getObjPath")) {
                 outputParamNames = listOf("arg0")
                 call { -> getObjPath() }
             }
-            method("getUnixFd") {
+            method(MethodName("getUnixFd")) {
                 outputParamNames = listOf("arg0")
                 call { -> getUnixFd() }
             }
-            method("throwError") {
+            method(MethodName("throwError")) {
                 call { -> throwError() }
             }
-            method("throwErrorWithNoReply") {
+            method(MethodName("throwErrorWithNoReply")) {
                 hasNoReply = true
                 call { -> throwErrorWithNoReply() }
             }
-            method("doPrivilegedStuff") {
+            method(MethodName("doPrivilegedStuff")) {
                 isPrivileged = true
                 call { -> doPrivilegedStuff() }
             }
-            method("emitTwoSimpleSignals") {
+            method(MethodName("emitTwoSimpleSignals")) {
                 call { -> emitTwoSimpleSignals() }
             }
-            signal("simpleSignal") {
+            signal(SignalName("simpleSignal")) {
                 isDeprecated = true
             }
-            signal("signalWithMap") { with<Map<Int, String>>("aMap") }
-            signal("signalWithVariant") { with<Variant>("aVariant") }
-            prop("action") {
+            signal(SignalName("signalWithMap")) { with<Map<Int, String>>("aMap") }
+            signal(SignalName("signalWithVariant")) { with<Variant>("aVariant") }
+            prop(PropertyName("action")) {
                 withGetter { action() }
                 withSetter { value: UInt ->
                     action(value)
                 }
                 +EMITS_INVALIDATION_SIGNAL
             }
-            prop("blocking") {
+            prop(PropertyName("blocking")) {
                 withGetter { blocking() }
                 withSetter { value: Boolean ->
                     blocking(value)
                 }
             }
-            prop("state") {
+            prop(PropertyName("state")) {
                 withGetter { state() }
                 isDeprecated = true
                 +CONST_PROPERTY_VALUE
             }
 
-            method("getMapOfVariants") {
+            method(MethodName("getMapOfVariants")) {
                 inputParamNames = listOf("x", "y")
                 outputParamNames = listOf("aMapOfVariants")
                 call { x: List<Int>, y: Pair<Variant, Variant> ->
                     getMapOfVariants(x, y)
                 }
             }
-            method("getStructInStruct") {
+            method(MethodName("getStructInStruct")) {
                 outputParamNames = listOf("aMapOfVariants")
                 call { -> getStructInStruct() }
             }
-            method("sumStructItems") {
+            method(MethodName("sumStructItems")) {
                 inputParamNames = listOf("arg0", "arg1")
                 outputParamNames = listOf("arg0")
                 call { arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long> ->
                     sumStructItems(arg0, arg1)
                 }
             }
-            method("getComplex") {
+            method(MethodName("getComplex")) {
                 outputParamNames = listOf("arg0")
                 isDeprecated = true
                 call { -> getComplex() }
             }
-            method("getInts16FromStruct") {
+            method(MethodName("getInts16FromStruct")) {
                 inputParamNames = listOf("arg0")
                 outputParamNames = listOf("arg0")
                 call { arg0: IntStruct ->
@@ -165,13 +169,13 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
         }
     }
 
-    fun emitSimpleSignal() = obj.emitSignal(INTERFACE_NAME, "simpleSignal") { call() }
+    fun emitSimpleSignal() = obj.emitSignal(INTERFACE_NAME, SignalName("simpleSignal")) { call() }
 
     fun emitSignalWithMap(aMap: Map<Int, String>) =
-        obj.emitSignal(INTERFACE_NAME, "signalWithMap") { call(aMap) }
+        obj.emitSignal(INTERFACE_NAME, SignalName("signalWithMap")) { call(aMap) }
 
     fun emitSignalWithVariant(aVariant: Variant) =
-        obj.emitSignal(INTERFACE_NAME, "signalWithVariant") { call(aVariant) }
+        obj.emitSignal(INTERFACE_NAME, SignalName("signalWithVariant")) { call(aVariant) }
 
     protected abstract fun noArgNoReturn(): Unit
     protected abstract fun getInt(): Int
@@ -239,6 +243,6 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
     protected abstract fun state(): String
 
     companion object {
-        const val INTERFACE_NAME = "org.sdbuscpp.integrationtests"
+        val INTERFACE_NAME = InterfaceName("org.sdbuscpp.integrationtests")
     }
 }

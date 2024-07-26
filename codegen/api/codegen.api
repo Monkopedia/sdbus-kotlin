@@ -99,6 +99,7 @@ public abstract class com/monkopedia/sdbus/BaseGenerator {
 	protected final fun setNamingManager (Lcom/monkopedia/sdbus/NamingManager;)V
 	protected abstract fun signalBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Signal;)Lcom/squareup/kotlinpoet/FunSpec$Builder;
 	protected final fun signalName (Lcom/monkopedia/sdbus/Signal;)Ljava/lang/String;
+	protected fun signalValBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Signal;)Lcom/squareup/kotlinpoet/PropertySpec$Builder;
 	public fun transformXmlToFile (Lcom/monkopedia/sdbus/XmlRootNode;)Ljava/util/List;
 }
 

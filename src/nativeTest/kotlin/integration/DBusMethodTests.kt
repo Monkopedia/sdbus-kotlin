@@ -4,15 +4,14 @@ package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.callMethod
-import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
 import com.monkopedia.sdbus.method
-import com.monkopedia.sdbus.registerMethod
 import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -22,30 +21,31 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 
 class DBusMethodTests : BaseTest() {
-    private val fixture: ConnectionTestFixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = TestFixtureSdBusCppLoop(this)
 
     @Test
     fun callsEmptyMethodSuccesfully() {
-        fixture.m_proxy!!.noArgNoReturn()
+        fixture.proxy!!.noArgNoReturn()
     }
 
     @Test
     fun callsMethodsWithBaseTypesSuccesfully() {
-        val resInt = fixture.m_proxy!!.getInt()
+        val resInt = fixture.proxy!!.getInt()
         assertEquals(INT32_VALUE, resInt)
 
-        val multiplyRes = fixture.m_proxy!!.multiply(INT64_VALUE, DOUBLE_VALUE)
+        val multiplyRes = fixture.proxy!!.multiply(INT64_VALUE, DOUBLE_VALUE)
         assertEquals(INT64_VALUE * DOUBLE_VALUE, multiplyRes)
     }
 
     @Test
     fun callsMethodsWithTuplesSuccesfully() {
-        val resTuple = fixture.m_proxy!!.getTuple()
+        val resTuple = fixture.proxy!!.getTuple()
         assertEquals(UINT32_VALUE, resTuple.first)
         assertEquals(STRING_VALUE, resTuple.second)
     }
@@ -53,7 +53,7 @@ class DBusMethodTests : BaseTest() {
     @Test
     fun callsMethodsWithStructSuccesfully() {
         val a = IntStruct(0u, 0, 0.0, "", emptyList())
-        var vectorRes = fixture.m_proxy?.getInts16FromStruct(a)
+        var vectorRes = fixture.proxy?.getInts16FromStruct(a)
         assertEquals(
             listOf(0.toShort()),
             vectorRes
@@ -66,14 +66,14 @@ class DBusMethodTests : BaseTest() {
             STRING_VALUE,
             listOf(INT16_VALUE, (-INT16_VALUE).toShort())
         )
-        vectorRes = fixture.m_proxy?.getInts16FromStruct(b)
+        vectorRes = fixture.proxy?.getInts16FromStruct(b)
         assertEquals(listOf(INT16_VALUE, INT16_VALUE, (-INT16_VALUE).toShort()), vectorRes)
     }
 
     @Test
     fun callsMethodWithVariantSuccesfully() {
         val v = Variant(DOUBLE_VALUE)
-        val variantRes = fixture.m_proxy!!.processVariant(v)
+        val variantRes = fixture.proxy!!.processVariant(v)
         assertEquals(DOUBLE_VALUE.toInt(), variantRes.get<Int>())
     }
 
@@ -81,7 +81,7 @@ class DBusMethodTests : BaseTest() {
     fun callsMethodWithStructVariantsAndGetMapSuccesfully() {
         val x = listOf(-2, 0, 2)
         val y = Variant(false) to Variant(true)
-        val mapOfVariants = fixture.m_proxy?.getMapOfVariants(x, y)!!
+        val mapOfVariants = fixture.proxy?.getMapOfVariants(x, y)!!
         val res = mapOf(
             -2 to Variant(false),
             0 to Variant(false),
@@ -95,20 +95,20 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun callsMethodWithStructInStructSuccesfully() {
-        val v = fixture.m_proxy?.getStructInStruct()!!
+        val v = fixture.proxy?.getStructInStruct()!!
         assertEquals(STRING_VALUE, v.first)
         assertEquals(INT32_VALUE, v.second.first[INT32_VALUE])
     }
 
     @Test
     fun callsMethodWithTwoStructsSuccesfully() {
-        val v = fixture.m_proxy?.sumStructItems(1.toUByte() to 2.toUShort(), 3 to 4)
+        val v = fixture.proxy?.sumStructItems(1.toUByte() to 2.toUShort(), 3 to 4)
         assertEquals(1 + 2 + 3 + 4, v)
     }
 
     @Test
     fun callsMethodWithTwoVectorsSuccesfully() {
-        val result = fixture.m_proxy!!.sumArrayItems(
+        val result = fixture.proxy!!.sumArrayItems(
             listOf(1.toUShort(), 7.toUShort()),
             arrayOf(2u, 3u, 4u)
         )
@@ -117,39 +117,39 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun callsMethodWithSignatureSuccesfully() {
-        val resSignature = fixture.m_proxy!!.getSignature()
+        val resSignature = fixture.proxy!!.getSignature()
         assertEquals(SIGNATURE_VALUE, resSignature)
     }
 
     @Test
     fun callsMethodWithObjectPathSuccesfully() {
-        val resObjectPath = fixture.m_proxy!!.getObjPath()
+        val resObjectPath = fixture.proxy!!.getObjPath()
         assertEquals(OBJECT_PATH_VALUE, resObjectPath)
     }
 
     @Test
     fun callsMethodWithUnixFdSuccesfully() {
-        val resUnixFd = fixture.m_proxy!!.getUnixFd()
+        val resUnixFd = fixture.proxy!!.getUnixFd()
         assertTrue(resUnixFd.fd > UNIX_FD_VALUE)
     }
 
     @Test
     fun callsMethodWithComplexTypeSuccesfully() {
-        val resComplex = fixture.m_proxy?.getComplex()
+        val resComplex = fixture.proxy?.getComplex()
         assertEquals(1, resComplex?.size)
     }
 
     @Test
     fun callsMultiplyMethodWithNoReplyFlag() {
-        fixture.m_proxy!!.multiplyWithNoReply(INT64_VALUE, DOUBLE_VALUE)
+        fixture.proxy!!.multiplyWithNoReply(INT64_VALUE, DOUBLE_VALUE)
 
-        assertTrue(waitUntil(fixture.m_adaptor!!.m_wasMultiplyCalled))
-        assertEquals(INT64_VALUE * DOUBLE_VALUE, fixture.m_adaptor!!.m_multiplyResult)
+        assertTrue(waitUntil(fixture.adaptor!!.wasMultiplyCalled))
+        assertEquals(INT64_VALUE * DOUBLE_VALUE, fixture.adaptor!!.multiplyResult)
     }
 
     @Test
     fun callsMethodWithCustomTimeoutSuccessfully() {
-        val res = fixture.m_proxy!!.doOperationWithTimeout(
+        val res = fixture.proxy!!.doOperationWithTimeout(
             500.milliseconds,
             20u
         ) // The operation will take 20ms, but the timeout is 500ms, so we are fine
@@ -160,7 +160,7 @@ class DBusMethodTests : BaseTest() {
     fun ThrowsTimeoutErrorWhenMethodTimesOut() {
         val start = Clock.System.now()
         try {
-            fixture.m_proxy!!.doOperationWithTimeout(
+            fixture.proxy!!.doOperationWithTimeout(
                 1.microseconds,
                 1000u
             ) // The operation will take 1s, but the timeout is 1us, so we should time out
@@ -182,7 +182,7 @@ class DBusMethodTests : BaseTest() {
     @Test
     fun callsMethodThatThrowsError() {
         try {
-            fixture.m_proxy!!.throwError()
+            fixture.proxy!!.throwError()
             fail("Expected Error exception")
         } catch (e: Error) {
             assertEquals("org.freedesktop.DBus.Error.AccessDenied", e.name)
@@ -192,15 +192,15 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun callsErrorThrowingMethodWithDontExpectReplySet() {
-        fixture.m_proxy!!.throwErrorWithNoReply()
+        fixture.proxy!!.throwErrorWithNoReply()
 
-        assertTrue(waitUntil(fixture.m_adaptor!!.m_wasThrowErrorCalled))
+        assertTrue(waitUntil(fixture.adaptor!!.wasThrowErrorCalled))
     }
 
     @Test
     fun failsCallingNonexistentMethod() {
         try {
-            fixture.m_proxy!!.callNonexistentMethod()
+            fixture.proxy!!.callNonexistentMethod()
             fail("Expected error")
         } catch (t: Error) {
             // Expected error
@@ -210,7 +210,7 @@ class DBusMethodTests : BaseTest() {
     @Test
     fun failsCallingMethodOnNonexistentInterface() {
         try {
-            fixture.m_proxy!!.callMethodOnNonexistentInterface()
+            fixture.proxy!!.callMethodOnNonexistentInterface()
             fail("Expected error")
         } catch (t: Error) {
             // Expected error
@@ -242,34 +242,34 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canReceiveSignalWhileMakingMethodCall() {
-        fixture.m_proxy!!.emitTwoSimpleSignals()
+        fixture.proxy!!.emitTwoSimpleSignals()
 
-        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSimpleSignal), "Got simple signal")
-        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSignalWithMap), "Got signal with map")
+        assertTrue(waitUntil(fixture.proxy!!.gotSimpleSignal), "Got simple signal")
+        assertTrue(waitUntil(fixture.proxy!!.gotSignalWithMap), "Got signal with map")
     }
 
     @Test
     fun canAccessAssociatedMethodCallMessageInMethodCallHandler() {
         // This will save pointer to method call message on server side
-        fixture.m_proxy!!.doOperation(10u)
+        fixture.proxy!!.doOperation(10u)
 
-        assertNotNull(fixture.m_adaptor!!.m_methodCallMsg)
-        assertEquals("doOperation", fixture.m_adaptor!!.m_methodName?.value)
+        assertNotNull(fixture.adaptor!!.methodCallMsg)
+        assertEquals("doOperation", fixture.adaptor!!.methodName?.value)
     }
 
     @Test
     fun canAccessAssociatedMethodCallMessageInAsyncMethodCallHandler(): Unit = runTest {
         // This will save pointer to method call message on server side
-        fixture.m_proxy!!.doOperationAsync(10u)
+        fixture.proxy!!.doOperationAsync(10u)
 
-        assertNotNull(fixture.m_adaptor!!.m_methodCallMsg)
-        assertEquals("doOperationAsync", fixture.m_adaptor?.m_methodName?.value)
+        assertNotNull(fixture.adaptor!!.methodCallMsg)
+        assertEquals("doOperationAsync", fixture.adaptor?.methodName?.value)
     }
 
     @Test
     fun canSetGeneralMethodTimeoutWithLibsystemdVersionGreaterThan239() {
-        s_adaptorConnection.setMethodCallTimeout(5000000u)
-        assertEquals(5000000u, s_adaptorConnection.getMethodCallTimeout())
+        globalAdaptorConnection.setMethodCallTimeout(5.seconds)
+        assertEquals(5000000u, globalAdaptorConnection.getMethodCallTimeout())
     }
 
     @Test
@@ -283,15 +283,15 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canRegisterAdditionalVTableDynamicallyAtAnyTime() {
-        val obj = fixture.m_adaptor!!.obj
+        val obj = fixture.adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
         val vtableSlot = obj.addVTable(interfaceName) {
-            method("add") {
+            method(MethodName("add")) {
                 call { a: Long, b: Double ->
                     a + b
                 }
             }
-            method("subtract") {
+            method(MethodName("subtract")) {
                 call { a: Int, b: Int ->
                     a - b
                 }
@@ -305,7 +305,7 @@ class DBusMethodTests : BaseTest() {
             dontRunEventLoopThread = true
         )
         val result: Int =
-            proxy.callMethod(interfaceName.value, "subtract") { call(10, 2) }
+            proxy.callMethod(interfaceName, MethodName("subtract")) { call(10, 2) }
 
         assertEquals(8, result)
         vtableSlot.release()
@@ -313,16 +313,16 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canUnregisterAdditionallyRegisteredVTableAtAnyTime() {
-        val obj = fixture.m_adaptor!!.obj
+        val obj = fixture.adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
 
         val slot = obj.addVTable( interfaceName) {
-            method("add") {
+            method(MethodName("add")) {
                 call { a: Long, b: Double ->
                     a + b
                 }
             }
-            method("subtract") {
+            method(MethodName("subtract")) {
                 call { a: Int, b: Int ->
                     a - b
                 }
@@ -337,7 +337,7 @@ class DBusMethodTests : BaseTest() {
             dontRunEventLoopThread = true
         )
         try {
-            proxy.callMethod<Unit>(interfaceName.value, "subtract") { call(10, 2) }
+            proxy.callMethod<Unit>(interfaceName, MethodName("subtract")) { call(10, 2) }
             fail("Method did not throw")
         } catch (t: Throwable) {
             // Expected

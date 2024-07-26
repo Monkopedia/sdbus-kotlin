@@ -30,7 +30,7 @@ class AdaptorAndProxy {
 }
 
 class CppEventLoop : BaseTest() {
-    private val fixture: ConnectionTestFixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = TestFixtureSdBusCppLoop(this)
 
     /*-------------------------------------*/
     /* --          TEST CASES           -- */
@@ -40,13 +40,13 @@ class CppEventLoop : BaseTest() {
     fun willCallCallbackHandlerForIncomingMessageMatchingMatchRule() {
         val matchRule = "sender='$SERVICE_NAME',path='$OBJECT_PATH'"
         var matchingMessageReceived = atomic(false)
-        val slot = s_proxyConnection.addMatch(matchRule) { msg: Message ->
+        val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) {
                 matchingMessageReceived.value = true
             }
         }
 
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         assertTrue(waitUntil(matchingMessageReceived))
         slot.release()
@@ -57,7 +57,7 @@ class CppEventLoop : BaseTest() {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
         val matchingMessageReceived = atomic(false)
         val matchRuleInstalled = atomic(false)
-        val slot = s_proxyConnection.addMatchAsync(matchRule, { msg: Message ->
+        val slot = globalProxyConnection.addMatchAsync(matchRule, { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) {
                 matchingMessageReceived.value = true
             }
@@ -67,7 +67,7 @@ class CppEventLoop : BaseTest() {
 
         assertTrue(waitUntil(matchRuleInstalled))
 
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         assertTrue(waitUntil(matchingMessageReceived))
         slot.release()
@@ -77,12 +77,12 @@ class CppEventLoop : BaseTest() {
     fun willUnsubscribeMatchRuleWhenClientDestroysTheAssociatedSlot() {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
         val matchingMessageReceived = atomic(false)
-        val slot = s_proxyConnection.addMatch(matchRule) { msg: Message ->
+        val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
             if (msg.getPath() == OBJECT_PATH.value) matchingMessageReceived.value = true
         }
         slot.release()
 
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         assertFalse(waitUntil(matchingMessageReceived, 1.seconds))
     }
@@ -99,11 +99,11 @@ class CppEventLoop : BaseTest() {
             }
         }
         con.addMatch(matchRule, callback)
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
         assertTrue(waitUntil(matchingMessageReceived, 2.seconds))
         matchingMessageReceived.value = false
         con.release()
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         assertFalse(waitUntil(matchingMessageReceived, 1.seconds))
     }
@@ -112,16 +112,16 @@ class CppEventLoop : BaseTest() {
     fun willNotPassToMatchCallbackMessagesThatDoNotMatchTheRule() {
         val matchRule = "type='signal',interface='${INTERFACE_NAME.value}',member='simpleSignal'"
         val numberOfMatchingMessages = atomic(0.convert<size_t>())
-        val slot = s_proxyConnection.addMatch(matchRule) { msg: Message ->
+        val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
             if (msg.getMemberName() == "simpleSignal") {
                 numberOfMatchingMessages.value++
             }
         }
-        val adaptor2 = TestAdaptor(s_adaptorConnection, OBJECT_PATH_2)
+        val adaptor2 = TestAdaptor(globalAdaptorConnection, OBJECT_PATH_2)
 
-        fixture.m_adaptor?.emitSignalWithMap(emptyMap())
+        fixture.adaptor?.emitSignalWithMap(emptyMap())
         adaptor2.emitSimpleSignal()
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         assertTrue(waitUntil({ numberOfMatchingMessages.value == 2u.convert<size_t>() }))
         assertFalse(waitUntil({ numberOfMatchingMessages.value > 2u }, 1.seconds))
@@ -131,15 +131,15 @@ class CppEventLoop : BaseTest() {
     // A simple direct connection test similar in nature to https://github.com/systemd/systemd/blob/main/src/libsystemd/sd-bus/test-bus-server.c
     @Test
     fun canBeUsedBetweenClientAndServer() {
-        val v = fixture.m_proxy!!.sumArrayItems(
+        val v = fixture.proxy!!.sumArrayItems(
             listOf(1u.toUShort(), 7u.toUShort()),
             arrayOf(2u, 3u, 4u)
         )
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         // Make sure method call passes and emitted signal is received
         assertEquals(1u + 7u + 2u + 3u + 4u, v)
-        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSimpleSignal))
+        assertTrue(waitUntil(fixture.proxy!!.gotSimpleSignal))
     }
 }
 
@@ -157,7 +157,7 @@ class DirectConnectionTest : BaseTest() {
 
         // Make sure method call passes and emitted signal is received
         assertEquals(1u + 7u + 2u + 3u + 4u, v)
-        assertTrue(waitUntil(fixture.m_proxy!!.m_gotSimpleSignal))
+        assertTrue(waitUntil(fixture.m_proxy!!.gotSimpleSignal))
         println("Done with test")
     }
 }

@@ -1,85 +1,76 @@
 package org.bluez
 
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
+import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.prop
-import kotlin.OptIn
-import kotlin.experimental.ExperimentalNativeApi
 
-@OptIn(ExperimentalNativeApi::class)
 public abstract class Adapter1Adaptor(
-  protected val obj: IObject,
+  public val obj: Object,
 ) : Adapter1 {
   public override fun register() {
     obj.addVTable(Adapter1.Companion.INTERFACE_NAME) {
-      method("StartDiscovery") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("StartDiscovery")) {
         acall(this@Adapter1Adaptor::startDiscovery)
       }
-      method("SetDiscoveryFilter") {
+      method(MethodName("SetDiscoveryFilter")) {
         inputParamNames = listOf("properties")
-        outputParamNames = listOf()
         acall(this@Adapter1Adaptor::setDiscoveryFilter)
       }
-      method("StopDiscovery") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("StopDiscovery")) {
         acall(this@Adapter1Adaptor::stopDiscovery)
       }
-      method("RemoveDevice") {
+      method(MethodName("RemoveDevice")) {
         inputParamNames = listOf("device")
-        outputParamNames = listOf()
         acall(this@Adapter1Adaptor::removeDevice)
       }
-      method("GetDiscoveryFilters") {
-        inputParamNames = listOf()
+      method(MethodName("GetDiscoveryFilters")) {
         outputParamNames = listOf("filters")
         acall(this@Adapter1Adaptor::getDiscoveryFilters)
       }
-      method("ConnectDevice") {
+      method(MethodName("ConnectDevice")) {
         inputParamNames = listOf("properties")
-        outputParamNames = listOf()
         acall(this@Adapter1Adaptor::connectDevice)
       }
-      prop("Address") {
+      prop(PropertyName("Address")) {
         with(this@Adapter1Adaptor::address)
       }
-      prop("AddressType") {
+      prop(PropertyName("AddressType")) {
         with(this@Adapter1Adaptor::addressType)
       }
-      prop("Name") {
+      prop(PropertyName("Name")) {
         with(this@Adapter1Adaptor::name)
       }
-      prop("Alias") {
+      prop(PropertyName("Alias")) {
         with(this@Adapter1Adaptor::alias)
       }
-      prop("Class") {
+      prop(PropertyName("Class")) {
         with(this@Adapter1Adaptor::`class`)
       }
-      prop("Powered") {
+      prop(PropertyName("Powered")) {
         with(this@Adapter1Adaptor::powered)
       }
-      prop("Discoverable") {
+      prop(PropertyName("Discoverable")) {
         with(this@Adapter1Adaptor::discoverable)
       }
-      prop("DiscoverableTimeout") {
+      prop(PropertyName("DiscoverableTimeout")) {
         with(this@Adapter1Adaptor::discoverableTimeout)
       }
-      prop("Pairable") {
+      prop(PropertyName("Pairable")) {
         with(this@Adapter1Adaptor::pairable)
       }
-      prop("PairableTimeout") {
+      prop(PropertyName("PairableTimeout")) {
         with(this@Adapter1Adaptor::pairableTimeout)
       }
-      prop("Discovering") {
+      prop(PropertyName("Discovering")) {
         with(this@Adapter1Adaptor::discovering)
       }
-      prop("UUIDs") {
+      prop(PropertyName("UUIDs")) {
         with(this@Adapter1Adaptor::uUIDs)
       }
-      prop("Modalias") {
+      prop(PropertyName("Modalias")) {
         with(this@Adapter1Adaptor::modalias)
       }
     }

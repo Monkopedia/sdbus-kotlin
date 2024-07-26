@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalSerializationApi::class)
+@file:OptIn(ExperimentalSerializationApi::class, ExperimentalForeignApi::class)
 
 package com.monkopedia.sdbus.internal
 
@@ -17,6 +17,7 @@ import com.monkopedia.sdbus.append
 import com.monkopedia.sdbus.appendArray
 import com.monkopedia.sdbus.asSignature
 import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.serialization.ExperimentalSerializationApi

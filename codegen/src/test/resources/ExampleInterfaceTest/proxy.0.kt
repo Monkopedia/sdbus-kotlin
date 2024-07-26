@@ -1,20 +1,20 @@
 package com.example.MyService1
 
-import com.monkopedia.sdbus.IProxy
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.callMethodAsync
-import kotlin.OptIn
 import kotlin.String
 import kotlin.UInt
-import kotlin.experimental.ExperimentalNativeApi
 
-@OptIn(ExperimentalNativeApi::class)
 public class InterestingInterfaceProxy(
-  public val proxy: IProxy,
+  public val proxy: Proxy,
 ) : InterestingInterface {
   public override fun register() {
   }
 
   override suspend fun addContact(name: String, email: String): UInt =
-        proxy.callMethodAsync(InterestingInterface.Companion.INTERFACE_NAME, "AddContact") {
-        call(name, email) }
+      proxy.callMethodAsync(InterestingInterface.Companion.INTERFACE_NAME, MethodName("AddContact"))
+      {
+    call(name, email)
+  }
 }

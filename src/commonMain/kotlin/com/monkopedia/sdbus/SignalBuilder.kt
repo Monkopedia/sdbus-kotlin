@@ -4,12 +4,6 @@ import com.monkopedia.sdbus.Flags.GeneralFlags.DEPRECATED
 
 fun registerSignal(signalName: SignalName): SignalVTableItem = SignalVTableItem(signalName)
 
-fun registerSignal(signalName: String): SignalVTableItem = registerSignal(SignalName(signalName))
-
-inline fun VTableBuilder.signal(signal: String, builder: SignalVTableItem.() -> Unit) {
-    signal(SignalName(signal), builder)
-}
-
 inline fun VTableBuilder.signal(signal: SignalName, builder: SignalVTableItem.() -> Unit) {
     items.add(SignalVTableItem(signal).also(builder))
 }

@@ -1,6 +1,5 @@
 @file:OptIn(
     ExperimentalForeignApi::class,
-    ExperimentalCoroutinesApi::class,
     ExperimentalNativeApi::class,
     ExperimentalNativeApi::class
 )
@@ -11,7 +10,7 @@ import cnames.structs.sd_bus
 import cnames.structs.sd_bus_message
 import cnames.structs.sd_bus_slot
 import com.monkopedia.sdbus.BusName
-import com.monkopedia.sdbus.IConnection.PollData
+import com.monkopedia.sdbus.Connection.PollData
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MessageHandler
@@ -54,7 +53,6 @@ import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -161,8 +159,7 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
     this.revents = revents
 }
 
-internal class Connection private constructor(private val sdbus: ISdBus, bus: BusPtr) :
-    IConnection {
+internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : InternalConnection {
     private val bus: BusPtr = bus
     private var asyncLoopThread: Job? = null
     val floatingMatchRules = mutableListOf<Resource>()
@@ -266,7 +263,7 @@ internal class Connection private constructor(private val sdbus: ISdBus, bus: Bu
         setMethodCallTimeout(timeout.inWholeMicroseconds.toULong())
     }
 
-    override fun setMethodCallTimeout(timeout: ULong) {
+    private fun setMethodCallTimeout(timeout: ULong) {
         require(!released) { "Connection has already been released" }
         val r = sdbus.sd_bus_set_method_call_timeout(bus.value, timeout)
 
@@ -287,11 +284,11 @@ internal class Connection private constructor(private val sdbus: ISdBus, bus: Bu
     override fun addMatch(match: String, callback: MessageHandler): Resource = memScoped {
         require(!released) { "Connection has already been released" }
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-        val matchInfo = MatchInfo(callback, {}, WeakReference(this@Connection))
+        val matchInfo = MatchInfo(callback, {}, WeakReference(this@ConnectionImpl))
         val stableRef = StableRef.create(matchInfo)
         val bus = sdbus
         val r = bus.sd_bus_add_match(
-            this@Connection.bus.value,
+            this@ConnectionImpl.bus.value,
             slot,
             match,
             sdbus_match_callback,
@@ -312,7 +309,7 @@ internal class Connection private constructor(private val sdbus: ISdBus, bus: Bu
     ): Resource = memScoped {
         require(!released) { "Connection has already been released" }
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-        val matchInfo = MatchInfo(callback, installCallback, WeakReference(this@Connection))
+        val matchInfo = MatchInfo(callback, installCallback, WeakReference(this@ConnectionImpl))
         val stableRef = StableRef.create(matchInfo)
 
         val r = sdbus.sd_bus_add_match_async(
@@ -565,12 +562,13 @@ internal class Connection private constructor(private val sdbus: ISdBus, bus: Bu
         }
     }
 
-    override fun getCurrentlyProcessedMessage(): Message {
-        require(!released) { "Connection has already been released" }
-        val sdbusMsg = sdbus.sd_bus_get_current_message(bus.get())
+    override val currentlyProcessedMessage: Message
+        get() {
+            require(!released) { "Connection has already been released" }
+            val sdbusMsg = sdbus.sd_bus_get_current_message(bus.get())
 
-        return Message(sdbusMsg!!, sdbus)
-    }
+            return Message(sdbusMsg!!, sdbus)
+        }
 
     class EventFd(fd: Int = 0) {
         class FdHolder(var fd: Int) {
@@ -611,7 +609,7 @@ internal class Connection private constructor(private val sdbus: ISdBus, bus: Bu
     private data class MatchInfo(
         val callback: MessageHandler,
         val installCallback: MessageHandler,
-        val connection: WeakReference<Connection>
+        val connection: WeakReference<ConnectionImpl>
     )
 
     private class EventLoopThread(private val bus_: BusPtr, private val sdbus_: ISdBus) {
@@ -800,31 +798,31 @@ internal class Connection private constructor(private val sdbus: ISdBus, bus: Bu
 
         private val eventPool = newFixedThreadPoolContext(8, "EventThreads")
 
-        fun defaultConnection(intf: ISdBus) = Connection(intf) { intf.sd_bus_open(it) }
+        fun defaultConnection(intf: ISdBus) = ConnectionImpl(intf) { intf.sd_bus_open(it) }
 
-        fun systemConnection(intf: ISdBus) = Connection(intf) { intf.sd_bus_open_system(it) }
+        fun systemConnection(intf: ISdBus) = ConnectionImpl(intf) { intf.sd_bus_open_system(it) }
 
-        fun sessionConnection(intf: ISdBus) = Connection(intf) { intf.sd_bus_open_user(it) }
+        fun sessionConnection(intf: ISdBus) = ConnectionImpl(intf) { intf.sd_bus_open_user(it) }
 
         fun sessionConnection(intf: ISdBus, address: String) =
-            Connection(intf) { intf.sd_bus_open_user_with_address(it, address) }
+            ConnectionImpl(intf) { intf.sd_bus_open_user_with_address(it, address) }
 
         fun remoteConnection(intf: ISdBus, host: String) =
-            Connection(intf) { intf.sd_bus_open_system_remote(it, host) }
+            ConnectionImpl(intf) { intf.sd_bus_open_system_remote(it, host) }
 
         fun privateConnection(intf: ISdBus, address: String) =
-            Connection(intf) { intf.sd_bus_open_direct(it, address) }
+            ConnectionImpl(intf) { intf.sd_bus_open_direct(it, address) }
 
         fun privateConnection(intf: ISdBus, fd: Int) =
-            Connection(intf) { intf.sd_bus_open_direct(it, fd) }
+            ConnectionImpl(intf) { intf.sd_bus_open_direct(it, fd) }
 
         fun serverConnection(intf: ISdBus, fd: Int) =
-            Connection(intf) { intf.sd_bus_open_server(it, fd) }
+            ConnectionImpl(intf) { intf.sd_bus_open_server(it, fd) }
 
         fun Connection(intf: ISdBus, bus: CPointer<sd_bus>) =
-            Connection(intf) { it.set(0, bus).let { 0 } }
+            ConnectionImpl(intf) { it.set(0, bus).let { 0 } }
 
-        fun pseudoConnection(intf: ISdBus) = Connection(intf, openPseudoBus(intf))
+        fun pseudoConnection(intf: ISdBus) = ConnectionImpl(intf, openPseudoBus(intf))
     }
 }
 

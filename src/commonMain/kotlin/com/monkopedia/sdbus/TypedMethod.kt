@@ -10,37 +10,46 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 
-inline fun <reified T : Any> typed() = Typed(T::class, serializer<T>())
+@PublishedApi
+internal inline fun <reified T : Any> typed() = Typed(T::class, serializer<T>())
 
-data class Typed<T : Any>(
-    val cls: KClass<T>,
-    val type: KSerializer<T>,
-    val signature: SdbusSig = type.descriptor.asSignature
+data class Typed<T : Any> @PublishedApi internal constructor(
+    internal val cls: KClass<T>,
+    internal val type: KSerializer<T>,
+    internal val signature: SdbusSig = type.descriptor.asSignature
 )
 
-typealias InputType = List<Typed<*>>
-typealias OutputType = Typed<*>
+internal typealias InputType = List<Typed<*>>
+internal typealias OutputType = Typed<*>
 
-data class TypedMethod(val inputType: InputType, val outputType: OutputType)
+@PublishedApi
+internal data class TypedMethod(val inputType: InputType, val outputType: OutputType)
 
 sealed class TypedMethodCall<T : TypedMethodCall<T>> {
 
-    abstract val method: TypedMethod
-    abstract val isAsync: Boolean
+    internal abstract val method: TypedMethod
+    internal abstract val isAsync: Boolean
 
-    fun invoke(args: Message, onSuccess: T.(result: Typed<Any>, Any) -> Unit = { _, _ -> }) =
-        invoke(args, onSuccess, {})
+    @PublishedApi
+    internal fun invoke(
+        args: Message,
+        onSuccess: T.(result: Typed<Any>, Any) -> Unit = { _, _ -> }
+    ) = invoke(args, onSuccess, {})
 
-    abstract fun <R> invoke(
+    @PublishedApi
+    internal abstract fun <R> invoke(
         args: Message,
         onSuccess: T.(result: Typed<Any>, Any) -> R,
         onFailure: T.(failure: Throwable) -> R,
         onResult: T.(R) -> Unit = {}
     )
 
+    open infix fun withContext(coroutineContext: CoroutineContext) = this
+
     abstract fun invoke(args: Throwable)
 
-    data class SyncMethodCall(
+    @PublishedApi
+    internal data class SyncMethodCall(
         override val method: TypedMethod,
         val handler: (List<Any?>) -> Any?,
         val errorCall: ((Throwable?) -> Unit)? = null
@@ -74,7 +83,8 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
         }
     }
 
-    data class AsyncMethodCall(
+    @PublishedApi
+    internal data class AsyncMethodCall(
         override val method: TypedMethod,
         val handler: suspend (List<Any?>) -> Any?,
         val errorCall: (suspend (Throwable?) -> Unit)? = null,
@@ -83,7 +93,7 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
         override val isAsync: Boolean
             get() = true
 
-        infix fun withContext(coroutineContext: CoroutineContext) =
+        override infix fun withContext(coroutineContext: CoroutineContext) =
             copy(coroutineContext = coroutineContext)
 
         override fun <R> invoke(
@@ -117,42 +127,39 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
     }
 }
 
-data class TypedArguments(val inputType: InputType, val values: List<Any>) {
-    operator fun plus(other: TypedArguments): TypedArguments =
+data class TypedArguments @PublishedApi internal constructor(
+    internal val inputType: InputType,
+    internal val values: List<Any>
+) {
+    internal operator fun plus(other: TypedArguments): TypedArguments =
         TypedArguments(inputType + other.inputType, values + other.values)
 
-    operator fun plus(other: Pair<Typed<*>, Any>): TypedArguments =
+    internal operator fun plus(other: Pair<Typed<*>, Any>): TypedArguments =
         TypedArguments(inputType + other.first, values + other.second)
-}
-
-infix fun TypedMethodCall<*>.onError(handler: (Throwable?) -> Unit) = when (this) {
-    is AsyncMethodCall -> copy(errorCall = { handler(it) })
-    is SyncMethodCall -> copy(errorCall = handler)
 }
 
 typealias TypedMethodBuilder = TypedMethodBuilderContext.() -> TypedMethodCall<*>
 typealias TypedArgumentsBuilder = TypedArgumentsBuilderContext.() -> TypedArguments
 
-inline fun buildCall(builder: TypedMethodBuilder): TypedMethodCall<*> =
-    TypedMethodBuilderContext().builder()
-
 inline fun buildArgs(builder: TypedArgumentsBuilder): TypedArguments =
     TypedArgumentsBuilderContext().builder()
 
-open class TypedMethodBuilderContext {
+open class TypedMethodBuilderContext @PublishedApi internal constructor() {
 
-    open fun createCall(
+    @PublishedApi
+    internal open fun createCall(
         method: TypedMethod,
         handler: (List<Any?>) -> Any?,
         errorCall: ((Throwable?) -> Unit)? = null
-    ): SyncMethodCall = SyncMethodCall(method, handler, errorCall)
+    ): TypedMethodCall<*> = SyncMethodCall(method, handler, errorCall)
 
-    open fun createACall(
+    @PublishedApi
+    internal open fun createACall(
         method: TypedMethod,
         handler: suspend (List<Any?>) -> Any?,
         errorCall: (suspend (Throwable?) -> Unit)? = null,
         coroutineContext: CoroutineContext = EmptyCoroutineContext
-    ): AsyncMethodCall = AsyncMethodCall(method, handler, errorCall, coroutineContext)
+    ): TypedMethodCall<*> = AsyncMethodCall(method, handler, errorCall, coroutineContext)
 
     inline fun args() = listOf<Typed<*>>()
     inline fun <reified A : Any> args1() = listOf(typed<A>())
@@ -211,7 +218,7 @@ open class TypedMethodBuilderContext {
             typed<J>()
         )
 
-    inline fun <reified R : Any> call(crossinline handler: () -> R): SyncMethodCall =
+    inline fun <reified R : Any> call(crossinline handler: () -> R): TypedMethodCall<*> =
         createCall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })
@@ -322,7 +329,7 @@ open class TypedMethodBuilderContext {
         }
     )
 
-    inline fun <reified R : Any> acall(crossinline handler: suspend () -> R): AsyncMethodCall =
+    inline fun <reified R : Any> acall(crossinline handler: suspend () -> R): TypedMethodCall<*> =
         createACall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })

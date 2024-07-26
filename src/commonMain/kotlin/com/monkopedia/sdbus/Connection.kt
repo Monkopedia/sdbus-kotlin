@@ -11,31 +11,31 @@ import kotlin.time.Duration.Companion
  * An interface to D-Bus bus connection. Incorporates implementation
  * of both synchronous and asynchronous D-Bus I/O event loop.
  *
- * All methods throw sdbus::Error in case of failure. All methods in
+ * All methods throw [com.monkopedia.sdbus.Error] in case of failure. All methods in
  * this class are thread-aware, but not thread-safe.
  *
  ***********************************************/
-interface IConnection : Resource {
+interface Connection : Resource {
 
-    /*!
-     * @brief Enters I/O event loop on this bus connection in a separate thread
+    /**
+     * Enters I/O event loop on this bus connection in a separate thread
      *
      * The same as enterEventLoop, except that it doesn't block
      * because it runs the loop in a separate, internally managed thread.
      */
     fun enterEventLoopAsync()
 
-    /*!
-     * @brief Leaves the I/O event loop running on this bus connection
+    /**
+     * Leaves the I/O event loop running on this bus connection
      *
      * This causes the loop to exit and frees the thread serving the loop
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     suspend fun leaveEventLoop()
 
-    /*!
-     * @brief Returns fd's, I/O events and timeout data to be used in an external event loop
+    /**
+     * Returns fd's, I/O events and timeout data to be used in an external event loop
      *
      * This function is useful to hook up a bus connection object with an
      * external (like GMainLoop, boost::asio, etc.) or manual event loop
@@ -64,12 +64,12 @@ interface IConnection : Resource {
      * To attach the bus connection to an sd-event event loop, use
      * attachSdEventLoop() function.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun getEventLoopPollData(): PollData
 
-    /*!
-     * @brief Provides access to the currently processed D-Bus message
+    /**
+     * Provides access to the currently processed D-Bus message
      *
      * This method provides access to the currently processed incoming D-Bus message.
      * "Currently processed" means that the registered callback handler(s) for that message
@@ -81,41 +81,36 @@ interface IConnection : Resource {
      *
      * @return Currently processed D-Bus message
      */
-    fun getCurrentlyProcessedMessage(): Message
+    val currentlyProcessedMessage: Message
 
-    /*!
-     * @brief Sets general method call timeout
+    /**
+     * Sets general method call timeout
      *
-     * @param[in] timeout Timeout value in microseconds
+     * @param timeout Timeout value in microseconds
      *
      * General method call timeout is used for all method calls upon this connection.
      * Method call-specific timeout overrides this general setting.
      *
      * Supported by libsystemd>=v240.
      *
-     * @throws sdbus::Error in case of failure
-     */
-    fun setMethodCallTimeout(timeout: ULong)
-
-    /*!
-     * @copydoc IConnection::setMethodCallTimeout(uint64_t)
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun setMethodCallTimeout(timeout: Duration)
 
-    /*!
-     * @brief Gets general method call timeout
+    /**
+     * Gets general method call timeout
      *
      * @return Timeout value in microseconds
      *
      * Supported by libsystemd>=v240.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun getMethodCallTimeout(): ULong
 
-    /*!
-     * @brief Adds an ObjectManager at the specified D-Bus object path
-     * @param[in] objectPath Object path at which the ObjectManager interface shall be installed
+    /**
+     * Adds an ObjectManager at the specified D-Bus object path
+     * @param objectPath Object path at which the ObjectManager interface shall be installed
      * @return Slot handle owning the registration
      *
      * Creates an ObjectManager interface at the specified object path on
@@ -127,15 +122,15 @@ interface IConnection : Resource {
      *
      * Another, recommended way to add object managers is directly through IObject API.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun addObjectManager(objectPath: ObjectPath): Resource
 
-    /*!
-     * @brief Installs a match rule for messages received on this bus connection
+    /**
+     * Installs a match rule for messages received on this bus connection
      *
-     * @param[in] match Match expression to filter incoming D-Bus message
-     * @param[in] callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
+     * @param match Match expression to filter incoming D-Bus message
+     * @param callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
      * @return RAII-style slot handle representing the ownership of the subscription
      *
      * The method installs a match rule for messages received on the specified bus connection.
@@ -150,16 +145,16 @@ interface IConnection : Resource {
      *
      * For more information, consult `man sd_bus_add_match`.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun addMatch(match: String, callback: MessageHandler): Resource
 
-    /*!
-     * @brief Asynchronously installs a match rule for messages received on this bus connection
+    /**
+     * Asynchronously installs a match rule for messages received on this bus connection
      *
-     * @param[in] match Match expression to filter incoming D-Bus message
-     * @param[in] callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
-     * @param[in] installCallback Callback handler to be called upon processing an inbound D-Bus message matching the rule
+     * @param match Match expression to filter incoming D-Bus message
+     * @param callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
+     * @param installCallback Callback handler to be called upon processing an inbound D-Bus message matching the rule
      * @return RAII-style slot handle representing the ownership of the subscription
      *
      * This method operates the same as `addMatch()` above, just that it installs the match rule asynchronously,
@@ -173,7 +168,7 @@ interface IConnection : Resource {
      *
      * For more information, consult `man sd_bus_add_match_async`.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun addMatchAsync(
         match: String,
@@ -181,63 +176,63 @@ interface IConnection : Resource {
         installCallback: MessageHandler
     ): Resource
 
-    /*!
-     * @brief Retrieves the unique name of a connection. E.g. ":1.xx"
+    /**
+     * Retrieves the unique name of a connection. E.g. ":1.xx"
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun getUniqueName(): BusName
 
-    /*!
-     * @brief Requests a well-known D-Bus service name on a bus
+    /**
+     * Requests a well-known D-Bus service name on a bus
      *
-     * @param[in] name Name to request
+     * @param name Name to request
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun requestName(name: ServiceName)
 
-    /*!
-     * @brief Releases an acquired well-known D-Bus service name on a bus
+    /**
+     * Releases an acquired well-known D-Bus service name on a bus
      *
-     * @param[in] name Name to release
+     * @param name Name to release
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun releaseName(name: ServiceName)
 
-    /*!
+    /**
      * @struct PollData
      *
      * Carries poll data needed for integration with external event loop implementations.
      *
      * See getEventLoopPollData() for more info.
      */
-    data class PollData(
-        /*!
+    data class PollData internal constructor(
+        /**
          * The read fd to be monitored by the event loop.
          */
         val fd: Int = 0,
 
-        /*!
+        /**
          * The events to use for poll(2) alongside fd.
          */
-        val events: Short = 0,
+        internal val events: Short = 0,
 
-        /*!
+        /**
          * Absolute timeout value in microseconds, based of CLOCK_MONOTONIC.
          *
          * Call getPollTimeout() to get timeout recalculated to relative timeout that can be passed to poll(2).
          */
         val timeout: Duration? = null,
 
-        /*!
+        /**
          * An additional event fd to be monitored by the event loop for POLLIN events.
          */
         val eventFd: Int = 0
     ) {
 
-        /*!
+        /**
          * Returns the timeout as relative value from now.
          *
          * Returned value is std::chrono::microseconds::max() if the timeout is indefinite.
@@ -250,7 +245,7 @@ interface IConnection : Resource {
             else -> (timeout - now()).coerceAtLeast(Companion.ZERO)
         }
 
-        /*!
+        /**
          * Returns relative timeout in the form which can be passed as argument 'timeout' to poll(2)
          *
          * @return -1 if the timeout is indefinite. 0 if the poll(2) shouldn't block.
@@ -269,112 +264,112 @@ interface IConnection : Resource {
 }
 internal expect inline fun now(): Duration
 
-/*!
- * @brief Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.
+/**
+ * Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.
  *
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createBusConnection(): IConnection
+expect fun createBusConnection(): Connection
 
-/*!
- * @brief Creates/opens D-Bus session bus connection with a name when in a user context, and a system bus connection with a name, otherwise.
+/**
+ * Creates/opens D-Bus session bus connection with a name when in a user context, and a system bus connection with a name, otherwise.
  *
- * @param[in] name Name to request on the connection after its opening
+ * @param name Name to request on the connection after its opening
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createBusConnection(name: ServiceName): IConnection
+expect fun createBusConnection(name: ServiceName): Connection
 
-/*!
- * @brief Creates/opens D-Bus system bus connection
+/**
+ * Creates/opens D-Bus system bus connection
  *
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createSystemBusConnection(): IConnection
+expect fun createSystemBusConnection(): Connection
 
-/*!
- * @brief Creates/opens D-Bus system bus connection with a name
+/**
+ * Creates/opens D-Bus system bus connection with a name
  *
- * @param[in] name Name to request on the connection after its opening
+ * @param name Name to request on the connection after its opening
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createSystemBusConnection(name: ServiceName): IConnection
+expect fun createSystemBusConnection(name: ServiceName): Connection
 
-/*!
- * @brief Creates/opens D-Bus session bus connection
+/**
+ * Creates/opens D-Bus session bus connection
  *
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createSessionBusConnection(): IConnection
+expect fun createSessionBusConnection(): Connection
 
-/*!
- * @brief Creates/opens D-Bus session bus connection with a name
+/**
+ * Creates/opens D-Bus session bus connection with a name
  *
- * @param[in] name Name to request on the connection after its opening
+ * @param name Name to request on the connection after its opening
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createSessionBusConnection(name: ServiceName): IConnection
+expect fun createSessionBusConnection(name: ServiceName): Connection
 
-/*!
- * @brief Creates/opens D-Bus session bus connection at a custom address
+/**
+ * Creates/opens D-Bus session bus connection at a custom address
  *
- * @param[in] address ";"-separated list of addresses of bus brokers to try to connect
+ * @param address ";"-separated list of addresses of bus brokers to try to connect
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  *
  * Consult manual pages for `sd_bus_set_address` of the underlying sd-bus library for more information.
  */
-expect fun createSessionBusConnectionWithAddress(address: String): IConnection
+expect fun createSessionBusConnectionWithAddress(address: String): Connection
 
-/*!
- * @brief Creates/opens D-Bus system connection on a remote host using ssh
+/**
+ * Creates/opens D-Bus system connection on a remote host using ssh
  *
- * @param[in] host Name of the host to connect
+ * @param host Name of the host to connect
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createRemoteSystemBusConnection(host: String): IConnection
+expect fun createRemoteSystemBusConnection(host: String): Connection
 
-/*!
- * @brief Opens direct D-Bus connection at a custom address
+/**
+ * Opens direct D-Bus connection at a custom address
  *
- * @param[in] address ";"-separated list of addresses of bus brokers to try to connect to
+ * @param address ";"-separated list of addresses of bus brokers to try to connect to
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createDirectBusConnection(address: String): IConnection
+expect fun createDirectBusConnection(address: String): Connection
 
-/*!
- * @brief Opens direct D-Bus connection at the given file descriptor
+/**
+ * Opens direct D-Bus connection at the given file descriptor
  *
- * @param[in] fd File descriptor used to communicate directly from/to a D-Bus server
+ * @param fd File descriptor used to communicate directly from/to a D-Bus server
  * @return Connection instance
  *
  * The underlying sdbus-c++ connection instance takes over ownership of fd, so the caller can let it go.
  * If, however, the call throws an exception, the ownership of fd remains with the caller.
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createDirectBusConnection(fd: Int): IConnection
+expect fun createDirectBusConnection(fd: Int): Connection
 
-/*!
- * @brief Opens direct D-Bus connection at fd as a server
+/**
+ * Opens direct D-Bus connection at fd as a server
  *
- * @param[in] fd File descriptor to use for server DBus connection
+ * @param fd File descriptor to use for server DBus connection
  * @return Server connection instance
  *
  * This creates a new, custom bus object in server mode. One can then call createDirectBusConnection()
@@ -383,7 +378,7 @@ expect fun createDirectBusConnection(fd: Int): IConnection
  * The underlying sdbus-c++ connection instance takes over ownership of fd, so the caller can let it go.
  * If, however, the call throws an exception, the ownership of fd remains with the caller.
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createServerBus(fd: Int): IConnection
+expect fun createServerBus(fd: Int): Connection
 

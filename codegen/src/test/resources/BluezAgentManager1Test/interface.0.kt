@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import kotlin.String
 
@@ -13,6 +14,6 @@ public interface AgentManager1 {
   public suspend fun requestDefaultAgent(agent: ObjectPath)
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.AgentManager1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.AgentManager1")
   }
 }

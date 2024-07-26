@@ -25,7 +25,6 @@ import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.value
 
 internal interface NativeTypeConverter<K, N : CVariable> {
-
     fun N.set(k: K)
     fun get(n: N): K
     val size: Long

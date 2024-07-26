@@ -1,4 +1,3 @@
-
 package com.monkopedia.sdbus
 
 /********************************************/
@@ -9,45 +8,35 @@ package com.monkopedia.sdbus
  * D-Bus object provides its interfaces, methods, signals and properties on a bus
  * identified by a specific bus name.
  *
- * All IObject member methods throw @c sdbus::Error in case of D-Bus or sdbus-c++ error.
+ * All IObject member methods throw @c [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-c++ error.
  * The IObject class has been designed as thread-aware. However, the operation of
  * creating and sending asynchronous method replies, as well as creating and emitting
  * signals, is thread-safe by design.
  *
  ***********************************************/
-interface IObject : Resource {
+interface Object : Resource {
 
-    /*!
-     * @brief Emits PropertyChanged signal for specified properties under a given interface of this object path
+    /**
+     * Emits PropertyChanged signal for specified properties under a given interface of this object path
      *
-     * @param[in] interfaceName Name of an interface that properties belong to
-     * @param[in] propNames Names of properties that will be included in the PropertiesChanged signal
+     * @param interfaceName Name of an interface that properties belong to
+     * @param propNames Names of properties that will be included in the PropertiesChanged signal
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitPropertiesChangedSignal(interfaceName: InterfaceName, propNames: List<PropertyName>)
 
-    /*!
-     * @copydoc IObject::emitPropertiesChangedSignal(const InterfaceName&,const std::vector<PropertyName>&)
-     */
-    fun emitPropertiesChangedSignal(interfaceName: String, propNames: List<PropertyName>)
-
-    /*!
-     * @brief Emits PropertyChanged signal for all properties on a given interface of this object pat
+    /**
+     * Emits PropertyChanged signal for all properties on a given interface of this object pat
      *
-     * @param[in] interfaceName Name of an interface
+     * @param interfaceName Name of an interface
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitPropertiesChangedSignal(interfaceName: InterfaceName)
 
-    /*!
-     * @copydoc IObject::emitPropertiesChangedSignal(const InterfaceName&)
-     */
-    fun emitPropertiesChangedSignal(interfaceName: String)
-
-    /*!
-     * @brief Emits InterfacesAdded signal on this object path
+    /**
+     * Emits InterfacesAdded signal on this object path
      *
      * This emits an InterfacesAdded signal on this object path, by iterating all registered
      * interfaces on the path. All properties are queried and included in the signal.
@@ -56,73 +45,73 @@ interface IObject : Resource {
      * call can figure out the list of supported interfaces itself. Furthermore, it properly
      * adds the builtin org.freedesktop.DBus.* interfaces.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitInterfacesAddedSignal()
 
-    /*!
-     * @brief Emits InterfacesAdded signal on this object path
+    /**
+     * Emits InterfacesAdded signal on this object path
      *
      * This emits an InterfacesAdded signal on this object path with explicitly provided list
      * of registered interfaces. Since v2.0, sdbus-c++ supports dynamically addable/removable
      * object interfaces and their vtables, so this method now makes more sense.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitInterfacesAddedSignal(interfaces: List<InterfaceName>)
 
-    /*!
-     * @brief Emits InterfacesRemoved signal on this object path
+    /**
+     * Emits InterfacesRemoved signal on this object path
      *
      * This is like sd_bus_emit_object_added(), but emits an InterfacesRemoved signal on this
      * object path. This only includes any registered interfaces but skips the properties.
      * This function shall be called (just) before destroying the object.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitInterfacesRemovedSignal()
 
-    /*!
-     * @brief Emits InterfacesRemoved signal on this object path
+    /**
+     * Emits InterfacesRemoved signal on this object path
      *
      * This emits an InterfacesRemoved signal on the given path with explicitly provided list
      * of registered interfaces. Since v2.0, sdbus-c++ supports dynamically addable/removable
      * object interfaces and their vtables, so this method now makes more sense.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitInterfacesRemovedSignal(interfaces: List<InterfaceName>)
 
-    /*!
-     * @brief Adds an ObjectManager interface at the path of this D-Bus object
+    /**
+     * Adds an ObjectManager interface at the path of this D-Bus object
      *
-     * @return Slot handle owning the registration
+     * @return [Resource] handle owning the registration
      *
      * Creates an ObjectManager interface at the specified object path on
      * the connection. This is a convenient way to interrogate a connection
      * to see what objects it has.
      *
      * The lifetime of the ObjectManager interface is bound to the lifetime
-     * of the returned slot instance.
+     * of the returned resource instance.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun addObjectManager(): Resource
 
-    /*!
-     * @brief Provides D-Bus connection used by the object
+    /**
+     * Provides D-Bus connection used by the object
      *
      * @return Reference to the D-Bus connection
      */
-    fun getConnection(): IConnection
+    val connection: Connection
 
-    /*!
-     * @brief Returns object path of the underlying DBus object
+    /**
+     * Returns object path of the underlying DBus object
      */
-    fun getObjectPath(): ObjectPath
+    val objectPath: ObjectPath
 
-    /*!
-     * @brief Provides access to the currently processed D-Bus message
+    /**
+     * Provides access to the currently processed D-Bus message
      *
      * This method provides access to the currently processed incoming D-Bus message.
      * "Currently processed" means that the registered callback handler(s) for that message
@@ -134,13 +123,13 @@ interface IObject : Resource {
      *
      * @return Currently processed D-Bus message
      */
-    fun getCurrentlyProcessedMessage(): Message
+    val currentlyProcessedMessage: Message
 
-    /*!
-     * @brief Adds a declaration of methods, properties and signals of the object at a given interface
+    /**
+     * Adds a declaration of methods, properties and signals of the object at a given interface
      *
-     * @param[in] interfaceName Name of an interface the the vtable is registered for
-     * @param[in] vtable A list of individual descriptions in the form of VTable item instances
+     * @param interfaceName Name of an interface the the vtable is registered for
+     * @param vtable A list of individual descriptions in the form of VTable item instances
      *
      * This method is used to declare attributes for the object under the given interface.
      * The `vtable' parameter may contain method declarations (using MethodVTableItem struct),
@@ -152,55 +141,49 @@ interface IObject : Resource {
      * Consult manual pages for the underlying `sd_bus_add_object_vtable` function for more information.
      *
      * The method can be called at any time during object's lifetime. For each vtable an internal
-     * registration slot is created and is returned to the caller. The returned slot should be destroyed
-     * when the vtable is not needed anymore. This allows for "dynamic" object API where vtables
-     * can be added or removed by the user at runtime.
+     * registration resource is created and is returned to the caller. The returned resource should
+     * be destroyed when the vtable is not needed anymore.
      *
      * The function provides strong exception guarantee. The state of the object remains
      * unmodified in face of an exception.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>): Resource
 
-    /*!
-     * @brief Creates a signal message
+    /**
+     * Creates a signal message
      *
-     * @param[in] interfaceName Name of an interface that the signal belongs under
-     * @param[in] signalName Name of the signal
+     * @param interfaceName Name of an interface that the signal belongs under
+     * @param signalName Name of the signal
      * @return A signal message
      *
      * Serialize signal arguments into the returned message and emit the signal by passing
      * the message with serialized arguments to the @c emitSignal function.
      * Alternatively, use higher-level API @c emitSignal(signalName: String) defined below.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun createSignal(interfaceName: InterfaceName, signalName: SignalName): Signal
 
-    /*!
-     * @brief Emits signal for this object path
+    /**
+     * Emits signal for this object path
      *
-     * @param[in] message Signal message to be sent out
+     * @param message Signal message to be sent out
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
-     * @throws sdbus::Error in case of failure
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun emitSignal(message: Signal)
-
-    fun createSignal(interfaceName: String, signalName: String): Signal
 }
 
-// Out-of-line member definitions
-
-
-/*!
- * @brief Creates instance representing a D-Bus object
+/**
+ * Creates instance representing a D-Bus object
  *
- * @param[in] connection D-Bus connection to be used by the object
- * @param[in] objectPath Path of the D-Bus object
- * @return Pointer to the object representation instance
+ * @param connection D-Bus connection to be used by the object
+ * @param objectPath Path of the D-Bus object
+ * @return [Object] representation instance
  *
  * The provided connection will be used by the object to export methods,
  * issue signals and provide properties.
@@ -209,8 +192,8 @@ interface IObject : Resource {
  * which is already running its I/O event loop.
  *
  * Code example:
- * @code
- * auto proxy = sdbus::createObject(connection, "/com/kistler/foo");
- * @endcode
+ * ```
+ * val proxy = createObject(connection, ObjectPath("/com/kistler/foo"))
+ * ```
  */
-expect fun createObject(connection: IConnection, objectPath: ObjectPath): IObject
+expect fun createObject(connection: Connection, objectPath: ObjectPath): Object

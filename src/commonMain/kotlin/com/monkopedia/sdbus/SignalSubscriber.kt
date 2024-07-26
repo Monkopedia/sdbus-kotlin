@@ -8,10 +8,10 @@ import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-/*!
- * @brief Registers signal handler for a given signal of the D-Bus object
+/**
+ * Registers signal handler for a given signal of the D-Bus object
  *
- * @param[in] signalName Name of the signal
+ * @param signalName Name of the signal
  * @return A helper object for convenient registration of the signal handler
  *
  * This is a high-level, convenience way of registering to D-Bus signals that abstracts
@@ -30,17 +30,11 @@ import kotlinx.coroutines.flow.callbackFlow
  * object_.uponSignal(levelChanged).onInterface(foo).call([this](uint16_t level){ this->onLevelChanged(level); });
  * @endcode
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-inline fun IProxy.onSignal(
+inline fun Proxy.onSignal(
     interfaceName: InterfaceName,
     signalName: SignalName,
-    builder: SignalSubscriber.() -> Unit
-): Resource = onSignal(interfaceName.value, signalName.value, builder)
-
-inline fun IProxy.onSignal(
-    interfaceName: String,
-    signalName: String,
     builder: SignalSubscriber.() -> Unit
 ): Resource {
     val methodCall = SignalSubscriber().also(builder).methodCall
@@ -53,9 +47,9 @@ inline fun IProxy.onSignal(
     }
 }
 
-inline fun <T> IProxy.signalFlow(
-    interfaceName: String,
-    signalName: String,
+inline fun <T> Proxy.signalFlow(
+    interfaceName: InterfaceName,
+    signalName: SignalName,
     builder: SignalSubscriber.() -> Unit
 ): Flow<T> {
     val methodCall = SignalSubscriber().also(builder).methodCall
@@ -85,13 +79,13 @@ class SignalSubscriber : TypedMethodBuilderContext() {
         method: TypedMethod,
         handler: (List<Any?>) -> Any?,
         errorCall: ((Throwable?) -> Unit)?
-    ): SyncMethodCall = super.createCall(method, handler, errorCall).also { methodCall = it }
+    ): TypedMethodCall<*> = super.createCall(method, handler, errorCall).also { methodCall = it }
 
     override fun createACall(
         method: TypedMethod,
         handler: suspend (List<Any?>) -> Any?,
         errorCall: (suspend (Throwable?) -> Unit)?,
         coroutineContext: CoroutineContext
-    ): AsyncMethodCall = super.createACall(method, handler, errorCall, coroutineContext)
+    ): TypedMethodCall<*> = super.createACall(method, handler, errorCall, coroutineContext)
         .also { methodCall = it }
 }

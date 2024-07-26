@@ -2,7 +2,8 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.Proxy
+import com.monkopedia.sdbus.internal.AsyncCallInfo
+import com.monkopedia.sdbus.internal.ProxyImpl
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 
@@ -21,8 +22,8 @@ actual class PendingAsyncCall internal constructor(
     private val target: WeakReference<AsyncCallInfo>
 ) : Resource {
 
-    /*!
-     * @brief Cancels the delivery of the pending asynchronous call result
+    /**
+     * Cancels the delivery of the pending asynchronous call result
      *
      * This function effectively removes the callback handler registered to the
      * async D-Bus method call result delivery. Does nothing if the call was
@@ -30,16 +31,16 @@ actual class PendingAsyncCall internal constructor(
      */
     actual fun cancel() {
         val asyncCallInfo = target.get() ?: return
-        (asyncCallInfo.proxy as Proxy).erase(asyncCallInfo)
+        (asyncCallInfo.proxy as ProxyImpl).erase(asyncCallInfo)
     }
 
     actual override fun release() {
         val asyncCallInfo = target.get() ?: return
-        (asyncCallInfo.proxy as Proxy).erase(asyncCallInfo)
+        (asyncCallInfo.proxy as ProxyImpl).erase(asyncCallInfo)
     }
 
-    /*!
-     * @brief Answers whether the asynchronous call is still pending
+    /**
+     * Answers whether the asynchronous call is still pending
      *
      * @return True if the call is pending, false if the call has been fully completed
      *

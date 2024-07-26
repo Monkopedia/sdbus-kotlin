@@ -9,23 +9,15 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 class ProxyGenerator : BaseGenerator() {
 
-    private val iProxy = ClassName.bestGuess("com.monkopedia.sdbus.IProxy")
+    private val proxy = ClassName.bestGuess("com.monkopedia.sdbus.Proxy")
     override val fileSuffix: String
         get() = "Proxy"
 
     override fun classBuilder(intf: Interface): TypeSpec.Builder =
         TypeSpec.classBuilder(intf.name.simpleName + "Proxy").apply {
-            addAnnotation(
-                AnnotationSpec.builder(ClassName.bestGuess("kotlin.OptIn")).apply {
-                    addMember(
-                        "%T::class",
-                        ClassName.bestGuess("kotlin.experimental.ExperimentalNativeApi")
-                    )
-                }.build()
-            )
             addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
             addProperty(
-                PropertySpec.builder("proxy", iProxy).apply {
+                PropertySpec.builder("proxy", proxy).apply {
                     initializer(CodeBlock.of("proxy"))
                     addModifiers(PUBLIC)
                 }.build()
@@ -34,10 +26,7 @@ class ProxyGenerator : BaseGenerator() {
 
     override fun constructorBuilder(intf: Interface): FunSpec.Builder =
         FunSpec.constructorBuilder().apply {
-            addParameter(
-                "proxy",
-                iProxy
-            )
+            addParameter("proxy", proxy)
         }
 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder =
@@ -53,9 +42,10 @@ class ProxyGenerator : BaseGenerator() {
             addCode(
                 CodeBlock.builder().apply {
                     add(
-                        "return proxy.%T(%T, %S) { ",
+                        "return proxy.%T(%T, %T(%S)) {\n",
                         ClassName("com.monkopedia.sdbus", "callMethodAsync"),
                         intfName(intf),
+                        ClassName("com.monkopedia.sdbus", "MethodName"),
                         method.name
                     )
                     withIndent {
@@ -64,10 +54,10 @@ class ProxyGenerator : BaseGenerator() {
                                 params.joinToString(", ") {
                                     (it.value.name ?: "arg${it.index}").decapitalCamelCase
                                 }
-                            }) "
+                            })\n"
                         )
                     }
-                    add("}")
+                    add("}\n")
                 }.build()
             )
         }
@@ -79,9 +69,10 @@ class ProxyGenerator : BaseGenerator() {
                 mutable(true)
             }
             delegate(
-                "proxy.%T(%T, %S) ",
+                "proxy.%T(%T, %T(%S)) ",
                 ClassName("com.monkopedia.sdbus", "prop"),
                 intfName(intf),
+                ClassName("com.monkopedia.sdbus", "PropertyName"),
                 method.name
             )
         }
@@ -98,9 +89,10 @@ class ProxyGenerator : BaseGenerator() {
             initializer(
                 CodeBlock.builder().apply {
                     add(
-                        "proxy.%T(%T, %S) {\n",
+                        "proxy.%T(%T, %T(%S)) {\n",
                         ClassName("com.monkopedia.sdbus", "signalFlow"),
                         intfName(intf),
+                        ClassName("com.monkopedia.sdbus", "SignalName"),
                         signal.name
                     )
                     withIndent {

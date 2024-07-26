@@ -1,12 +1,16 @@
 package com.monkopedia.sdbus
 
-fun IConnection.withService(serviceName: ServiceName): ServiceConnection =
+fun Connection.withService(serviceName: ServiceName): ServiceConnection =
     ServiceConnection(this, serviceName)
 
-class ServiceConnection(val connection: IConnection, val serviceName: ServiceName) {
+/**
+ * A Simple wrapper around a connection that avoids repeating the service name when creating
+ * proxies.
+ */
+class ServiceConnection(val connection: Connection, val serviceName: ServiceName) {
 
-    fun createProxy(objectPath: ObjectPath): IProxy =
+    fun createProxy(objectPath: ObjectPath): Proxy =
         createProxy(connection, serviceName, objectPath)
 
-    fun createObject(objectPath: ObjectPath): IObject = createObject(connection, objectPath)
+    fun createObject(objectPath: ObjectPath): Object = createObject(connection, objectPath)
 }

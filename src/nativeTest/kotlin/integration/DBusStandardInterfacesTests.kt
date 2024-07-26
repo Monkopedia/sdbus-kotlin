@@ -2,10 +2,16 @@
 
 package com.monkopedia.sdbus.integration
 
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.ObjectManagerProxy
+import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertiesProxy.Companion.get
 import com.monkopedia.sdbus.PropertiesProxy.Companion.getAsync
 import com.monkopedia.sdbus.PropertiesProxy.Companion.set
+import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.onSignal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -14,6 +20,11 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
@@ -25,7 +36,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun pingsViaPeerInterface() {
-        fixture.m_proxy!!.ping()
+        fixture.proxy!!.ping()
     }
 
     @Test
@@ -38,20 +49,20 @@ class DBusStandardInterfacesTests : BaseTest() {
             )
         }
 
-        fixture.m_proxy!!.getMachineId()
+        fixture.proxy!!.getMachineId()
     }
 
     @Test
     fun getsPropertyViaPropertiesInterface() {
         assertEquals(
             DEFAULT_STATE_VALUE,
-            fixture.m_proxy!!.get(INTERFACE_NAME.value, "state")
+            fixture.proxy!!.get(INTERFACE_NAME, PropertyName("state"))
         )
     }
 
     @Test
     fun getsPropertyAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
-        val future: String = fixture.m_proxy!!.getAsync(INTERFACE_NAME.value, "state")
+        val future: String = fixture.proxy!!.getAsync(INTERFACE_NAME, PropertyName("state"))
 
         assertEquals(DEFAULT_STATE_VALUE, future)
     }
@@ -60,27 +71,27 @@ class DBusStandardInterfacesTests : BaseTest() {
     fun setsPropertyViaPropertiesInterface() {
         val newActionValue = 2345u
 
-        fixture.m_proxy!!.set(INTERFACE_NAME.value, "action", newActionValue)
+        fixture.proxy!!.set(INTERFACE_NAME, PropertyName("action"), newActionValue)
 
-        assertEquals(newActionValue, fixture.m_proxy!!.action())
+        assertEquals(newActionValue, fixture.proxy!!.action())
     }
 
     @Test
     fun setsPropertyAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
         val newActionValue = 2347u
 
-        fixture.m_proxy!!.setAsync(
-            INTERFACE_NAME.value,
-            "action",
+        fixture.proxy!!.setAsync(
+            INTERFACE_NAME,
+            PropertyName("action"),
             Variant(newActionValue)
         )
 
-        assertEquals(newActionValue, fixture.m_proxy!!.action())
+        assertEquals(newActionValue, fixture.proxy!!.action())
     }
 
     @Test
     fun getsAllPropertiesViaPropertiesInterface() {
-        val properties = fixture.m_proxy!!.getAll(INTERFACE_NAME)
+        val properties = fixture.proxy!!.getAll(INTERFACE_NAME)
 
         assertEquals(3, properties.size)
         assertEquals(
@@ -99,7 +110,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun getsAllPropertiesAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
-        val properties = fixture.m_proxy!!.getAllAsync(INTERFACE_NAME)
+        val properties = fixture.proxy!!.getAllAsync(INTERFACE_NAME)
 
         assertEquals(3, properties.size)
         assertEquals(
@@ -119,7 +130,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     @Test
     fun emitsPropertyChangedSignalForSelectedProperties() {
         val signalReceived = atomic(false)
-        fixture.m_proxy!!.m_onPropertiesChangedHandler = { interfaceName, changedProperties, _ ->
+        fixture.proxy!!.propertiesChangedHandler = { interfaceName, changedProperties, _ ->
             assertEquals(INTERFACE_NAME, interfaceName)
             assertEquals(1, changedProperties.size)
             assertEquals(
@@ -129,9 +140,9 @@ class DBusStandardInterfacesTests : BaseTest() {
             signalReceived.value = true
         }
 
-        fixture.m_proxy!!.blocking(!DEFAULT_BLOCKING_VALUE)
-        fixture.m_proxy!!.action(DEFAULT_ACTION_VALUE * 2u)
-        fixture.m_adaptor!!.emitPropertiesChangedSignal(INTERFACE_NAME, listOf(BLOCKING_PROPERTY))
+        fixture.proxy!!.blocking(!DEFAULT_BLOCKING_VALUE)
+        fixture.proxy!!.action(DEFAULT_ACTION_VALUE * 2u)
+        fixture.adaptor!!.emitPropertiesChangedSignal(INTERFACE_NAME, listOf(BLOCKING_PROPERTY))
 
         assertTrue(waitUntil(signalReceived))
     }
@@ -139,7 +150,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     @Test
     fun emitsPropertyChangedSignalForAllProperties() {
         val signalReceived = atomic(false)
-        fixture.m_proxy!!.m_onPropertiesChangedHandler =
+        fixture.proxy!!.propertiesChangedHandler =
             { interfaceName, changedProperties, invalidatedProperties ->
                 assertEquals(INTERFACE_NAME, interfaceName)
                 assertEquals(1, changedProperties.size)
@@ -152,24 +163,24 @@ class DBusStandardInterfacesTests : BaseTest() {
                 signalReceived.value = true
             }
 
-        fixture.m_adaptor!!.emitPropertiesChangedSignal(INTERFACE_NAME)
+        fixture.adaptor!!.emitPropertiesChangedSignal(INTERFACE_NAME)
 
         assertTrue(waitUntil(signalReceived))
     }
 
     @Test
     fun getsZeroManagedObjectsIfHasNoSubPathObjects() {
-        fixture.m_adaptor!!.obj.release()
-        val objectsInterfacesAndProperties = fixture.m_objectManagerProxy!!.getManagedObjects()
+        fixture.adaptor!!.obj.release()
+        val objectsInterfacesAndProperties = fixture.objectManagerProxy!!.getManagedObjects()
 
         assertEquals(0, objectsInterfacesAndProperties.size)
     }
 
     @Test
     fun getsManagedObjectsSuccessfully() {
-        val adaptor2 = TestAdaptor(s_adaptorConnection, OBJECT_PATH_2)
+        val adaptor2 = TestAdaptor(globalAdaptorConnection, OBJECT_PATH_2)
         adaptor2.registerAdaptor()
-        val objectsInterfacesAndProperties = fixture.m_objectManagerProxy!!.getManagedObjects()
+        val objectsInterfacesAndProperties = fixture.objectManagerProxy!!.getManagedObjects()
 
         assertEquals(2, objectsInterfacesAndProperties.size)
         assertEquals(
@@ -189,75 +200,96 @@ class DBusStandardInterfacesTests : BaseTest() {
     @Test
     fun emitsInterfacesAddedSignalForSelectedObjectInterfaces(): Unit = runBlocking {
         val completableDeferred = CompletableDeferred<Result<*>>()
-        fixture.m_objectManagerProxy!!.m_onInterfacesAddedHandler =
-            { objectPath, interfacesAndProperties ->
-                completableDeferred.complete(
-                    kotlin.runCatching {
-                        assertEquals(OBJECT_PATH, objectPath)
-                        assertEquals(1, interfacesAndProperties.size)
-                        assertNotNull(interfacesAndProperties.get(INTERFACE_NAME))
-                        assertEquals(2, interfacesAndProperties.get(INTERFACE_NAME)?.size)
-                        assertNotNull(
-                            interfacesAndProperties.get(INTERFACE_NAME)?.get(STATE_PROPERTY)
-                        )
-                        assertNotNull(
-                            interfacesAndProperties.get(INTERFACE_NAME)?.get(BLOCKING_PROPERTY)
-                        )
-                    }
-                )
-            }
+        launch {
+            fixture.objectManagerProxy!!.objectData(OBJECT_PATH).first { it.isNotEmpty() }
+                .let { interfacesAndProperties ->
+                    completableDeferred.complete(
+                        kotlin.runCatching {
+                            assertEquals(1, interfacesAndProperties.size)
+                            assertNotNull(interfacesAndProperties.get(INTERFACE_NAME))
+                            assertEquals(2, interfacesAndProperties.get(INTERFACE_NAME)?.size)
+                            assertNotNull(
+                                interfacesAndProperties.get(INTERFACE_NAME)?.get(STATE_PROPERTY)
+                            )
+                            assertNotNull(
+                                interfacesAndProperties.get(INTERFACE_NAME)?.get(BLOCKING_PROPERTY)
+                            )
+                        }
+                    )
+                }
+        }
 
-        fixture.m_adaptor!!.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
+        fixture.adaptor!!.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
 
         withTimeout(5.seconds) { completableDeferred.await() }.getOrThrow()
     }
 
     @Test
-    fun emitsInterfacesAddedSignalForAllObjectInterfaces() {
+    fun emitsInterfacesAddedSignalForAllObjectInterfaces() = runTest {
         val signalReceived = atomic(false)
-        fixture.m_objectManagerProxy!!.m_onInterfacesAddedHandler =
-            { objectPath, interfacesAndProperties ->
-                assertEquals(OBJECT_PATH, objectPath)
+        launch(Dispatchers.IO) {
+            fixture.objectManagerProxy!!.objectData(OBJECT_PATH).first { it.isNotEmpty() }
+                .let { interfacesAndProperties ->
 
-                assertEquals(4, interfacesAndProperties.size)
-                assertNotNull(interfacesAndProperties.get(INTERFACE_NAME))
-                assertEquals(2, interfacesAndProperties.get(INTERFACE_NAME)?.size)
-                assertNotNull(interfacesAndProperties.get(INTERFACE_NAME)?.get(STATE_PROPERTY))
-                assertNotNull(interfacesAndProperties.get(INTERFACE_NAME)?.get(BLOCKING_PROPERTY))
+                    assertEquals(4, interfacesAndProperties.size)
+                    assertNotNull(interfacesAndProperties.get(INTERFACE_NAME))
+                    assertEquals(2, interfacesAndProperties.get(INTERFACE_NAME)?.size)
+                    assertNotNull(interfacesAndProperties.get(INTERFACE_NAME)?.get(STATE_PROPERTY))
+                    assertNotNull(
+                        interfacesAndProperties.get(INTERFACE_NAME)?.get(BLOCKING_PROPERTY)
+                    )
 
-                signalReceived.value = true
-            }
+                    signalReceived.value = true
+                }
+        }
 
-        fixture.m_adaptor!!.emitInterfacesAddedSignal()
+        fixture.adaptor!!.emitInterfacesAddedSignal()
 
         assertTrue(waitUntil(signalReceived))
     }
 
     @Test
-    fun emitsInterfacesRemovedSignalForSelectedObjectInterfaces() {
+    fun emitsInterfacesRemovedSignalForSelectedObjectInterfaces() = runTest {
         val signalReceived = atomic(false)
-        fixture.m_objectManagerProxy!!.m_onInterfacesRemovedHandler = { objectPath, interfaces ->
-            assertEquals(OBJECT_PATH, objectPath)
-            assertEquals(1, interfaces.size)
-            assertEquals(INTERFACE_NAME, interfaces[0])
-            signalReceived.value = true
+        val readyToEmit = atomic(false)
+        val ready = atomic(false)
+        val job = launch(Dispatchers.IO) {
+            fixture.objectManagerProxy!!.interfacesFor(OBJECT_PATH).onStart {
+                readyToEmit.value = true
+            }.collect {
+                if (ready.value && INTERFACE_NAME !in it) {
+                    signalReceived.value = true
+                } else if (INTERFACE_NAME in it) {
+                    ready.value = true
+                }
+            }
         }
+        assertTrue(waitUntil(readyToEmit), "Ready to emit")
+        fixture.adaptor!!.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
 
-        fixture.m_adaptor!!.emitInterfacesRemovedSignal(listOf(INTERFACE_NAME))
+        assertTrue(waitUntil(ready), "Ready for remove")
+
+        fixture.adaptor!!.emitInterfacesRemovedSignal(listOf(INTERFACE_NAME))
 
         assertTrue(waitUntil(signalReceived))
+        job.cancel()
     }
 
     @Test
     fun emitsInterfacesRemovedSignalForAllObjectInterfaces() {
         val signalReceived = atomic(false)
-        fixture.m_objectManagerProxy!!.m_onInterfacesRemovedHandler = { objectPath, interfaces ->
-            assertEquals(OBJECT_PATH, objectPath)
-            assertEquals(4, interfaces.size); // INTERFACE_NAME + 3 standard interfaces
-            signalReceived.value = true
+        fixture.objectManagerProxy!!.proxy.onSignal(
+            ObjectManagerProxy.INTERFACE_NAME,
+            SignalName("InterfacesRemoved")
+        ) {
+            call { objectPath: ObjectPath, interfaces: List<InterfaceName> ->
+                assertEquals(OBJECT_PATH, objectPath)
+                assertEquals(4, interfaces.size); // INTERFACE_NAME + 3 standard interfaces
+                signalReceived.value = true
+            }
         }
 
-        fixture.m_adaptor!!.emitInterfacesRemovedSignal()
+        fixture.adaptor!!.emitInterfacesRemovedSignal()
 
         assertTrue(waitUntil(signalReceived))
     }

@@ -3,9 +3,9 @@
 package com.monkopedia.sdbus.unit
 
 import cnames.structs.sd_bus
-import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.defaultConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.sessionConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.systemConnection
 import com.monkopedia.sdbus.mocks.DefaultResponses.withDefaults
 import com.monkopedia.sdbus.mocks.MappingHandler.Companion.configure
 import com.monkopedia.sdbus.mocks.RecordingHandler.Companion.record
@@ -17,7 +17,6 @@ import kotlin.test.fail
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.set
 import kotlinx.cinterop.toCPointer
 

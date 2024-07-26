@@ -115,9 +115,7 @@ internal class SdBus : ISdBus {
     override fun sd_bus_message_new_method_return(
         call: CValuesRef<sd_bus_message>?,
         m: CValuesRef<CPointerVar<sd_bus_message>>?
-    ): Int {
-        return sdbus.sd_bus_message_new_method_return(call, m)
-    }
+    ): Int = sdbus.sd_bus_message_new_method_return(call, m)
 
     override fun sd_bus_message_new_method_error(
         call: CValuesRef<sd_bus_message>?,
@@ -174,17 +172,13 @@ internal class SdBus : ISdBus {
         return sdbus.sd_bus_emit_interfaces_removed_strv(bus, path, interfaces)
     }
 
-    override fun sd_bus_open(ret: CValuesRef<CPointerVar<sd_bus>>?): Int {
-        return sdbus.sd_bus_open(ret)
-    }
+    override fun sd_bus_open(ret: CValuesRef<CPointerVar<sd_bus>>?): Int = sdbus.sd_bus_open(ret)
 
-    override fun sd_bus_open_system(ret: CValuesRef<CPointerVar<sd_bus>>?): Int {
-        return sdbus.sd_bus_open_system(ret)
-    }
+    override fun sd_bus_open_system(ret: CValuesRef<CPointerVar<sd_bus>>?): Int =
+        sdbus.sd_bus_open_system(ret)
 
-    override fun sd_bus_open_user(ret: CValuesRef<CPointerVar<sd_bus>>?): Int {
-        return sdbus.sd_bus_open_user(ret)
-    }
+    override fun sd_bus_open_user(ret: CValuesRef<CPointerVar<sd_bus>>?): Int =
+        sdbus.sd_bus_open_user(ret)
 
     override fun sd_bus_open_user_with_address(
         ret: CValuesRef<CPointerVar<sd_bus>>?,
@@ -274,9 +268,7 @@ internal class SdBus : ISdBus {
     override fun sd_bus_open_system_remote(
         ret: CValuesRef<CPointerVar<sd_bus>>?,
         host: String?
-    ): Int {
-        return sdbus.sd_bus_open_system_remote(ret, host)
-    }
+    ): Int = sdbus.sd_bus_open_system_remote(ret, host)
 
     override fun sd_bus_request_name(
         bus: CValuesRef<sd_bus>?,
@@ -364,9 +356,7 @@ internal class SdBus : ISdBus {
             return sdbus.sd_bus_slot_unref(slot)
         }
 
-    override fun sd_bus_new(ret: CValuesRef<CPointerVar<sd_bus>>?): Int {
-        return sdbus.sd_bus_new(ret)
-    }
+    override fun sd_bus_new(ret: CValuesRef<CPointerVar<sd_bus>>?): Int = sdbus.sd_bus_new(ret)
 
     override fun sd_bus_start(bus: CValuesRef<sd_bus>?): Int = lock.withLock {
         return sdbus.sd_bus_start(bus)
@@ -407,17 +397,13 @@ internal class SdBus : ISdBus {
         return sdbus.sd_bus_get_n_queued_read(bus, ret)
     }
 
-    override fun sd_bus_flush(bus: CValuesRef<sd_bus>?): Int {
-        return sdbus.sd_bus_flush(bus)
-    }
+    override fun sd_bus_flush(bus: CValuesRef<sd_bus>?): Int = sdbus.sd_bus_flush(bus)
 
-    override fun sd_bus_flush_close_unref(bus: CValuesRef<sd_bus>?): CPointer<sd_bus>? {
-        return sdbus.sd_bus_flush_close_unref(bus)
-    }
+    override fun sd_bus_flush_close_unref(bus: CValuesRef<sd_bus>?): CPointer<sd_bus>? =
+        sdbus.sd_bus_flush_close_unref(bus)
 
-    override fun sd_bus_close_unref(bus: CValuesRef<sd_bus>?): CPointer<sd_bus>? {
-        return sdbus.sd_bus_close_unref(bus)
-    }
+    override fun sd_bus_close_unref(bus: CValuesRef<sd_bus>?): CPointer<sd_bus>? =
+        sdbus.sd_bus_close_unref(bus)
 
     override fun sd_bus_message_set_destination(
         m: CValuesRef<sd_bus_message>?,

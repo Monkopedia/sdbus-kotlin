@@ -41,9 +41,11 @@ class InterfaceGenerator : BaseGenerator() {
             addType(
                 TypeSpec.companionObjectBuilder().apply {
                     addProperty(
-                        PropertySpec.builder("INTERFACE_NAME", STRING).apply {
-                            addModifiers(CONST)
-                            initializer("%S", intf.name)
+                        PropertySpec.builder(
+                            "INTERFACE_NAME",
+                            ClassName("com.monkopedia.sdbus", "InterfaceName")
+                        ).apply {
+                            initializer("InterfaceName(%S)", intf.name)
                         }.build()
                     )
                 }.build()

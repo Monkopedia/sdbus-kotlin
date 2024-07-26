@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.Variant
 import kotlin.String
@@ -21,6 +22,6 @@ public interface LEAdvertisingManager1 {
   public suspend fun unregisterAdvertisement(service: ObjectPath)
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.LEAdvertisingManager1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.LEAdvertisingManager1")
   }
 }

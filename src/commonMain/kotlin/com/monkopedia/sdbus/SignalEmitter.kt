@@ -1,33 +1,26 @@
 package com.monkopedia.sdbus
 
-/*!
- * @brief Emits signal on D-Bus
+/**
+ * Emits signal on D-Bus
  *
- * @param[in] signalName Name of the signal
+ * @param signalName Name of the signal
  * @return A helper object for convenient emission of signals
  *
  * This is a high-level, convenience way of emitting D-Bus signals that abstracts
  * from the D-Bus message concept. Signal arguments are automatically serialized
  * in a message and D-Bus signatures automatically deduced from the provided native arguments.
  *
- * Example of use:
- * @code
- * int arg1 = ...;
- * double arg2 = ...;
- * SignalName fooSignal{"fooSignal"};
- * object_.emitSignal(fooSignal).onInterface("com.kistler.foo").withArguments(arg1, arg2);
- * @endcode
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-inline fun IObject.emitSignal(
-    interfaceName: String = "",
-    signalName: String = "",
+inline fun Object.emitSignal(
+    interfaceName: InterfaceName = InterfaceName(""),
+    signalName: SignalName = SignalName(""),
     builder: SignalEmitter.() -> Unit
 ) = emit(SignalEmitter(interfaceName, signalName).also(builder))
 
-fun IObject.emit(signal: SignalEmitter) {
-    val m = createSignal(signal.intf, signal.signal)
+fun Object.emit(signal: SignalEmitter) {
+    val m = createSignal(signal.interfaceName, signal.signalName)
     m.serialize(
         signal.typedMethodArguments ?: buildArgs {
             call()
@@ -37,20 +30,10 @@ fun IObject.emit(signal: SignalEmitter) {
 }
 
 data class SignalEmitter(
-    var intf: String = "",
-    var signal: String = "",
+    var interfaceName: InterfaceName = InterfaceName(""),
+    var signalName: SignalName = SignalName(""),
     var typedMethodArguments: TypedArguments? = null
 ) : TypedArgumentsBuilderContext() {
-    var interfaceName: InterfaceName
-        get() = InterfaceName(intf)
-        set(value) {
-            intf = value.value
-        }
-    var signalName: SignalName
-        get() = SignalName(signal)
-        set(value) {
-            signal = value.value
-        }
 
     override fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
         super.createCall(inputType, values).also {

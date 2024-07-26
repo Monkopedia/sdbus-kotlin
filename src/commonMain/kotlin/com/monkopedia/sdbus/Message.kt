@@ -7,10 +7,6 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
-private inline fun debugPrint(msg: () -> String) {
-    if (false) println(msg())
-}
-
 /********************************************/
 /**
  * @class Message
@@ -27,23 +23,23 @@ private inline fun debugPrint(msg: () -> String) {
  ***********************************************/
 expect open class Message {
 
-    internal fun append(item: Boolean): Unit
+    internal fun append(item: Boolean)
 
-    internal fun append(item: Short): Unit
+    internal fun append(item: Short)
 
-    internal fun append(item: Int): Unit
+    internal fun append(item: Int)
 
-    internal fun append(item: Long): Unit
+    internal fun append(item: Long)
 
-    internal fun append(item: UByte): Unit
+    internal fun append(item: UByte)
 
-    internal fun append(item: UShort): Unit
+    internal fun append(item: UShort)
 
-    internal fun append(item: UInt): Unit
+    internal fun append(item: UInt)
 
-    internal fun append(item: ULong): Unit
+    internal fun append(item: ULong)
 
-    internal fun append(item: Double): Unit
+    internal fun append(item: Double)
 
     internal fun append(item: String)
 
@@ -55,7 +51,7 @@ expect open class Message {
 
     internal fun appendSignature(item: String)
 
-    internal fun append(item: UnixFd): Unit
+    internal fun append(item: UnixFd)
 
     internal fun readBoolean(): Boolean
 
@@ -157,20 +153,24 @@ expect open class Message {
     fun getSELinuxContext(): String
 }
 
-inline fun <reified T : Any> Message.serialize(arg: T) {
+@PublishedApi
+internal inline fun <reified T : Any> Message.serialize(arg: T) {
     serialize(serializer<T>(), serializersModuleOf(serializer<T>()), arg)
 }
 
-expect fun <T> Message.serialize(
+@PublishedApi
+internal expect fun <T> Message.serialize(
     serializer: SerializationStrategy<T>,
     module: SerializersModule,
     arg: T
 )
 
-inline fun <reified T : Any> Message.deserialize(): T =
+@PublishedApi
+internal inline fun <reified T : Any> Message.deserialize(): T =
     deserialize(serializer<T>(), serializersModuleOf(serializer<T>()))
 
-expect fun <T : Any> Message.deserialize(
+@PublishedApi
+internal expect fun <T : Any> Message.deserialize(
     serializer: DeserializationStrategy<T>,
     module: SerializersModule
 ): T
@@ -202,7 +202,8 @@ internal fun Message.serialize(
     }
 }
 
-fun Message.serialize(typedArgs: TypedArguments) {
+@PublishedApi
+internal fun Message.serialize(typedArgs: TypedArguments) {
     val types = typedArgs.inputType.map { it.type }
     val args = typedArgs.values
     val module = typedArgs.module()

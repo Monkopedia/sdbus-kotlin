@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Variant
 import kotlin.Boolean
 import kotlin.String
@@ -38,6 +39,6 @@ public interface LEAdvertisement1 {
   public suspend fun release()
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.LEAdvertisement1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.LEAdvertisement1")
   }
 }

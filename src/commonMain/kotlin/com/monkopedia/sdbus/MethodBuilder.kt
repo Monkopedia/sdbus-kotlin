@@ -7,14 +7,6 @@ import com.monkopedia.sdbus.TypedMethodCall.AsyncMethodCall
 import com.monkopedia.sdbus.TypedMethodCall.SyncMethodCall
 import kotlin.coroutines.CoroutineContext
 
-fun registerMethod(methodName: MethodName): MethodVTableItem = MethodVTableItem(methodName)
-
-fun registerMethod(methodName: String): MethodVTableItem = registerMethod(MethodName(methodName))
-
-fun VTableBuilder.method(methodName: String, builder: MethodVTableItem.() -> Unit) {
-    method(MethodName(methodName), builder)
-}
-
 fun VTableBuilder.method(methodName: MethodName, builder: MethodVTableItem.() -> Unit) {
     items.add(MethodVTableItem(methodName).also(builder))
 }
@@ -33,14 +25,14 @@ data class MethodVTableItem(
         method: TypedMethod,
         handler: (List<Any?>) -> Any?,
         errorCall: ((Throwable?) -> Unit)?
-    ): SyncMethodCall = super.createCall(method, handler, errorCall).also(this::implementedAs)
+    ): TypedMethodCall<*> = super.createCall(method, handler, errorCall).also(this::implementedAs)
 
     override fun createACall(
         method: TypedMethod,
         handler: suspend (List<Any?>) -> Any?,
         errorCall: (suspend (Throwable?) -> Unit)?,
         coroutineContext: CoroutineContext
-    ): AsyncMethodCall = super.createACall(method, handler, errorCall, coroutineContext)
+    ): TypedMethodCall<*> = super.createACall(method, handler, errorCall, coroutineContext)
         .also(this::implementedAs)
 
     fun implementedAs(callback: TypedMethodCall<*>): MethodVTableItem = apply {
@@ -52,7 +44,6 @@ data class MethodVTableItem(
                 call,
                 onSuccess = { type, result ->
                     call.createReply().also {
-                        @Suppress("UNCHECKED_CAST")
                         it.serialize(type, result)
                     }
                 },

@@ -207,30 +207,30 @@ data class ListSig(val element: SdbusSig) : SdbusSig {
 
 expect val VoidSig: SdbusSig
 
-expect val BoolSig : SdbusSig
+expect val BoolSig: SdbusSig
 
-expect val UByteSig : SdbusSig
+expect val UByteSig: SdbusSig
 
-expect val ShortSig : SdbusSig
+expect val ShortSig: SdbusSig
 
-expect val UShortSig : SdbusSig
+expect val UShortSig: SdbusSig
 
-expect val IntSig : SdbusSig
+expect val IntSig: SdbusSig
 
-expect val UIntSig : SdbusSig
+expect val UIntSig: SdbusSig
 
 expect val LongSig: SdbusSig
 
-expect val ULongSig : SdbusSig
+expect val ULongSig: SdbusSig
 
-expect val DoubleSig : SdbusSig
+expect val DoubleSig: SdbusSig
 
 expect val StringSig: SdbusSig
 
-expect val ObjectPathSig : SdbusSig
+expect val ObjectPathSig: SdbusSig
 
-expect val SignatureSig : SdbusSig
+expect val SignatureSig: SdbusSig
 
-expect val UnixFdSig : SdbusSig
+expect val UnixFdSig: SdbusSig
 
 expect val VariantSig: SdbusSig

@@ -1,21 +1,20 @@
 package org.foo
 
-import com.monkopedia.sdbus.IProxy
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Proxy
+import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.callMethodAsync
 import com.monkopedia.sdbus.signalFlow
 import kotlin.Boolean
-import kotlin.OptIn
 import kotlin.String
 import kotlin.Unit
-import kotlin.experimental.ExperimentalNativeApi
 import kotlinx.coroutines.flow.Flow
 
-@OptIn(ExperimentalNativeApi::class)
 public class BackgroundProxy(
-  public val proxy: IProxy,
+  public val proxy: Proxy,
 ) : Background {
   public val backgroundChanged: Flow<Unit> = proxy.signalFlow(Background.Companion.INTERFACE_NAME,
-      "backgroundChanged") {
+      SignalName("backgroundChanged")) {
         call { -> Unit }
       }
 
@@ -23,11 +22,17 @@ public class BackgroundProxy(
   }
 
   override suspend fun refreshBackground(): Unit =
-        proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, "refreshBackground") { call() }
+      proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("refreshBackground")) {
+    call()
+  }
 
   override suspend fun currentBackground(): String =
-        proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, "currentBackground") { call() }
+      proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("currentBackground")) {
+    call()
+  }
 
   override suspend fun setBackground(name: String): Boolean =
-        proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, "setBackground") { call(name) }
+      proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("setBackground")) {
+    call(name)
+  }
 }

@@ -1,5 +1,6 @@
 package org.bluez
 
+import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import kotlin.Boolean
 import kotlin.String
@@ -15,6 +16,6 @@ public interface GattService1 {
   public fun register()
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.bluez.GattService1"
+    public val INTERFACE_NAME: InterfaceName = InterfaceName("org.bluez.GattService1")
   }
 }

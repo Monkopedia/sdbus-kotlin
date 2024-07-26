@@ -6,16 +6,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 interface ProxyHolder {
-    val proxy: IProxy
+    val proxy: Proxy
 }
 
 interface PeerProxy : ProxyHolder {
-    fun ping(): Unit = proxy.callMethod(INTERFACE_NAME, "Ping") {}
+    fun ping(): Unit = proxy.callMethod(INTERFACE_NAME, SignalName("Ping")) {}
 
-    fun getMachineId(): String = proxy.callMethod(INTERFACE_NAME, "GetMachineId") {}
+    fun getMachineId(): String = proxy.callMethod(INTERFACE_NAME, SignalName("GetMachineId")) {}
 
     companion object {
-        const val INTERFACE_NAME = "org.freedesktop.DBus.Peer"
+        val INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Peer")
     }
 }
 
@@ -23,7 +23,7 @@ interface PeerProxy : ProxyHolder {
 interface PropertiesProxy : ProxyHolder {
 
     fun registerPropertiesProxy() {
-        proxy.onSignal(INTERFACE_NAME, "PropertiesChanged") {
+        proxy.onSignal(INTERFACE_NAME, SignalName("PropertiesChanged")) {
             call {
                     interfaceName: InterfaceName,
                     changedProperties: Map<PropertyName, Variant>,
@@ -49,20 +49,10 @@ interface PropertiesProxy : ProxyHolder {
         proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
             .getResult()
 
-    suspend fun setAsync(interfaceName: String, propertyName: String, value: Variant) =
-        proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
-            .getResult()
-
     fun getAll(interfaceName: InterfaceName): Map<PropertyName, Variant> =
         proxy.getAllProperties().onInterface(interfaceName)
 
-    fun getAll(interfaceName: String): Map<PropertyName, Variant> =
-        proxy.getAllProperties().onInterface(interfaceName)
-
     suspend fun getAllAsync(interfaceName: InterfaceName): Map<PropertyName, Variant> =
-        proxy.getAllPropertiesAsync().onInterface(interfaceName).getResult()
-
-    suspend fun getAllAsync(interfaceName: String): Map<PropertyName, Variant> =
         proxy.getAllPropertiesAsync().onInterface(interfaceName).getResult()
 
     companion object {
@@ -74,30 +64,16 @@ interface PropertiesProxy : ProxyHolder {
             dontExpectReply: Boolean = false
         ) {
             proxy.setProperty(
-                interfaceName.value,
-                propertyName.value,
+                interfaceName,
+                propertyName,
                 value,
                 dontExpectReply = dontExpectReply
             )
         }
 
-        inline fun <reified T : Any> PropertiesProxy.set(
-            interfaceName: String,
-            propertyName: String,
-            value: T,
-            dontExpectReply: Boolean = false
-        ) {
-            proxy.setProperty(interfaceName, propertyName, value, dontExpectReply = dontExpectReply)
-        }
-
         suspend inline fun <reified T> PropertiesProxy.getAsync(
             interfaceName: InterfaceName,
             propertyName: PropertyName
-        ): T = proxy.getPropertyAsync(propertyName).onInterface(interfaceName).get()
-
-        suspend inline fun <reified T> PropertiesProxy.getAsync(
-            interfaceName: String,
-            propertyName: String
         ): T = proxy.getPropertyAsync(propertyName).onInterface(interfaceName).get()
 
         inline fun <reified T> PropertiesProxy.get(
@@ -105,22 +81,19 @@ interface PropertiesProxy : ProxyHolder {
             propertyName: PropertyName
         ): T = proxy.getProperty(interfaceName, propertyName)
 
-        inline fun <reified T> PropertiesProxy.get(interfaceName: String, propertyName: String): T =
-            proxy.getProperty(interfaceName, propertyName)
-
-        const val INTERFACE_NAME = "org.freedesktop.DBus.Properties"
+        val INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")
     }
 }
 
 // Proxy for object manager
-class ObjectManagerProxy(override val proxy: IProxy) : ProxyHolder {
+class ObjectManagerProxy(override val proxy: Proxy) : ProxyHolder {
     private val state =
         MutableStateFlow(mapOf<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>>())
 
     val objects: Flow<List<ObjectPath>> = state.map { it.keys.toList() }
 
     init {
-        proxy.onSignal(INTERFACE_NAME, "InterfacesAdded") {
+        proxy.onSignal(INTERFACE_NAME, SignalName("InterfacesAdded")) {
             call {
                     objectPath: ObjectPath,
                     interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
@@ -131,7 +104,7 @@ class ObjectManagerProxy(override val proxy: IProxy) : ProxyHolder {
                 }
             }
         }
-        proxy.onSignal(INTERFACE_NAME, "InterfacesRemoved") {
+        proxy.onSignal(INTERFACE_NAME, SignalName("InterfacesRemoved")) {
             call {
                     objectPath: ObjectPath,
                     interfaces: List<InterfaceName>
@@ -142,7 +115,9 @@ class ObjectManagerProxy(override val proxy: IProxy) : ProxyHolder {
                 }
             }
         }
-        state.value = getManagedObjects()
+        state.value = runCatching {
+            getManagedObjects()
+        }.getOrNull().orEmpty()
     }
 
     fun interfacesFor(objectPath: ObjectPath): Flow<List<InterfaceName>> = state.map {
@@ -157,15 +132,15 @@ class ObjectManagerProxy(override val proxy: IProxy) : ProxyHolder {
         state.map { it[objectPath].orEmpty() }
 
     fun getManagedObjects(): Map<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>> =
-        proxy.callMethod(INTERFACE_NAME, "GetManagedObjects") { }
+        proxy.callMethod(INTERFACE_NAME, MethodName("GetManagedObjects")) { }
 
     companion object {
-        const val INTERFACE_NAME = "org.freedesktop.DBus.ObjectManager"
+        val INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.ObjectManager")
     }
 }
 
 interface ObjectAdaptor {
-    val obj: IObject
+    val obj: Object
 }
 
 // Adaptors for the above-listed standard D-Bus interfaces are not necessary because the functionality
@@ -179,15 +154,7 @@ interface PropertiesAdaptor : ObjectAdaptor {
         obj.emitPropertiesChangedSignal(interfaceName, properties)
     }
 
-    fun emitPropertiesChangedSignal(interfaceName: String, properties: List<PropertyName>) {
-        obj.emitPropertiesChangedSignal(interfaceName, properties)
-    }
-
     fun emitPropertiesChangedSignal(interfaceName: InterfaceName) {
-        obj.emitPropertiesChangedSignal(interfaceName)
-    }
-
-    fun emitPropertiesChangedSignal(interfaceName: String) {
         obj.emitPropertiesChangedSignal(interfaceName)
     }
 
@@ -196,8 +163,8 @@ interface PropertiesAdaptor : ObjectAdaptor {
     }
 }
 
-/*!
- * @brief Managed Object Convenience Adaptor
+/**
+ * Managed Object Convenience Adaptor
  *
  * Adding this class as _Interfaces.. template parameter of class AdaptorInterfaces
  * will extend the resulting object adaptor with emitInterfacesAddedSignal()/emitInterfacesRemovedSignal()
@@ -209,8 +176,8 @@ interface PropertiesAdaptor : ObjectAdaptor {
  */
 interface ManagedObjectAdaptor : ObjectAdaptor {
 
-    /*!
-     * @brief Emits InterfacesAdded signal for this object path
+    /**
+     * Emits InterfacesAdded signal for this object path
      *
      * See IObject::emitInterfacesAddedSignal().
      */
@@ -218,8 +185,8 @@ interface ManagedObjectAdaptor : ObjectAdaptor {
         obj.emitInterfacesAddedSignal()
     }
 
-    /*!
-     * @brief Emits InterfacesAdded signal for this object path
+    /**
+     * Emits InterfacesAdded signal for this object path
      *
      * See IObject::emitInterfacesAddedSignal().
      */
@@ -227,8 +194,8 @@ interface ManagedObjectAdaptor : ObjectAdaptor {
         obj.emitInterfacesAddedSignal(interfaces)
     }
 
-    /*!
-     * @brief Emits InterfacesRemoved signal for this object path
+    /**
+     * Emits InterfacesRemoved signal for this object path
      *
      * See IObject::emitInterfacesRemovedSignal().
      */
@@ -236,8 +203,8 @@ interface ManagedObjectAdaptor : ObjectAdaptor {
         obj.emitInterfacesRemovedSignal()
     }
 
-    /*!
-     * @brief Emits InterfacesRemoved signal for this object path
+    /**
+     * Emits InterfacesRemoved signal for this object path
      *
      * See IObject::emitInterfacesRemovedSignal().
      */

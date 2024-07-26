@@ -5,7 +5,6 @@ package com.monkopedia.sdbus.internal
 import cnames.structs.sd_bus
 import cnames.structs.sd_bus_message
 import com.monkopedia.sdbus.Flags
-import com.monkopedia.sdbus.IObject
 import com.monkopedia.sdbus.InterfaceFlagsVTableItem
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
@@ -13,6 +12,7 @@ import com.monkopedia.sdbus.MethodCall
 import com.monkopedia.sdbus.MethodCallback
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodVTableItem
+import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyGetCallback
 import com.monkopedia.sdbus.PropertyGetReply
@@ -26,9 +26,9 @@ import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.SignalVTableItem
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.VTableItem
-import com.monkopedia.sdbus.internal.Object.VTable.MethodItem
-import com.monkopedia.sdbus.internal.Object.VTable.PropertyItem
-import com.monkopedia.sdbus.internal.Object.VTable.SignalItem
+import com.monkopedia.sdbus.internal.ObjectImpl.VTable.MethodItem
+import com.monkopedia.sdbus.internal.ObjectImpl.VTable.PropertyItem
+import com.monkopedia.sdbus.internal.ObjectImpl.VTable.SignalItem
 import com.monkopedia.sdbus.sdbusRequire
 import com.monkopedia.sdbus.toSdBusInterfaceFlags
 import com.monkopedia.sdbus.toSdBusMethodFlags
@@ -59,7 +59,10 @@ import sdbus.sd_bus_error
 import sdbus.sd_bus_error_set
 import sdbus.sd_bus_vtable
 
-internal class Object(private val connection: IConnection, private val path: ObjectPath) : IObject {
+internal class ObjectImpl(
+    override val connection: InternalConnection,
+    override val objectPath: ObjectPath
+) : Object {
     private class Allocs {
         var objManagers = MutableStateFlow<List<Resource>>(emptyList())
 
@@ -79,43 +82,39 @@ internal class Object(private val connection: IConnection, private val path: Obj
     }
 
     init {
-        checkObjectPath(path.value)
+        checkObjectPath(objectPath.value)
     }
 
-    override fun addVTable(
-        interfaceName: InterfaceName,
-        vtable: List<VTableItem>,
-    ): Resource = memScoped {
-        checkInterfaceName(interfaceName.value)
+    override fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>): Resource =
+        memScoped {
+            checkInterfaceName(interfaceName.value)
 
-        // 1st pass -- create vtable structure for internal sdbus-c++ purposes
-        val internalVTable = createInternalVTable(interfaceName, vtable)
+            // 1st pass -- create vtable structure for internal sdbus-c++ purposes
+            val internalVTable = createInternalVTable(interfaceName, vtable)
 
-        // Return vtable wrapped in a Slot object
-        val reference = Reference(internalVTable) {
-            it.clear()
+            // Return vtable wrapped in a Slot object
+            val reference = Reference(internalVTable) {
+                it.clear()
+            }
+            // 2nd pass -- from internal sdbus-c++ vtable, create vtable structure in format expected by underlying sd-bus library
+            internalVTable.sdbusVTable =
+                internalVTable.scope.createInternalSdBusVTable(internalVTable)
+
+            // 3rd step -- register the vtable with sd-bus
+            val slot = connection.addObjectVTable(
+                objectPath,
+                internalVTable.interfaceName,
+                internalVTable.sdbusVTable!!,
+                internalVTable
+            )
+
+            reference.freeAfter(slot).also { slot ->
+                allocs.objManagers.update { it + slot }
+            }
         }
-        // 2nd pass -- from internal sdbus-c++ vtable, create vtable structure in format expected by underlying sd-bus library
-        internalVTable.sdbusVTable = internalVTable.scope.createInternalSdBusVTable(internalVTable)
-
-        // 3rd step -- register the vtable with sd-bus
-        val slot = connection.addObjectVTable(
-            path,
-            internalVTable.interfaceName,
-            internalVTable.sdbusVTable!!,
-            internalVTable
-        )
-
-        reference.freeAfter(slot).also { slot ->
-            allocs.objManagers.update { it + slot }
-        }
-    }
 
     override fun createSignal(interfaceName: InterfaceName, signalName: SignalName): Signal =
-        connection.createSignal(path, interfaceName, signalName)
-
-    override fun createSignal(interfaceName: String, signalName: String): Signal =
-        connection.createSignal(path.value, interfaceName, signalName)
+        connection.createSignal(objectPath, interfaceName, signalName)
 
     override fun emitSignal(message: Signal) {
         sdbusRequire(!message.isValid, "Invalid signal message provided", EINVAL)
@@ -127,46 +126,36 @@ internal class Object(private val connection: IConnection, private val path: Obj
         emitPropertiesChangedSignal(interfaceName, emptyList())
     }
 
-    override fun emitPropertiesChangedSignal(interfaceName: String) {
-        emitPropertiesChangedSignal(interfaceName, emptyList())
-    }
-
     override fun emitPropertiesChangedSignal(
         interfaceName: InterfaceName,
         propNames: List<PropertyName>
     ) {
-        connection.emitPropertiesChangedSignal(path, interfaceName, propNames)
-    }
-
-    override fun emitPropertiesChangedSignal(interfaceName: String, propNames: List<PropertyName>) {
-        connection.emitPropertiesChangedSignal(path.value, interfaceName, propNames)
+        connection.emitPropertiesChangedSignal(objectPath, interfaceName, propNames)
     }
 
     override fun emitInterfacesAddedSignal() {
-        connection.emitInterfacesAddedSignal(path)
+        connection.emitInterfacesAddedSignal(objectPath)
     }
 
     override fun emitInterfacesAddedSignal(interfaces: List<InterfaceName>) {
-        connection.emitInterfacesAddedSignal(path, interfaces)
+        connection.emitInterfacesAddedSignal(objectPath, interfaces)
     }
 
     override fun emitInterfacesRemovedSignal() {
-        connection.emitInterfacesRemovedSignal(path)
+        connection.emitInterfacesRemovedSignal(objectPath)
     }
 
     override fun emitInterfacesRemovedSignal(interfaces: List<InterfaceName>) {
-        connection.emitInterfacesRemovedSignal(path, interfaces)
+        connection.emitInterfacesRemovedSignal(objectPath, interfaces)
     }
 
-    override fun addObjectManager(): Resource = connection.addObjectManager(path).also { slot ->
-        allocs.objManagers.update { it + slot }
-    }
+    override fun addObjectManager(): Resource =
+        connection.addObjectManager(objectPath).also { slot ->
+            allocs.objManagers.update { it + slot }
+        }
 
-    override fun getConnection(): com.monkopedia.sdbus.IConnection = connection
-
-    override fun getObjectPath(): ObjectPath = path
-
-    override fun getCurrentlyProcessedMessage(): Message = connection.getCurrentlyProcessedMessage()
+    override val currentlyProcessedMessage: Message
+        get() = connection.currentlyProcessedMessage
 
     //    private:
     // A vtable record comprising methods, signals, properties, flags.
@@ -195,7 +184,7 @@ internal class Object(private val connection: IConnection, private val path: Obj
         var sdbusVTable: CArrayPointer<sd_bus_vtable>? = null
 
         // Back-reference to the owning object from sd-bus callback handlers
-        var obj: Object? = null
+        var obj: ObjectImpl? = null
 
         fun clear() {
             scope.clear()
@@ -275,7 +264,7 @@ internal class Object(private val connection: IConnection, private val path: Obj
         vtable.signals.add(
             SignalItem(
                 signal.name,
-                signal.signature!!,
+                signal.signature,
                 paramNamesToString(signal.paramNames),
                 signal.flags
             )
@@ -319,7 +308,7 @@ internal class Object(private val connection: IConnection, private val path: Obj
         }
 
         fun AutofreeScope.writeMethodRecordToSdBusVTable(
-            method: VTable.MethodItem,
+            method: MethodItem,
             vtable: MutableList<CValue<sd_bus_vtable>>
         ) {
             val vtableItem = createSdBusVTableMethodItem(
@@ -334,7 +323,7 @@ internal class Object(private val connection: IConnection, private val path: Obj
         }
 
         fun AutofreeScope.writeSignalRecordToSdBusVTable(
-            signal: VTable.SignalItem,
+            signal: SignalItem,
             vtable: MutableList<CValue<sd_bus_vtable>>
         ) {
             val vtableItem = createSdBusVTableSignalItem(
@@ -347,7 +336,7 @@ internal class Object(private val connection: IConnection, private val path: Obj
         }
 
         fun AutofreeScope.writePropertyRecordToSdBusVTable(
-            property: VTable.PropertyItem,
+            property: PropertyItem,
             vtable: MutableList<CValue<sd_bus_vtable>>
         ) {
             val vtableItem = if (property.setCallback == null) {

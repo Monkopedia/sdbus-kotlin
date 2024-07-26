@@ -5,8 +5,6 @@ import com.monkopedia.sdbus.Flags.GeneralFlags.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags
 
-fun setInterfaceFlags(): InterfaceFlagsVTableItem = InterfaceFlagsVTableItem()
-
 inline fun VTableBuilder.interfaceFlags(builder: InterfaceFlagsVTableItem.() -> Unit) {
     items.add(InterfaceFlagsVTableItem().also(builder))
 }

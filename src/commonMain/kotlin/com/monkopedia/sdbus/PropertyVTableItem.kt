@@ -9,13 +9,6 @@ import kotlin.reflect.KProperty0
 fun registerProperty(propertyName: PropertyName): PropertyVTableItem =
     PropertyVTableItem(propertyName)
 
-fun registerProperty(propertyName: String): PropertyVTableItem =
-    registerProperty(PropertyName(propertyName))
-
-inline fun VTableBuilder.prop(propertyName: String, builder: PropertyVTableItem.() -> Unit) {
-    prop(PropertyName(propertyName), builder)
-}
-
 inline fun VTableBuilder.prop(propertyName: PropertyName, builder: PropertyVTableItem.() -> Unit) {
     items.add(PropertyVTableItem(propertyName).also(builder))
 }

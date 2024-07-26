@@ -1,129 +1,133 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package com.monkopedia.sdbus
 
 import cnames.structs.sd_bus
-import com.monkopedia.sdbus.internal.Connection.Companion.Connection
-import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.privateConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.remoteConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.serverConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.defaultConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.privateConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.remoteConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.serverConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.sessionConnection
+import com.monkopedia.sdbus.internal.ConnectionImpl.Companion.systemConnection
+import com.monkopedia.sdbus.internal.Reference
 import com.monkopedia.sdbus.internal.SdBus
 import kotlin.time.Duration
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 
-/*!
- * @brief Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.
+/**
+ * Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.
  *
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createBusConnection(): IConnection = defaultConnection(SdBus())
+actual fun createBusConnection(): Connection = defaultConnection(SdBus())
 
-/*!
- * @brief Creates/opens D-Bus session bus connection with a name when in a user context, and a system bus connection with a name, otherwise.
+/**
+ * Creates/opens D-Bus session bus connection with a name when in a user context, and a system bus connection with a name, otherwise.
  *
- * @param[in] name Name to request on the connection after its opening
+ * @param name Name to request on the connection after its opening
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createBusConnection(name: ServiceName): IConnection =
+actual fun createBusConnection(name: ServiceName): Connection =
     defaultConnection(SdBus()).also { it.requestName(name) }
 
-/*!
- * @brief Creates/opens D-Bus system bus connection
+/**
+ * Creates/opens D-Bus system bus connection
  *
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createSystemBusConnection(): IConnection = systemConnection(SdBus())
+actual fun createSystemBusConnection(): Connection = systemConnection(SdBus())
 
-/*!
- * @brief Creates/opens D-Bus system bus connection with a name
+/**
+ * Creates/opens D-Bus system bus connection with a name
  *
- * @param[in] name Name to request on the connection after its opening
+ * @param name Name to request on the connection after its opening
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createSystemBusConnection(name: ServiceName): IConnection =
+actual fun createSystemBusConnection(name: ServiceName): Connection =
     defaultConnection(SdBus()).also { it.requestName(name) }
 
-/*!
- * @brief Creates/opens D-Bus session bus connection
+/**
+ * Creates/opens D-Bus session bus connection
  *
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createSessionBusConnection(): IConnection = sessionConnection(SdBus())
+actual fun createSessionBusConnection(): Connection = sessionConnection(SdBus())
 
-/*!
- * @brief Creates/opens D-Bus session bus connection with a name
+/**
+ * Creates/opens D-Bus session bus connection with a name
  *
- * @param[in] name Name to request on the connection after its opening
+ * @param name Name to request on the connection after its opening
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createSessionBusConnection(name: ServiceName): IConnection =
+actual fun createSessionBusConnection(name: ServiceName): Connection =
     sessionConnection(SdBus()).also { it.requestName(name) }
 
-/*!
- * @brief Creates/opens D-Bus session bus connection at a custom address
+/**
+ * Creates/opens D-Bus session bus connection at a custom address
  *
- * @param[in] address ";"-separated list of addresses of bus brokers to try to connect
+ * @param address ";"-separated list of addresses of bus brokers to try to connect
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  *
  * Consult manual pages for `sd_bus_set_address` of the underlying sd-bus library for more information.
  */
-actual fun createSessionBusConnectionWithAddress(address: String): IConnection =
+actual fun createSessionBusConnectionWithAddress(address: String): Connection =
     sessionConnection(SdBus(), address)
 
-/*!
- * @brief Creates/opens D-Bus system connection on a remote host using ssh
+/**
+ * Creates/opens D-Bus system connection on a remote host using ssh
  *
- * @param[in] host Name of the host to connect
+ * @param host Name of the host to connect
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createRemoteSystemBusConnection(host: String): IConnection =
+actual fun createRemoteSystemBusConnection(host: String): Connection =
     remoteConnection(SdBus(), host)
 
-/*!
- * @brief Opens direct D-Bus connection at a custom address
+/**
+ * Opens direct D-Bus connection at a custom address
  *
- * @param[in] address ";"-separated list of addresses of bus brokers to try to connect to
+ * @param address ";"-separated list of addresses of bus brokers to try to connect to
  * @return Connection instance
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createDirectBusConnection(address: String): IConnection =
+actual fun createDirectBusConnection(address: String): Connection =
     privateConnection(SdBus(), address)
 
-/*!
- * @brief Opens direct D-Bus connection at the given file descriptor
+/**
+ * Opens direct D-Bus connection at the given file descriptor
  *
- * @param[in] fd File descriptor used to communicate directly from/to a D-Bus server
+ * @param fd File descriptor used to communicate directly from/to a D-Bus server
  * @return Connection instance
  *
  * The underlying sdbus-c++ connection instance takes over ownership of fd, so the caller can let it go.
  * If, however, the call throws an exception, the ownership of fd remains with the caller.
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createDirectBusConnection(fd: Int): IConnection = privateConnection(SdBus(), fd)
+actual fun createDirectBusConnection(fd: Int): Connection = privateConnection(SdBus(), fd)
 
-/*!
- * @brief Opens direct D-Bus connection at fd as a server
+/**
+ * Opens direct D-Bus connection at fd as a server
  *
- * @param[in] fd File descriptor to use for server DBus connection
+ * @param fd File descriptor to use for server DBus connection
  * @return Server connection instance
  *
  * This creates a new, custom bus object in server mode. One can then call createDirectBusConnection()
@@ -132,14 +136,14 @@ actual fun createDirectBusConnection(fd: Int): IConnection = privateConnection(S
  * The underlying sdbus-c++ connection instance takes over ownership of fd, so the caller can let it go.
  * If, however, the call throws an exception, the ownership of fd remains with the caller.
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-actual fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
+actual fun createServerBus(fd: Int): Connection = serverConnection(SdBus(), fd)
 
-/*!
- * @brief Creates sdbus-c++ bus connection representation out of underlying sd_bus instance
+/**
+ * Creates sdbus-c++ bus connection representation out of underlying sd_bus instance
  *
- * @param[in] bus File descriptor to use for server DBus connection
+ * @param bus File descriptor to use for server DBus connection
  * @return Connection instance
  *
  * This functions is helpful in cases where clients need a custom, tweaked configuration of their
@@ -151,7 +155,7 @@ actual fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
  * must have been started by the client before this call.
  * The bus object will get flushed, closed, and unreffed when the IConnection instance is destroyed.
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  *
  * Code example:
  * @code
@@ -163,6 +167,7 @@ actual fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
  * auto con = sdbus::createBusConnection(bus); // IConnection consumes sd_bus object
  * @endcode
  */
-fun createBusConnection(bus: CPointer<sd_bus>): IConnection = Connection(SdBus(), bus)
+internal fun createBusConnection(bus: CPointer<sd_bus>): Connection =
+    ConnectionImpl(SdBus(), Reference(bus) {})
 
 internal actual inline fun now(): Duration = com.monkopedia.sdbus.internal.now()

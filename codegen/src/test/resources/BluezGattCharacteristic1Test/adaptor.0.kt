@@ -1,78 +1,70 @@
 package org.bluez
 
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
+import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.prop
-import kotlin.OptIn
-import kotlin.experimental.ExperimentalNativeApi
 
-@OptIn(ExperimentalNativeApi::class)
 public abstract class GattCharacteristic1Adaptor(
-  protected val obj: IObject,
+  public val obj: Object,
 ) : GattCharacteristic1 {
   public override fun register() {
     obj.addVTable(GattCharacteristic1.Companion.INTERFACE_NAME) {
-      method("ReadValue") {
+      method(MethodName("ReadValue")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("value")
         acall(this@GattCharacteristic1Adaptor::readValue)
       }
-      method("WriteValue") {
+      method(MethodName("WriteValue")) {
         inputParamNames = listOf("value", "options")
-        outputParamNames = listOf()
         acall(this@GattCharacteristic1Adaptor::writeValue)
       }
-      method("AcquireWrite") {
+      method(MethodName("AcquireWrite")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("fd", "mtu")
         acall(this@GattCharacteristic1Adaptor::acquireWrite)
       }
-      method("AcquireNotify") {
+      method(MethodName("AcquireNotify")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("fd", "mtu")
         acall(this@GattCharacteristic1Adaptor::acquireNotify)
       }
-      method("StartNotify") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("StartNotify")) {
         acall(this@GattCharacteristic1Adaptor::startNotify)
       }
-      method("StopNotify") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("StopNotify")) {
         acall(this@GattCharacteristic1Adaptor::stopNotify)
       }
-      method("Confirm") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("Confirm")) {
         acall(this@GattCharacteristic1Adaptor::confirm)
       }
-      prop("UUID") {
+      prop(PropertyName("UUID")) {
         with(this@GattCharacteristic1Adaptor::uUID)
       }
-      prop("Service") {
+      prop(PropertyName("Service")) {
         with(this@GattCharacteristic1Adaptor::service)
       }
-      prop("Value") {
+      prop(PropertyName("Value")) {
         with(this@GattCharacteristic1Adaptor::`value`)
       }
-      prop("DirectedValue") {
+      prop(PropertyName("DirectedValue")) {
         with(this@GattCharacteristic1Adaptor::directedValue)
       }
-      prop("Notifying") {
+      prop(PropertyName("Notifying")) {
         with(this@GattCharacteristic1Adaptor::notifying)
       }
-      prop("Flags") {
+      prop(PropertyName("Flags")) {
         with(this@GattCharacteristic1Adaptor::flags)
       }
-      prop("Descriptors") {
+      prop(PropertyName("Descriptors")) {
         with(this@GattCharacteristic1Adaptor::descriptors)
       }
-      prop("WriteAcquired") {
+      prop(PropertyName("WriteAcquired")) {
         with(this@GattCharacteristic1Adaptor::writeAcquired)
       }
-      prop("NotifyAcquired") {
+      prop(PropertyName("NotifyAcquired")) {
         with(this@GattCharacteristic1Adaptor::notifyAcquired)
       }
     }

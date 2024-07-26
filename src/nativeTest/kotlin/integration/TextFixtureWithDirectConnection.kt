@@ -2,10 +2,6 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.IConnection
-import com.monkopedia.sdbus.createBusConnection
-import com.monkopedia.sdbus.createDirectBusConnection
-import com.monkopedia.sdbus.createServerBus
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -41,10 +37,10 @@ import platform.posix.unlink
 import platform.posix.usleep
 
 @ThreadLocal
-val s_adaptorConnection = com.monkopedia.sdbus.createBusConnection()
+val globalAdaptorConnection = com.monkopedia.sdbus.createBusConnection()
 
 @ThreadLocal
-val s_proxyConnection = com.monkopedia.sdbus.createBusConnection()
+val globalProxyConnection = com.monkopedia.sdbus.createBusConnection()
 
 class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
 
@@ -94,8 +90,8 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
     }
 
     private val context = newFixedThreadPoolContext(4, "test-context")
-    var m_adaptorConnection: com.monkopedia.sdbus.IConnection? = null
-    var m_proxyConnection: com.monkopedia.sdbus.IConnection? = null
+    var m_adaptorConnection: com.monkopedia.sdbus.Connection? = null
+    var m_proxyConnection: com.monkopedia.sdbus.Connection? = null
     var m_adaptor: TestAdaptor? = null
     var m_proxy: TestProxy? = null
 

@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import kotlinx.validation.ExperimentalBCVApi
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
@@ -46,9 +49,14 @@ kotlin {
             cinterops {
                 val sdbus by creating
             }
-            kotlinOptions {
-                freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
-            }
+        }
+        compilerOptions {
+            freeCompilerArgs.set(
+                listOf(
+                    "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
+                    "-Xexpect-actual-classes"
+                )
+            )
         }
     }
     applyDefaultHierarchyTemplate()

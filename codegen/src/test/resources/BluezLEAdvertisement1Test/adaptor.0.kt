@@ -1,57 +1,54 @@
 package org.bluez
 
-import com.monkopedia.sdbus.IObject
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
+import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.prop
-import kotlin.OptIn
-import kotlin.experimental.ExperimentalNativeApi
 
-@OptIn(ExperimentalNativeApi::class)
 public abstract class LEAdvertisement1Adaptor(
-  protected val obj: IObject,
+  public val obj: Object,
 ) : LEAdvertisement1 {
   public override fun register() {
     obj.addVTable(LEAdvertisement1.Companion.INTERFACE_NAME) {
-      method("Release") {
-        inputParamNames = listOf()
-        outputParamNames = listOf()
+      method(MethodName("Release")) {
         acall(this@LEAdvertisement1Adaptor::release)
       }
-      prop("Type") {
+      prop(PropertyName("Type")) {
         with(this@LEAdvertisement1Adaptor::type)
       }
-      prop("ServiceUUIDs") {
+      prop(PropertyName("ServiceUUIDs")) {
         with(this@LEAdvertisement1Adaptor::serviceUUIDs)
       }
-      prop("ServiceData") {
+      prop(PropertyName("ServiceData")) {
         with(this@LEAdvertisement1Adaptor::serviceData)
       }
-      prop("ManufacturerData") {
+      prop(PropertyName("ManufacturerData")) {
         with(this@LEAdvertisement1Adaptor::manufacturerData)
       }
-      prop("Data") {
+      prop(PropertyName("Data")) {
         with(this@LEAdvertisement1Adaptor::`data`)
       }
-      prop("Discoverable") {
+      prop(PropertyName("Discoverable")) {
         with(this@LEAdvertisement1Adaptor::discoverable)
       }
-      prop("DiscoverableTimeout") {
+      prop(PropertyName("DiscoverableTimeout")) {
         with(this@LEAdvertisement1Adaptor::discoverableTimeout)
       }
-      prop("Includes") {
+      prop(PropertyName("Includes")) {
         with(this@LEAdvertisement1Adaptor::includes)
       }
-      prop("LocalName") {
+      prop(PropertyName("LocalName")) {
         with(this@LEAdvertisement1Adaptor::localName)
       }
-      prop("Appearance") {
+      prop(PropertyName("Appearance")) {
         with(this@LEAdvertisement1Adaptor::appearance)
       }
-      prop("Duration") {
+      prop(PropertyName("Duration")) {
         with(this@LEAdvertisement1Adaptor::duration)
       }
-      prop("Timeout") {
+      prop(PropertyName("Timeout")) {
         with(this@LEAdvertisement1Adaptor::timeout)
       }
     }

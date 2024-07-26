@@ -7,10 +7,10 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
-/*!
- * @brief Calls method on the D-Bus object asynchronously
+/**
+ * Calls method on the D-Bus object asynchronously
  *
- * @param[in] methodName Name of the method
+ * @param methodName Name of the method
  * @return A helper object for convenient asynchronous invocation of the method
  *
  * This is a high-level, convenience way of calling D-Bus methods that abstracts
@@ -28,25 +28,11 @@ import kotlinx.serialization.serializer
  * });
  * @endcode
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-suspend inline fun <reified R : Any> IProxy.callMethodAsync(
+suspend inline fun <reified R : Any> Proxy.callMethodAsync(
     interfaceName: InterfaceName,
     methodName: MethodName,
-    builder: MethodInvoker.() -> Unit
-): R = callMethodAsync(interfaceName.value, methodName.value, builder)
-suspend inline fun <reified R : Any> IProxy.callMethodAsync(
-    interfaceName: InterfaceName,
-    methodName: String,
-    builder: MethodInvoker.() -> Unit
-): R = callMethodAsync(interfaceName.value, methodName, builder)
-
-/*!
- * @copydoc IProxy::callMethodAsync(const MethodName&)
- */
-suspend inline fun <reified R : Any> IProxy.callMethodAsync(
-    interfaceName: String,
-    methodName: String,
     builder: MethodInvoker.() -> Unit
 ): R {
     val method = createMethodCall(interfaceName, methodName)
@@ -74,10 +60,10 @@ suspend inline fun <reified R : Any> IProxy.callMethodAsync(
     }
 }
 
-/*!
- * @brief Calls method on the D-Bus object
+/**
+ * Calls method on the D-Bus object
  *
- * @param[in] methodName Name of the method
+ * @param methodName Name of the method
  * @return A helper object for convenient invocation of the method
  *
  * This is a high-level, convenience way of calling D-Bus methods that abstracts
@@ -92,26 +78,11 @@ suspend inline fun <reified R : Any> IProxy.callMethodAsync(
  * object_.callMethod(multiply).onInterface(INTERFACE_NAME).withArguments(a, b).storeResultsTo(result);
  * @endcode
  *
- * @throws sdbus::Error in case of failure
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-inline fun <reified R : Any> IProxy.callMethod(
+inline fun <reified R : Any> Proxy.callMethod(
     interfaceName: InterfaceName,
     methodName: MethodName,
-    builder: MethodInvoker.() -> Unit
-): R = callMethod(interfaceName.value, methodName.value, builder)
-
-inline fun <reified R : Any> IProxy.callMethod(
-    interfaceName: InterfaceName,
-    methodName: String,
-    builder: MethodInvoker.() -> Unit
-): R = callMethod(interfaceName.value, methodName, builder)
-
-/*!
- * @copydoc IProxy::callMethod(const MethodName&)
- */
-inline fun <reified R : Any> IProxy.callMethod(
-    interfaceName: String,
-    methodName: String,
     builder: MethodInvoker.() -> Unit
 ): R {
     val method = createMethodCall(interfaceName, methodName)
@@ -130,14 +101,15 @@ inline fun <reified R : Any> IProxy.callMethod(
     }
 }
 
-class MethodInvoker(private val method: MethodCall) : TypedArgumentsBuilderContext() {
+class MethodInvoker @PublishedApi internal constructor(private val method: MethodCall) :
+    TypedArgumentsBuilderContext() {
 
     var args: TypedArguments? = null
     var dontExpectReply by method::dontExpectReply
 
     var timeout: ULong = 0u
     var timeoutDuration: Duration
-        get() = timeout.takeIf { it > 0u }?.let { it.toLong().microseconds } ?: INFINITE
+        get() = timeout.takeIf { it > 0u }?.toLong()?.microseconds ?: INFINITE
         set(value) {
             timeout = if (value == INFINITE) 0u else value.inWholeMicroseconds.toULong()
         }
@@ -147,53 +119,3 @@ class MethodInvoker(private val method: MethodCall) : TypedArgumentsBuilderConte
             args = it
         }
 }
-
-// class AsyncMethodInvoker {
-//    private var timeout_: ULong = 0u
-//    private var method_: MethodCall? = null
-//    private val proxy: IProxy
-//    private val methodName: String
-//
-//    constructor(proxy: IProxy, methodName: String) {
-//        this.proxy = proxy
-//        this.methodName = methodName
-//    }
-//
-//    constructor(proxy: IProxy, methodName: MethodName) : this(proxy, methodName.value)
-//
-//    fun onInterface(interfaceName: InterfaceName): AsyncMethodInvoker =
-//        onInterface(interfaceName.value)
-//
-//    fun onInterface(interfaceName: String): AsyncMethodInvoker = apply {
-//        method_ = proxy.createMethodCall(interfaceName, methodName)
-//    }
-//
-//    fun withTimeout(usec: ULong): AsyncMethodInvoker = apply {
-//        timeout_ = usec
-//    }
-//
-//    inline fun withTimeout(timeout: Duration): AsyncMethodInvoker =
-//        withTimeout(timeout.inWholeMicroseconds.toULong())
-//
-//    inline fun withArguments(builder: TypedArgumentsBuilder): AsyncMethodInvoker =
-//        withArguments(buildArgs(builder))
-//
-//    fun withArguments(typedArgs: TypedArguments): AsyncMethodInvoker = apply {
-//        require(method_?.isValid == true)
-//
-//        method_!!.serialize(typedArgs)
-//    }
-//
-//    fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
-//        require(method_?.isValid == true)
-//
-//    }
-//
-//    inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder): PendingAsyncCall =
-//        uponReplyInvoke(buildCall(callbackBuilder))
-//
-//    suspend inline fun <reified T> getResult(): T {
-//    }
-//
-//    fun makeAsyncReplyHandler(callback: TypedMethodCall<*>): AsyncReplyHandler =
-// }

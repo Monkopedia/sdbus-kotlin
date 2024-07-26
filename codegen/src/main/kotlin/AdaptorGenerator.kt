@@ -1,13 +1,11 @@
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.Direction.OUT
-import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier.ABSTRACT
 import com.squareup.kotlinpoet.KModifier.OVERRIDE
-import com.squareup.kotlinpoet.KModifier.PROTECTED
 import com.squareup.kotlinpoet.KModifier.PUBLIC
 import com.squareup.kotlinpoet.KModifier.SUSPEND
 import com.squareup.kotlinpoet.PropertySpec
@@ -17,36 +15,25 @@ import com.squareup.kotlinpoet.withIndent
 
 class AdaptorGenerator : BaseGenerator() {
 
-    private val iObject = ClassName.bestGuess("com.monkopedia.sdbus.IObject")
+    private val obj = ClassName.bestGuess("com.monkopedia.sdbus.Object")
     override val fileSuffix: String
         get() = "Adaptor"
 
     override fun classBuilder(intf: Interface): Builder =
         TypeSpec.classBuilder(intf.name.simpleName + "Adaptor").apply {
-            addAnnotation(
-                AnnotationSpec.builder(ClassName.bestGuess("kotlin.OptIn")).apply {
-                    addMember(
-                        "%T::class",
-                        ClassName.bestGuess("kotlin.experimental.ExperimentalNativeApi")
-                    )
-                }.build()
-            )
             addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
             addModifiers(ABSTRACT)
             addProperty(
-                PropertySpec.builder("obj", iObject).apply {
+                PropertySpec.builder("obj", obj).apply {
                     initializer(CodeBlock.of("obj"))
-                    addModifiers(PROTECTED)
+                    addModifiers(PUBLIC)
                 }.build()
             )
         }
 
     override fun constructorBuilder(intf: Interface): FunSpec.Builder =
         FunSpec.constructorBuilder().apply {
-            addParameter(
-                "obj",
-                iObject
-            )
+            addParameter("obj", obj)
         }
 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder? = null
@@ -65,8 +52,10 @@ class AdaptorGenerator : BaseGenerator() {
         addCode(
             CodeBlock.builder().apply {
                 add(
-                    "return obj.%T(%S) { ",
+                    "return obj.%T(%T, %T(%S)) {\n",
                     ClassName("com.monkopedia.sdbus", "emitSignal"),
+                    intfName(intf),
+                    ClassName("com.monkopedia.sdbus", "SignalName"),
                     signal.name
                 )
                 withIndent {
@@ -75,10 +64,10 @@ class AdaptorGenerator : BaseGenerator() {
                             params.joinToString(", ") {
                                 (it.value.name ?: "arg${it.index}").decapitalCamelCase
                             }
-                        }) "
+                        })\n"
                     )
                 }
-                add("}")
+                add("}\n")
             }.build()
         )
     }
@@ -90,10 +79,15 @@ class AdaptorGenerator : BaseGenerator() {
             add("obj.%T(%T) {\n", ClassName("com.monkopedia.sdbus", "addVTable"), intfName(intf))
             withIndent {
                 intf.methods.forEach {
-                    add("%T(%S) {\n", ClassName("com.monkopedia.sdbus", "method"), it.name)
+                    add(
+                        "%T(%T(%S)) {\n",
+                        ClassName("com.monkopedia.sdbus", "method"),
+                        ClassName("com.monkopedia.sdbus", "MethodName"),
+                        it.name
+                    )
                     withIndent {
                         val args = it.args.filter { it.direction != OUT }
-                        if (args.all { !it.name.isNullOrBlank() }) {
+                        if (args.all { !it.name.isNullOrBlank() } && args.isNotEmpty()) {
                             val argsTempl = List(args.size) { "%S" }.joinToString(", ")
                             add(
                                 "inputParamNames = listOf($argsTempl)\n",
@@ -101,7 +95,7 @@ class AdaptorGenerator : BaseGenerator() {
                             )
                         }
                         val outs = it.args.filter { it.direction == OUT }
-                        if (outs.all { !it.name.isNullOrBlank() }) {
+                        if (outs.all { !it.name.isNullOrBlank() } && outs.isNotEmpty()) {
                             val argsTempl = List(outs.size) { "%S" }.joinToString(", ")
                             add(
                                 "outputParamNames = listOf($argsTempl)\n",
@@ -117,7 +111,12 @@ class AdaptorGenerator : BaseGenerator() {
                     add("}\n")
                 }
                 intf.signals.forEach {
-                    add("%T(%S) {\n", ClassName("com.monkopedia.sdbus", "signal"), it.name)
+                    add(
+                        "%T(%T(%S)) {\n",
+                        ClassName("com.monkopedia.sdbus", "signal"),
+                        ClassName("com.monkopedia.sdbus", "SignalName"),
+                        it.name
+                    )
                     withIndent {
                         it.args.forEachIndexed { index, arg ->
                             add("with<%T>(%S)\n", namingManager[arg], arg.name ?: "arg$index")
@@ -126,7 +125,12 @@ class AdaptorGenerator : BaseGenerator() {
                     add("}\n")
                 }
                 intf.properties.forEach {
-                    add("%T(%S) {\n", ClassName("com.monkopedia.sdbus", "prop"), it.name)
+                    add(
+                        "%T(%T(%S)) {\n",
+                        ClassName("com.monkopedia.sdbus", "prop"),
+                        ClassName("com.monkopedia.sdbus", "PropertyName"),
+                        it.name
+                    )
                     withIndent {
                         add(
                             "with(this@%N::%N)\n",

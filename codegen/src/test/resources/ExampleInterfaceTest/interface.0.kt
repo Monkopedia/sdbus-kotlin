@@ -1,5 +1,6 @@
 package com.example.MyService1
 
+import com.monkopedia.sdbus.InterfaceName
 import kotlin.String
 import kotlin.UInt
 
@@ -9,6 +10,7 @@ public interface InterestingInterface {
   public suspend fun addContact(name: String, email: String): UInt
 
   public companion object {
-    public const val INTERFACE_NAME: String = "com.example.MyService1.InterestingInterface"
+    public val INTERFACE_NAME: InterfaceName =
+        InterfaceName("com.example.MyService1.InterestingInterface")
   }
 }
