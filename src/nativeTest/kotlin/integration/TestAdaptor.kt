@@ -2,13 +2,11 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.IConnection
 import com.monkopedia.sdbus.IObject
 import com.monkopedia.sdbus.ManagedObjectAdaptor
 import com.monkopedia.sdbus.MemberName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
-import com.monkopedia.sdbus.ObjectManagerAdaptor
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertiesAdaptor
 import com.monkopedia.sdbus.Signature
@@ -23,9 +21,9 @@ import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.posix.usleep
 
-class ObjectManagerTestAdaptor(override val obj: IObject) : ObjectManagerAdaptor {
+class ObjectManagerTestAdaptor(val obj: IObject) {
     init {
-        registerObjectManagerAdaptor()
+        obj.addObjectManager()
     }
 
     constructor(connection: com.monkopedia.sdbus.IConnection, path: ObjectPath) :

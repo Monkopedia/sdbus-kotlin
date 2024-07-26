@@ -14,10 +14,9 @@ import kotlin.Unit
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class GattCharacteristic1Proxy(
+public class GattCharacteristic1Proxy(
   protected val proxy: IProxy,
 ) : GattCharacteristic1 {
   override val uUID: String by proxy.prop(GattCharacteristic1.Companion.INTERFACE_NAME, "UUID") 
@@ -47,7 +46,6 @@ public abstract class GattCharacteristic1Proxy(
       "NotifyAcquired") 
 
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun readValue(options: Map<String, Variant>): List<UByte> =

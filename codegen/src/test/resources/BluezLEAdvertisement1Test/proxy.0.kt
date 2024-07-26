@@ -13,10 +13,9 @@ import kotlin.Unit
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class LEAdvertisement1Proxy(
+public class LEAdvertisement1Proxy(
   protected val proxy: IProxy,
 ) : LEAdvertisement1 {
   override val type: String by proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, "Type") 
@@ -54,7 +53,6 @@ public abstract class LEAdvertisement1Proxy(
   override val timeout: UShort by proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, "Timeout") 
 
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun release(): Unit =

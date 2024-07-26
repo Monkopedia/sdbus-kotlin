@@ -8,6 +8,7 @@ import com.monkopedia.sdbus.NamingManager.NamingType
 import com.monkopedia.sdbus.NamingManager.SimpleType
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import kotlin.math.sign
 
 class NamingManager(doc: XmlRootNode) {
 
@@ -196,14 +197,12 @@ private fun MutableMap<String, NamingType>.buildMethodTypes(pkg: String, method:
     method.args.filter { it.direction == IN }.forEachIndexed { index, arg ->
         buildArgTypes(pkg, index, arg)
     }
-    buildOutputType(pkg, method.name, method.args.filter { it.direction == OUT })
+    buildSingleType(pkg, method.name, method.args.filter { it.direction == OUT })
     buildAnnotationsTypes(pkg, method.annotations)
 }
 
 private fun MutableMap<String, NamingType>.buildSignalTypes(pkg: String, signal: Signal) {
-    signal.args.forEachIndexed { index, arg ->
-        buildArgTypes(pkg, index, arg)
-    }
+    buildSingleType(pkg, signal.name, signal.args)
     buildAnnotationsTypes(pkg, signal.annotations)
 }
 
@@ -212,7 +211,7 @@ private fun MutableMap<String, NamingType>.buildArgTypes(pkg: String, index: Int
     buildAnnotationsTypes(pkg, arg.annotations)
 }
 
-private fun MutableMap<String, NamingType>.buildOutputType(
+private fun MutableMap<String, NamingType>.buildSingleType(
     pkg: String,
     name: String,
     outputs: List<Arg>

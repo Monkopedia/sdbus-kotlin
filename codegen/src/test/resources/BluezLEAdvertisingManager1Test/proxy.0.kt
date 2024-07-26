@@ -12,10 +12,9 @@ import kotlin.Unit
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class LEAdvertisingManager1Proxy(
+public class LEAdvertisingManager1Proxy(
   protected val proxy: IProxy,
 ) : LEAdvertisingManager1 {
   override val activeInstances: UByte by proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME,
@@ -28,7 +27,6 @@ public abstract class LEAdvertisingManager1Proxy(
       proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME, "SupportedIncludes") 
 
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun registerAdvertisement(advertisement: ObjectPath,

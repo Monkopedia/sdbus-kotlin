@@ -6,14 +6,12 @@ import kotlin.OptIn
 import kotlin.String
 import kotlin.Unit
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class NetworkServer1Proxy(
+public class NetworkServer1Proxy(
   protected val proxy: IProxy,
 ) : NetworkServer1 {
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun register(uuid: String, bridge: String): Unit =

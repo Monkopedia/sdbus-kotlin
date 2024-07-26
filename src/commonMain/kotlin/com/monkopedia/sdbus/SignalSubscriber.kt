@@ -3,6 +3,10 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.TypedMethodCall.AsyncMethodCall
 import com.monkopedia.sdbus.TypedMethodCall.SyncMethodCall
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 /*!
  * @brief Registers signal handler for a given signal of the D-Bus object
@@ -32,9 +36,7 @@ inline fun IProxy.onSignal(
     interfaceName: InterfaceName,
     signalName: SignalName,
     builder: SignalSubscriber.() -> Unit
-): Resource {
-    return onSignal(interfaceName.value, signalName.value, builder)
-}
+): Resource = onSignal(interfaceName.value, signalName.value, builder)
 
 inline fun IProxy.onSignal(
     interfaceName: String,
@@ -48,6 +50,31 @@ inline fun IProxy.onSignal(
         signalName
     ) { signal ->
         methodCall.invoke(signal)
+    }
+}
+
+inline fun <T> IProxy.signalFlow(
+    interfaceName: String,
+    signalName: String,
+    builder: SignalSubscriber.() -> Unit
+): Flow<T> {
+    val methodCall = SignalSubscriber().also(builder).methodCall
+        ?: error("No method call specified for signal handler")
+    return callbackFlow {
+        val registration = registerSignalHandler(
+            interfaceName,
+            signalName
+        ) { signal ->
+            methodCall.invoke(signal, onSuccess = { _, res ->
+                @Suppress("UNCHECKED_CAST")
+                channel.trySendBlocking(res as T)
+            }, onFailure = {
+                channel.close(it)
+            })
+        }
+        awaitClose {
+            registration.release()
+        }
     }
 }
 

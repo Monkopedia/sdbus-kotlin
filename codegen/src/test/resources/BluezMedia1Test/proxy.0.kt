@@ -9,14 +9,12 @@ import kotlin.String
 import kotlin.Unit
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class Media1Proxy(
+public class Media1Proxy(
   protected val proxy: IProxy,
 ) : Media1 {
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun registerEndpoint(endpoint: ObjectPath, properties: Map<String, Variant>):

@@ -12,8 +12,6 @@ public interface Background {
 
   public suspend fun setBackground(name: String): Boolean
 
-  public suspend fun onBackgroundChanged()
-
   public companion object {
     public const val INTERFACE_NAME: String = "org.foo.Background"
   }

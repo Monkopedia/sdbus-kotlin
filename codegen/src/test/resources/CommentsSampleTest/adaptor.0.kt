@@ -32,7 +32,7 @@ public abstract class PropertiesAdaptor(
     }
   }
 
-  override suspend fun onPropertiesChanged(
+  public suspend fun onPropertiesChanged(
     interfaceName: String,
     changedProperties: Map<String, Variant>,
     invalidatedProperties: List<String>,

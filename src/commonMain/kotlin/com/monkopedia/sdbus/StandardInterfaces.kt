@@ -1,5 +1,10 @@
 package com.monkopedia.sdbus
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+
 interface ProxyHolder {
     val proxy: IProxy
 }
@@ -11,16 +16,6 @@ interface PeerProxy : ProxyHolder {
 
     companion object {
         const val INTERFACE_NAME = "org.freedesktop.DBus.Peer"
-    }
-}
-
-// Proxy for introspection
-interface IntrospectableProxy : ProxyHolder {
-
-    fun Introspect(): String = proxy.callMethod(INTERFACE_NAME, "Introspect") {}
-
-    companion object {
-        const val INTERFACE_NAME = "org.freedesktop.DBus.Introspectable"
     }
 }
 
@@ -72,7 +67,7 @@ interface PropertiesProxy : ProxyHolder {
 
     companion object {
 
-        inline fun <reified T: Any> PropertiesProxy.set(
+        inline fun <reified T : Any> PropertiesProxy.set(
             interfaceName: InterfaceName,
             propertyName: PropertyName,
             value: T,
@@ -86,7 +81,7 @@ interface PropertiesProxy : ProxyHolder {
             )
         }
 
-        inline fun <reified T: Any> PropertiesProxy.set(
+        inline fun <reified T : Any> PropertiesProxy.set(
             interfaceName: String,
             propertyName: String,
             value: T,
@@ -118,15 +113,22 @@ interface PropertiesProxy : ProxyHolder {
 }
 
 // Proxy for object manager
-interface ObjectManagerProxy : ProxyHolder {
+class ObjectManagerProxy(override val proxy: IProxy) : ProxyHolder {
+    private val state =
+        MutableStateFlow(mapOf<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>>())
 
-    fun registerObjectManagerProxy() {
+    val objects: Flow<List<ObjectPath>> = state.map { it.keys.toList() }
+
+    init {
         proxy.onSignal(INTERFACE_NAME, "InterfacesAdded") {
             call {
                     objectPath: ObjectPath,
                     interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
                 ->
-                onInterfacesAdded(objectPath, interfacesAndProperties)
+                state.update {
+                    val map = it[objectPath].orEmpty() + interfacesAndProperties
+                    it + (objectPath to map)
+                }
             }
         }
         proxy.onSignal(INTERFACE_NAME, "InterfacesRemoved") {
@@ -134,21 +136,28 @@ interface ObjectManagerProxy : ProxyHolder {
                     objectPath: ObjectPath,
                     interfaces: List<InterfaceName>
                 ->
-                onInterfacesRemoved(objectPath, interfaces)
+                state.update {
+                    val map = it[objectPath].orEmpty() - interfaces.toSet()
+                    it + (objectPath to map)
+                }
             }
         }
+        state.value = getManagedObjects()
     }
 
-    fun onInterfacesAdded(
-        objectPath: ObjectPath,
-        interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
-    )
+    fun interfacesFor(objectPath: ObjectPath): Flow<List<InterfaceName>> = state.map {
+        it[objectPath]?.keys?.toList().orEmpty()
+    }
 
-    fun onInterfacesRemoved(objectPath: ObjectPath, interfaces: List<InterfaceName>)
+    fun objectsFor(interfaceName: InterfaceName): Flow<List<ObjectPath>> = state.map {
+        it.filter { it.value.containsKey(interfaceName) }.keys.toList()
+    }
+
+    fun objectData(objectPath: ObjectPath): Flow<Map<InterfaceName, Map<PropertyName, Variant>>> =
+        state.map { it[objectPath].orEmpty() }
 
     fun getManagedObjects(): Map<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>> =
-        proxy.callMethod(INTERFACE_NAME, "GetManagedObjects") {
-        }
+        proxy.callMethod(INTERFACE_NAME, "GetManagedObjects") { }
 
     companion object {
         const val INTERFACE_NAME = "org.freedesktop.DBus.ObjectManager"
@@ -184,27 +193,6 @@ interface PropertiesAdaptor : ObjectAdaptor {
 
     companion object {
         const val INTERFACE_NAME = "org.freedesktop.DBus.Properties"
-    }
-}
-
-/*!
- * @brief Object Manager Convenience Adaptor
- *
- * Adding this class as _Interfaces.. template parameter of class AdaptorInterfaces
- * implements the *GetManagedObjects()* method of the [org.freedesktop.DBus.ObjectManager.GetManagedObjects](https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager)
- * interface.
- *
- * Note that there can be multiple object managers in a path hierarchy. InterfacesAdded/InterfacesRemoved
- * signals are sent from the closest object manager at either the same path or the closest parent path of an object.
- */
-interface ObjectManagerAdaptor : ObjectAdaptor {
-
-    fun registerObjectManagerAdaptor() {
-        obj.addObjectManager()
-    }
-
-    companion object {
-        const val INTERFACE_NAME = "org.freedesktop.DBus.ObjectManager"
     }
 }
 

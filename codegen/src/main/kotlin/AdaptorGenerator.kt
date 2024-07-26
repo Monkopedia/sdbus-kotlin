@@ -57,7 +57,7 @@ class AdaptorGenerator : BaseGenerator() {
         "on" + signal.signalName()
     ).apply {
         addModifiers(SUSPEND)
-        addModifiers(OVERRIDE)
+        addModifiers(PUBLIC)
         val params = signal.args.filter { it.direction != OUT }.withIndex()
         for ((index, arg) in params) {
             addParameter((arg.name ?: "arg$index").decapitalCamelCase, namingManager[arg])

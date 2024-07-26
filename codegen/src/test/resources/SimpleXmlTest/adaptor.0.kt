@@ -33,5 +33,5 @@ public abstract class BackgroundAdaptor(
     }
   }
 
-  override suspend fun onBackgroundChanged(): Unit = obj.emitSignal("backgroundChanged") { call() }
+  public suspend fun onBackgroundChanged(): Unit = obj.emitSignal("backgroundChanged") { call() }
 }

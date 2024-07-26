@@ -2,28 +2,24 @@ package org.foo
 
 import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.callMethodAsync
-import com.monkopedia.sdbus.onSignal
+import com.monkopedia.sdbus.signalFlow
 import kotlin.Boolean
 import kotlin.OptIn
 import kotlin.String
 import kotlin.Unit
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
+import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class BackgroundProxy(
+public class BackgroundProxy(
   protected val proxy: IProxy,
 ) : Background {
-  public override fun register() {
-    val weakRef = WeakReference(this)
-    proxy.onSignal(Background.Companion.INTERFACE_NAME, "backgroundChanged") {
-      acall {
-        ->
-        weakRef.get()
-          ?.onBackgroundChanged()
-          ?: Unit
+  public val backgroundChanged: Flow<Unit> = proxy.signalFlow(Background.Companion.INTERFACE_NAME,
+      "backgroundChanged") {
+        call { -> Unit }
       }
-    }
+
+  public override fun register() {
   }
 
   override suspend fun refreshBackground(): Unit =

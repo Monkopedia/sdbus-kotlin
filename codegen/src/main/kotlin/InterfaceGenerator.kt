@@ -71,15 +71,7 @@ class InterfaceGenerator : BaseGenerator() {
             }
         }
 
-    override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder = FunSpec.builder(
-        "on" + signal.signalName()
-    ).apply {
-        addModifiers(SUSPEND)
-        addModifiers(ABSTRACT)
-        for ((index, arg) in signal.args.filter { it.direction != OUT }.withIndex()) {
-            addParameter((arg.name ?: "arg$index").decapitalCamelCase, namingManager[arg])
-        }
-    }
+    override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder? = null
 
     override fun FunSpec.Builder.buildRegistration(intf: Interface) {
         addModifiers(ABSTRACT)

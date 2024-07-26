@@ -9,14 +9,12 @@ import kotlin.String
 import kotlin.Unit
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class GattManager1Proxy(
+public class GattManager1Proxy(
   protected val proxy: IProxy,
 ) : GattManager1 {
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun registerApplication(application: ObjectPath, options: Map<String, Variant>):

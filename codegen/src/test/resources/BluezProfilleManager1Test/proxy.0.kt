@@ -9,14 +9,12 @@ import kotlin.String
 import kotlin.Unit
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class ProfileManager1Proxy(
+public class ProfileManager1Proxy(
   protected val proxy: IProxy,
 ) : ProfileManager1 {
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun registerProfile(

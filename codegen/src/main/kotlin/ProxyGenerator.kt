@@ -5,6 +5,7 @@ import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Direction.OUT
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.KModifier.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 class ProxyGenerator : BaseGenerator() {
 
@@ -23,7 +24,6 @@ class ProxyGenerator : BaseGenerator() {
                 }.build()
             )
             addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
-            addModifiers(ABSTRACT)
             addProperty(
                 PropertySpec.builder("proxy", iProxy).apply {
                     initializer(CodeBlock.of("proxy"))
@@ -88,46 +88,36 @@ class ProxyGenerator : BaseGenerator() {
 
     override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder? = null
 
-    override fun FunSpec.Builder.buildRegistration(intf: Interface) {
-        addModifiers(PUBLIC)
-        addModifiers(OVERRIDE)
-        addCode("val weakRef = %T(this)\n", ClassName.bestGuess("kotlin.native.ref.WeakReference"))
-        intf.signals.forEach { signal ->
-            val args = signal.args.filter { it.direction != OUT }
-            addCode(
+    override fun signalValBuilder(intf: Interface, signal: Signal): PropertySpec.Builder? {
+        val type = namingManager.get(signal.args)
+        return PropertySpec.builder(
+            signal.name.decapitalCamelCase,
+            ClassName.bestGuess("kotlinx.coroutines.flow.Flow").parameterizedBy(type)
+        ).apply {
+            addModifiers(PUBLIC)
+            initializer(
                 CodeBlock.builder().apply {
                     add(
                         "proxy.%T(%T, %S) {\n",
-                        ClassName("com.monkopedia.sdbus", "onSignal"),
+                        ClassName("com.monkopedia.sdbus", "signalFlow"),
                         intfName(intf),
                         signal.name
                     )
                     withIndent {
-                        add("acall {\n")
-                        withIndent {
-                            withIndent {
-                                args.forEach {
-                                    add("${it.name!!.decapitalCamelCase}: %T,\n", namingManager[it])
-                                }
-                            }
-                            add("->\n")
-                            add("weakRef.get()\n")
-                            withIndent {
-                                add(
-                                    "?.on${signal.signalName()}(${
-                                        args.joinToString(", ") {
-                                            it.name!!.decapitalCamelCase
-                                        }
-                                    })\n"
-                                )
-                                add("?: Unit\n")
-                            }
+                        if (type == UNIT) {
+                            add("call { -> Unit }\n")
+                        } else {
+                            add("call(::%T)\n", type)
                         }
-                        add("}\n")
                     }
                     add("}\n")
                 }.build()
             )
         }
+    }
+
+    override fun FunSpec.Builder.buildRegistration(intf: Interface) {
+        addModifiers(PUBLIC)
+        addModifiers(OVERRIDE)
     }
 }

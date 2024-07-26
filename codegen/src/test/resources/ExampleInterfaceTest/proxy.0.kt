@@ -6,14 +6,12 @@ import kotlin.OptIn
 import kotlin.String
 import kotlin.UInt
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class InterestingInterfaceProxy(
+public class InterestingInterfaceProxy(
   protected val proxy: IProxy,
 ) : InterestingInterface {
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun addContact(name: String, email: String): UInt =

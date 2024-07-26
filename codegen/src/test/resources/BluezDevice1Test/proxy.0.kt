@@ -16,10 +16,9 @@ import kotlin.Unit
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class Device1Proxy(
+public class Device1Proxy(
   protected val proxy: IProxy,
 ) : Device1 {
   override val address: String by proxy.prop(Device1.Companion.INTERFACE_NAME, "Address") 
@@ -75,7 +74,6 @@ public abstract class Device1Proxy(
       "AdvertisingData") 
 
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun connect(): Unit = proxy.callMethodAsync(Device1.Companion.INTERFACE_NAME,

@@ -48,6 +48,7 @@ abstract class BaseGenerator {
                 }
                 for (signal in intf.signals) {
                     signalBuilder(intf, signal)?.build()?.let { addFunction(it) }
+                    signalValBuilder(intf, signal)?.build()?.let { addProperty(it) }
                 }
             }.build()
         )
@@ -58,6 +59,8 @@ abstract class BaseGenerator {
     protected abstract fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder?
     protected abstract fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder?
     protected abstract fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder?
+    protected open fun signalValBuilder(intf: Interface, signal: Signal): PropertySpec.Builder? =
+        null
 
     protected abstract fun FunSpec.Builder.buildRegistration(intf: Interface)
 

@@ -7,14 +7,12 @@ import kotlin.OptIn
 import kotlin.String
 import kotlin.Unit
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class AgentManager1Proxy(
+public class AgentManager1Proxy(
   protected val proxy: IProxy,
 ) : AgentManager1 {
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 
   override suspend fun registerAgent(agent: ObjectPath, capability: String): Unit =

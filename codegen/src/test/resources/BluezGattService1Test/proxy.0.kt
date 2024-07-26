@@ -8,10 +8,9 @@ import kotlin.OptIn
 import kotlin.String
 import kotlin.collections.List
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 
 @OptIn(ExperimentalNativeApi::class)
-public abstract class GattService1Proxy(
+public class GattService1Proxy(
   protected val proxy: IProxy,
 ) : GattService1 {
   override val uUID: String by proxy.prop(GattService1.Companion.INTERFACE_NAME, "UUID") 
@@ -22,6 +21,5 @@ public abstract class GattService1Proxy(
       "Includes") 
 
   public override fun register() {
-    val weakRef = WeakReference(this)
   }
 }
