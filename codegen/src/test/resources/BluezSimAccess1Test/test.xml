@@ -1,0 +1,6 @@
+<node>
+    <interface name="org.bluez.SimAccess1">
+        <method name="Disconnect"/>
+        <property name="Connected" type="b" access="read"/>
+    </interface>
+</node>

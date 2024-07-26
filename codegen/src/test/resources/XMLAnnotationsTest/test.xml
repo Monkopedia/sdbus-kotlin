@@ -1,0 +1,62 @@
+<node>
+  <interface name="org.freedesktop.DBus.Properties">
+    <annotation name="org.gtk.GDBus.DocString" value="Interface for all
+      objects which expose properties on the bus, allowing those properties to
+      be got, set, and signals emitted to notify of changes to the property
+      values."/>
+    <annotation name="org.gtk.GDBus.DocString.Short"
+      value="Standard property getter/setter interface"/>
+
+    <method name="Get">
+      <annotation name="org.gtk.GDBus.DocString" value="Retrieves the value of
+        the property at @property_name on @interface_name on this object. If
+        @interface_name is an empty string, all interfaces will be searched
+        for @property_name; if multiple properties match, the result is
+        undefined.
+
+        If @interface_name or @property_name do not exist, a
+        #org.freedesktop.DBus.Error.InvalidArgs error is returned."/>
+
+      <arg type="s" name="interface_name" direction="in">
+        <annotation name="org.gtk.GDBus.DocString"
+          value="Name of the interface the property is defined on."/>
+      </arg>
+
+      <arg type="s" name="property_name" direction="in">
+        <annotation name="org.gtk.GDBus.DocString"
+          value="Name of the property to get."/>
+      </arg>
+
+      <arg type="v" name="value" direction="out">
+        <annotation name="org.gtk.GDBus.DocString"
+          value="Property value, wrapped in a variant."/>
+      </arg>
+    </method>
+
+    <signal name="PropertiesChanged">
+      <annotation name="org.gtk.GDBus.DocString" value="Emitted when one or
+        more properties change values on @interface_name. A property may be
+        listed in @changed_properties or @invalidated_properties depending on
+        whether the service wants to broadcast the property’s new value. If a
+        value is large or infrequently used, the service might not want to
+        broadcast it, and will wait for clients to request it instead."/>
+
+      <arg type="s" name="interface_name">
+        <annotation name="org.gtk.GDBus.DocString"
+          value="Name of the interface the properties changed on."/>
+      </arg>
+
+      <arg type="a{sv}" name="changed_properties">
+        <annotation name="org.gtk.GDBus.DocString"
+          value="Map of property name to updated value for the changed
+            properties."/>
+      </arg>
+
+      <arg type="as" name="invalidated_properties">
+        <annotation name="org.gtk.GDBus.DocString"
+          value="List of names of other properties which have changed, but
+            whose updated values are not notified."/>
+      </arg>
+    </signal>
+  </interface>
+</node>

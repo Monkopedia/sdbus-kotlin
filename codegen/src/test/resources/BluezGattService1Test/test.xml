@@ -1,0 +1,7 @@
+<node>
+    <interface name="org.bluez.GattService1">
+        <property name="UUID" type="s" access="read"/>
+        <property name="Primary" type="b" access="read"/>
+        <property name="Includes" type="ao" access="read"/>
+    </interface>
+</node>

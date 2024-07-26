@@ -13,6 +13,7 @@ buildscript {
 plugins {
     kotlin("multiplatform") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
+    `maven-publish`
 }
 apply(plugin = "kotlinx-atomicfu")
 
@@ -24,16 +25,7 @@ repositories {
 }
 
 kotlin {
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-    }
-
-    nativeTarget.apply {
+    linuxX64("native") {
         binaries {
             sharedLib { }
         }
@@ -78,7 +70,6 @@ afterEvaluate {
         kotlinOptions {
             freeCompilerArgs += "-Xoverride-konan-properties=linker.linux_x64=/usr/bin/ld.gold"
             freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
-//            freeCompilerArgs += listOf("-Xlinker", "-l", "/usr/lib/expat")
         }
     }
     println("${link::class}")

@@ -1,0 +1,52 @@
+<node>
+  <!--
+      org.freedesktop.DBus.Properties:
+      @short_description: Standard property getter/setter interface
+
+      Interface for all objects which expose properties on the bus, allowing
+      those properties to be got, set, and signals emitted to notify of changes
+      to the property values.
+  -->
+  <interface name="org.freedesktop.DBus.Properties">
+    <!--
+        Get:
+        @interface_name: Name of the interface the property is defined on.
+        @property_name: Name of the property to get.
+        @value: Property value, wrapped in a variant.
+
+        Retrieves the value of the property at @property_name on
+        @interface_name on this object. If @interface_name is an empty string,
+        all interfaces will be searched for @property_name; if multiple
+        properties match, the result is undefined.
+
+        If @interface_name or @property_name do not exist, a
+        #org.freedesktop.DBus.Error.InvalidArgs error is returned.
+    -->
+    <method name="Get">
+      <arg type="s" name="interface_name" direction="in"/>
+      <arg type="s" name="property_name" direction="in"/>
+      <arg type="v" name="value" direction="out"/>
+    </method>
+
+    <!--
+        PropertiesChanged:
+        @interface_name: Name of the interface the properties changed on.
+        @changed_properties: Map of property name to updated value for the
+          changed properties.
+        @invalidated_properties: List of names of other properties which have
+          changed, but whose updated values are not notified.
+
+        Emitted when one or more properties change values on @interface_name.
+        A property may be listed in @changed_properties or
+        @invalidated_properties depending on whether the service wants to
+        broadcast the property’s new value. If a value is large or infrequently
+        used, the service might not want to broadcast it, and will wait for
+        clients to request it instead.
+    -->
+    <signal name="PropertiesChanged">
+      <arg type="s" name="interface_name"/>
+      <arg type="a{sv}" name="changed_properties"/>
+      <arg type="as" name="invalidated_properties"/>
+    </signal>
+  </interface>
+</node>

@@ -1,0 +1,11 @@
+<node>
+    <interface name="org.bluez.GattManager1">
+        <method name="RegisterApplication">
+            <arg name="application" type="o" direction="in"/>
+            <arg name="options" type="a{sv}" direction="in"/>
+        </method>
+        <method name="UnregisterApplication">
+            <arg name="application" type="o" direction="in"/>
+        </method>
+    </interface>
+</node>

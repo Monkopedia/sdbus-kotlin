@@ -1,0 +1,11 @@
+<node>
+    <interface name="org.bluez.HealthManager1">
+        <method name="CreateApplication">
+            <arg name="config" type="a{sv}" direction="in"/>
+            <arg name="application" type="o" direction="out"/>
+        </method>
+        <method name="DestroyApplication">
+            <arg name="application" type="o" direction="in"/>
+        </method>
+    </interface>
+</node>

@@ -1,0 +1,15 @@
+<node>
+  <interface name="org.foo.Background">
+    <signal name="backgroundChanged">
+    </signal>
+    <method name="refreshBackground">
+    </method>
+    <method name="currentBackground">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="setBackground">
+      <arg type="b" direction="out"/>
+      <arg name="name" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

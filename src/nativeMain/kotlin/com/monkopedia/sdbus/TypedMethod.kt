@@ -322,7 +322,7 @@ open class TypedMethodBuilderContext {
         }
     )
 
-    inline fun <reified R : Any> acall(crossinline handler: () -> R): AsyncMethodCall =
+    inline fun <reified R : Any> acall(crossinline handler: suspend () -> R): AsyncMethodCall =
         createACall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })

@@ -97,6 +97,10 @@ class Variant constructor() {
         return contents
     }
 
+    override fun toString(): String {
+        return "Variant(${peekValueType()})"
+    }
+
     companion object : KSerializer<Variant> {
         const val SERIAL_NAME = "sdbus.Variant"
         override val descriptor: SerialDescriptor = buildClassSerialDescriptor(SERIAL_NAME)
