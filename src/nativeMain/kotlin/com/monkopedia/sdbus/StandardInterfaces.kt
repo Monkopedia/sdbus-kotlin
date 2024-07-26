@@ -60,8 +60,12 @@ interface PropertiesProxy : ProxyHolder {
         value: Variant,
         dontExpectReply: Boolean = false
     ) {
-        proxy.setProperty(propertyName).onInterface(interfaceName)
-            .toValue(value, dontExpectReply = dontExpectReply)
+        proxy.setProperty(
+            interfaceName.value,
+            propertyName.value,
+            value,
+            dontExpectReply = dontExpectReply
+        )
     }
 
     fun set(
@@ -70,8 +74,7 @@ interface PropertiesProxy : ProxyHolder {
         value: Variant,
         dontExpectReply: Boolean = false
     ) {
-        proxy.setProperty(propertyName).onInterface(interfaceName)
-            .toValue(value, dontExpectReply = dontExpectReply)
+        proxy.setProperty(interfaceName, propertyName, value, dontExpectReply = dontExpectReply)
     }
 
     suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
@@ -109,10 +112,10 @@ interface PropertiesProxy : ProxyHolder {
         inline fun <reified T> PropertiesProxy.get(
             interfaceName: InterfaceName,
             propertyName: PropertyName
-        ): T = proxy.getProperty(propertyName).onInterface(interfaceName)
+        ): T = proxy.getProperty(interfaceName, propertyName)
 
         inline fun <reified T> PropertiesProxy.get(interfaceName: String, propertyName: String): T =
-            proxy.getProperty(propertyName).onInterface(interfaceName)
+            proxy.getProperty(interfaceName, propertyName)
 
         const val INTERFACE_NAME = "org.freedesktop.DBus.Properties"
     }

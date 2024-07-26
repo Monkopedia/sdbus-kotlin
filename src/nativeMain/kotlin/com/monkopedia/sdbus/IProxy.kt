@@ -319,35 +319,6 @@ suspend inline fun IProxy.callMethodAsync(message: MethodCall, timeout: Duration
 
 
 /*!
- * @brief Gets value of a property of the D-Bus object
- *
- * @param[in] propertyName Name of the property
- * @return A helper object for convenient getting of property value
- *
- * This is a high-level, convenience way of reading D-Bus property values that abstracts
- * from the D-Bus message concept. sdbus::Variant is returned which shall then be converted
- * to the real property type (implicit conversion is supported).
- *
- * Example of use:
- * @code
- * int state = object.getProperty("state").onInterface("com.kistler.foo");
- * sdbus::InterfaceName foo{"com.kistler.foo"};
- * sdbus::PropertyName level{"level"};
- * int level = object.getProperty(level).onInterface(foo);
- * @endcode
- *
- * @throws sdbus::Error in case of failure
- */
-inline fun IProxy.getProperty(propertyName: PropertyName): PropertyGetter =
-    PropertyGetter(this, propertyName.value)
-
-/*!
- * @copydoc IProxy::getProperty(const PropertyName&)
- */
-inline fun IProxy.getProperty(propertyName: String): PropertyGetter =
-    PropertyGetter(this, propertyName)
-
-/*!
  * @brief Gets value of a property of the D-Bus object asynchronously
  *
  * @param[in] propertyName Name of the property
@@ -374,34 +345,6 @@ inline fun IProxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGet
 inline fun IProxy.getPropertyAsync(propertyName: String): AsyncPropertyGetter =
     AsyncPropertyGetter(this, propertyName)
 
-/*!
- * @brief Sets value of a property of the D-Bus object
- *
- * @param[in] propertyName Name of the property
- * @return A helper object for convenient setting of property value
- *
- * This is a high-level, convenience way of writing D-Bus property values that abstracts
- * from the D-Bus message concept.
- * Setting property value with NoReply flag is also supported.
- *
- * Example of use:
- * @code
- * int state = ...;
- * object_.setProperty("state").onInterface("com.kistler.foo").toValue(state);
- * // Or we can just send the set message call without waiting for the reply
- * object_.setProperty("state").onInterface("com.kistler.foo").toValue(state, dont_expect_reply);
- * @endcode
- *
- * @throws sdbus::Error in case of failure
- */
-inline fun IProxy.setProperty(propertyName: PropertyName): PropertySetter =
-    PropertySetter(this, propertyName.value)
-
-/*!
- * @copydoc IProxy::setProperty(const PropertyName&)
- */
-inline fun IProxy.setProperty(propertyName: String): PropertySetter =
-    PropertySetter(this, propertyName)
 
 /*!
  * @brief Sets value of a property of the D-Bus object asynchronously

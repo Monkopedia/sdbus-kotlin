@@ -3,6 +3,8 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.Flags.GeneralFlags.DEPRECATED
 import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 import kotlinx.cinterop.memScoped
 
 fun registerProperty(propertyName: PropertyName): PropertyVTableItem =
@@ -11,14 +13,11 @@ fun registerProperty(propertyName: PropertyName): PropertyVTableItem =
 fun registerProperty(propertyName: String): PropertyVTableItem =
     registerProperty(PropertyName(propertyName))
 
-inline fun VTableBuilder.property(propertyName: String, builder: PropertyVTableItem.() -> Unit) {
-    property(PropertyName(propertyName), builder)
+inline fun VTableBuilder.prop(propertyName: String, builder: PropertyVTableItem.() -> Unit) {
+    prop(PropertyName(propertyName), builder)
 }
 
-inline fun VTableBuilder.property(
-    propertyName: PropertyName,
-    builder: PropertyVTableItem.() -> Unit
-) {
+inline fun VTableBuilder.prop(propertyName: PropertyName, builder: PropertyVTableItem.() -> Unit) {
     items.add(PropertyVTableItem(propertyName).also(builder))
 }
 
@@ -77,5 +76,17 @@ data class PropertyVTableItem(
 
     operator fun PropertyUpdateBehaviorFlags.unaryPlus() {
         flags.set(this)
+    }
+
+    inline fun <reified T : Any> with(receiver: KProperty0<T>) {
+        signature = Signature(signatureOf<T>().value)
+        getter = {
+            receiver.get()
+        }
+        if (receiver is KMutableProperty0) {
+            setter = {
+                receiver.set(it.deserialize<T>())
+            }
+        }
     }
 }

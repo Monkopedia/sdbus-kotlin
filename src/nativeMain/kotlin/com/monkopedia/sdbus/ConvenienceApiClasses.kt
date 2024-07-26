@@ -8,44 +8,6 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
-class PropertyGetter(private val proxy: IProxy, private val propertyName: String) {
-
-    inline fun <reified T : Any> onInterface(interfaceName: InterfaceName): T {
-        val serializer = serializer<T>()
-        val module = serializersModuleOf(serializer)
-        return onInterface(
-            interfaceName.value,
-            serializer,
-            module,
-            signatureOf<T>()
-        )
-    }
-
-    inline fun <reified T : Any> onInterface(interfaceName: String): T {
-        val serializer = serializer<T>()
-        val module = serializersModuleOf(serializer)
-        return onInterface(
-            interfaceName,
-            serializer,
-            module,
-            signatureOf<T>()
-        )
-    }
-
-    fun <T : Any> onInterface(
-        interfaceName: String,
-        serializer: DeserializationStrategy<T>,
-        module: SerializersModule,
-        signature: SdbusSig
-    ): T = proxy.callMethod<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, "Get") {
-        call(interfaceName, propertyName)
-    }.get(serializer, module, signature)
-
-    companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
-    }
-}
-
 class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: String) {
 
     private var interfaceName_: String? = null
@@ -72,32 +34,6 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
         return proxy.callMethodAsync<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, "Get") {
             call(interfaceName_!!, propertyName)
         }.get(serializer, module, signature)
-    }
-
-    companion object {
-        const val DBUS_PROPERTIES_INTERFACE_NAME = "org.freedesktop.DBus.Properties"
-    }
-}
-
-class PropertySetter(private val proxy: IProxy, private val propertyName: String) {
-    private var interfaceName_: String? = null
-
-    fun onInterface(interfaceName: InterfaceName): PropertySetter = onInterface(interfaceName.value)
-    fun onInterface(interfaceName: String): PropertySetter = apply {
-        interfaceName_ = interfaceName
-    }
-
-    inline fun <reified T : Any> toValue(value: T, dontExpectReply: Boolean = false) {
-        toValue(Variant<T>(value), dontExpectReply = dontExpectReply)
-    }
-
-    fun toValue(variant: Variant, dontExpectReply: Boolean = false) {
-        require(interfaceName_?.isNotEmpty() == true)
-
-        proxy.callMethod<Unit>(DBUS_PROPERTIES_INTERFACE_NAME, "Set") {
-            this.dontExpectReply = dontExpectReply
-            call(interfaceName_!!, propertyName, variant)
-        }
     }
 
     companion object {

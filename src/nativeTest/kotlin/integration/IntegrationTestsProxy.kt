@@ -21,6 +21,7 @@ import com.monkopedia.sdbus.setProperty
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.serialization.descriptors.PrimitiveKind.INT
 
 @OptIn(ExperimentalForeignApi::class)
 abstract class IntegrationTestsProxy(override val proxy: IProxy) :
@@ -121,19 +122,19 @@ abstract class IntegrationTestsProxy(override val proxy: IProxy) :
         }
     }
 
-    fun action(): UInt = proxy.getProperty("action").onInterface(INTERFACE_NAME)
+    fun action(): UInt = proxy.getProperty(INTERFACE_NAME, "action")
 
     fun action(value: UInt) {
-        proxy.setProperty("action").onInterface(INTERFACE_NAME).toValue(value)
+        proxy.setProperty(INTERFACE_NAME, "action", value)
     }
 
-    fun blocking(): Boolean = proxy.getProperty("blocking").onInterface(INTERFACE_NAME)
+    fun blocking(): Boolean = proxy.getProperty(INTERFACE_NAME, "blocking")
 
     fun blocking(value: Boolean) {
-        proxy.setProperty("blocking").onInterface(INTERFACE_NAME).toValue(value)
+        proxy.setProperty(INTERFACE_NAME, "blocking", value)
     }
 
-    fun state(): String = proxy.getProperty("state").onInterface(INTERFACE_NAME)
+    fun state(): String = proxy.getProperty(INTERFACE_NAME, "state")
 
     companion object {
 

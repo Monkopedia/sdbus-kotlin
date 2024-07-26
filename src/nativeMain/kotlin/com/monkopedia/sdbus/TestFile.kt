@@ -10,6 +10,7 @@ import com.monkopedia.sdbus.callMethodAsync
 import com.monkopedia.sdbus.emitSignal
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.onSignal
+import com.monkopedia.sdbus.prop
 import com.monkopedia.sdbus.signal
 import com.monkopedia.sdbus.testing.Properties.Companion.INTERFACE_NAME
 import kotlin.experimental.ExperimentalNativeApi
@@ -45,8 +46,12 @@ public abstract class PropertiesAdapter(protected val obj: IObject) : Properties
                 with<Map<String, Variant>>("changed_properties")
                 with<List<String>>("invalidated_properties")
             }
+            prop("name") {
+                with(this::name)
+            }
         }
     }
+    abstract var name: String
 
     override suspend fun onPropertiesChanged(
         interfaceName: String,
@@ -67,7 +72,7 @@ public abstract class PropertiesProxy(protected val proxy: IProxy) : Properties 
             acall {
                     interfaceName: String,
                     changedProperties: Map<String, Variant>,
-                    invalidatedProperties: List<String>
+                    invalidatedProperties: List<String>,
                 ->
                 weakRef.get()
                     ?.onPropertiesChanged(interfaceName, changedProperties, invalidatedProperties)
@@ -75,6 +80,7 @@ public abstract class PropertiesProxy(protected val proxy: IProxy) : Properties 
             }
         }
     }
+    val name: String by proxy.prop(INTERFACE_NAME, "name")
 
     override suspend fun get(interfaceName: String, propertyName: String): Variant {
         return proxy.callMethodAsync(INTERFACE_NAME, "Get") {

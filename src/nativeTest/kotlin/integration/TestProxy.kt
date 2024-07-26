@@ -200,6 +200,6 @@ class TestProxy private constructor(proxy: IProxy) : IntegrationTestsProxy(proxy
     }
 
     fun setStateProperty(value: String) {
-        proxy.setProperty("state").onInterface(INTERFACE_NAME).toValue(value)
+        proxy.setProperty(INTERFACE_NAME, "state", value)
     }
 }

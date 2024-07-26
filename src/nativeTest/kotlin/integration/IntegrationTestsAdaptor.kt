@@ -15,7 +15,7 @@ import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.emitSignal
 import com.monkopedia.sdbus.interfaceFlags
 import com.monkopedia.sdbus.method
-import com.monkopedia.sdbus.property
+import com.monkopedia.sdbus.prop
 import com.monkopedia.sdbus.signal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
@@ -113,20 +113,20 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
             }
             signal("signalWithMap") { with<Map<Int, String>>("aMap") }
             signal("signalWithVariant") { with<Variant>("aVariant") }
-            property("action") {
+            prop("action") {
                 withGetter { action() }
                 withSetter { value: UInt ->
                     action(value)
                 }
                 +EMITS_INVALIDATION_SIGNAL
             }
-            property("blocking") {
+            prop("blocking") {
                 withGetter { blocking() }
                 withSetter { value: Boolean ->
                     blocking(value)
                 }
             }
-            property("state") {
+            prop("state") {
                 withGetter { state() }
                 isDeprecated = true
                 +CONST_PROPERTY_VALUE
