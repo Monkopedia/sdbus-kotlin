@@ -8,7 +8,6 @@ import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.Object
-import com.monkopedia.sdbus.ObjectAdaptor
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.SignalName
@@ -24,7 +23,7 @@ import com.monkopedia.sdbus.signal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 
-abstract class IntegrationTestsAdaptor(override val obj: Object) : ObjectAdaptor {
+abstract class IntegrationTestsAdaptor(val obj: Object) {
 
     open fun registerAdaptor() {
         obj.addVTable(INTERFACE_NAME) {

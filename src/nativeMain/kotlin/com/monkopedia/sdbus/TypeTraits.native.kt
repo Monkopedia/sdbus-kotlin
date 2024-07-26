@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.internal.BooleanTypeConverter
@@ -14,14 +16,26 @@ import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.IntVar
+
+actual sealed class SdbusSig actual constructor() {
+    @PublishedApi
+    internal actual abstract val value: String
+
+    @PublishedApi
+    internal actual abstract val valid: Boolean
+
+    @PublishedApi
+    internal actual abstract val isTrivial: Boolean
+}
 
 data class PrimitiveSig<K, N : CVariable> internal constructor(
     override val value: String,
     override val valid: Boolean = false,
     override val isTrivial: Boolean = false,
     internal val converter: NativeTypeConverter<K, N>? = null
-) : SdbusSig
+) : SdbusSig()
 
 actual val VoidSig: SdbusSig =
     PrimitiveSig<Unit, COpaquePointerVar>("", valid = true, isTrivial = false)

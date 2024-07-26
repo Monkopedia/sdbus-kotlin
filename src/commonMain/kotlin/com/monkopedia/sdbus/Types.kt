@@ -1,4 +1,3 @@
-
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
@@ -90,9 +89,7 @@ class Variant constructor() {
         return contents
     }
 
-    override fun toString(): String {
-        return "Variant(${peekValueType()})"
-    }
+    override fun toString(): String = "Variant(${peekValueType()})"
 
     companion object : KSerializer<Variant> {
         const val SERIAL_NAME = "sdbus.Variant"
@@ -157,13 +154,9 @@ value class BusName(val value: String) {
 
 typealias ServiceName = BusName
 
-/********************************************/
 /**
- * @class InterfaceName
- *
  * Strong type representing the D-Bus interface name
- *
- ***********************************************/
+ */
 @Serializable(InterfaceName.Companion::class)
 value class InterfaceName(val value: String) {
     override fun toString(): String = value
@@ -181,13 +174,9 @@ value class InterfaceName(val value: String) {
     }
 }
 
-/********************************************/
 /**
- * @class MemberName
- *
  * Strong type representing the D-Bus member name
- *
- ***********************************************/
+ */
 @Serializable(MemberName.Companion::class)
 value class MemberName(val value: String) {
     override fun toString(): String = value
@@ -209,13 +198,9 @@ typealias MethodName = MemberName
 typealias SignalName = MemberName
 typealias PropertyName = MemberName
 
-/********************************************/
 /**
- * @class Signature
- *
  * Strong type representing the D-Bus object path
- *
- ***********************************************/
+ */
 @Serializable(Signature.Companion::class)
 value class Signature(val value: String) {
 
@@ -236,19 +221,19 @@ value class Signature(val value: String) {
     }
 }
 
-/********************************************/
 /**
- * @struct UnixFd
- *
  * UnixFd is a representation of file descriptor D-Bus type that owns
  * the underlying fd, provides access to it, and closes the fd when
  * the UnixFd goes out of scope.
  *
  * UnixFd can be default constructed (owning invalid fd), or constructed from
  * an explicitly provided fd by either duplicating or adopting that fd as-is.
- *
- ***********************************************/
-expect class UnixFd(fd: Int, adopt_fd: Unit) : Resource {
+ */
+expect class UnixFd(fd: Int, adoptFd: Unit) : Resource {
+
+    constructor(fd: Int = -1)
+    constructor(other: UnixFd)
+
     override fun release()
 
     companion object {

@@ -184,7 +184,7 @@ class TypesTest {
     fun aUnixFd_AdoptsAndOwnsFdAsIsUponAdoptionConstruction() {
         val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
 
-        val unixFd = UnixFd(fd, adopt_fd = Unit)
+        val unixFd = UnixFd(fd, adoptFd = Unit)
         assertEquals(fd, unixFd.fd)
         unixFd.release()
         assertEquals(-1, close(fd))
@@ -202,7 +202,7 @@ class TypesTest {
     @Test
     fun aUnixFd_ClosesFdProperlyUponDestruction() {
         val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
-        val unixFd = UnixFd(fd, adopt_fd = Unit)
+        val unixFd = UnixFd(fd, adoptFd = Unit)
         val unixFdCopy = UnixFd(unixFd)
         val fdCopy = unixFdCopy.fd
         unixFd.release()
@@ -215,7 +215,7 @@ class TypesTest {
     @Test
     fun aUnixFd_ClosesFdOnRelease() {
         val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
-        val unixFd = UnixFd(fd, adopt_fd = Unit)
+        val unixFd = UnixFd(fd, adoptFd = Unit)
 
         unixFd.release()
 

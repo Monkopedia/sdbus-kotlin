@@ -10,7 +10,6 @@ package com.monkopedia.sdbus
  * from the D-Bus message concept. Signal arguments are automatically serialized
  * in a message and D-Bus signatures automatically deduced from the provided native arguments.
  *
- *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
 inline fun Object.emitSignal(

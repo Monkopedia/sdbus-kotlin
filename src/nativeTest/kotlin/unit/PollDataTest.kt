@@ -2,7 +2,7 @@
 
 package com.monkopedia.sdbus.unit
 
-import com.monkopedia.sdbus.Connection.PollData
+import com.monkopedia.sdbus.internal.PollData
 import com.monkopedia.sdbus.internal.now
 import kotlin.test.Test
 import kotlin.test.assertEquals

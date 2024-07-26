@@ -26,7 +26,7 @@ import platform.posix.errno
  ***********************************************/
 @OptIn(ExperimentalNativeApi::class)
 @Serializable(UnixFd.Companion::class)
-actual class UnixFd actual constructor(val fd: Int, adopt_fd: Unit) : Resource {
+actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
     private var wasReleased = false
     private val cleaner = createCleaner(fd) {
         if (it >= 0) {
@@ -34,8 +34,8 @@ actual class UnixFd actual constructor(val fd: Int, adopt_fd: Unit) : Resource {
         }
     }
 
-    constructor(fd: Int = -1) : this(checkedDup(fd), Unit)
-    constructor(other: UnixFd) : this(checkedDup(other.fd), Unit)
+    actual constructor(fd: Int) : this(checkedDup(fd), Unit)
+    actual constructor(other: UnixFd) : this(checkedDup(other.fd), Unit)
 
     val isValid: Boolean
         get() = fd >= 0 && !wasReleased

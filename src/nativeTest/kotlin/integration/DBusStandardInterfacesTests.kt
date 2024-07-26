@@ -143,7 +143,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
         fixture.proxy!!.blocking(!DEFAULT_BLOCKING_VALUE)
         fixture.proxy!!.action(DEFAULT_ACTION_VALUE * 2u)
-        fixture.adaptor!!.emitPropertiesChangedSignal(INTERFACE_NAME, listOf(BLOCKING_PROPERTY))
+        fixture.adaptor!!.obj.emitPropertiesChangedSignal(INTERFACE_NAME, listOf(BLOCKING_PROPERTY))
 
         assertTrue(waitUntil(signalReceived))
     }
@@ -164,7 +164,7 @@ class DBusStandardInterfacesTests : BaseTest() {
                 signalReceived.value = true
             }
 
-        fixture.adaptor!!.emitPropertiesChangedSignal(INTERFACE_NAME)
+        fixture.adaptor!!.obj.emitPropertiesChangedSignal(INTERFACE_NAME)
 
         assertTrue(waitUntil(signalReceived))
     }
@@ -220,7 +220,7 @@ class DBusStandardInterfacesTests : BaseTest() {
                 }
         }
 
-        fixture.adaptor!!.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
+        fixture.adaptor!!.obj.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
 
         withTimeout(5.seconds) { completableDeferred.await() }.getOrThrow()
     }
@@ -244,7 +244,7 @@ class DBusStandardInterfacesTests : BaseTest() {
                 }
         }
 
-        fixture.adaptor!!.emitInterfacesAddedSignal()
+        fixture.adaptor!!.obj.emitInterfacesAddedSignal()
 
         assertTrue(waitUntil(signalReceived))
     }
@@ -266,11 +266,11 @@ class DBusStandardInterfacesTests : BaseTest() {
             }
         }
         assertTrue(waitUntil(readyToEmit), "Ready to emit")
-        fixture.adaptor!!.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
+        fixture.adaptor!!.obj.emitInterfacesAddedSignal(listOf(INTERFACE_NAME))
 
         assertTrue(waitUntil(ready), "Ready for remove")
 
-        fixture.adaptor!!.emitInterfacesRemovedSignal(listOf(INTERFACE_NAME))
+        fixture.adaptor!!.obj.emitInterfacesRemovedSignal(listOf(INTERFACE_NAME))
 
         assertTrue(waitUntil(signalReceived))
         job.cancel()
@@ -290,7 +290,7 @@ class DBusStandardInterfacesTests : BaseTest() {
             }
         }
 
-        fixture.adaptor!!.emitInterfacesRemovedSignal()
+        fixture.adaptor!!.obj.emitInterfacesRemovedSignal()
 
         assertTrue(waitUntil(signalReceived))
     }

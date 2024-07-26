@@ -2,13 +2,11 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.ManagedObjectAdaptor
 import com.monkopedia.sdbus.MemberName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ObjectPath
-import com.monkopedia.sdbus.PropertiesAdaptor
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
@@ -31,9 +29,7 @@ class ObjectManagerTestAdaptor(val obj: Object) {
 }
 
 class TestAdaptor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath) :
-    IntegrationTestsAdaptor(createObject(connection, path)),
-    PropertiesAdaptor,
-    ManagedObjectAdaptor {
+    IntegrationTestsAdaptor(createObject(connection, path)) {
     private val cleaner = createCleaner(obj) {
         it.release()
     }

@@ -98,7 +98,7 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
 
     fun doOperationWithTimeout(timeout: Duration, param: UInt): UInt =
         proxy.callMethod(INTERFACE_NAME, MethodName("doOperation")) {
-            timeoutDuration = timeout
+            this.timeout = timeout
             call(param)
         }
 
@@ -148,7 +148,7 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
         GlobalScope.launch {
             val result = runCatching {
                 proxy.callMethodAsync<UInt>(INTERFACE_NAME, MethodName("doOperation")) {
-                    timeoutDuration = timeout
+                    this.timeout = timeout
                     call(param)
                 }
             }

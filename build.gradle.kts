@@ -112,7 +112,7 @@ ktlint {
 val overrides = mapOf(
     "linker.linux_x64" to "/usr/bin/ld.gold",
     "linker.linux_x64-linux_arm64" to "/usr/bin/aarch64-linux-gnu-ld.gold"
-).entries.joinToString(" ") { "-Xoverride-konan-properties=${it.key}=${it.value}" }
+).entries.map { "-Xoverride-konan-properties=${it.key}=${it.value}" }
 
 afterEvaluate {
     tasks.all {

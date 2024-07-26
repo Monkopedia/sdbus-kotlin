@@ -8,12 +8,9 @@ import kotlinx.serialization.serializer
 
 class AsyncPropertyGetter(private val proxy: Proxy, private val propertyName: PropertyName) {
 
-    private var interfaceName: String? = null
+    private var interfaceName: InterfaceName? = null
 
-    fun onInterface(interfaceName: InterfaceName): AsyncPropertyGetter =
-        onInterface(interfaceName.value)
-
-    fun onInterface(interfaceName: String): AsyncPropertyGetter = apply {
+    fun onInterface(interfaceName: InterfaceName): AsyncPropertyGetter = apply {
         this.interfaceName = interfaceName
     }
 
@@ -28,7 +25,7 @@ class AsyncPropertyGetter(private val proxy: Proxy, private val propertyName: Pr
         module: SerializersModule,
         signature: SdbusSig
     ): T {
-        require(interfaceName?.isNotEmpty() == true)
+        require(interfaceName?.value?.isNotEmpty() == true)
         return proxy.callMethodAsync<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Get")) {
             call(interfaceName!!, propertyName)
         }.get(serializer, module, signature)

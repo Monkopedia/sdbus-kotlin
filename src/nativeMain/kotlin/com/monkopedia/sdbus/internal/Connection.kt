@@ -10,7 +10,6 @@ import cnames.structs.sd_bus
 import cnames.structs.sd_bus_message
 import cnames.structs.sd_bus_slot
 import com.monkopedia.sdbus.BusName
-import com.monkopedia.sdbus.Connection.PollData
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MessageHandler
@@ -48,7 +47,6 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.interpretCPointer
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.placeTo
-import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
@@ -240,7 +238,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
         joinWithEventLoop()
     }
 
-    override fun getEventLoopPollData(): PollData {
+    private fun getEventLoopPollData(): PollData {
         require(!released) { "Connection has already been released" }
         return eventThread.getEventLoopPollData()
     }
@@ -270,7 +268,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
         sdbusRequire(r < 0, "Failed to set method call timeout", -r)
     }
 
-    override fun getMethodCallTimeout(): ULong = memScoped {
+    override fun getMethodCallTimeout(): Duration = memScoped {
         require(!released) { "Connection has already been released" }
         val timeout = cValue<uint64_tVar>().getPointer(this)
 
@@ -278,7 +276,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
 
         sdbusRequire(r < 0, "Failed to get method call timeout", -r)
 
-        return timeout[0]
+        return timeout[0].toLong().microseconds
     }
 
     override fun addMatch(match: String, callback: MessageHandler): Resource = memScoped {
@@ -567,7 +565,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
             require(!released) { "Connection has already been released" }
             val sdbusMsg = sdbus.sd_bus_get_current_message(bus.get())
 
-            return Message(sdbusMsg!!, sdbus)
+            return PlainMessage(sdbusMsg!!, sdbus)
         }
 
     class EventFd(fd: Int = 0) {

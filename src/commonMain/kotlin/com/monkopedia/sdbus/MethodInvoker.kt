@@ -3,6 +3,7 @@ package com.monkopedia.sdbus
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.INFINITE
 import kotlin.time.Duration.Companion.microseconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
@@ -19,14 +20,15 @@ import kotlinx.serialization.serializer
  * and return values.
  *
  * Example of use:
- * @code
- * int a = ..., b = ...;
- * MethodName multiply{"multiply"};
- * object_.callMethodAsync(multiply).onInterface(INTERFACE_NAME).withArguments(a, b).uponReplyInvoke([](int result)
- * {
- *     std::cout << "Got result of multiplying " << a << " and " << b << ": " << result << std::endl;
- * });
- * @endcode
+ * ```
+ * val a: Int = ...
+ * val b: Int = ...
+ * val multiply = MethodName("multiply")
+ * val result = object.callMethodAsync(INTERFACE_NAME, multiply) {
+ *   call(a, b)
+ * }
+ * println("Got result of multiplying $a and $b: $result")
+ * ```
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
@@ -44,7 +46,7 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
         return (Unit as R)
     } else {
         val completable = CompletableDeferred<R>()
-        callMethodAsync(method, { reply, error ->
+        val call = callMethodAsync(method, { reply, error ->
             if (error != null) {
                 completable.completeExceptionally(error)
             } else {
@@ -56,7 +58,12 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
             }
         }, invoker.timeout)
 
-        return completable.await()
+        try {
+            return completable.await()
+        } catch (t: CancellationException) {
+            call.release()
+            throw t
+        }
     }
 }
 
@@ -72,11 +79,15 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
  * and return values.
  *
  * Example of use:
- * @code
- * int result, a = ..., b = ...;
- * MethodName multiply{"multiply"};
- * object_.callMethod(multiply).onInterface(INTERFACE_NAME).withArguments(a, b).storeResultsTo(result);
- * @endcode
+ * ```
+ * val a: Int = ...
+ * val b: Int = ...
+ * val multiply = MethodName("multiply")
+ * val result = object.callMethod(INTERFACE_NAME, multiply) {
+ *   call(a, b)
+ * }
+ * println("Got result of multiplying $a and $b: $result")
+ * ```
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
@@ -107,12 +118,7 @@ class MethodInvoker @PublishedApi internal constructor(private val method: Metho
     var args: TypedArguments? = null
     var dontExpectReply by method::dontExpectReply
 
-    var timeout: ULong = 0u
-    var timeoutDuration: Duration
-        get() = timeout.takeIf { it > 0u }?.toLong()?.microseconds ?: INFINITE
-        set(value) {
-            timeout = if (value == INFINITE) 0u else value.inWholeMicroseconds.toULong()
-        }
+    var timeout: Duration = INFINITE
 
     override fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
         super.createCall(inputType, values).also {

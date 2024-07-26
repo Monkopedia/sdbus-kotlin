@@ -5,6 +5,11 @@ import com.monkopedia.sdbus.Flags.GeneralFlags.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Builds a method to be added to the vtable in progress.
+ *
+ * @see addVTable
+ */
 fun VTableBuilder.method(methodName: MethodName, builder: MethodVTableItem.() -> Unit) {
     items.add(MethodVTableItem(methodName).also(builder))
 }

@@ -29,11 +29,6 @@ actual class PendingAsyncCall internal constructor(
      * async D-Bus method call result delivery. Does nothing if the call was
      * completed already, or if the originating Proxy object has gone meanwhile.
      */
-    actual fun cancel() {
-        val asyncCallInfo = target.get() ?: return
-        (asyncCallInfo.proxy as ProxyImpl).erase(asyncCallInfo)
-    }
-
     actual override fun release() {
         val asyncCallInfo = target.get() ?: return
         (asyncCallInfo.proxy as ProxyImpl).erase(asyncCallInfo)

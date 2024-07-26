@@ -85,8 +85,11 @@ interface PropertiesProxy : ProxyHolder {
     }
 }
 
-// Proxy for object manager
-class ObjectManagerProxy(override val proxy: Proxy) : ProxyHolder {
+/**
+ * Proxy for the ObjectManager interface, allows access to flows containing combinations of objects,
+ * their interfaces, and their properties.
+ */
+class ObjectManagerProxy(val proxy: Proxy) {
     private val state =
         MutableStateFlow(mapOf<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>>())
 
@@ -139,76 +142,3 @@ class ObjectManagerProxy(override val proxy: Proxy) : ProxyHolder {
     }
 }
 
-interface ObjectAdaptor {
-    val obj: Object
-}
-
-// Adaptors for the above-listed standard D-Bus interfaces are not necessary because the functionality
-// is provided by underlying libsystemd implementation. The exception is Properties_adaptor,
-// ObjectManager_adaptor and ManagedObject_adaptor, which provide convenience functionality to emit signals.
-
-// Adaptor for properties
-interface PropertiesAdaptor : ObjectAdaptor {
-
-    fun emitPropertiesChangedSignal(interfaceName: InterfaceName, properties: List<PropertyName>) {
-        obj.emitPropertiesChangedSignal(interfaceName, properties)
-    }
-
-    fun emitPropertiesChangedSignal(interfaceName: InterfaceName) {
-        obj.emitPropertiesChangedSignal(interfaceName)
-    }
-
-    companion object {
-        const val INTERFACE_NAME = "org.freedesktop.DBus.Properties"
-    }
-}
-
-/**
- * Managed Object Convenience Adaptor
- *
- * Adding this class as _Interfaces.. template parameter of class AdaptorInterfaces
- * will extend the resulting object adaptor with emitInterfacesAddedSignal()/emitInterfacesRemovedSignal()
- * according to org.freedesktop.DBus.ObjectManager.InterfacesAdded/.InterfacesRemoved.
- *
- * Note that objects which implement this adaptor require an object manager (e.g via ObjectManager_adaptor) to be
- * instantiated on one of it's parent object paths or the same path. InterfacesAdded/InterfacesRemoved
- * signals are sent from the closest object manager at either the same path or the closest parent path of an object.
- */
-interface ManagedObjectAdaptor : ObjectAdaptor {
-
-    /**
-     * Emits InterfacesAdded signal for this object path
-     *
-     * See IObject::emitInterfacesAddedSignal().
-     */
-    fun emitInterfacesAddedSignal() {
-        obj.emitInterfacesAddedSignal()
-    }
-
-    /**
-     * Emits InterfacesAdded signal for this object path
-     *
-     * See IObject::emitInterfacesAddedSignal().
-     */
-    fun emitInterfacesAddedSignal(interfaces: List<InterfaceName>) {
-        obj.emitInterfacesAddedSignal(interfaces)
-    }
-
-    /**
-     * Emits InterfacesRemoved signal for this object path
-     *
-     * See IObject::emitInterfacesRemovedSignal().
-     */
-    fun emitInterfacesRemovedSignal() {
-        obj.emitInterfacesRemovedSignal()
-    }
-
-    /**
-     * Emits InterfacesRemoved signal for this object path
-     *
-     * See IObject::emitInterfacesRemovedSignal().
-     */
-    fun emitInterfacesRemovedSignal(interfaces: List<InterfaceName>) {
-        obj.emitInterfacesRemovedSignal(interfaces)
-    }
-}

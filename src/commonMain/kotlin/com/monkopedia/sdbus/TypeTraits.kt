@@ -158,13 +158,18 @@ fun signatureOf(type: KType): SdbusSig {
     }
 }
 
-interface SdbusSig {
-    val value: String
-    val valid: Boolean
-    val isTrivial: Boolean
+expect sealed class SdbusSig() {
+    @PublishedApi
+    internal abstract val value: String
+
+    @PublishedApi
+    internal abstract val valid: Boolean
+
+    @PublishedApi
+    internal abstract val isTrivial: Boolean
 }
 
-object InvalidSig : SdbusSig {
+data object InvalidSig : SdbusSig() {
     override val value: String
         get() = ""
     override val valid: Boolean
@@ -173,7 +178,7 @@ object InvalidSig : SdbusSig {
         get() = false
 }
 
-data class StructSig(val signatures: List<SdbusSig>) : SdbusSig {
+data class StructSig(val signatures: List<SdbusSig>) : SdbusSig() {
 
     val contents: String
         get() = signatures.joinToString("") { it.value }
@@ -183,7 +188,7 @@ data class StructSig(val signatures: List<SdbusSig>) : SdbusSig {
     override val isTrivial: Boolean = false
 }
 
-data class MapSig(val t1: SdbusSig, val t2: SdbusSig) : SdbusSig {
+data class MapSig(val t1: SdbusSig, val t2: SdbusSig) : SdbusSig() {
     val contents: String
         get() = "${t1.value}${t2.value}"
     val dictValue: String
@@ -196,7 +201,7 @@ data class MapSig(val t1: SdbusSig, val t2: SdbusSig) : SdbusSig {
         get() = false
 }
 
-data class ListSig(val element: SdbusSig) : SdbusSig {
+data class ListSig(val element: SdbusSig) : SdbusSig() {
     override val value: String
         get() = "a${element.value}"
     override val valid: Boolean

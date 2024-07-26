@@ -106,7 +106,7 @@ private inline fun debugPrint(msg: () -> String) {
  * APIs of @c IObject and @c IProxy.
  *
  ***********************************************/
-actual open class Message internal constructor(
+actual sealed class Message(
     internal val msg: CPointer<sd_bus_message>?,
     internal val sdbus: ISdBus,
     adoptMessage: Boolean = false
@@ -127,7 +127,7 @@ actual open class Message internal constructor(
         }
     }
 
-    internal constructor(sdbus: ISdBus) : this(null, sdbus)
+    constructor(sdbus: ISdBus) : this(null, sdbus)
 
     constructor (o: Message) : this(o.msg, o.sdbus)
 

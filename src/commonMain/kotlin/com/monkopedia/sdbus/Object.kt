@@ -2,14 +2,12 @@ package com.monkopedia.sdbus
 
 /********************************************/
 /**
- * @class IObject
- *
- * IObject class represents a D-Bus object instance identified by a specific object path.
+ * Object class represents a D-Bus object instance identified by a specific object path.
  * D-Bus object provides its interfaces, methods, signals and properties on a bus
  * identified by a specific bus name.
  *
- * All IObject member methods throw @c [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-c++ error.
- * The IObject class has been designed as thread-aware. However, the operation of
+ * All Object member methods throw [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-kotlin error.
+ * The Object class has been designed as thread-aware. However, the operation of
  * creating and sending asynchronous method replies, as well as creating and emitting
  * signals, is thread-safe by design.
  *

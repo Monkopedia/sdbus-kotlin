@@ -245,8 +245,6 @@ interface Proxy : Resource {
 
 /********************************************/
 /**
- * @class PendingAsyncCall
- *
  * PendingAsyncCall represents a simple handle type to cancel the delivery
  * of the asynchronous D-Bus call result to the application.
  *
@@ -263,8 +261,6 @@ expect class PendingAsyncCall : Resource {
      * async D-Bus method call result delivery. Does nothing if the call was
      * completed already, or if the originating Proxy object has gone meanwhile.
      */
-    fun cancel()
-
     override fun release()
 
     /**
@@ -303,11 +299,11 @@ suspend inline fun Proxy.callMethodAsync(message: MethodCall, timeout: Duration)
  * from the D-Bus message concept.
  *
  * Example of use:
- * @code
- * std::future<sdbus::Variant> state = object.getPropertyAsync("state").onInterface("com.kistler.foo").getResultAsFuture();
- * auto callback = [](std::optional<[com.monkopedia.sdbus.Error]> err, const sdbus::Variant& value){ ... };
- * object.getPropertyAsync("state").onInterface("com.kistler.foo").uponReplyInvoke(std::move(callback));
- * @endcode
+ * ```
+ * val state: Int = proxy.getPropertyAsync(PropertyName("state")))
+ *   .onInterface(InterfaceName("com.kristler.foo"))
+ *   .get()
+ * ```
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
@@ -324,11 +320,12 @@ inline fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGett
  * from the D-Bus message concept.
  *
  * Example of use:
- * @code
- * int state = ...;
- * // We can wait until the set operation finishes by waiting on the future
- * std::future<void> res = object_.setPropertyAsync("state").onInterface("com.kistler.foo").toValue(state).getResultAsFuture();
- * @endcode
+ * ```
+ * val state: Int = ...
+ * proxy.setPropertyAsync(PropertyName("state"))
+ *   .onInterface(InterfaceName("com.kristler.foo"))
+ *   .toValue(state)
+ * ```
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
@@ -344,9 +341,9 @@ inline fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySett
  * from the D-Bus message concept.
  *
  * Example of use:
- * @code
- * auto props = object.getAllProperties().onInterface("com.kistler.foo");
- * @endcode
+ * ```
+ * val props = proxy.getAllProperties().onInterface(InterfaceName("com.kistler.foo"))
+ * ```
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
@@ -361,10 +358,10 @@ inline fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(t
  * from the D-Bus message concept.
  *
  * Example of use:
- * @code
- * auto callback = [](std::optional<[com.monkopedia.sdbus.Error]> err, const std::map<PropertyName, Variant>>& properties){ ... };
- * auto props = object.getAllPropertiesAsync().onInterface("com.kistler.foo").uponReplyInvoke(std::move(callback));
- * @endcode
+ * ```
+ * val props = object.getAllPropertiesAsync().onInterface(InterfaceName("com.kistler.foo"))
+ *   getResult();
+ * ```
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
@@ -389,9 +386,9 @@ inline fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPro
  * D-Bus connections to a custom server bus).
  *
  * Code example:
- * @code
- * auto proxy = sdbus::createProxy(connection, "com.kistler.foo", "/com/kistler/foo");
- * @endcode
+ * ```
+ * val proxy = createProxy(connection, ServiceName("com.kistler.foo"), ObjectPath("/com/kistler/foo"))
+ * ```
  */
 expect fun createProxy(
     connection: Connection,
@@ -413,9 +410,9 @@ expect fun createProxy(
  * method replies will be executed in the context of that thread.
  *
  * Code example:
- * @code
- * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
- * @endcode
+ * ```
+ * val proxy = createProxy(ServiceName("com.kistler.foo"), ObjectPath("/com/kistler/foo"))
+ * ```
  */
 expect fun createProxy(
     destination: ServiceName,
