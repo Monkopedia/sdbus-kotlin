@@ -8,7 +8,12 @@ rm -rf libs/$ARCH/$VERSION
 mkdir -p libs/$ARCH/$VERSION
 cd libs/$ARCH/$VERSION
 
-wget https://archlinux.org/packages/core/$ARCH/systemd-libs/download/ -Opackage.pkg.tar.zst
+if [[ "$ARCH" == x86_64 ]]; then
+   URL=https://archlinux.org/packages/core/$ARCH/systemd-libs/download/
+elif [[ "$ARCH" == aarch64 ]]; then
+   URL=http://mirror.archlinuxarm.org/$ARCH/core/systemd-libs-$VERSION-$ARCH.pkg.tar.xz
+fi
+wget $URL -Opackage.pkg.tar.zst
 tar xf package.pkg.tar.zst usr/include usr/lib
 mv usr/include include/
 mv usr/lib lib/

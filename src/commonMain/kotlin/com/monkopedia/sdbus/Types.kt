@@ -2,7 +2,6 @@
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
-import kotlin.jvm.JvmInline
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -115,7 +114,6 @@ class Variant constructor() {
  * Strong type representing the D-Bus object path
  *
  ***********************************************/
-@JvmInline
 @Serializable(ObjectPath.Companion::class)
 value class ObjectPath(val value: String) {
     override fun toString(): String = value
@@ -140,7 +138,6 @@ value class ObjectPath(val value: String) {
  * Strong type representing the D-Bus bus/service/connection name
  *
  ***********************************************/
-@JvmInline
 @Serializable(BusName.Companion::class)
 value class BusName(val value: String) {
     override fun toString(): String = value
@@ -167,7 +164,6 @@ typealias ServiceName = BusName
  * Strong type representing the D-Bus interface name
  *
  ***********************************************/
-@JvmInline
 @Serializable(InterfaceName.Companion::class)
 value class InterfaceName(val value: String) {
     override fun toString(): String = value
@@ -192,7 +188,6 @@ value class InterfaceName(val value: String) {
  * Strong type representing the D-Bus member name
  *
  ***********************************************/
-@JvmInline
 @Serializable(MemberName.Companion::class)
 value class MemberName(val value: String) {
     override fun toString(): String = value
@@ -221,7 +216,6 @@ typealias PropertyName = MemberName
  * Strong type representing the D-Bus object path
  *
  ***********************************************/
-@JvmInline
 @Serializable(Signature.Companion::class)
 value class Signature(val value: String) {
 

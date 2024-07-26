@@ -60,6 +60,24 @@ kotlin {
             )
         }
     }
+    linuxArm64 {
+        binaries {
+            sharedLib { }
+        }
+        compilations.getByName("main") {
+            cinterops {
+                create("sdbus-aarch64-$SYSTEMD_VERSION")
+            }
+        }
+        compilerOptions {
+            freeCompilerArgs.set(
+                listOf(
+                    "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
+                    "-Xexpect-actual-classes"
+                )
+            )
+        }
+    }
     applyDefaultHierarchyTemplate()
     sourceSets {
         val commonMain by getting {
@@ -86,21 +104,34 @@ kotlin {
     }
 }
 
+val overrides = mapOf(
+    "linker.linux_x64" to "/usr/bin/ld.gold",
+    "linker.linux_x64-linux_arm64" to "/usr/bin/aarch64-linux-gnu-ld.gold"
+).entries.joinToString(" ") { "-Xoverride-konan-properties=${it.key}=${it.value}"}
+
 afterEvaluate {
     tasks.all {
         (this as? KotlinNativeLink)?.kotlinOptions {
-            freeCompilerArgs += "-Xoverride-konan-properties=linker.linux_x64=/usr/bin/ld.gold"
+            freeCompilerArgs += overrides
         }
         (this as? KotlinNativeCompile)?.kotlinOptions {
-            freeCompilerArgs += "-Xoverride-konan-properties=linker.linux_x64=/usr/bin/ld.gold"
+            freeCompilerArgs += overrides
         }
     }
     val link = tasks.getByName("linkDebugTestLinuxX64")
     (link as KotlinNativeLink).apply {
         kotlinOptions {
-            freeCompilerArgs += "-Xoverride-konan-properties=linker.linux_x64=/usr/bin/ld.gold"
+            freeCompilerArgs += overrides
             freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
         }
     }
     println("${link::class}")
+    val linkArm = tasks.getByName("linkDebugTestLinuxArm64")
+    (linkArm as KotlinNativeLink).apply {
+        kotlinOptions {
+            freeCompilerArgs += overrides
+            freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
+        }
+    }
+    println("${linkArm::class}")
 }

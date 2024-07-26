@@ -1,0 +1,138 @@
+headers = systemd/sd-bus.h
+compilerOpts.linux = -Ilibs/aarch64/256.2-1/include
+linkerOpts.linux = -Llibs/aarch64/256.2-1/lib
+package = sdbus
+
+---
+#include <systemd/sd-bus.h>
+
+void sd_bus_vtable_start(sd_bus_vtable* ret, uint64_t flags) {
+    sd_bus_vtable start = SD_BUS_VTABLE_START(flags);
+    *ret = start;
+};
+
+void sd_bus_signal_with_names(sd_bus_vtable* ret, char *member
+                                         , char *signature
+                                         , char *outnames
+                                         , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_SIGNAL_WITH_NAMES(member, signature, outnames, flags);
+    *ret = vt;
+}
+
+void sd_bus_property(sd_bus_vtable* ret, char *member
+                                                   , char *signature
+                                                   , sd_bus_property_get_t getter
+                                                   , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_PROPERTY(member, signature, getter, 0, flags);
+    *ret = vt;
+}
+
+void sd_bus_writable_property(sd_bus_vtable* ret, char *member
+                                                   , char *signature
+                                                   , sd_bus_property_get_t getter
+                                                   , sd_bus_property_set_t setter
+                                                   , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_WRITABLE_PROPERTY(member, signature, getter, setter, 0, flags);
+    *ret = vt;
+}
+
+void sd_bus_vtable_end(sd_bus_vtable* ret)
+{
+    sd_bus_vtable vt = SD_BUS_VTABLE_END;
+    *ret = vt;
+}
+headers = systemd/sd-bus.h
+compilerOpts.linux = -Ilibs/aarch64/256.2-1/include
+linkerOpts.linux = -Llibs/aarch64/256.2-1/lib -lsystemd
+package = sdbus
+
+---
+#include <systemd/sd-bus.h>
+
+void sd_bus_vtable_start(sd_bus_vtable* ret, uint64_t flags) {
+    sd_bus_vtable start = SD_BUS_VTABLE_START(flags);
+    *ret = start;
+};
+
+void sd_bus_signal_with_names(sd_bus_vtable* ret, char *member
+                                         , char *signature
+                                         , char *outnames
+                                         , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_SIGNAL_WITH_NAMES(member, signature, outnames, flags);
+    *ret = vt;
+}
+
+void sd_bus_property(sd_bus_vtable* ret, char *member
+                                                   , char *signature
+                                                   , sd_bus_property_get_t getter
+                                                   , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_PROPERTY(member, signature, getter, 0, flags);
+    *ret = vt;
+}
+
+void sd_bus_writable_property(sd_bus_vtable* ret, char *member
+                                                   , char *signature
+                                                   , sd_bus_property_get_t getter
+                                                   , sd_bus_property_set_t setter
+                                                   , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_WRITABLE_PROPERTY(member, signature, getter, setter, 0, flags);
+    *ret = vt;
+}
+
+void sd_bus_vtable_end(sd_bus_vtable* ret)
+{
+    sd_bus_vtable vt = SD_BUS_VTABLE_END;
+    *ret = vt;
+}
+headers = systemd/sd-bus.h
+compilerOpts.linux = -Ilibs/aarch64/256.2-1/include
+linkerOpts.linux = -Llibs/aarch64/256.2-1/lib -lsystemd
+package = sdbus
+
+---
+#include <systemd/sd-bus.h>
+
+void sd_bus_vtable_start(sd_bus_vtable* ret, uint64_t flags) {
+    sd_bus_vtable start = SD_BUS_VTABLE_START(flags);
+    *ret = start;
+};
+
+void sd_bus_signal_with_names(sd_bus_vtable* ret, char *member
+                                         , char *signature
+                                         , char *outnames
+                                         , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_SIGNAL_WITH_NAMES(member, signature, outnames, flags);
+    *ret = vt;
+}
+
+void sd_bus_property(sd_bus_vtable* ret, char *member
+                                                   , char *signature
+                                                   , sd_bus_property_get_t getter
+                                                   , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_PROPERTY(member, signature, getter, 0, flags);
+    *ret = vt;
+}
+
+void sd_bus_writable_property(sd_bus_vtable* ret, char *member
+                                                   , char *signature
+                                                   , sd_bus_property_get_t getter
+                                                   , sd_bus_property_set_t setter
+                                                   , uint64_t flags )
+{
+    sd_bus_vtable vt = SD_BUS_WRITABLE_PROPERTY(member, signature, getter, setter, 0, flags);
+    *ret = vt;
+}
+
+void sd_bus_vtable_end(sd_bus_vtable* ret)
+{
+    sd_bus_vtable vt = SD_BUS_VTABLE_END;
+    *ret = vt;
+}
