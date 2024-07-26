@@ -1,9 +1,4 @@
-@file:OptIn(ExperimentalForeignApi::class)
-
 package com.monkopedia.sdbus
-
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.get
 
 class Error(val name: String, val errorMessage: String = "") : Exception("$name: $errorMessage")
 

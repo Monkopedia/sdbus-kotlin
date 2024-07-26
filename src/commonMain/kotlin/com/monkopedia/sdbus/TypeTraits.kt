@@ -1,10 +1,9 @@
-@file:OptIn(ExperimentalForeignApi::class, ExperimentalSerializationApi::class)
+@file:OptIn(ExperimentalSerializationApi::class)
 
 package com.monkopedia.sdbus
 
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.PolymorphicKind.OPEN
 import kotlinx.serialization.descriptors.PolymorphicKind.SEALED

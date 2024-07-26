@@ -30,6 +30,11 @@ import com.monkopedia.sdbus.internal.Object.VTable.MethodItem
 import com.monkopedia.sdbus.internal.Object.VTable.PropertyItem
 import com.monkopedia.sdbus.internal.Object.VTable.SignalItem
 import com.monkopedia.sdbus.sdbusRequire
+import com.monkopedia.sdbus.toSdBusInterfaceFlags
+import com.monkopedia.sdbus.toSdBusMethodFlags
+import com.monkopedia.sdbus.toSdBusPropertyFlags
+import com.monkopedia.sdbus.toSdBusSignalFlags
+import com.monkopedia.sdbus.toSdBusWritablePropertyFlags
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 import kotlinx.cinterop.Arena

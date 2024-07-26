@@ -41,7 +41,7 @@ actual class MethodCall internal constructor(
     actual fun send(timeout: ULong): MethodReply =
         if (dontExpectReply) sendWithNoReply() else sendWithReply(timeout)
 
-    actual fun send(
+    fun send(
         callback: sd_bus_message_handler_t,
         userData: Any?,
         timeout: ULong

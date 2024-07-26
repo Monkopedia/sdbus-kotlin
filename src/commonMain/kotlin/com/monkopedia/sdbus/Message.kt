@@ -1,21 +1,11 @@
-@file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
-
 package com.monkopedia.sdbus
 
-import kotlin.experimental.ExperimentalNativeApi
-import kotlinx.cinterop.COpaquePointerVar
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CValuesRef
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.get
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
-import platform.posix.size_t
-import platform.posix.size_tVar
 
 private inline fun debugPrint(msg: () -> String) {
     if (false) println(msg())
@@ -126,14 +116,6 @@ expect open class Message {
     internal fun enterStruct(signature: String)
 
     internal fun exitStruct()
-
-    internal fun appendArray(type: Char, ptr: CPointer<*>, size: size_t)
-
-    internal fun readArray(
-        type: Char,
-        ptr: CValuesRef<COpaquePointerVar>,
-        size: CValuesRef<size_tVar>
-    )
 
     internal operator fun invoke(): Boolean
     internal fun clearFlags()

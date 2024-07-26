@@ -1,5 +1,7 @@
 package com.monkopedia.sdbus
 
+import kotlin.jvm.JvmInline
+
 /*!
  * @brief Adds a declaration of methods, properties and signals of the object at a given interface
  *
@@ -37,6 +39,7 @@ inline fun IObject.addVTable(interfaceName: InterfaceName, builder: VTableBuilde
 inline fun IObject.addVTable(interfaceName: String, builder: VTableBuilder.() -> Unit) =
     addVTable(InterfaceName(interfaceName), builder)
 
+@JvmInline
 value class VTableBuilder(val items: MutableList<VTableItem>)
 
 sealed interface VTableItem

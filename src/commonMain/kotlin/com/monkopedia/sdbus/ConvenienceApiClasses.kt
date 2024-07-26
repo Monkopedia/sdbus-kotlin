@@ -1,8 +1,6 @@
-@file:OptIn(ExperimentalForeignApi::class)
 
 package com.monkopedia.sdbus
 
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf

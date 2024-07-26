@@ -1,17 +1,13 @@
-@file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
-import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.createCleaner
-import kotlinx.cinterop.ExperimentalForeignApi
+import kotlin.jvm.JvmInline
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveKind.INT
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
@@ -20,9 +16,6 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
-import platform.posix.close
-import platform.posix.dup
-import platform.posix.errno
 
 inline fun <reified T : Any> Variant(value: T): Variant {
     val serializer = serializer<T>()
@@ -121,6 +114,7 @@ class Variant constructor() {
  * Strong type representing the D-Bus object path
  *
  ***********************************************/
+@JvmInline
 @Serializable(ObjectPath.Companion::class)
 value class ObjectPath(val value: String) {
     override fun toString(): String = value
@@ -145,6 +139,7 @@ value class ObjectPath(val value: String) {
  * Strong type representing the D-Bus bus/service/connection name
  *
  ***********************************************/
+@JvmInline
 @Serializable(BusName.Companion::class)
 value class BusName(val value: String) {
     override fun toString(): String = value
@@ -171,6 +166,7 @@ typealias ServiceName = BusName
  * Strong type representing the D-Bus interface name
  *
  ***********************************************/
+@JvmInline
 @Serializable(InterfaceName.Companion::class)
 value class InterfaceName(val value: String) {
     override fun toString(): String = value
@@ -195,6 +191,7 @@ value class InterfaceName(val value: String) {
  * Strong type representing the D-Bus member name
  *
  ***********************************************/
+@JvmInline
 @Serializable(MemberName.Companion::class)
 value class MemberName(val value: String) {
     override fun toString(): String = value
@@ -223,6 +220,7 @@ typealias PropertyName = MemberName
  * Strong type representing the D-Bus object path
  *
  ***********************************************/
+@JvmInline
 @Serializable(Signature.Companion::class)
 value class Signature(val value: String) {
 
@@ -255,48 +253,11 @@ value class Signature(val value: String) {
  * an explicitly provided fd by either duplicating or adopting that fd as-is.
  *
  ***********************************************/
-@Serializable(UnixFd.Companion::class)
-class UnixFd(val fd: Int, adopt_fd: Unit) : Resource {
-    private var wasReleased = false
-    private val cleaner = createCleaner(fd) {
-        if (it >= 0) {
-            close(it)
-        }
-    }
+expect class UnixFd(fd: Int, adopt_fd: Unit): Resource {
+    override fun release()
 
-    constructor(fd: Int = -1) : this(checkedDup(fd), Unit)
-    constructor(other: UnixFd) : this(checkedDup(other.fd), Unit)
-
-    val isValid: Boolean
-        get() = fd >= 0 && !wasReleased
-
-    override fun release() {
-        close(fd)
-        wasReleased = true
-    }
-
-    companion object : KSerializer<UnixFd> {
-
-        const val SERIAL_NAME = "sdbus.UnixFD"
-
-        private fun checkedDup(fd: Int): Int {
-            if (fd < 0) {
-                return fd
-            }
-            return dup(fd).also {
-                if (it < 0) {
-                    throw createError(errno, "dup failed")
-                }
-            }
-        }
-
-        override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(SERIAL_NAME, INT)
-
-        override fun deserialize(decoder: Decoder): UnixFd =
-            decoder.decodeInline(descriptor).decodeInt().let(::UnixFd)
-
-        override fun serialize(encoder: Encoder, value: UnixFd) {
-            encoder.encodeInline(descriptor).encodeInt(value.fd)
-        }
+    companion object {
+        val SERIAL_NAME: String
     }
 }
+

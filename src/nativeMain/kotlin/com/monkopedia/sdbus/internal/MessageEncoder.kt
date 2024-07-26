@@ -14,6 +14,7 @@ import com.monkopedia.sdbus.StructSig
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.append
+import com.monkopedia.sdbus.appendArray
 import com.monkopedia.sdbus.asSignature
 import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.convert

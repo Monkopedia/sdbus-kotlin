@@ -1,5 +1,5 @@
 <node>
-  <interface name="org.freedesktop.DBus.Properties">
+  <interface name="org.freedesktop.two.DBus.Properties">
     <annotation name="org.gtk.GDBus.DocString" value="Interface for all
       objects which expose properties on the bus, allowing those properties to
       be got, set, and signals emitted to notify of changes to the property

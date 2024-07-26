@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     application
     kotlin("jvm")
@@ -19,6 +21,9 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
+}
+afterEvaluate {
+    tasks["testClasses"].dependsOn(rootProject.tasks.named("publishKotlinMultiplatformPublicationToMavenLocal"))
 }
 
 application {

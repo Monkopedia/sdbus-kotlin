@@ -2,8 +2,12 @@ package com.monkopedia.sdbus
 
 import com.squareup.kotlinpoet.FileSpec
 import java.io.File
-import kotlin.test.expect
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
 import nl.adaptivity.xmlutil.serialization.XML
+import org.jetbrains.kotlin.cli.common.CLITool
+import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.cli.metadata.K2MetadataCompiler
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -35,13 +39,6 @@ class GeneratorTest {
         val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
         val gen = ProxyGenerator().transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "proxy", gen)
-    }
-
-    @ParameterizedTest
-    @MethodSource("data")
-    fun testCompile(testRoot: File) {
-        val kotlinFiles = testRoot.listFiles().orEmpty().filter { it.extension == "kt" }
-
     }
 
     private fun assertFiles(root: File, prefix: String, actual: List<FileSpec>) {

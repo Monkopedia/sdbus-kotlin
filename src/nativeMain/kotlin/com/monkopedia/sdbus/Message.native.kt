@@ -107,11 +107,11 @@ private inline fun debugPrint(msg: () -> String) {
  *
  ***********************************************/
 actual open class Message internal constructor(
-    protected val msg: CPointer<sd_bus_message>?,
+    internal val msg: CPointer<sd_bus_message>?,
     internal val sdbus: ISdBus,
     adoptMessage: Boolean = false
 ) {
-    private var isOk: Boolean = true
+    internal var isOk: Boolean = true
     private val resource = msg to sdbus
     private val cleaner = createCleaner(resource) { (msg, sdbus) ->
         if (msg != null) {
@@ -535,25 +535,6 @@ actual open class Message internal constructor(
         sdbusRequire(r < 0, "Failed to exit a struct", -r)
     }
 
-    internal actual fun appendArray(type: Char, ptr: CPointer<*>, size: size_t) {
-        debugPrint { "append array $type $size" }
-        val r = sd_bus_message_append_array(msg, type.code.toByte(), ptr, size)
-        sdbusRequire(r < 0, "Failed to serialize an array", -r)
-    }
-
-    internal actual fun readArray(
-        type: Char,
-        ptr: CValuesRef<COpaquePointerVar>,
-        size: CValuesRef<size_tVar>
-    ) {
-        debugPrint { "Read array $type $size" }
-        val r = sd_bus_message_read_array(msg, type.code.toByte(), ptr, size)
-        if (r == 0) {
-            isOk = false
-        }
-
-        sdbusRequire(r < 0, "Failed to deserialize an array", -r)
-    }
 
     internal actual operator fun invoke(): Boolean = isOk
     internal actual fun clearFlags() {
@@ -716,4 +697,25 @@ internal actual inline fun <T> Message.deserializeArrayFast(
 
     val count = arraySize[0] / converter.size.toUInt()
     converter.readNativeInto(arrayPtr[0]?.reinterpret()!!, count.convert(), items)
+}
+
+
+internal  fun Message.appendArray(type: Char, ptr: CPointer<*>, size: size_t) {
+    debugPrint { "append array $type $size" }
+    val r = sd_bus_message_append_array(msg, type.code.toByte(), ptr, size)
+    sdbusRequire(r < 0, "Failed to serialize an array", -r)
+}
+
+internal fun Message.readArray(
+    type: Char,
+    ptr: CValuesRef<COpaquePointerVar>,
+    size: CValuesRef<size_tVar>
+) {
+    debugPrint { "Read array $type $size" }
+    val r = sd_bus_message_read_array(msg, type.code.toByte(), ptr, size)
+    if (r == 0) {
+        isOk = false
+    }
+
+    sdbusRequire(r < 0, "Failed to deserialize an array", -r)
 }

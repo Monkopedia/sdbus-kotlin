@@ -1,4 +1,4 @@
-package org.freedesktop.DBus
+package org.freedesktop.two.DBus
 
 import com.monkopedia.sdbus.Variant
 import kotlin.String
@@ -17,6 +17,6 @@ public interface Properties {
   )
 
   public companion object {
-    public const val INTERFACE_NAME: String = "org.freedesktop.DBus.Properties"
+    public const val INTERFACE_NAME: String = "org.freedesktop.two.DBus.Properties"
   }
 }

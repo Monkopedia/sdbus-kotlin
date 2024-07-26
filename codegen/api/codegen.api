@@ -1,0 +1,505 @@
+public final class com/monkopedia/sdbus/Access : java/lang/Enum {
+	public static final field Companion Lcom/monkopedia/sdbus/Access$Companion;
+	public static final field READ Lcom/monkopedia/sdbus/Access;
+	public static final field READWRITE Lcom/monkopedia/sdbus/Access;
+	public static final field WRITE Lcom/monkopedia/sdbus/Access;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/Access;
+	public static fun values ()[Lcom/monkopedia/sdbus/Access;
+}
+
+public final class com/monkopedia/sdbus/Access$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/AdaptorGenerator : com/monkopedia/sdbus/BaseGenerator {
+	public fun <init> ()V
+}
+
+public final class com/monkopedia/sdbus/Annotation {
+	public static final field Companion Lcom/monkopedia/sdbus/Annotation$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Doc;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/monkopedia/sdbus/Doc;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Doc;)Lcom/monkopedia/sdbus/Annotation;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Annotation;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Doc;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Annotation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDoc ()Lcom/monkopedia/sdbus/Doc;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Annotation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Annotation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Annotation;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Annotation;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Annotation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Arg {
+	public static final field Companion Lcom/monkopedia/sdbus/Arg$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Direction;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Direction;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/monkopedia/sdbus/Direction;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Lcom/monkopedia/sdbus/Doc;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Direction;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)Lcom/monkopedia/sdbus/Arg;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Arg;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Direction;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Arg;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnnotations ()Ljava/util/List;
+	public final fun getDirection ()Lcom/monkopedia/sdbus/Direction;
+	public final fun getDoc ()Lcom/monkopedia/sdbus/Doc;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Arg$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Arg$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Arg;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Arg;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Arg$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class com/monkopedia/sdbus/BaseGenerator {
+	protected field namingManager Lcom/monkopedia/sdbus/NamingManager;
+	public fun <init> ()V
+	protected abstract fun buildRegistration (Lcom/squareup/kotlinpoet/FunSpec$Builder;Lcom/monkopedia/sdbus/Interface;)V
+	protected abstract fun classBuilder (Lcom/monkopedia/sdbus/Interface;)Lcom/squareup/kotlinpoet/TypeSpec$Builder;
+	protected abstract fun constructorBuilder (Lcom/monkopedia/sdbus/Interface;)Lcom/squareup/kotlinpoet/FunSpec$Builder;
+	protected abstract fun getFileSuffix ()Ljava/lang/String;
+	protected final fun getNamingManager ()Lcom/monkopedia/sdbus/NamingManager;
+	protected final fun getSimpleName (Ljava/lang/String;)Ljava/lang/String;
+	protected final fun intfName (Lcom/monkopedia/sdbus/Interface;)Lcom/squareup/kotlinpoet/ClassName;
+	protected abstract fun methodBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Method;)Lcom/squareup/kotlinpoet/FunSpec$Builder;
+	protected abstract fun propertyBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Property;)Lcom/squareup/kotlinpoet/PropertySpec$Builder;
+	protected final fun setNamingManager (Lcom/monkopedia/sdbus/NamingManager;)V
+	protected abstract fun signalBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Signal;)Lcom/squareup/kotlinpoet/FunSpec$Builder;
+	protected final fun signalName (Lcom/monkopedia/sdbus/Signal;)Ljava/lang/String;
+	public fun transformXmlToFile (Lcom/monkopedia/sdbus/XmlRootNode;)Ljava/util/List;
+}
+
+public final class com/monkopedia/sdbus/BaseGeneratorKt {
+	public static final fun getPkg (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Description {
+	public static final field Companion Lcom/monkopedia/sdbus/Description$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/monkopedia/sdbus/Para;)V
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Para;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/sdbus/Para;
+	public final fun copy (Lcom/monkopedia/sdbus/Para;)Lcom/monkopedia/sdbus/Description;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Description;Lcom/monkopedia/sdbus/Para;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Description;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPara ()Lcom/monkopedia/sdbus/Para;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Description$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Description$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Description;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Description;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Description$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Direction : java/lang/Enum {
+	public static final field Companion Lcom/monkopedia/sdbus/Direction$Companion;
+	public static final field IN Lcom/monkopedia/sdbus/Direction;
+	public static final field OUT Lcom/monkopedia/sdbus/Direction;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/Direction;
+	public static fun values ()[Lcom/monkopedia/sdbus/Direction;
+}
+
+public final class com/monkopedia/sdbus/Direction$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Doc {
+	public static final field Companion Lcom/monkopedia/sdbus/Doc$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/monkopedia/sdbus/Summary;Lcom/monkopedia/sdbus/Description;)V
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Summary;Lcom/monkopedia/sdbus/Description;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/sdbus/Summary;
+	public final fun component2 ()Lcom/monkopedia/sdbus/Description;
+	public final fun copy (Lcom/monkopedia/sdbus/Summary;Lcom/monkopedia/sdbus/Description;)Lcom/monkopedia/sdbus/Doc;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Doc;Lcom/monkopedia/sdbus/Summary;Lcom/monkopedia/sdbus/Description;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Doc;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Lcom/monkopedia/sdbus/Description;
+	public final fun getSummary ()Lcom/monkopedia/sdbus/Summary;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Doc$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Doc$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Doc;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Doc$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Interface {
+	public static final field Companion Lcom/monkopedia/sdbus/Interface$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/sdbus/Interface;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Interface;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Interface;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnnotations ()Ljava/util/List;
+	public final fun getMethods ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProperties ()Ljava/util/List;
+	public final fun getSignals ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Interface$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Interface$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Interface;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Interface;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Interface$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/InterfaceGenerator : com/monkopedia/sdbus/BaseGenerator {
+	public fun <init> ()V
+	public fun transformXmlToFile (Lcom/monkopedia/sdbus/XmlRootNode;)Ljava/util/List;
+}
+
+public final class com/monkopedia/sdbus/InterfaceGeneratorKt {
+	public static final fun getCapitalCamelCase (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getCapitalized (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getDecapitalCamelCase (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getDecapitalized (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Method {
+	public static final field Companion Lcom/monkopedia/sdbus/Method$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lcom/monkopedia/sdbus/Doc;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)Lcom/monkopedia/sdbus/Method;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Method;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Method;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnnotations ()Ljava/util/List;
+	public final fun getArgs ()Ljava/util/List;
+	public final fun getDoc ()Lcom/monkopedia/sdbus/Doc;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Method$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Method$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Method;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Method;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Method$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/NamingManager {
+	public fun <init> (Lcom/monkopedia/sdbus/XmlRootNode;)V
+	public final fun get (Lcom/monkopedia/sdbus/Arg;)Lcom/squareup/kotlinpoet/TypeName;
+	public final fun get (Lcom/monkopedia/sdbus/Property;)Lcom/squareup/kotlinpoet/TypeName;
+	public final fun get (Ljava/util/List;)Lcom/squareup/kotlinpoet/TypeName;
+	public final fun getExtraFiles ()Ljava/util/List;
+	public final fun getTypeMap ()Ljava/util/Map;
+}
+
+public final class com/monkopedia/sdbus/NamingManager$GeneratedType : com/monkopedia/sdbus/NamingManager$NamingType {
+	public fun <init> (Ljava/util/List;Ljava/util/Set;Ljava/util/List;Ljava/lang/String;)V
+	public final fun generateName (Ljava/util/List;)V
+	public final fun getArgs ()Ljava/util/List;
+	public final fun getNameReferences ()Ljava/util/Set;
+	public final fun getPkgs ()Ljava/util/List;
+	public fun getReference ()Lcom/squareup/kotlinpoet/ClassName;
+	public synthetic fun getReference ()Lcom/squareup/kotlinpoet/TypeName;
+	public fun getType ()Ljava/lang/String;
+	public final fun suggestNames (Ljava/util/List;)V
+}
+
+public final class com/monkopedia/sdbus/NamingManager$LazyType : com/monkopedia/sdbus/NamingManager$NamingType {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/NamingManager$LazyType;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/NamingManager$LazyType;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/sdbus/NamingManager$LazyType;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBaseTypes ()Ljava/util/List;
+	public final fun getGenerator ()Lkotlin/jvm/functions/Function1;
+	public fun getReference ()Lcom/squareup/kotlinpoet/TypeName;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class com/monkopedia/sdbus/NamingManager$NamingType {
+	public abstract fun getReference ()Lcom/squareup/kotlinpoet/TypeName;
+	public abstract fun getType ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/NamingManager$SimpleType : com/monkopedia/sdbus/NamingManager$NamingType {
+	public fun <init> (Ljava/lang/String;Lcom/squareup/kotlinpoet/TypeName;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/squareup/kotlinpoet/TypeName;
+	public final fun copy (Ljava/lang/String;Lcom/squareup/kotlinpoet/TypeName;)Lcom/monkopedia/sdbus/NamingManager$SimpleType;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/NamingManager$SimpleType;Ljava/lang/String;Lcom/squareup/kotlinpoet/TypeName;ILjava/lang/Object;)Lcom/monkopedia/sdbus/NamingManager$SimpleType;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getReference ()Lcom/squareup/kotlinpoet/TypeName;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/NamingManagerKt {
+	public static final fun buildType (Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/sdbus/NamingManager$NamingType;
+}
+
+public final class com/monkopedia/sdbus/Para {
+	public static final field Companion Lcom/monkopedia/sdbus/Para$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/monkopedia/sdbus/Para;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Para;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Para;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getParaContent ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Para$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Para$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Para;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Para;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Para$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Property {
+	public static final field Companion Lcom/monkopedia/sdbus/Property$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Access;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Access;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/monkopedia/sdbus/Access;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Lcom/monkopedia/sdbus/Doc;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Access;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)Lcom/monkopedia/sdbus/Property;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Property;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Access;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Property;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccess ()Lcom/monkopedia/sdbus/Access;
+	public final fun getAnnotations ()Ljava/util/List;
+	public final fun getDoc ()Lcom/monkopedia/sdbus/Doc;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Property$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Property$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Property;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Property;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Property$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/ProxyGenerator : com/monkopedia/sdbus/BaseGenerator {
+	public fun <init> ()V
+}
+
+public final class com/monkopedia/sdbus/Signal {
+	public static final field Companion Lcom/monkopedia/sdbus/Signal$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lcom/monkopedia/sdbus/Doc;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)Lcom/monkopedia/sdbus/Signal;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Signal;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Signal;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnnotations ()Ljava/util/List;
+	public final fun getArgs ()Ljava/util/List;
+	public final fun getDoc ()Lcom/monkopedia/sdbus/Doc;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Signal$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Signal$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Signal;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Signal;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Signal$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Summary {
+	public static final field Companion Lcom/monkopedia/sdbus/Summary$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/monkopedia/sdbus/Summary;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Summary;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Summary;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSummaryText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/Summary$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/Summary$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Summary;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Summary;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Summary$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/TypeGenerationKt {
+	public static final fun generateType (Lcom/monkopedia/sdbus/NamingManager$GeneratedType;)Lcom/squareup/kotlinpoet/FileSpec;
+}
+
+public final class com/monkopedia/sdbus/Xml2Kotlin : com/github/ajalt/clikt/core/CliktCommand {
+	public fun <init> ()V
+	public final fun getAdaptor ()Z
+	public final fun getInput ()Ljava/io/File;
+	public final fun getKeep ()Z
+	public final fun getOutput ()Ljava/io/File;
+	public final fun getProxy ()Z
+	public fun run ()V
+}
+
+public final class com/monkopedia/sdbus/Xml2KotlinKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+
+public final class com/monkopedia/sdbus/XmlRootNode {
+	public static final field Companion Lcom/monkopedia/sdbus/XmlRootNode$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lcom/monkopedia/sdbus/Doc;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;)Lcom/monkopedia/sdbus/XmlRootNode;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/XmlRootNode;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/monkopedia/sdbus/Doc;ILjava/lang/Object;)Lcom/monkopedia/sdbus/XmlRootNode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDoc ()Lcom/monkopedia/sdbus/Doc;
+	public final fun getInterfaces ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getNodes ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public synthetic class com/monkopedia/sdbus/XmlRootNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/XmlRootNode$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/XmlRootNode;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/XmlRootNode;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/XmlRootNode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

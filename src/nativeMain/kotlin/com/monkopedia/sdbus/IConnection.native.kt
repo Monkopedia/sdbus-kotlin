@@ -163,6 +163,6 @@ actual fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
  * auto con = sdbus::createBusConnection(bus); // IConnection consumes sd_bus object
  * @endcode
  */
-actual fun createBusConnection(bus: CPointer<sd_bus>): IConnection = Connection(SdBus(), bus)
+fun createBusConnection(bus: CPointer<sd_bus>): IConnection = Connection(SdBus(), bus)
 
 internal actual inline fun now(): Duration = com.monkopedia.sdbus.internal.now()

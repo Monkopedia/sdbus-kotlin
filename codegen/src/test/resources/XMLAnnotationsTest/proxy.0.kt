@@ -1,4 +1,4 @@
-package org.freedesktop.DBus
+package org.freedesktop.two.DBus
 
 import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.Variant

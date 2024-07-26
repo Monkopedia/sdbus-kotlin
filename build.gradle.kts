@@ -1,3 +1,4 @@
+import kotlinx.validation.ExperimentalBCVApi
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
@@ -11,8 +12,11 @@ buildscript {
 }
 
 plugins {
+
     kotlin("multiplatform") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.15.1"
+
     `maven-publish`
 }
 apply(plugin = "kotlinx-atomicfu")
@@ -24,8 +28,17 @@ repositories {
     mavenCentral()
 }
 
+// == BCV setup ==
+apiValidation {
+    ignoredProjects.addAll(listOf("compile_test"))
+    @OptIn(ExperimentalBCVApi::class)
+    klib {
+        enabled = true
+    }
+}
+
 kotlin {
-    linuxX64("native") {
+    linuxX64 {
         binaries {
             sharedLib { }
         }
@@ -38,7 +51,15 @@ kotlin {
             }
         }
     }
+    applyDefaultHierarchyTemplate()
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+            }
+        }
         val nativeMain by getting {
             dependencies {
                 implementation("com.github.ajalt.clikt:clikt:4.4.0")
@@ -65,7 +86,7 @@ afterEvaluate {
             freeCompilerArgs += "-Xoverride-konan-properties=linker.linux_x64=/usr/bin/ld.gold"
         }
     }
-    val link = tasks.getByName("linkDebugTestNative")
+    val link = tasks.getByName("linkDebugTestLinuxX64")
     (link as KotlinNativeLink).apply {
         kotlinOptions {
             freeCompilerArgs += "-Xoverride-konan-properties=linker.linux_x64=/usr/bin/ld.gold"
