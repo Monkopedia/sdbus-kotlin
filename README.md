@@ -75,7 +75,7 @@ plugins {
 }
 ```
 
-For a full example build file, see the [bluez-scan sample](samples/bluez-scan].
+For a full example build file, see the [bluez-scan sample](samples/bluez-scan).
 
 ## API
 
