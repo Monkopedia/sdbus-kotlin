@@ -171,8 +171,8 @@ publishing {
             url.set("http://www.github.com/Monkopedia/sdbus-kotlin")
             licenses {
                 license {
-//                    name.set("The Apache License, Version 2.0")
-//                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
+                    url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
                 }
             }
             developers {
@@ -236,7 +236,7 @@ allprojects {
     this.license {
         header = rootProject.file("license-header.txt")
         includes(listOf("**/*.kt"))
-        excludes(listOf("**/test/resources/**/*.kt", "compile_test/**/*.kt"))
+        excludes(listOf("**/test/resources/**/*.kt", "**/compile_test/**/*.kt"))
         strictCheck = true
         ext["year"] = Calendar.getInstance().get(Calendar.YEAR)
         ext["name"] = "Jason Monk"
