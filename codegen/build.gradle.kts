@@ -13,9 +13,9 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.pdvrieze.xmlutil:serialization:0.90.1")
-    implementation("com.github.ajalt.clikt:clikt:4.4.0")
-    implementation("com.squareup:kotlinpoet-jvm:1.17.0")
+    implementation(libs.xmlutil)
+    implementation(libs.clikt)
+    implementation(libs.kotlinpoet)
     testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")

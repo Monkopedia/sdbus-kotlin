@@ -5,25 +5,14 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.24.0")
-    }
-}
-
 plugins {
-
-    kotlin("multiplatform") version "2.0.0"
-    kotlin("plugin.serialization") version "2.0.0"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.15.1"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.bcv)
+    alias(libs.plugins.ktlint)
 
     `maven-publish`
 }
-apply(plugin = "kotlinx-atomicfu")
 
 group = "com.monkopedia"
 version = "1.0-SNAPSHOT"
@@ -84,23 +73,24 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.atomicfu)
             }
         }
         val nativeMain by getting {
             dependencies {
-                implementation("com.github.ajalt.clikt:clikt:4.4.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+                implementation(libs.clikt)
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.datetime)
                 implementation(kotlin("stdlib"))
             }
         }
         val nativeTest by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0-RC")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }
