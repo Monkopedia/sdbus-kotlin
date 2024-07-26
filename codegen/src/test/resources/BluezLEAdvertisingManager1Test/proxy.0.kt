@@ -15,7 +15,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class LEAdvertisingManager1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : LEAdvertisingManager1 {
   override val activeInstances: UByte by proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME,
       "ActiveInstances") 

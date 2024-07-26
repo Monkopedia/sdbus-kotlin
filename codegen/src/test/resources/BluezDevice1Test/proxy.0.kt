@@ -19,7 +19,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class Device1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : Device1 {
   override val address: String by proxy.prop(Device1.Companion.INTERFACE_NAME, "Address") 
 

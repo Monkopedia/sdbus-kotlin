@@ -9,7 +9,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class NetworkServer1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : NetworkServer1 {
   public override fun register() {
   }

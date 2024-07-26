@@ -27,7 +27,7 @@ class ProxyGenerator : BaseGenerator() {
             addProperty(
                 PropertySpec.builder("proxy", iProxy).apply {
                     initializer(CodeBlock.of("proxy"))
-                    addModifiers(PROTECTED)
+                    addModifiers(PUBLIC)
                 }.build()
             )
         }

@@ -12,7 +12,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class ProfileManager1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : ProfileManager1 {
   public override fun register() {
   }

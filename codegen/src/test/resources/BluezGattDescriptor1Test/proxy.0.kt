@@ -15,7 +15,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class GattDescriptor1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : GattDescriptor1 {
   override val uUID: String by proxy.prop(GattDescriptor1.Companion.INTERFACE_NAME, "UUID") 
 

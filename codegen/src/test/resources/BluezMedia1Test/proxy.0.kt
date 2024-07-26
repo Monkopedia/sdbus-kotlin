@@ -12,7 +12,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class Media1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : Media1 {
   public override fun register() {
   }

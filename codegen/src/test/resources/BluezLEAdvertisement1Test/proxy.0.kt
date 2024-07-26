@@ -16,7 +16,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class LEAdvertisement1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : LEAdvertisement1 {
   override val type: String by proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, "Type") 
 

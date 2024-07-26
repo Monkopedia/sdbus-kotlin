@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalNativeApi::class)
 public class BackgroundProxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : Background {
   public val backgroundChanged: Flow<Unit> = proxy.signalFlow(Background.Companion.INTERFACE_NAME,
       "backgroundChanged") {

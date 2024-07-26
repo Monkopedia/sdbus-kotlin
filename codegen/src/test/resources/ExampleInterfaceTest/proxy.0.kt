@@ -9,7 +9,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class InterestingInterfaceProxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : InterestingInterface {
   public override fun register() {
   }

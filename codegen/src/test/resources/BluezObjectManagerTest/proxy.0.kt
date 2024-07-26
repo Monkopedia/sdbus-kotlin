@@ -11,7 +11,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class ObjectManagerProxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : ObjectManager {
   public override fun register() {
   }

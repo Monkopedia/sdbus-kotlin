@@ -10,7 +10,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class AgentManager1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : AgentManager1 {
   public override fun register() {
   }

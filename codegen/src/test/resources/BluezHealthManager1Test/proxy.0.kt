@@ -12,7 +12,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class HealthManager1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : HealthManager1 {
   public override fun register() {
   }

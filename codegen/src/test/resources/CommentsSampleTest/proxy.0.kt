@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalNativeApi::class)
 public class PropertiesProxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : Properties {
   public val propertiesChanged: Flow<PropertiesChanged> =
       proxy.signalFlow(Properties.Companion.INTERFACE_NAME, "PropertiesChanged") {

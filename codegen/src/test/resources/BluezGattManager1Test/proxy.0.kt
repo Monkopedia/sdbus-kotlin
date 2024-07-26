@@ -12,7 +12,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class GattManager1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : GattManager1 {
   public override fun register() {
   }

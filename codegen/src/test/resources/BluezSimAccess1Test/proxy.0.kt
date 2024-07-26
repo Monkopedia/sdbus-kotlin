@@ -10,7 +10,7 @@ import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalNativeApi::class)
 public class SimAccess1Proxy(
-  protected val proxy: IProxy,
+  public val proxy: IProxy,
 ) : SimAccess1 {
   override val connected: Boolean by proxy.prop(SimAccess1.Companion.INTERFACE_NAME, "Connected") 
 
