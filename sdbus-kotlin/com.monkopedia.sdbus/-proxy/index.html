@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Proxy</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+<link href="../../../images/monkopedia_icon.png">
+<link href="../../../images/logo-icon.svg">
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+</head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../index.html">
+                            sdbus-kotlin
+                    </a>
+            </div>
+            <div class="library-version">
+0.1.0            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":dokkaHtml/commonMain">common</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="sdbus-kotlin::com.monkopedia.sdbus/Proxy///PointingToDeclaration//788909594">
+  <div class="breadcrumbs"><a href="../../../index.html">sdbus-kotlin</a><span class="delimiter">/</span><a href="../index.html">com.monkopedia.sdbus</a><span class="delimiter">/</span><span class="current">Proxy</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Proxy</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Proxy</a> : <a href="../-resource/index.html">Resource</a></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button><button class="section-tab" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION,EXTENSION_PROPERTY,EXTENSION_FUNCTION">Members &amp; Extensions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1589965964%2FProperties%2F788909594" anchor-label="connection" id="-1589965964%2FProperties%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="connection.html"><span><span>connection</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1589965964%2FProperties%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="connection.html">connection</a><span class="token operator">: </span><a href="../-connection/index.html">Connection</a></div><div class="brief "><p class="paragraph">Provides D-Bus connection used by the proxy</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="44134761%2FProperties%2F788909594" anchor-label="currentlyProcessedMessage" id="44134761%2FProperties%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="currently-processed-message.html"><span>currently</span><wbr></wbr><span>Processed</span><wbr></wbr><span><span>Message</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="44134761%2FProperties%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="currently-processed-message.html">currentlyProcessedMessage</a><span class="token operator">: </span><a href="../-message/index.html">Message</a></div><div class="brief "><p class="paragraph">Provides access to the currently processed D-Bus message</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="924105998%2FProperties%2F788909594" anchor-label="objectPath" id="924105998%2FProperties%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="object-path.html"><span>object</span><wbr></wbr><span><span>Path</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="924105998%2FProperties%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="object-path.html">objectPath</a><span class="token operator">: </span><a href="../-object-path/index.html">ObjectPath</a></div><div class="brief "><p class="paragraph">Returns object path of the underlying DBus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1356439594%2FFunctions%2F788909594" anchor-label="callMethod" id="-1356439594%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="call-method.html"><span>call</span><wbr></wbr><span><span>Method</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1356439594%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="call-method.html"><span class="token function">callMethod</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-reply/index.html">MethodReply</a></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="call-method.html"><span class="token function">callMethod</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter ">timeout<span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-reply/index.html">MethodReply</a></div><div class="brief "><p class="paragraph">Calls method on the remote D-Bus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="759636473%2FFunctions%2F788909594" anchor-label="callMethod" id="759636473%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../call-method.html"><span>call</span><wbr></wbr><span><span>Method</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="759636473%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../call-method.html"><span class="token function">callMethod</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter ">timeout<span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-reply/index.html">MethodReply</a></div><br><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../call-method.html">R</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../call-method.html"><span class="token function">callMethod</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">methodName<span class="token operator">: </span><a href="../-method-name/index.html">MethodName</a><span class="token punctuation">, </span></span><span class="parameter ">builder<span class="token operator">: </span><a href="../-method-invoker/index.html">MethodInvoker</a><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../call-method.html">R</a></div><div class="brief "><p class="paragraph">Calls method on the D-Bus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2120086766%2FFunctions%2F788909594" anchor-label="callMethodAsync" id="-2120086766%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="call-method-async.html"><span>call</span><wbr></wbr><span>Method</span><wbr></wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2120086766%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-reply/index.html">MethodReply</a></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter ">asyncReplyCallback<span class="token operator">: </span><a href="../-async-reply-handler/index.html">AsyncReplyHandler</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-pending-async-call/index.html">PendingAsyncCall</a></div><div class="brief "><p class="paragraph">Calls method on the D-Bus object asynchronously</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter ">timeout<span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-reply/index.html">MethodReply</a></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter ">asyncReplyCallback<span class="token operator">: </span><a href="../-async-reply-handler/index.html">AsyncReplyHandler</a><span class="token punctuation">, </span></span><span class="parameter ">timeout<span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-pending-async-call/index.html">PendingAsyncCall</a></div><div class="brief "><p class="paragraph">Calls method on the D-Bus object asynchronously, with custom timeout</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="492009037%2FFunctions%2F788909594" anchor-label="callMethodAsync" id="492009037%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../call-method-async.html"><span>call</span><wbr></wbr><span>Method</span><wbr></wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="492009037%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline suspend </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter ">timeout<span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-reply/index.html">MethodReply</a></div><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">message<span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">noinline </span>asyncReplyCallback<span class="token operator">: </span><a href="../-async-reply-handler/index.html">AsyncReplyHandler</a><span class="token punctuation">, </span></span><span class="parameter ">timeout<span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-pending-async-call/index.html">PendingAsyncCall</a></div><br><div class="symbol monospace"><span class="token keyword">inline suspend </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../call-method-async.html">R</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../call-method-async.html"><span class="token function">callMethodAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">methodName<span class="token operator">: </span><a href="../-method-name/index.html">MethodName</a><span class="token punctuation">, </span></span><span class="parameter ">builder<span class="token operator">: </span><a href="../-method-invoker/index.html">MethodInvoker</a><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../call-method-async.html">R</a></div><div class="brief "><p class="paragraph">Calls method on the D-Bus object asynchronously</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1373325967%2FFunctions%2F788909594" anchor-label="createMethodCall" id="-1373325967%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="create-method-call.html"><span>create</span><wbr></wbr><span>Method</span><wbr></wbr><span><span>Call</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1373325967%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="create-method-call.html"><span class="token function">createMethodCall</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">methodName<span class="token operator">: </span><a href="../-method-name/index.html">MethodName</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-method-call/index.html">MethodCall</a></div><div class="brief "><p class="paragraph">Creates a method call message</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="537904543%2FFunctions%2F788909594" anchor-label="getAllProperties" id="537904543%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-all-properties.html"><span>get</span><wbr></wbr><span>All</span><wbr></wbr><span><span>Properties</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="537904543%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../get-all-properties.html"><span class="token function">getAllProperties</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-all-properties-getter/index.html">AllPropertiesGetter</a></div><div class="brief "><p class="paragraph">Gets values of all properties of the D-Bus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1543973335%2FFunctions%2F788909594" anchor-label="getAllPropertiesAsync" id="-1543973335%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-all-properties-async.html"><span>get</span><wbr></wbr><span>All</span><wbr></wbr><span>Properties</span><wbr></wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1543973335%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../get-all-properties-async.html"><span class="token function">getAllPropertiesAsync</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-async-all-properties-getter/index.html">AsyncAllPropertiesGetter</a></div><div class="brief "><p class="paragraph">Gets values of all properties of the D-Bus object asynchronously</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1300867306%2FFunctions%2F788909594" anchor-label="getProperty" id="-1300867306%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-property.html"><span>get</span><wbr></wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1300867306%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../get-property.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../get-property.html"><span class="token function">getProperty</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../get-property.html">T</a></div><div class="brief "><p class="paragraph">Gets value of a property of the D-Bus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1131646488%2FFunctions%2F788909594" anchor-label="getPropertyAsync" id="-1131646488%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-property-async.html"><span>get</span><wbr></wbr><span>Property</span><wbr></wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1131646488%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../get-property-async.html"><span class="token function">getPropertyAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-async-property-getter/index.html">AsyncPropertyGetter</a></div><div class="brief "><p class="paragraph">Gets value of a property of the D-Bus object asynchronously</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1281191237%2FFunctions%2F788909594" anchor-label="onSignal" id="1281191237%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../on-signal.html"><span>on</span><wbr></wbr><span><span>Signal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1281191237%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../on-signal.html"><span class="token function">onSignal</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">signalName<span class="token operator">: </span><a href="../-signal-name/index.html">SignalName</a><span class="token punctuation">, </span></span><span class="parameter ">builder<span class="token operator">: </span><a href="../-signal-subscriber/index.html">SignalSubscriber</a><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-resource/index.html">Resource</a></div><div class="brief "><p class="paragraph">Registers signal handler for a given signal of the D-Bus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-153391852%2FFunctions%2F788909594" anchor-label="prop" id="-153391852%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../prop.html"><span><span>prop</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-153391852%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../prop.html">R</a><span class="token punctuation">, </span><a href="../prop.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../prop.html"><span class="token function">prop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span><span class="token operator">&lt;</span><a href="../prop.html">R</a><span class="token punctuation">, </span><a href="../prop.html">T</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1928181840%2FFunctions%2F788909594" anchor-label="registerSignalHandler" id="-1928181840%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="register-signal-handler.html"><span>register</span><wbr></wbr><span>Signal</span><wbr></wbr><span><span>Handler</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1928181840%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="register-signal-handler.html"><span class="token function">registerSignalHandler</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">signalName<span class="token operator">: </span><a href="../-signal-name/index.html">SignalName</a><span class="token punctuation">, </span></span><span class="parameter ">signalHandler<span class="token operator">: </span><a href="../-signal-handler/index.html">SignalHandler</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-resource/index.html">Resource</a></div><div class="brief "><p class="paragraph">Registers a handler for the desired signal emitted by the D-Bus object</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-773404819%2FFunctions%2F788909594" anchor-label="release" id="-773404819%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-resource/release.html"><span><span>release</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-773404819%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="../-resource/release.html"><span class="token function">release</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Releases this resource and any child resources it may have.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-6793758%2FFunctions%2F788909594" anchor-label="setProperty" id="-6793758%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-property.html"><span>set</span><wbr></wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-6793758%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../set-property.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../set-property.html"><span class="token function">setProperty</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="../set-property.html">T</a><span class="token punctuation">, </span></span><span class="parameter ">dontExpectReply<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="314835804%2FFunctions%2F788909594" anchor-label="setPropertyAsync" id="314835804%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-property-async.html"><span>set</span><wbr></wbr><span>Property</span><wbr></wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="314835804%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../set-property-async.html"><span class="token function">setPropertyAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-async-property-setter/index.html">AsyncPropertySetter</a></div><div class="brief "><p class="paragraph">Sets value of a property of the D-Bus object asynchronously</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1601262294%2FFunctions%2F788909594" anchor-label="signalFlow" id="1601262294%2FFunctions%2F788909594" data-filterable-set=":dokkaHtml/commonMain"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":dokkaHtml/commonMain" data-filterable-set=":dokkaHtml/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../signal-flow.html"><span>signal</span><wbr></wbr><span><span>Flow</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1601262294%2FFunctions%2F788909594"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../signal-flow.html">T</a><span class="token operator">&gt; </span><a href="index.html">Proxy</a><span class="token punctuation">.</span><a href="../signal-flow.html"><span class="token function">signalFlow</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter ">signalName<span class="token operator">: </span><a href="../-signal-name/index.html">SignalName</a><span class="token punctuation">, </span></span><span class="parameter ">builder<span class="token operator">: </span><a href="../-signal-subscriber/index.html">SignalSubscriber</a><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="/&amp;lt;Error class: unknown class&amp;gt;///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span><span class="token operator">&lt;</span><a href="../signal-flow.html">T</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

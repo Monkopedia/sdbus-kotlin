@@ -1,0 +1,1 @@
+sourceset_dependencies='{":dokkaHtml/commonMain":[],":dokkaHtml/linuxMain":[":dokkaHtml/nativeMain"],":dokkaHtml/linuxX64Main":[":dokkaHtml/linuxMain"],":dokkaHtml/nativeMain":[":dokkaHtml/commonMain"]}'
