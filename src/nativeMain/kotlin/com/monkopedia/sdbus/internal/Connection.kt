@@ -65,12 +65,12 @@ import platform.linux.eventfd_write
 import platform.posix.EINTR
 import platform.posix.EINVAL
 import platform.posix.POLLIN
+import platform.posix.UINT64_MAX
 import platform.posix.close
 import platform.posix.errno
 import platform.posix.poll
 import platform.posix.pollfd
 import platform.posix.uint64_tVar
-import sdbus.UINT64_MAX
 import sdbus._SD_BUS_MESSAGE_TYPE_INVALID
 import sdbus.sd_bus_error
 import sdbus.sd_bus_interface_name_is_valid
@@ -727,14 +727,11 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
 
             require(eventFd_.fd >= 0)
 
-            val timeout =
-                if (pollData.timeout_usec ==
-                    UINT64_MAX
-                ) {
-                    Duration.INFINITE
-                } else {
-                    pollData.timeout_usec.toLong().microseconds
-                }
+            val timeout = if (pollData.timeout_usec == UINT64_MAX) {
+                Duration.INFINITE
+            } else {
+                pollData.timeout_usec.toLong().microseconds
+            }
 
             return PollData(pollData.fd, pollData.events, timeout, 0) // eventFd_.fd)
         }

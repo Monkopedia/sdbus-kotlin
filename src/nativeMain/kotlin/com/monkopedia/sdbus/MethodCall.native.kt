@@ -26,7 +26,6 @@ import sdbus.sd_bus_message_get_expect_reply
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_message_set_expect_reply
 import sdbus.sd_bus_slot_unref
-import sdbus.uint64_t
 
 actual class MethodCall internal constructor(
     msg: CPointer<sd_bus_message>?,
@@ -97,7 +96,7 @@ actual class MethodCall internal constructor(
             sdbusRequire(r < 0, "Failed to set the dont-expect-reply flag", -r)
         }
 
-    private fun sendWithReply(timeout: uint64_t = 0u): MethodReply = memScoped {
+    private fun sendWithReply(timeout: ULong = 0u): MethodReply = memScoped {
         val sdbusError = sdBusNullError()
 
         val sdbusReply =

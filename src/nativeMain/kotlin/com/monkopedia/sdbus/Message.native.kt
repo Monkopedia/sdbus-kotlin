@@ -30,8 +30,19 @@ import kotlinx.cinterop.toKString
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.SerializersModule
+import platform.posix.gid_t
+import platform.posix.gid_tVar
+import platform.posix.int16_t
+import platform.posix.int32_t
+import platform.posix.int64_t
+import platform.posix.pid_t
 import platform.posix.size_t
 import platform.posix.size_tVar
+import platform.posix.uid_t
+import platform.posix.uint16_t
+import platform.posix.uint32_t
+import platform.posix.uint64_t
+import platform.posix.uint8_t
 import sdbus.SD_BUS_CREDS_AUGMENT
 import sdbus.SD_BUS_CREDS_EGID
 import sdbus.SD_BUS_CREDS_EUID
@@ -57,12 +68,6 @@ import sdbus.SD_BUS_TYPE_UINT32
 import sdbus.SD_BUS_TYPE_UINT64
 import sdbus.SD_BUS_TYPE_UNIX_FD
 import sdbus.SD_BUS_TYPE_VARIANT
-import sdbus.gid_t
-import sdbus.gid_tVar
-import sdbus.int16_t
-import sdbus.int32_t
-import sdbus.int64_t
-import sdbus.pid_t
 import sdbus.sd_bus_message_append_array
 import sdbus.sd_bus_message_append_basic
 import sdbus.sd_bus_message_at_end
@@ -82,11 +87,6 @@ import sdbus.sd_bus_message_read_array
 import sdbus.sd_bus_message_read_basic
 import sdbus.sd_bus_message_rewind
 import sdbus.sd_bus_message_seal
-import sdbus.uid_t
-import sdbus.uint16_t
-import sdbus.uint32_t
-import sdbus.uint64_t
-import sdbus.uint8_t
 
 private inline fun debugPrint(msg: () -> String) {
     if (false) println(msg())

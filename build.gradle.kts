@@ -41,13 +41,14 @@ apiValidation {
 }
 
 kotlin {
+    val SYSTEMD_VERSION = "256.2-1"
     linuxX64 {
         binaries {
             sharedLib { }
         }
         compilations.getByName("main") {
             cinterops {
-                val sdbus by creating
+                create("sdbus-x86_64-$SYSTEMD_VERSION")
             }
         }
         compilerOptions {

@@ -14,17 +14,17 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
-import sdbus.gid_tVar
-import sdbus.pid_tVar
+import platform.posix.gid_tVar
+import platform.posix.pid_tVar
+import platform.posix.uid_tVar
+import platform.posix.uint64_t
+import platform.posix.uint64_tVar
+import platform.posix.uint8_t
 import sdbus.sd_bus_error
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
-import sdbus.uid_tVar
-import sdbus.uint64_t
-import sdbus.uint64_tVar
-import sdbus.uint8_t
 
-class SdBusMock : Fake by FakeHelper(), ISdBus {
+internal class SdBusMock : Fake by FakeHelper(), ISdBus {
 
     override fun sd_bus_message_ref(m: CValuesRef<sd_bus_message>?): CPointer<sd_bus_message>? =
         invoke("sd_bus_message_ref", m)

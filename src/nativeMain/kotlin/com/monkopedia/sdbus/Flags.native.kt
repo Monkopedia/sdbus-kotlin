@@ -11,10 +11,9 @@ import sdbus.SD_BUS_VTABLE_PROPERTY_CONST
 import sdbus.SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE
 import sdbus.SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION
 import sdbus.SD_BUS_VTABLE_UNPRIVILEGED
-import sdbus.uint64_t
 
-internal fun Flags.toSdBusInterfaceFlags(): uint64_t {
-    var sdbusFlags: uint64_t = 0u
+internal fun Flags.toSdBusInterfaceFlags(): ULong {
+    var sdbusFlags: ULong = 0u
 
     if (test(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
@@ -28,8 +27,8 @@ internal fun Flags.toSdBusInterfaceFlags(): uint64_t {
     return sdbusFlags
 }
 
-internal fun Flags.toSdBusMethodFlags(): uint64_t {
-    var sdbusFlags: uint64_t = 0u
+internal fun Flags.toSdBusMethodFlags(): ULong {
+    var sdbusFlags: ULong = 0u
 
     if (test(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
@@ -44,8 +43,8 @@ internal fun Flags.toSdBusMethodFlags(): uint64_t {
     return sdbusFlags
 }
 
-internal fun Flags.toSdBusSignalFlags(): uint64_t {
-    var sdbusFlags: uint64_t = 0u
+internal fun Flags.toSdBusSignalFlags(): ULong {
+    var sdbusFlags: ULong = 0u
 
     if (test(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
@@ -54,8 +53,8 @@ internal fun Flags.toSdBusSignalFlags(): uint64_t {
     return sdbusFlags
 }
 
-internal fun Flags.toSdBusPropertyFlags(): uint64_t {
-    var sdbusFlags: uint64_t = 0u
+internal fun Flags.toSdBusPropertyFlags(): ULong {
+    var sdbusFlags: ULong = 0u
 
     if (test(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
@@ -68,7 +67,7 @@ internal fun Flags.toSdBusPropertyFlags(): uint64_t {
     return sdbusFlags
 }
 
-private fun Flags.testEmitsFlags(sdbusFlags: uint64_t): uint64_t = sdbusFlags or when {
+private fun Flags.testEmitsFlags(sdbusFlags: ULong): ULong = sdbusFlags or when {
     test(
         Flags.PropertyUpdateBehaviorFlags.EMITS_CHANGE_SIGNAL
     ) -> SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE
@@ -80,7 +79,7 @@ private fun Flags.testEmitsFlags(sdbusFlags: uint64_t): uint64_t = sdbusFlags or
     else -> 0u
 }
 
-internal fun Flags.toSdBusWritablePropertyFlags(): uint64_t {
+internal fun Flags.toSdBusWritablePropertyFlags(): ULong {
     var sdbusFlags = toSdBusPropertyFlags()
 
     if (!test(PRIVILEGED)) {

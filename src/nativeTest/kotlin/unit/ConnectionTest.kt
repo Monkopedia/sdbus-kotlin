@@ -20,7 +20,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.set
 import kotlinx.cinterop.toCPointer
 
-class ConnectionTest {
+internal class ConnectionTest {
 
     val sdBusIntfMock_ = SdBusMock().withDefaults()
     val fakeBusPtr_ = 1.toLong().toCPointer<sd_bus>()

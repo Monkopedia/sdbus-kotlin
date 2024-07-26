@@ -21,17 +21,17 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.set
-import sdbus.gid_tVar
-import sdbus.pid_tVar
+import platform.posix.gid_tVar
+import platform.posix.pid_tVar
+import platform.posix.uid_tVar
+import platform.posix.uint64_t
+import platform.posix.uint64_tVar
+import platform.posix.uint8_t
 import sdbus.sd_bus_error
 import sdbus.sd_bus_get_events
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
 import sdbus.sd_id128_t
-import sdbus.uid_tVar
-import sdbus.uint64_t
-import sdbus.uint64_tVar
-import sdbus.uint8_t
 
 internal class SdBus : ISdBus {
     private val lock = ReentrantLock()

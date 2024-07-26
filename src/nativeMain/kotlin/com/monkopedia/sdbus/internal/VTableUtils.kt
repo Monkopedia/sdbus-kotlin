@@ -19,9 +19,8 @@ import sdbus.sd_bus_vtable
 import sdbus.sd_bus_vtable_end
 import sdbus.sd_bus_vtable_start
 import sdbus.sd_bus_writable_property
-import sdbus.uint64_t
 
-internal fun createSdBusVTableStartItem(flags: uint64_t): CValue<sd_bus_vtable> = cValue {
+internal fun createSdBusVTableStartItem(flags: ULong): CValue<sd_bus_vtable> = cValue {
     sd_bus_vtable_start(ptr, flags)
 }
 
@@ -31,7 +30,7 @@ internal fun createSdBusVTableMethodItem(
     result: CPointer<ByteVar>,
     paramNames: CPointer<ByteVar>,
     handler: sd_bus_message_handler_t,
-    flags: uint64_t
+    flags: ULong
 ): CValue<sd_bus_vtable> = cValue {
     this.type = _SD_BUS_VTABLE_METHOD.convert()
     this.flags = flags
@@ -47,7 +46,7 @@ internal fun createSdBusVTableSignalItem(
     member: CPointer<ByteVar>,
     signature: CPointer<ByteVar>,
     outnames: CPointer<ByteVar>,
-    flags: uint64_t
+    flags: ULong
 ): CValue<sd_bus_vtable> = cValue {
     sd_bus_signal_with_names(ptr, member, signature, outnames, flags)
 }
@@ -56,7 +55,7 @@ internal fun createSdBusVTableReadOnlyPropertyItem(
     member: CPointer<ByteVar>,
     signature: CPointer<ByteVar>,
     getter: sd_bus_property_get_t,
-    flags: uint64_t
+    flags: ULong
 ): CValue<sd_bus_vtable> = cValue { sd_bus_property(ptr, member, signature, getter, flags) }
 
 internal fun createSdBusVTableWritablePropertyItem(
@@ -64,7 +63,7 @@ internal fun createSdBusVTableWritablePropertyItem(
     signature: CPointer<ByteVar>,
     getter: sd_bus_property_get_t,
     setter: sd_bus_property_set_t,
-    flags: uint64_t
+    flags: ULong
 ): CValue<sd_bus_vtable> =
     cValue { sd_bus_writable_property(ptr, member, signature, getter, setter, flags) }
 

@@ -1,6 +1,26 @@
+#!/bin/bash
+
+ARCH=$1
+VERSION=$2
+echo "Fetching $ARCH and placing in libs/$ARCH/$VERSION"
+
+rm -rf libs/$ARCH/$VERSION
+mkdir -p libs/$ARCH/$VERSION
+cd libs/$ARCH/$VERSION
+
+wget https://archlinux.org/packages/core/$ARCH/systemd-libs/download/ -Opackage.pkg.tar.zst
+tar xf package.pkg.tar.zst usr/include usr/lib
+mv usr/include include/
+mv usr/lib lib/
+rmdir usr
+rm package.pkg.tar.zst
+cd -
+
+cat >> src/nativeInterop/cinterop/sdbus-$ARCH-$VERSION.def <<EOF
 headers = systemd/sd-bus.h
-compilerOpts.linux = -I/usr/include
-linkerOpts.linux = -L/usr/lib -lsystemd
+compilerOpts.linux = -Ilibs/$ARCH/$VERSION/include
+linkerOpts.linux = -Llibs/$ARCH/$VERSION/lib -lsystemd
+package = sdbus
 
 ---
 #include <systemd/sd-bus.h>
@@ -43,3 +63,6 @@ void sd_bus_vtable_end(sd_bus_vtable* ret)
     sd_bus_vtable vt = SD_BUS_VTABLE_END;
     *ret = vt;
 }
+EOF
+
+

@@ -12,12 +12,12 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import platform.posix.CLOCK_MONOTONIC
+import platform.posix.clock_gettime
 import platform.posix.errno
-import sdbus.CLOCK_MONOTONIC
-import sdbus.clock_gettime
+import platform.posix.timespec
 import sdbus.sd_bus_error
 import sdbus.sd_bus_error_set
-import sdbus.timespec
 
 internal inline fun invokeHandlerAndCatchErrors(
     retError: CPointer<sd_bus_error>?,
