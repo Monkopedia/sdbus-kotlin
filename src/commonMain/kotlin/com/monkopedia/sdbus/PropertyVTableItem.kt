@@ -5,7 +5,6 @@ import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty0
-import kotlinx.cinterop.memScoped
 
 fun registerProperty(propertyName: PropertyName): PropertyVTableItem =
     PropertyVTableItem(propertyName)
@@ -36,9 +35,7 @@ data class PropertyVTableItem(
 
             getter = { reply ->
                 // Get the propety value and serialize it into the pre-constructed reply message
-                memScoped {
-                    reply.serialize<T>(callback())
-                }
+                reply.serialize<T>(callback())
             }
         }
 
@@ -49,13 +46,11 @@ data class PropertyVTableItem(
             }
             setter = { call ->
                 // Default-construct property value
-                memScoped {
-                    // Deserialize property value from the incoming call message
-                    val property = call.deserialize<T>()
+                // Deserialize property value from the incoming call message
+                val property = call.deserialize<T>()
 
-                    // Invoke setter with the value
-                    callback(property)
-                }
+                // Invoke setter with the value
+                callback(property)
             }
         }
 

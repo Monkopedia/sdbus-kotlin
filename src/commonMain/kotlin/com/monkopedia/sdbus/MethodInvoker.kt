@@ -137,7 +137,7 @@ class MethodInvoker(private val method: MethodCall) : TypedArgumentsBuilderConte
 
     var timeout: ULong = 0u
     var timeoutDuration: Duration
-        get() = timeout.takeIf { it > 0u }?.let { it.toLong().microseconds } ?: Duration.INFINITE
+        get() = timeout.takeIf { it > 0u }?.let { it.toLong().microseconds } ?: INFINITE
         set(value) {
             timeout = if (value == INFINITE) 0u else value.inWholeMicroseconds.toULong()
         }

@@ -2,9 +2,7 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.Object
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.posix.EINVAL
 
 /********************************************/
 /**
@@ -218,13 +216,4 @@ interface IObject : Resource {
  * auto proxy = sdbus::createObject(connection, "/com/kistler/foo");
  * @endcode
  */
-fun createObject(connection: IConnection, objectPath: ObjectPath): IObject {
-    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    sdbusRequire(
-        sdbusConnection == null,
-        "Connection is not a real sdbus-c++ connection",
-        EINVAL
-    )
-
-    return Object(sdbusConnection!!, objectPath)
-}
+expect fun createObject(connection: IConnection, objectPath: ObjectPath): IObject

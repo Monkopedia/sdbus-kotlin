@@ -7,7 +7,7 @@ import com.monkopedia.sdbus.internal.ISdBus
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 
-class PropertyGetReply internal constructor(
+actual class PropertyGetReply internal constructor(
     msg: CPointer<sd_bus_message>?,
     sdbus: ISdBus,
     adoptMessage: Boolean = false

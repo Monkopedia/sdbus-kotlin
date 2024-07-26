@@ -28,7 +28,7 @@ import sdbus.sd_bus_message_set_expect_reply
 import sdbus.sd_bus_slot_unref
 import sdbus.uint64_t
 
-class MethodCall internal constructor(
+actual class MethodCall internal constructor(
     msg: CPointer<sd_bus_message>?,
     sdbus: ISdBus,
     adoptMessage: Boolean = false
@@ -38,10 +38,10 @@ class MethodCall internal constructor(
 
     constructor (o: MethodCall) : this(o.msg, o.sdbus)
 
-    fun send(timeout: ULong): MethodReply =
+    actual fun send(timeout: ULong): MethodReply =
         if (dontExpectReply) sendWithNoReply() else sendWithReply(timeout)
 
-    fun send(
+    actual fun send(
         callback: sd_bus_message_handler_t,
         userData: Any?,
         timeout: ULong
@@ -66,7 +66,7 @@ class MethodCall internal constructor(
         }
     }
 
-    fun createReply(): MethodReply = memScoped {
+    actual fun createReply(): MethodReply = memScoped {
         val sdbusReply = cValue<CPointerVar<sd_bus_message>>().getPointer(this)
         val r = sdbus.sd_bus_message_new_method_return(msg, sdbusReply)
         sdbusRequire(r < 0, "Failed to create method reply", -r)
@@ -74,7 +74,7 @@ class MethodCall internal constructor(
         MethodReply(sdbusReply[0]!!, sdbus, adoptMessage = true)
     }
 
-    fun createErrorReply(error: Error): MethodReply = memScoped {
+    actual fun createErrorReply(error: Error): MethodReply = memScoped {
         val sdbusError = sdBusNullError()
         sd_bus_error_set(sdbusError, error.name, error.errorMessage)
 
@@ -86,7 +86,7 @@ class MethodCall internal constructor(
         MethodReply(sdbusErrorReply[0]!!, sdbus, adoptMessage = true)
     }
 
-    var dontExpectReply: Boolean
+    actual var dontExpectReply: Boolean
         get() {
             val r = sd_bus_message_get_expect_reply(msg)
             sdbusRequire(r < 0, "Failed to get the dont-expect-reply flag", -r)

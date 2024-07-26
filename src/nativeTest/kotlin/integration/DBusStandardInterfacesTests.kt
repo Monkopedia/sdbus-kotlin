@@ -4,6 +4,7 @@ package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.PropertiesProxy.Companion.get
 import com.monkopedia.sdbus.PropertiesProxy.Companion.getAsync
+import com.monkopedia.sdbus.PropertiesProxy.Companion.set
 import com.monkopedia.sdbus.Variant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,7 +60,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     fun setsPropertyViaPropertiesInterface() {
         val newActionValue = 2345u
 
-        fixture.m_proxy!!.set(INTERFACE_NAME.value, "action", Variant(newActionValue))
+        fixture.m_proxy!!.set(INTERFACE_NAME.value, "action", newActionValue)
 
         assertEquals(newActionValue, fixture.m_proxy!!.action())
     }

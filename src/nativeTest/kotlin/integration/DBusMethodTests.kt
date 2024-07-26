@@ -299,7 +299,11 @@ class DBusMethodTests : BaseTest() {
         }
 
         // The new remote vtable is registered as long as we keep vtableSlot, so remote method calls now should pass
-        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
+        val proxy = com.monkopedia.sdbus.createProxy(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            dontRunEventLoopThread = true
+        )
         val result: Int =
             proxy.callMethod(interfaceName.value, "subtract") { call(10, 2) }
 
@@ -327,7 +331,11 @@ class DBusMethodTests : BaseTest() {
         slot.release()
 
         // No such remote D-Bus method under given interface exists anymore...
-        val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
+        val proxy = com.monkopedia.sdbus.createProxy(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            dontRunEventLoopThread = true
+        )
         try {
             proxy.callMethod<Unit>(interfaceName.value, "subtract") { call(10, 2) }
             fail("Method did not throw")

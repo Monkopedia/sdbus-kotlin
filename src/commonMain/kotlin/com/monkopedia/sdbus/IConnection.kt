@@ -3,15 +3,6 @@
 package com.monkopedia.sdbus
 
 import cnames.structs.sd_bus
-import com.monkopedia.sdbus.internal.Connection.Companion.Connection
-import com.monkopedia.sdbus.internal.Connection.Companion.defaultConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.privateConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.remoteConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.serverConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.sessionConnection
-import com.monkopedia.sdbus.internal.Connection.Companion.systemConnection
-import com.monkopedia.sdbus.internal.SdBus
-import com.monkopedia.sdbus.internal.now
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion
 import kotlinx.cinterop.CPointer
@@ -280,6 +271,7 @@ interface IConnection : Resource {
         }
     }
 }
+internal expect inline fun now(): Duration
 
 /*!
  * @brief Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.
@@ -288,7 +280,7 @@ interface IConnection : Resource {
  *
  * @throws sdbus::Error in case of failure
  */
-fun createBusConnection(): IConnection = defaultConnection(SdBus())
+expect fun createBusConnection(): IConnection
 
 /*!
  * @brief Creates/opens D-Bus session bus connection with a name when in a user context, and a system bus connection with a name, otherwise.
@@ -298,8 +290,7 @@ fun createBusConnection(): IConnection = defaultConnection(SdBus())
  *
  * @throws sdbus::Error in case of failure
  */
-fun createBusConnection(name: ServiceName): IConnection =
-    defaultConnection(SdBus()).also { it.requestName(name) }
+expect fun createBusConnection(name: ServiceName): IConnection
 
 /*!
  * @brief Creates/opens D-Bus system bus connection
@@ -308,7 +299,7 @@ fun createBusConnection(name: ServiceName): IConnection =
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSystemBusConnection(): IConnection = systemConnection(SdBus())
+expect fun createSystemBusConnection(): IConnection
 
 /*!
  * @brief Creates/opens D-Bus system bus connection with a name
@@ -318,8 +309,7 @@ fun createSystemBusConnection(): IConnection = systemConnection(SdBus())
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSystemBusConnection(name: ServiceName): IConnection =
-    defaultConnection(SdBus()).also { it.requestName(name) }
+expect fun createSystemBusConnection(name: ServiceName): IConnection
 
 /*!
  * @brief Creates/opens D-Bus session bus connection
@@ -328,7 +318,7 @@ fun createSystemBusConnection(name: ServiceName): IConnection =
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSessionBusConnection(): IConnection = sessionConnection(SdBus())
+expect fun createSessionBusConnection(): IConnection
 
 /*!
  * @brief Creates/opens D-Bus session bus connection with a name
@@ -338,8 +328,7 @@ fun createSessionBusConnection(): IConnection = sessionConnection(SdBus())
  *
  * @throws sdbus::Error in case of failure
  */
-fun createSessionBusConnection(name: ServiceName): IConnection =
-    sessionConnection(SdBus()).also { it.requestName(name) }
+expect fun createSessionBusConnection(name: ServiceName): IConnection
 
 /*!
  * @brief Creates/opens D-Bus session bus connection at a custom address
@@ -351,8 +340,7 @@ fun createSessionBusConnection(name: ServiceName): IConnection =
  *
  * Consult manual pages for `sd_bus_set_address` of the underlying sd-bus library for more information.
  */
-fun createSessionBusConnectionWithAddress(address: String): IConnection =
-    sessionConnection(SdBus(), address)
+expect fun createSessionBusConnectionWithAddress(address: String): IConnection
 
 /*!
  * @brief Creates/opens D-Bus system connection on a remote host using ssh
@@ -362,7 +350,7 @@ fun createSessionBusConnectionWithAddress(address: String): IConnection =
  *
  * @throws sdbus::Error in case of failure
  */
-fun createRemoteSystemBusConnection(host: String): IConnection = remoteConnection(SdBus(), host)
+expect fun createRemoteSystemBusConnection(host: String): IConnection
 
 /*!
  * @brief Opens direct D-Bus connection at a custom address
@@ -372,7 +360,7 @@ fun createRemoteSystemBusConnection(host: String): IConnection = remoteConnectio
  *
  * @throws sdbus::Error in case of failure
  */
-fun createDirectBusConnection(address: String): IConnection = privateConnection(SdBus(), address)
+expect fun createDirectBusConnection(address: String): IConnection
 
 /*!
  * @brief Opens direct D-Bus connection at the given file descriptor
@@ -385,7 +373,7 @@ fun createDirectBusConnection(address: String): IConnection = privateConnection(
  *
  * @throws sdbus::Error in case of failure
  */
-fun createDirectBusConnection(fd: Int): IConnection = privateConnection(SdBus(), fd)
+expect fun createDirectBusConnection(fd: Int): IConnection
 
 /*!
  * @brief Opens direct D-Bus connection at fd as a server
@@ -401,7 +389,7 @@ fun createDirectBusConnection(fd: Int): IConnection = privateConnection(SdBus(),
  *
  * @throws sdbus::Error in case of failure
  */
-fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
+expect fun createServerBus(fd: Int): IConnection
 
 /*!
  * @brief Creates sdbus-c++ bus connection representation out of underlying sd_bus instance
@@ -430,4 +418,4 @@ fun createServerBus(fd: Int): IConnection = serverConnection(SdBus(), fd)
  * auto con = sdbus::createBusConnection(bus); // IConnection consumes sd_bus object
  * @endcode
  */
-fun createBusConnection(bus: CPointer<sd_bus>): IConnection = Connection(SdBus(), bus)
+expect fun createBusConnection(bus: CPointer<sd_bus>): IConnection

@@ -9,7 +9,7 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 
 // Represents any of the above message types, or just a message that serves as a container for data
-class PlainMessage internal constructor(
+actual class PlainMessage internal constructor(
     msg: CPointer<sd_bus_message>?,
     sdbus: ISdBus,
     adoptMessage: Boolean = false
@@ -17,7 +17,8 @@ class PlainMessage internal constructor(
 
     constructor(o: PlainMessage) : this(o.msg, o.sdbus)
 
-    companion object {
-        fun createPlainMessage(): PlainMessage = getPseudoConnectionInstance().createPlainMessage()
+    actual companion object {
+        actual fun createPlainMessage(): PlainMessage =
+            getPseudoConnectionInstance().createPlainMessage()
     }
 }

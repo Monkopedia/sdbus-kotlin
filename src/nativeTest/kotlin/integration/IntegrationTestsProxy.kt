@@ -24,7 +24,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.descriptors.PrimitiveKind.INT
 
 @OptIn(ExperimentalForeignApi::class)
-abstract class IntegrationTestsProxy(override val proxy: IProxy) :
+abstract class IntegrationTestsProxy(override val proxy: com.monkopedia.sdbus.IProxy) :
     PropertiesProxy,
     PeerProxy {
     private var simpleSignalHandler: Resource? = null

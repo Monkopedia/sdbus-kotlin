@@ -3,16 +3,15 @@
 package com.monkopedia.sdbus.internal
 
 import cnames.structs.sd_bus_message
+import com.monkopedia.sdbus.AsyncCallInfo
 import com.monkopedia.sdbus.AsyncReplyHandler
 import com.monkopedia.sdbus.Error
-import com.monkopedia.sdbus.IProxy
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodCall
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
-import com.monkopedia.sdbus.PendingAsyncCall
 import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
@@ -42,7 +41,7 @@ internal class Proxy(
     private val destination: ServiceName,
     private val path: ObjectPath,
     dontRunEventLoopThread: Boolean = false
-) : IProxy {
+) : com.monkopedia.sdbus.IProxy {
     private class Allocs {
         val floatingAsyncCallSlots = FloatingAsyncCallSlots()
         val floatingSignalSlots = mutableListOf<Resource>()
@@ -90,13 +89,13 @@ internal class Proxy(
     override fun callMethodAsync(
         message: MethodCall,
         asyncReplyCallback: AsyncReplyHandler
-    ): PendingAsyncCall = callMethodAsync(message, asyncReplyCallback, 0u)
+    ): com.monkopedia.sdbus.PendingAsyncCall = callMethodAsync(message, asyncReplyCallback, 0u)
 
     override fun callMethodAsync(
         message: MethodCall,
         asyncReplyCallback: AsyncReplyHandler,
         timeout: ULong
-    ): PendingAsyncCall {
+    ): com.monkopedia.sdbus.PendingAsyncCall {
         sdbusRequire(
             !message.isValid,
             "Invalid async method call message provided",
@@ -118,7 +117,7 @@ internal class Proxy(
             allocs.floatingAsyncCallSlots.pushBack(asyncCallInfo)
         }
 
-        return PendingAsyncCall(WeakReference(asyncCallInfo))
+        return com.monkopedia.sdbus.PendingAsyncCall(WeakReference(asyncCallInfo))
     }
 
     override suspend fun callMethodAsync(message: MethodCall): MethodReply =
@@ -176,15 +175,6 @@ internal class Proxy(
 
     class SignalInfo(val callback: SignalHandler, val proxy: Proxy)
 
-    data class AsyncCallInfo(
-        val callback: AsyncReplyHandler,
-        val proxy: Proxy,
-        val floating: Boolean,
-        var finished: Boolean = false
-    ) {
-        var methodCall: Resource? = null
-    }
-
     // Container keeping track of pending async calls
     class FloatingAsyncCallSlots {
         private val lock = ReentrantLock()
@@ -233,7 +223,7 @@ internal class Proxy(
 
                             val message = MethodReply(
                                 sdbusMessage!!,
-                                proxy.connection.getSdBusInterface()
+                                (proxy as Proxy).connection.getSdBusInterface()
                             )
 
                             val error = sd_bus_message_get_error(sdbusMessage)
@@ -251,7 +241,7 @@ internal class Proxy(
                         // We can't do it earlier (before callback invocation for example), because CallBack data (slot release)
                         // is the synchronization point between callback invocation and Proxy::unregister.
                     } finally {
-                        proxy.allocs.floatingAsyncCallSlots.erase(asyncCallInfo)
+                        (proxy as Proxy).allocs.floatingAsyncCallSlots.erase(asyncCallInfo)
                     }
                 }
 

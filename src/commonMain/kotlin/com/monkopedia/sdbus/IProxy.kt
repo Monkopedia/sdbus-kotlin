@@ -1,15 +1,14 @@
-@file:OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+@file:OptIn(
+    ExperimentalForeignApi::class,
+    ExperimentalNativeApi::class,
+    ExperimentalNativeApi::class
+)
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.Proxy
-import com.monkopedia.sdbus.internal.Proxy.AsyncCallInfo
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.WeakReference
 import kotlin.time.Duration
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
-import platform.posix.EINVAL
 
 /********************************************/
 /**
@@ -270,8 +269,7 @@ interface IProxy : Resource {
  * It's safe to call its methods even after the Proxy has gone.
  *
  ***********************************************/
-class PendingAsyncCall internal constructor(private val target: WeakReference<AsyncCallInfo>) :
-    Resource {
+expect class PendingAsyncCall : Resource {
 
     /*!
      * @brief Cancels the delivery of the pending asynchronous call result
@@ -280,15 +278,9 @@ class PendingAsyncCall internal constructor(private val target: WeakReference<As
      * async D-Bus method call result delivery. Does nothing if the call was
      * completed already, or if the originating Proxy object has gone meanwhile.
      */
-    fun cancel() {
-        val asyncCallInfo = target.get() ?: return
-        asyncCallInfo.proxy.erase(asyncCallInfo)
-    }
+    fun cancel()
 
-    override fun release() {
-        val asyncCallInfo = target.get() ?: return
-        asyncCallInfo.proxy.erase(asyncCallInfo)
-    }
+    override fun release()
 
     /*!
      * @brief Answers whether the asynchronous call is still pending
@@ -298,7 +290,7 @@ class PendingAsyncCall internal constructor(private val target: WeakReference<As
      * Pending call in this context means a call whose results have not arrived, or
      * have arrived and are currently being processed by the callback handler.
      */
-    fun isPending(): Boolean = target.get()?.finished == false
+    fun isPending(): Boolean
 }
 
 // Out-of-line member definitions
@@ -315,8 +307,6 @@ inline fun IProxy.callMethodAsync(
 
 suspend inline fun IProxy.callMethodAsync(message: MethodCall, timeout: Duration): MethodReply =
     callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
-
-
 
 /*!
  * @brief Gets value of a property of the D-Bus object asynchronously
@@ -344,7 +334,6 @@ inline fun IProxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGet
  */
 inline fun IProxy.getPropertyAsync(propertyName: String): AsyncPropertyGetter =
     AsyncPropertyGetter(this, propertyName)
-
 
 /*!
  * @brief Sets value of a property of the D-Bus object asynchronously
@@ -431,26 +420,12 @@ inline fun IProxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPr
  * auto proxy = sdbus::createProxy(connection, "com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(
+expect fun createProxy(
     connection: IConnection,
     destination: ServiceName,
     objectPath: ObjectPath,
     dontRunEventLoopThread: Boolean = false
-): IProxy {
-    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    sdbusRequire(
-        sdbusConnection == null,
-        "Connection is not a real sdbus-c++ connection",
-        EINVAL
-    )
-
-    return Proxy(
-        sdbusConnection!!,
-        destination,
-        objectPath,
-        dontRunEventLoopThread = dontRunEventLoopThread
-    )
-}
+): IProxy
 
 /*!
  * @brief Creates a proxy object for a specific remote D-Bus object
@@ -469,20 +444,8 @@ fun createProxy(
  * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(
+expect fun createProxy(
     destination: ServiceName,
     objectPath: ObjectPath,
     dontRunEventLoopThread: Boolean = false
-): IProxy = memScoped {
-    val connection = createBusConnection()
-
-    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
-    assert(sdbusConnection != null)
-
-    Proxy(
-        sdbusConnection!!,
-        destination,
-        objectPath,
-        dontRunEventLoopThread = dontRunEventLoopThread
-    )
-}
+): IProxy

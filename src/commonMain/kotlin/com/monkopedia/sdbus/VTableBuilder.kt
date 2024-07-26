@@ -1,6 +1,5 @@
 package com.monkopedia.sdbus
 
-
 /*!
  * @brief Adds a declaration of methods, properties and signals of the object at a given interface
  *

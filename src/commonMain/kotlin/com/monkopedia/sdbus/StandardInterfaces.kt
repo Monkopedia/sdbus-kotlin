@@ -54,29 +54,6 @@ interface PropertiesProxy : ProxyHolder {
         invalidatedProperties: List<PropertyName>
     ) = Unit
 
-    fun set(
-        interfaceName: InterfaceName,
-        propertyName: PropertyName,
-        value: Variant,
-        dontExpectReply: Boolean = false
-    ) {
-        proxy.setProperty(
-            interfaceName.value,
-            propertyName.value,
-            value,
-            dontExpectReply = dontExpectReply
-        )
-    }
-
-    fun set(
-        interfaceName: String,
-        propertyName: String,
-        value: Variant,
-        dontExpectReply: Boolean = false
-    ) {
-        proxy.setProperty(interfaceName, propertyName, value, dontExpectReply = dontExpectReply)
-    }
-
     suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
         proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
             .getResult()
@@ -98,6 +75,29 @@ interface PropertiesProxy : ProxyHolder {
         proxy.getAllPropertiesAsync().onInterface(interfaceName).getResult()
 
     companion object {
+
+        inline fun <reified T: Any> PropertiesProxy.set(
+            interfaceName: InterfaceName,
+            propertyName: PropertyName,
+            value: T,
+            dontExpectReply: Boolean = false
+        ) {
+            proxy.setProperty(
+                interfaceName.value,
+                propertyName.value,
+                value,
+                dontExpectReply = dontExpectReply
+            )
+        }
+
+        inline fun <reified T: Any> PropertiesProxy.set(
+            interfaceName: String,
+            propertyName: String,
+            value: T,
+            dontExpectReply: Boolean = false
+        ) {
+            proxy.setProperty(interfaceName, propertyName, value, dontExpectReply = dontExpectReply)
+        }
 
         suspend inline fun <reified T> PropertiesProxy.getAsync(
             interfaceName: InterfaceName,

@@ -2,24 +2,9 @@
 
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.internal.BooleanTypeConverter
-import com.monkopedia.sdbus.internal.DoubleTypeConverter
-import com.monkopedia.sdbus.internal.IntTypeConverter
-import com.monkopedia.sdbus.internal.LongTypeConverter
-import com.monkopedia.sdbus.internal.NativeTypeConverter
-import com.monkopedia.sdbus.internal.ShortTypeConverter
-import com.monkopedia.sdbus.internal.UByteTypeConverter
-import com.monkopedia.sdbus.internal.UIntTypeConverter
-import com.monkopedia.sdbus.internal.ULongTypeConverter
-import com.monkopedia.sdbus.internal.UShortTypeConverter
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.COpaquePointerVar
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.IntVar
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.PolymorphicKind.OPEN
 import kotlinx.serialization.descriptors.PolymorphicKind.SEALED
@@ -189,13 +174,6 @@ object InvalidSig : SdbusSig {
         get() = false
 }
 
-data class PrimitiveSig<K, N : CVariable> internal constructor(
-    override val value: String,
-    override val valid: Boolean = false,
-    override val isTrivial: Boolean = false,
-    internal val converter: NativeTypeConverter<K, N>? = null
-) : SdbusSig
-
 data class StructSig(val signatures: List<SdbusSig>) : SdbusSig {
 
     val contents: String
@@ -228,34 +206,32 @@ data class ListSig(val element: SdbusSig) : SdbusSig {
         get() = false
 }
 
-val VoidSig = PrimitiveSig<Unit, COpaquePointerVar>("", valid = true, isTrivial = false)
+expect val VoidSig: SdbusSig
 
-val BoolSig = PrimitiveSig("b", valid = true, isTrivial = true, BooleanTypeConverter)
+expect val BoolSig : SdbusSig
 
-val UByteSig = PrimitiveSig("y", valid = true, isTrivial = true, UByteTypeConverter)
+expect val UByteSig : SdbusSig
 
-val ShortSig = PrimitiveSig("n", valid = true, isTrivial = true, ShortTypeConverter)
+expect val ShortSig : SdbusSig
 
-val UShortSig = PrimitiveSig("q", valid = true, isTrivial = true, UShortTypeConverter)
+expect val UShortSig : SdbusSig
 
-val IntSig = PrimitiveSig("i", valid = true, isTrivial = true, IntTypeConverter)
+expect val IntSig : SdbusSig
 
-val UIntSig = PrimitiveSig("u", valid = true, isTrivial = true, UIntTypeConverter)
+expect val UIntSig : SdbusSig
 
-val LongSig = PrimitiveSig("x", valid = true, isTrivial = true, LongTypeConverter)
+expect val LongSig: SdbusSig
 
-val ULongSig = PrimitiveSig("t", valid = true, isTrivial = true, ULongTypeConverter)
+expect val ULongSig : SdbusSig
 
-val DoubleSig = PrimitiveSig("d", valid = true, isTrivial = true, DoubleTypeConverter)
+expect val DoubleSig : SdbusSig
 
-val StringSig = PrimitiveSig<String, CPointerVar<ByteVar>>("s", valid = true, isTrivial = false)
+expect val StringSig: SdbusSig
 
-val ObjectPathSig =
-    PrimitiveSig<ObjectPath, CPointerVar<ByteVar>>("o", valid = true, isTrivial = false)
+expect val ObjectPathSig : SdbusSig
 
-val SignatureSig =
-    PrimitiveSig<Signature, CPointerVar<ByteVar>>("g", valid = true, isTrivial = false)
+expect val SignatureSig : SdbusSig
 
-val UnixFdSig = PrimitiveSig<UnixFd, IntVar>("h", valid = true, isTrivial = false)
+expect val UnixFdSig : SdbusSig
 
-val VariantSig = PrimitiveSig<Any, COpaquePointerVar>("v", valid = true, isTrivial = false)
+expect val VariantSig: SdbusSig

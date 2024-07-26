@@ -26,14 +26,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
-class ObjectManagerTestProxy(proxy: IProxy) : ObjectManagerProxy {
-    override val proxy: IProxy = proxy
+class ObjectManagerTestProxy(proxy: com.monkopedia.sdbus.IProxy) : ObjectManagerProxy {
+    override val proxy: com.monkopedia.sdbus.IProxy = proxy
 
     constructor(
         connection: com.monkopedia.sdbus.IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
-    ) : this(createProxy(connection, destination, objectPath))
+    ) : this(com.monkopedia.sdbus.createProxy(connection, destination, objectPath))
 
     init {
         registerObjectManagerProxy()
@@ -57,23 +57,23 @@ class ObjectManagerTestProxy(proxy: IProxy) : ObjectManagerProxy {
     var m_onInterfacesRemovedHandler: ((ObjectPath, List<InterfaceName>) -> Unit)? = null
 }
 
-class TestProxy private constructor(proxy: IProxy) : IntegrationTestsProxy(proxy) {
+class TestProxy private constructor(proxy: com.monkopedia.sdbus.IProxy) : IntegrationTestsProxy(proxy) {
 
     constructor(destination: ServiceName, objectPath: ObjectPath) : this(
-        createProxy(destination, objectPath)
+        com.monkopedia.sdbus.createProxy(destination, objectPath)
     )
 
     constructor(
         destination: ServiceName,
         objectPath: ObjectPath,
         dontRunEventLoopThread: Boolean = false
-    ) : this(createProxy(destination, objectPath, dontRunEventLoopThread))
+    ) : this(com.monkopedia.sdbus.createProxy(destination, objectPath, dontRunEventLoopThread))
 
     constructor(
         connection: com.monkopedia.sdbus.IConnection,
         destination: ServiceName,
         objectPath: ObjectPath
-    ) : this(createProxy(connection, destination, objectPath))
+    ) : this(com.monkopedia.sdbus.createProxy(connection, destination, objectPath))
 
     var m_gotSimpleSignal = atomic(false)
     var m_gotSignalWithMap = atomic(false)
