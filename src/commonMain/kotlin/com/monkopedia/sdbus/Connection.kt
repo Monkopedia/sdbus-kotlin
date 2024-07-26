@@ -123,7 +123,7 @@ interface Connection : Resource {
      * terminates the bus connection should installing the match fail.
      *
      * The lifetime of the match rule is bound to the lifetime of the returned resource instance.
-     * Releasing the slot instance implies the uninstalling of the match rule from the bus
+     * Releasing the resource instance implies the uninstalling of the match rule from the bus
      * connection.
      *
      * For more information, consult `man sd_bus_add_match_async`.

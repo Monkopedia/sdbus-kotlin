@@ -14,39 +14,12 @@ abstract interface com.monkopedia.sdbus/Connection : com.monkopedia.sdbus/Resour
     abstract fun addMatchAsync(kotlin/String, kotlin/Function1<com.monkopedia.sdbus/Message, kotlin/Unit>, kotlin/Function1<com.monkopedia.sdbus/Message, kotlin/Unit>): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addMatchAsync|addMatchAsync(kotlin.String;kotlin.Function1<com.monkopedia.sdbus.Message,kotlin.Unit>;kotlin.Function1<com.monkopedia.sdbus.Message,kotlin.Unit>){}[0]
     abstract fun addObjectManager(com.monkopedia.sdbus/ObjectPath): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addObjectManager|addObjectManager(com.monkopedia.sdbus.ObjectPath){}[0]
     abstract fun enterEventLoopAsync() // com.monkopedia.sdbus/Connection.enterEventLoopAsync|enterEventLoopAsync(){}[0]
-    abstract fun getEventLoopPollData(): com.monkopedia.sdbus/Connection.PollData // com.monkopedia.sdbus/Connection.getEventLoopPollData|getEventLoopPollData(){}[0]
-    abstract fun getMethodCallTimeout(): kotlin/ULong // com.monkopedia.sdbus/Connection.getMethodCallTimeout|getMethodCallTimeout(){}[0]
+    abstract fun getMethodCallTimeout(): kotlin.time/Duration // com.monkopedia.sdbus/Connection.getMethodCallTimeout|getMethodCallTimeout(){}[0]
     abstract fun getUniqueName(): com.monkopedia.sdbus/BusName // com.monkopedia.sdbus/Connection.getUniqueName|getUniqueName(){}[0]
     abstract fun releaseName(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Connection.releaseName|releaseName(com.monkopedia.sdbus.BusName){}[0]
     abstract fun requestName(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Connection.requestName|requestName(com.monkopedia.sdbus.BusName){}[0]
     abstract fun setMethodCallTimeout(kotlin.time/Duration) // com.monkopedia.sdbus/Connection.setMethodCallTimeout|setMethodCallTimeout(kotlin.time.Duration){}[0]
     abstract suspend fun leaveEventLoop() // com.monkopedia.sdbus/Connection.leaveEventLoop|leaveEventLoop(){}[0]
-
-    final class PollData { // com.monkopedia.sdbus/Connection.PollData|null[0]
-        final val eventFd // com.monkopedia.sdbus/Connection.PollData.eventFd|{}eventFd[0]
-            final fun <get-eventFd>(): kotlin/Int // com.monkopedia.sdbus/Connection.PollData.eventFd.<get-eventFd>|<get-eventFd>(){}[0]
-        final val fd // com.monkopedia.sdbus/Connection.PollData.fd|{}fd[0]
-            final fun <get-fd>(): kotlin/Int // com.monkopedia.sdbus/Connection.PollData.fd.<get-fd>|<get-fd>(){}[0]
-        final val timeout // com.monkopedia.sdbus/Connection.PollData.timeout|{}timeout[0]
-            final fun <get-timeout>(): kotlin.time/Duration? // com.monkopedia.sdbus/Connection.PollData.timeout.<get-timeout>|<get-timeout>(){}[0]
-
-        final fun component1(): kotlin/Int // com.monkopedia.sdbus/Connection.PollData.component1|component1(){}[0]
-        final fun component3(): kotlin.time/Duration? // com.monkopedia.sdbus/Connection.PollData.component3|component3(){}[0]
-        final fun component4(): kotlin/Int // com.monkopedia.sdbus/Connection.PollData.component4|component4(){}[0]
-        final fun copy(kotlin/Int = ..., kotlin/Short = ..., kotlin.time/Duration? = ..., kotlin/Int = ...): com.monkopedia.sdbus/Connection.PollData // com.monkopedia.sdbus/Connection.PollData.copy|copy(kotlin.Int;kotlin.Short;kotlin.time.Duration?;kotlin.Int){}[0]
-        final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.sdbus/Connection.PollData.equals|equals(kotlin.Any?){}[0]
-        final fun getPollTimeout(): kotlin/Int // com.monkopedia.sdbus/Connection.PollData.getPollTimeout|getPollTimeout(){}[0]
-        final fun getRelativeTimeout(): kotlin.time/Duration // com.monkopedia.sdbus/Connection.PollData.getRelativeTimeout|getRelativeTimeout(){}[0]
-        final fun hashCode(): kotlin/Int // com.monkopedia.sdbus/Connection.PollData.hashCode|hashCode(){}[0]
-        final fun toString(): kotlin/String // com.monkopedia.sdbus/Connection.PollData.toString|toString(){}[0]
-    }
-}
-
-abstract interface com.monkopedia.sdbus/ManagedObjectAdaptor : com.monkopedia.sdbus/ObjectAdaptor { // com.monkopedia.sdbus/ManagedObjectAdaptor|null[0]
-    open fun emitInterfacesAddedSignal() // com.monkopedia.sdbus/ManagedObjectAdaptor.emitInterfacesAddedSignal|emitInterfacesAddedSignal(){}[0]
-    open fun emitInterfacesAddedSignal(kotlin.collections/List<com.monkopedia.sdbus/InterfaceName>) // com.monkopedia.sdbus/ManagedObjectAdaptor.emitInterfacesAddedSignal|emitInterfacesAddedSignal(kotlin.collections.List<com.monkopedia.sdbus.InterfaceName>){}[0]
-    open fun emitInterfacesRemovedSignal() // com.monkopedia.sdbus/ManagedObjectAdaptor.emitInterfacesRemovedSignal|emitInterfacesRemovedSignal(){}[0]
-    open fun emitInterfacesRemovedSignal(kotlin.collections/List<com.monkopedia.sdbus/InterfaceName>) // com.monkopedia.sdbus/ManagedObjectAdaptor.emitInterfacesRemovedSignal|emitInterfacesRemovedSignal(kotlin.collections.List<com.monkopedia.sdbus.InterfaceName>){}[0]
 }
 
 abstract interface com.monkopedia.sdbus/Object : com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/Object|null[0]
@@ -69,11 +42,6 @@ abstract interface com.monkopedia.sdbus/Object : com.monkopedia.sdbus/Resource {
     abstract fun emitSignal(com.monkopedia.sdbus/Signal) // com.monkopedia.sdbus/Object.emitSignal|emitSignal(com.monkopedia.sdbus.Signal){}[0]
 }
 
-abstract interface com.monkopedia.sdbus/ObjectAdaptor { // com.monkopedia.sdbus/ObjectAdaptor|null[0]
-    abstract val obj // com.monkopedia.sdbus/ObjectAdaptor.obj|{}obj[0]
-        abstract fun <get-obj>(): com.monkopedia.sdbus/Object // com.monkopedia.sdbus/ObjectAdaptor.obj.<get-obj>|<get-obj>(){}[0]
-}
-
 abstract interface com.monkopedia.sdbus/PeerProxy : com.monkopedia.sdbus/ProxyHolder { // com.monkopedia.sdbus/PeerProxy|null[0]
     open fun getMachineId(): kotlin/String // com.monkopedia.sdbus/PeerProxy.getMachineId|getMachineId(){}[0]
     open fun ping() // com.monkopedia.sdbus/PeerProxy.ping|ping(){}[0]
@@ -81,16 +49,6 @@ abstract interface com.monkopedia.sdbus/PeerProxy : com.monkopedia.sdbus/ProxyHo
     final object Companion { // com.monkopedia.sdbus/PeerProxy.Companion|null[0]
         final val INTERFACE_NAME // com.monkopedia.sdbus/PeerProxy.Companion.INTERFACE_NAME|{}INTERFACE_NAME[0]
             final fun <get-INTERFACE_NAME>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/PeerProxy.Companion.INTERFACE_NAME.<get-INTERFACE_NAME>|<get-INTERFACE_NAME>(){}[0]
-    }
-}
-
-abstract interface com.monkopedia.sdbus/PropertiesAdaptor : com.monkopedia.sdbus/ObjectAdaptor { // com.monkopedia.sdbus/PropertiesAdaptor|null[0]
-    open fun emitPropertiesChangedSignal(com.monkopedia.sdbus/InterfaceName) // com.monkopedia.sdbus/PropertiesAdaptor.emitPropertiesChangedSignal|emitPropertiesChangedSignal(com.monkopedia.sdbus.InterfaceName){}[0]
-    open fun emitPropertiesChangedSignal(com.monkopedia.sdbus/InterfaceName, kotlin.collections/List<com.monkopedia.sdbus/MemberName>) // com.monkopedia.sdbus/PropertiesAdaptor.emitPropertiesChangedSignal|emitPropertiesChangedSignal(com.monkopedia.sdbus.InterfaceName;kotlin.collections.List<com.monkopedia.sdbus.MemberName>){}[0]
-
-    final object Companion { // com.monkopedia.sdbus/PropertiesAdaptor.Companion|null[0]
-        final const val INTERFACE_NAME // com.monkopedia.sdbus/PropertiesAdaptor.Companion.INTERFACE_NAME|{}INTERFACE_NAME[0]
-            final fun <get-INTERFACE_NAME>(): kotlin/String // com.monkopedia.sdbus/PropertiesAdaptor.Companion.INTERFACE_NAME.<get-INTERFACE_NAME>|<get-INTERFACE_NAME>(){}[0]
     }
 }
 
@@ -138,15 +96,6 @@ abstract interface com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/Resou
     abstract fun release() // com.monkopedia.sdbus/Resource.release|release(){}[0]
 }
 
-abstract interface com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/SdbusSig|null[0]
-    abstract val isTrivial // com.monkopedia.sdbus/SdbusSig.isTrivial|{}isTrivial[0]
-        abstract fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/SdbusSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
-    abstract val valid // com.monkopedia.sdbus/SdbusSig.valid|{}valid[0]
-        abstract fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/SdbusSig.valid.<get-valid>|<get-valid>(){}[0]
-    abstract val value // com.monkopedia.sdbus/SdbusSig.value|{}value[0]
-        abstract fun <get-value>(): kotlin/String // com.monkopedia.sdbus/SdbusSig.value.<get-value>|<get-value>(){}[0]
-}
-
 sealed interface com.monkopedia.sdbus/VTableItem // com.monkopedia.sdbus/VTableItem|null[0]
 
 final class <#A: kotlin/Any> com.monkopedia.sdbus/Typed { // com.monkopedia.sdbus/Typed|null[0]
@@ -159,16 +108,6 @@ final class <#A: kotlin/Any> com.monkopedia.sdbus/Typed { // com.monkopedia.sdbu
 }
 
 final class <#A: kotlin/Any?, #B: kotlinx.cinterop/CVariable> com.monkopedia.sdbus/PrimitiveSig : com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/PrimitiveSig|null[0]
-    final val isTrivial // com.monkopedia.sdbus/PrimitiveSig.isTrivial|{}isTrivial[0]
-        final fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/PrimitiveSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
-    final val valid // com.monkopedia.sdbus/PrimitiveSig.valid|{}valid[0]
-        final fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/PrimitiveSig.valid.<get-valid>|<get-valid>(){}[0]
-    final val value // com.monkopedia.sdbus/PrimitiveSig.value|{}value[0]
-        final fun <get-value>(): kotlin/String // com.monkopedia.sdbus/PrimitiveSig.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // com.monkopedia.sdbus/PrimitiveSig.component1|component1(){}[0]
-    final fun component2(): kotlin/Boolean // com.monkopedia.sdbus/PrimitiveSig.component2|component2(){}[0]
-    final fun component3(): kotlin/Boolean // com.monkopedia.sdbus/PrimitiveSig.component3|component3(){}[0]
     final fun copy(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., com.monkopedia.sdbus.internal/NativeTypeConverter<#A, #B>? = ...): com.monkopedia.sdbus/PrimitiveSig<#A, #B> // com.monkopedia.sdbus/PrimitiveSig.copy|copy(kotlin.String;kotlin.Boolean;kotlin.Boolean;com.monkopedia.sdbus.internal.NativeTypeConverter<1:0,1:1>?){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.sdbus/PrimitiveSig.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.monkopedia.sdbus/PrimitiveSig.hashCode|hashCode(){}[0]
@@ -205,7 +144,6 @@ final class com.monkopedia.sdbus/AsyncPropertyGetter { // com.monkopedia.sdbus/A
     constructor <init>(com.monkopedia.sdbus/Proxy, com.monkopedia.sdbus/MemberName) // com.monkopedia.sdbus/AsyncPropertyGetter.<init>|<init>(com.monkopedia.sdbus.Proxy;com.monkopedia.sdbus.MemberName){}[0]
 
     final fun onInterface(com.monkopedia.sdbus/InterfaceName): com.monkopedia.sdbus/AsyncPropertyGetter // com.monkopedia.sdbus/AsyncPropertyGetter.onInterface|onInterface(com.monkopedia.sdbus.InterfaceName){}[0]
-    final fun onInterface(kotlin/String): com.monkopedia.sdbus/AsyncPropertyGetter // com.monkopedia.sdbus/AsyncPropertyGetter.onInterface|onInterface(kotlin.String){}[0]
     final suspend fun <#A1: kotlin/Any> get(kotlinx.serialization/DeserializationStrategy<#A1>, kotlinx.serialization.modules/SerializersModule, com.monkopedia.sdbus/SdbusSig): #A1 // com.monkopedia.sdbus/AsyncPropertyGetter.get|get(kotlinx.serialization.DeserializationStrategy<0:0>;kotlinx.serialization.modules.SerializersModule;com.monkopedia.sdbus.SdbusSig){0§<kotlin.Any>}[0]
     final suspend inline fun <#A1: reified kotlin/Any> get(): #A1 // com.monkopedia.sdbus/AsyncPropertyGetter.get|get(){0§<kotlin.Any>}[0]
 
@@ -318,12 +256,6 @@ final class com.monkopedia.sdbus/ListSig : com.monkopedia.sdbus/SdbusSig { // co
 
     final val element // com.monkopedia.sdbus/ListSig.element|{}element[0]
         final fun <get-element>(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/ListSig.element.<get-element>|<get-element>(){}[0]
-    final val isTrivial // com.monkopedia.sdbus/ListSig.isTrivial|{}isTrivial[0]
-        final fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/ListSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
-    final val valid // com.monkopedia.sdbus/ListSig.valid|{}valid[0]
-        final fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/ListSig.valid.<get-valid>|<get-valid>(){}[0]
-    final val value // com.monkopedia.sdbus/ListSig.value|{}value[0]
-        final fun <get-value>(): kotlin/String // com.monkopedia.sdbus/ListSig.value.<get-value>|<get-value>(){}[0]
 
     final fun component1(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/ListSig.component1|component1(){}[0]
     final fun copy(com.monkopedia.sdbus/SdbusSig = ...): com.monkopedia.sdbus/ListSig // com.monkopedia.sdbus/ListSig.copy|copy(com.monkopedia.sdbus.SdbusSig){}[0]
@@ -339,16 +271,10 @@ final class com.monkopedia.sdbus/MapSig : com.monkopedia.sdbus/SdbusSig { // com
         final fun <get-contents>(): kotlin/String // com.monkopedia.sdbus/MapSig.contents.<get-contents>|<get-contents>(){}[0]
     final val dictValue // com.monkopedia.sdbus/MapSig.dictValue|{}dictValue[0]
         final fun <get-dictValue>(): kotlin/String // com.monkopedia.sdbus/MapSig.dictValue.<get-dictValue>|<get-dictValue>(){}[0]
-    final val isTrivial // com.monkopedia.sdbus/MapSig.isTrivial|{}isTrivial[0]
-        final fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/MapSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
     final val t1 // com.monkopedia.sdbus/MapSig.t1|{}t1[0]
         final fun <get-t1>(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/MapSig.t1.<get-t1>|<get-t1>(){}[0]
     final val t2 // com.monkopedia.sdbus/MapSig.t2|{}t2[0]
         final fun <get-t2>(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/MapSig.t2.<get-t2>|<get-t2>(){}[0]
-    final val valid // com.monkopedia.sdbus/MapSig.valid|{}valid[0]
-        final fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/MapSig.valid.<get-valid>|<get-valid>(){}[0]
-    final val value // com.monkopedia.sdbus/MapSig.value|{}value[0]
-        final fun <get-value>(): kotlin/String // com.monkopedia.sdbus/MapSig.value.<get-value>|<get-value>(){}[0]
 
     final fun component1(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/MapSig.component1|component1(){}[0]
     final fun component2(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/MapSig.component2|component2(){}[0]
@@ -381,11 +307,8 @@ final class com.monkopedia.sdbus/MethodInvoker : com.monkopedia.sdbus/TypedArgum
         final fun <get-dontExpectReply>(): kotlin/Boolean // com.monkopedia.sdbus/MethodInvoker.dontExpectReply.<get-dontExpectReply>|<get-dontExpectReply>(){}[0]
         final fun <set-dontExpectReply>(kotlin/Boolean) // com.monkopedia.sdbus/MethodInvoker.dontExpectReply.<set-dontExpectReply>|<set-dontExpectReply>(kotlin.Boolean){}[0]
     final var timeout // com.monkopedia.sdbus/MethodInvoker.timeout|{}timeout[0]
-        final fun <get-timeout>(): kotlin/ULong // com.monkopedia.sdbus/MethodInvoker.timeout.<get-timeout>|<get-timeout>(){}[0]
-        final fun <set-timeout>(kotlin/ULong) // com.monkopedia.sdbus/MethodInvoker.timeout.<set-timeout>|<set-timeout>(kotlin.ULong){}[0]
-    final var timeoutDuration // com.monkopedia.sdbus/MethodInvoker.timeoutDuration|{}timeoutDuration[0]
-        final fun <get-timeoutDuration>(): kotlin.time/Duration // com.monkopedia.sdbus/MethodInvoker.timeoutDuration.<get-timeoutDuration>|<get-timeoutDuration>(){}[0]
-        final fun <set-timeoutDuration>(kotlin.time/Duration) // com.monkopedia.sdbus/MethodInvoker.timeoutDuration.<set-timeoutDuration>|<set-timeoutDuration>(kotlin.time.Duration){}[0]
+        final fun <get-timeout>(): kotlin.time/Duration // com.monkopedia.sdbus/MethodInvoker.timeout.<get-timeout>|<get-timeout>(){}[0]
+        final fun <set-timeout>(kotlin.time/Duration) // com.monkopedia.sdbus/MethodInvoker.timeout.<set-timeout>|<set-timeout>(kotlin.time.Duration){}[0]
 
     final fun createCall(kotlin.collections/List<com.monkopedia.sdbus/Typed<*>>, kotlin.collections/List<kotlin/Any>): com.monkopedia.sdbus/TypedArguments // com.monkopedia.sdbus/MethodInvoker.createCall|createCall(kotlin.collections.List<com.monkopedia.sdbus.Typed<*>>;kotlin.collections.List<kotlin.Any>){}[0]
 }
@@ -443,7 +366,7 @@ final class com.monkopedia.sdbus/MethodVTableItem : com.monkopedia.sdbus/TypedMe
     final fun toString(): kotlin/String // com.monkopedia.sdbus/MethodVTableItem.toString|toString(){}[0]
 }
 
-final class com.monkopedia.sdbus/ObjectManagerProxy : com.monkopedia.sdbus/ProxyHolder { // com.monkopedia.sdbus/ObjectManagerProxy|null[0]
+final class com.monkopedia.sdbus/ObjectManagerProxy { // com.monkopedia.sdbus/ObjectManagerProxy|null[0]
     constructor <init>(com.monkopedia.sdbus/Proxy) // com.monkopedia.sdbus/ObjectManagerProxy.<init>|<init>(com.monkopedia.sdbus.Proxy){}[0]
 
     final val objects // com.monkopedia.sdbus/ObjectManagerProxy.objects|{}objects[0]
@@ -463,7 +386,6 @@ final class com.monkopedia.sdbus/ObjectManagerProxy : com.monkopedia.sdbus/Proxy
 }
 
 final class com.monkopedia.sdbus/PendingAsyncCall : com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/PendingAsyncCall|null[0]
-    final fun cancel() // com.monkopedia.sdbus/PendingAsyncCall.cancel|cancel(){}[0]
     final fun isPending(): kotlin/Boolean // com.monkopedia.sdbus/PendingAsyncCall.isPending|isPending(){}[0]
     final fun release() // com.monkopedia.sdbus/PendingAsyncCall.release|release(){}[0]
 }
@@ -608,14 +530,8 @@ final class com.monkopedia.sdbus/StructSig : com.monkopedia.sdbus/SdbusSig { // 
 
     final val contents // com.monkopedia.sdbus/StructSig.contents|{}contents[0]
         final fun <get-contents>(): kotlin/String // com.monkopedia.sdbus/StructSig.contents.<get-contents>|<get-contents>(){}[0]
-    final val isTrivial // com.monkopedia.sdbus/StructSig.isTrivial|{}isTrivial[0]
-        final fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/StructSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
     final val signatures // com.monkopedia.sdbus/StructSig.signatures|{}signatures[0]
         final fun <get-signatures>(): kotlin.collections/List<com.monkopedia.sdbus/SdbusSig> // com.monkopedia.sdbus/StructSig.signatures.<get-signatures>|<get-signatures>(){}[0]
-    final val valid // com.monkopedia.sdbus/StructSig.valid|{}valid[0]
-        final fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/StructSig.valid.<get-valid>|<get-valid>(){}[0]
-    final val value // com.monkopedia.sdbus/StructSig.value|{}value[0]
-        final fun <get-value>(): kotlin/String // com.monkopedia.sdbus/StructSig.value.<get-value>|<get-value>(){}[0]
 
     final fun component1(): kotlin.collections/List<com.monkopedia.sdbus/SdbusSig> // com.monkopedia.sdbus/StructSig.component1|component1(){}[0]
     final fun copy(kotlin.collections/List<com.monkopedia.sdbus/SdbusSig> = ...): com.monkopedia.sdbus/StructSig // com.monkopedia.sdbus/StructSig.copy|copy(kotlin.collections.List<com.monkopedia.sdbus.SdbusSig>){}[0]
@@ -819,33 +735,6 @@ final value class com.monkopedia.sdbus/VTableBuilder { // com.monkopedia.sdbus/V
     final fun toString(): kotlin/String // com.monkopedia.sdbus/VTableBuilder.toString|toString(){}[0]
 }
 
-open class com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/Message|null[0]
-    constructor <init>(com.monkopedia.sdbus/Message) // com.monkopedia.sdbus/Message.<init>|<init>(com.monkopedia.sdbus.Message){}[0]
-
-    final val isEmpty // com.monkopedia.sdbus/Message.isEmpty|{}isEmpty[0]
-        final fun <get-isEmpty>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
-    final val isValid // com.monkopedia.sdbus/Message.isValid|{}isValid[0]
-        final fun <get-isValid>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isValid.<get-isValid>|<get-isValid>(){}[0]
-
-    final fun copyTo(com.monkopedia.sdbus/Message, kotlin/Boolean) // com.monkopedia.sdbus/Message.copyTo|copyTo(com.monkopedia.sdbus.Message;kotlin.Boolean){}[0]
-    final fun getCredsEgid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsEgid|getCredsEgid(){}[0]
-    final fun getCredsEuid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsEuid|getCredsEuid(){}[0]
-    final fun getCredsGid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsGid|getCredsGid(){}[0]
-    final fun getCredsPid(): kotlin/Int // com.monkopedia.sdbus/Message.getCredsPid|getCredsPid(){}[0]
-    final fun getCredsSupplementaryGids(): kotlin.collections/List<kotlin/UInt> // com.monkopedia.sdbus/Message.getCredsSupplementaryGids|getCredsSupplementaryGids(){}[0]
-    final fun getCredsUid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsUid|getCredsUid(){}[0]
-    final fun getDestination(): kotlin/String? // com.monkopedia.sdbus/Message.getDestination|getDestination(){}[0]
-    final fun getInterfaceName(): kotlin/String? // com.monkopedia.sdbus/Message.getInterfaceName|getInterfaceName(){}[0]
-    final fun getMemberName(): kotlin/String? // com.monkopedia.sdbus/Message.getMemberName|getMemberName(){}[0]
-    final fun getPath(): kotlin/String? // com.monkopedia.sdbus/Message.getPath|getPath(){}[0]
-    final fun getSELinuxContext(): kotlin/String // com.monkopedia.sdbus/Message.getSELinuxContext|getSELinuxContext(){}[0]
-    final fun getSender(): kotlin/String? // com.monkopedia.sdbus/Message.getSender|getSender(){}[0]
-    final fun isAtEnd(kotlin/Boolean): kotlin/Boolean // com.monkopedia.sdbus/Message.isAtEnd|isAtEnd(kotlin.Boolean){}[0]
-    final fun peekType(): kotlin/Pair<kotlin/Char?, kotlin/String?> // com.monkopedia.sdbus/Message.peekType|peekType(){}[0]
-    final fun rewind(kotlin/Boolean) // com.monkopedia.sdbus/Message.rewind|rewind(kotlin.Boolean){}[0]
-    final fun seal() // com.monkopedia.sdbus/Message.seal|seal(){}[0]
-}
-
 open class com.monkopedia.sdbus/TypedArgumentsBuilderContext { // com.monkopedia.sdbus/TypedArgumentsBuilderContext|null[0]
     constructor <init>() // com.monkopedia.sdbus/TypedArgumentsBuilderContext.<init>|<init>(){}[0]
 
@@ -950,13 +839,48 @@ sealed class <#A: com.monkopedia.sdbus/TypedMethodCall<#A>> com.monkopedia.sdbus
     }
 }
 
+sealed class com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/Message|null[0]
+    constructor <init>(kotlinx.cinterop/CPointer<cnames.structs/sd_bus_message>?, com.monkopedia.sdbus.internal/ISdBus, kotlin/Boolean = ...) // com.monkopedia.sdbus/Message.<init>|<init>(kotlinx.cinterop.CPointer<cnames.structs.sd_bus_message>?;com.monkopedia.sdbus.internal.ISdBus;kotlin.Boolean){}[0]
+
+    final val isEmpty // com.monkopedia.sdbus/Message.isEmpty|{}isEmpty[0]
+        final fun <get-isEmpty>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
+    final val isValid // com.monkopedia.sdbus/Message.isValid|{}isValid[0]
+        final fun <get-isValid>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isValid.<get-isValid>|<get-isValid>(){}[0]
+
+    final fun copyTo(com.monkopedia.sdbus/Message, kotlin/Boolean) // com.monkopedia.sdbus/Message.copyTo|copyTo(com.monkopedia.sdbus.Message;kotlin.Boolean){}[0]
+    final fun getCredsEgid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsEgid|getCredsEgid(){}[0]
+    final fun getCredsEuid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsEuid|getCredsEuid(){}[0]
+    final fun getCredsGid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsGid|getCredsGid(){}[0]
+    final fun getCredsPid(): kotlin/Int // com.monkopedia.sdbus/Message.getCredsPid|getCredsPid(){}[0]
+    final fun getCredsSupplementaryGids(): kotlin.collections/List<kotlin/UInt> // com.monkopedia.sdbus/Message.getCredsSupplementaryGids|getCredsSupplementaryGids(){}[0]
+    final fun getCredsUid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsUid|getCredsUid(){}[0]
+    final fun getDestination(): kotlin/String? // com.monkopedia.sdbus/Message.getDestination|getDestination(){}[0]
+    final fun getInterfaceName(): kotlin/String? // com.monkopedia.sdbus/Message.getInterfaceName|getInterfaceName(){}[0]
+    final fun getMemberName(): kotlin/String? // com.monkopedia.sdbus/Message.getMemberName|getMemberName(){}[0]
+    final fun getPath(): kotlin/String? // com.monkopedia.sdbus/Message.getPath|getPath(){}[0]
+    final fun getSELinuxContext(): kotlin/String // com.monkopedia.sdbus/Message.getSELinuxContext|getSELinuxContext(){}[0]
+    final fun getSender(): kotlin/String? // com.monkopedia.sdbus/Message.getSender|getSender(){}[0]
+    final fun isAtEnd(kotlin/Boolean): kotlin/Boolean // com.monkopedia.sdbus/Message.isAtEnd|isAtEnd(kotlin.Boolean){}[0]
+    final fun peekType(): kotlin/Pair<kotlin/Char?, kotlin/String?> // com.monkopedia.sdbus/Message.peekType|peekType(){}[0]
+    final fun rewind(kotlin/Boolean) // com.monkopedia.sdbus/Message.rewind|rewind(kotlin.Boolean){}[0]
+    final fun seal() // com.monkopedia.sdbus/Message.seal|seal(){}[0]
+}
+
+sealed class com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/SdbusSig|null[0]
+    constructor <init>() // com.monkopedia.sdbus/SdbusSig.<init>|<init>(){}[0]
+
+    abstract val isTrivial // com.monkopedia.sdbus/SdbusSig.isTrivial|{}isTrivial[0]
+        abstract fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/SdbusSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
+    abstract val valid // com.monkopedia.sdbus/SdbusSig.valid|{}valid[0]
+        abstract fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/SdbusSig.valid.<get-valid>|<get-valid>(){}[0]
+    abstract val value // com.monkopedia.sdbus/SdbusSig.value|{}value[0]
+        abstract fun <get-value>(): kotlin/String // com.monkopedia.sdbus/SdbusSig.value.<get-value>|<get-value>(){}[0]
+}
+
 final object com.monkopedia.sdbus/InvalidSig : com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/InvalidSig|null[0]
-    final val isTrivial // com.monkopedia.sdbus/InvalidSig.isTrivial|{}isTrivial[0]
-        final fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/InvalidSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
-    final val valid // com.monkopedia.sdbus/InvalidSig.valid|{}valid[0]
-        final fun <get-valid>(): kotlin/Boolean // com.monkopedia.sdbus/InvalidSig.valid.<get-valid>|<get-valid>(){}[0]
-    final val value // com.monkopedia.sdbus/InvalidSig.value|{}value[0]
-        final fun <get-value>(): kotlin/String // com.monkopedia.sdbus/InvalidSig.value.<get-value>|<get-value>(){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.sdbus/InvalidSig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.monkopedia.sdbus/InvalidSig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.monkopedia.sdbus/InvalidSig.toString|toString(){}[0]
 }
 
 final const val com.monkopedia.sdbus.internal/SDBUSCPP_ERROR_NAME // com.monkopedia.sdbus.internal/SDBUSCPP_ERROR_NAME|{}SDBUSCPP_ERROR_NAME[0]
@@ -1022,7 +946,6 @@ final fun com.monkopedia.sdbus/createSessionBusConnectionWithAddress(kotlin/Stri
 final fun com.monkopedia.sdbus/createSystemBusConnection(): com.monkopedia.sdbus/Connection // com.monkopedia.sdbus/createSystemBusConnection|createSystemBusConnection(){}[0]
 final fun com.monkopedia.sdbus/createSystemBusConnection(com.monkopedia.sdbus/BusName): com.monkopedia.sdbus/Connection // com.monkopedia.sdbus/createSystemBusConnection|createSystemBusConnection(com.monkopedia.sdbus.BusName){}[0]
 final fun com.monkopedia.sdbus/registerProperty(com.monkopedia.sdbus/MemberName): com.monkopedia.sdbus/PropertyVTableItem // com.monkopedia.sdbus/registerProperty|registerProperty(com.monkopedia.sdbus.MemberName){}[0]
-final fun com.monkopedia.sdbus/registerSignal(com.monkopedia.sdbus/MemberName): com.monkopedia.sdbus/SignalVTableItem // com.monkopedia.sdbus/registerSignal|registerSignal(com.monkopedia.sdbus.MemberName){}[0]
 final fun com.monkopedia.sdbus/signatureOf(kotlin.reflect/KType): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/signatureOf|signatureOf(kotlin.reflect.KType){}[0]
 final inline fun (com.monkopedia.sdbus/Object).com.monkopedia.sdbus/addVTable(com.monkopedia.sdbus/InterfaceName, kotlin/Function1<com.monkopedia.sdbus/VTableBuilder, kotlin/Unit>): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/addVTable|addVTable@com.monkopedia.sdbus.Object(com.monkopedia.sdbus.InterfaceName;kotlin.Function1<com.monkopedia.sdbus.VTableBuilder,kotlin.Unit>){}[0]
 final inline fun (com.monkopedia.sdbus/Object).com.monkopedia.sdbus/emitSignal(com.monkopedia.sdbus/InterfaceName = ..., com.monkopedia.sdbus/MemberName = ..., kotlin/Function1<com.monkopedia.sdbus/SignalEmitter, kotlin/Unit>) // com.monkopedia.sdbus/emitSignal|emitSignal@com.monkopedia.sdbus.Object(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;kotlin.Function1<com.monkopedia.sdbus.SignalEmitter,kotlin.Unit>){}[0]

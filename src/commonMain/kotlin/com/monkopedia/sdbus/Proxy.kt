@@ -1,4 +1,3 @@
-
 package com.monkopedia.sdbus
 
 import kotlin.time.Duration
@@ -12,7 +11,7 @@ import kotlin.time.Duration
  * The proxy enables calling methods on remote objects, receiving signals from remote
  * objects, and getting/setting properties of remote objects.
  *
- * All IProxy member methods throw @c [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-c++ error.
+ * All IProxy member methods throw @c [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-kotlin error.
  * The IProxy class has been designed as thread-aware. However, the operation of
  * creating and sending method calls (both synchronously and asynchronously) is
  * thread-safe by design.
@@ -227,12 +226,12 @@ interface Proxy : Resource {
      * @param signalName Name of the signal
      * @param signalHandler Callback that implements the body of the signal handler
      *
-     * @return RAII-style slot handle representing the ownership of the subscription
+     * @return [Resource] handle to the registration
      *
      * A signal can be subscribed to and unsubscribed from at any time during proxy
      * lifetime. The subscription is active immediately after the call. The lifetime
-     * of the subscription is bound to the lifetime of the slot object. The subscription
-     * is unregistered by letting go of the slot object.
+     * of the subscription is bound to the lifetime of the resource object. The subscription
+     * is unregistered by releasing the resource object.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */

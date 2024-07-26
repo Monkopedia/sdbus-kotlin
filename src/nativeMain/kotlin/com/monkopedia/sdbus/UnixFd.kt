@@ -23,7 +23,7 @@ import platform.posix.errno
  * UnixFd can be default constructed (owning invalid fd), or constructed from
  * an explicitly provided fd by either duplicating or adopting that fd as-is.
  *
- ***********************************************/
+ */
 @OptIn(ExperimentalNativeApi::class)
 @Serializable(UnixFd.Companion::class)
 actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {

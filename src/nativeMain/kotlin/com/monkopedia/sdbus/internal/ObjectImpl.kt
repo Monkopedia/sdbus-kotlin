@@ -89,14 +89,14 @@ internal class ObjectImpl(
         memScoped {
             checkInterfaceName(interfaceName.value)
 
-            // 1st pass -- create vtable structure for internal sdbus-c++ purposes
+            // 1st pass -- create vtable structure for internal sdbus-kotlin purposes
             val internalVTable = createInternalVTable(interfaceName, vtable)
 
             // Return vtable wrapped in a Slot object
             val reference = Reference(internalVTable) {
                 it.clear()
             }
-            // 2nd pass -- from internal sdbus-c++ vtable, create vtable structure in format expected by underlying sd-bus library
+            // 2nd pass -- from internal sdbus-kotlin vtable, create vtable structure in format expected by underlying sd-bus library
             internalVTable.sdbusVTable =
                 internalVTable.scope.createInternalSdBusVTable(internalVTable)
 

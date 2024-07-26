@@ -61,24 +61,25 @@ kotlin {
             )
         }
     }
-    linuxArm64 {
-        binaries {
-            sharedLib { }
-        }
-        compilations.getByName("main") {
-            cinterops {
-                create("sdbus-aarch64-$systemdVersion")
-            }
-        }
-        compilerOptions {
-            freeCompilerArgs.set(
-                listOf(
-                    "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
-                    "-Xexpect-actual-classes"
-                )
-            )
-        }
-    }
+    // Not working quite yet.
+//    linuxArm64 {
+//        binaries {
+//            sharedLib { }
+//        }
+//        compilations.getByName("main") {
+//            cinterops {
+//                create("sdbus-aarch64-$systemdVersion")
+//            }
+//        }
+//        compilerOptions {
+//            freeCompilerArgs.set(
+//                listOf(
+//                    "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
+//                    "-Xexpect-actual-classes"
+//                )
+//            )
+//        }
+//    }
     applyDefaultHierarchyTemplate()
     sourceSets {
         val commonMain by getting {
@@ -131,12 +132,12 @@ afterEvaluate {
         }
     }
     println("${link::class}")
-    val linkArm = tasks.getByName("linkDebugTestLinuxArm64")
-    (linkArm as KotlinNativeLink).apply {
-        kotlinOptions {
-            freeCompilerArgs += overrides
-            freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
-        }
-    }
-    println("${linkArm::class}")
+//    val linkArm = tasks.getByName("linkDebugTestLinuxArm64")
+//    (linkArm as KotlinNativeLink).apply {
+//        kotlinOptions {
+//            freeCompilerArgs += overrides
+//            freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
+//        }
+//    }
+//    println("${linkArm::class}")
 }

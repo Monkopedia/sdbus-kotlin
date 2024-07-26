@@ -178,7 +178,7 @@ inline fun buildArgs(builder: TypedArgumentsBuilder): TypedArguments =
  * Custom context usage:
  * ```
  * method(MethodName("Multiply")) {
- *   implementedAs(call(this::multiply) withContext Dispatchers.IO)
+ *   implementedAs(acall(this::multiply) withContext Dispatchers.IO)
  * }
  * ```
  */

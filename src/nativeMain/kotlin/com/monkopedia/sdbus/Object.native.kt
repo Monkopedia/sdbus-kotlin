@@ -7,7 +7,7 @@ actual fun createObject(connection: Connection, objectPath: ObjectPath): Object 
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
     sdbusRequire(
         sdbusConnection == null,
-        "Connection is not a real sdbus-c++ connection",
+        "Connection is not a real sdbus-kotlin connection",
         EINVAL
     )
 

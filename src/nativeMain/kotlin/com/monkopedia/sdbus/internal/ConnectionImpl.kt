@@ -1,6 +1,5 @@
 @file:OptIn(
     ExperimentalForeignApi::class,
-    ExperimentalNativeApi::class,
     ExperimentalNativeApi::class
 )
 
@@ -82,27 +81,27 @@ internal typealias Bus = CPointer<sd_bus>
 internal typealias BusFactory = (CPointer<CPointerVar<sd_bus>>) -> Int
 internal typealias BusPtr = Reference<Bus?>
 
-internal inline fun checkObjectPath(_PATH: String) = sdbusRequire(
-    sd_bus_object_path_is_valid(_PATH) == 0,
-    "Invalid object path '$_PATH' provided",
+internal inline fun checkObjectPath(path: String) = sdbusRequire(
+    sd_bus_object_path_is_valid(path) == 0,
+    "Invalid object path '$path' provided",
     EINVAL
 )
 
-internal inline fun checkInterfaceName(_NAME: String) = sdbusRequire(
-    sd_bus_interface_name_is_valid(_NAME) == 0,
-    "Invalid interface name '$_NAME' provided",
+internal inline fun checkInterfaceName(name: String) = sdbusRequire(
+    sd_bus_interface_name_is_valid(name) == 0,
+    "Invalid interface name '$name' provided",
     EINVAL
 )
 
-internal inline fun checkServiceName(_NAME: String) = sdbusRequire(
-    _NAME.isNotEmpty() && sd_bus_service_name_is_valid(_NAME) == 0,
-    "Invalid service name '$_NAME' provided",
+internal inline fun checkServiceName(name: String) = sdbusRequire(
+    name.isNotEmpty() && sd_bus_service_name_is_valid(name) == 0,
+    "Invalid service name '$name' provided",
     EINVAL
 )
 
-internal inline fun checkMemberName(_NAME: String) = sdbusRequire(
-    sd_bus_member_name_is_valid(_NAME) == 0,
-    "Invalid member name '$_NAME' provided",
+internal inline fun checkMemberName(name: String) = sdbusRequire(
+    sd_bus_member_name_is_valid(name) == 0,
+    "Invalid member name '$name' provided",
     EINVAL
 )
 
@@ -157,8 +156,8 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
     this.revents = revents
 }
 
-internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : InternalConnection {
-    private val bus: BusPtr = bus
+internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr) :
+    InternalConnection {
     private var asyncLoopThread: Job? = null
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
@@ -660,8 +659,6 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
             val r = sdbus.sd_bus_process(bus, null)
             sdbusRequire(r < 0, "Failed to process bus requests", -r)
 
-            // In correct use of sdbus-c++ API, r can be 0 only when processPendingEvent()
-            // is called from an external event loop as a reaction to event fd being signalled.
             // If there are no more D-Bus messages to process, we know we have to clear event fd.
             if (r == 0) {
                 eventFd.clear()

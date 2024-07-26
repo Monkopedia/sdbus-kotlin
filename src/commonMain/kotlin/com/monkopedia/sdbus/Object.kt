@@ -51,8 +51,7 @@ interface Object : Resource {
      * Emits InterfacesAdded signal on this object path
      *
      * This emits an InterfacesAdded signal on this object path with explicitly provided list
-     * of registered interfaces. Since v2.0, sdbus-c++ supports dynamically addable/removable
-     * object interfaces and their vtables, so this method now makes more sense.
+     * of registered interfaces.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
@@ -73,8 +72,7 @@ interface Object : Resource {
      * Emits InterfacesRemoved signal on this object path
      *
      * This emits an InterfacesRemoved signal on the given path with explicitly provided list
-     * of registered interfaces. Since v2.0, sdbus-c++ supports dynamically addable/removable
-     * object interfaces and their vtables, so this method now makes more sense.
+     * of registered interfaces.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
