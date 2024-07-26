@@ -90,7 +90,7 @@ val adapter = Adapter1Proxy(connection.createProxy(ObjectPath("/org/bluez/hci0")
 adapter.startDiscovery()
 ```
 
-See the full [API docs]() for more information.
+See the full [API docs](https://monkopedia.github.io/sdbus-kotlin/sdbus-kotlin/com.monkopedia.sdbus/index.html) for more information.
 
 ## Complex Types
 
