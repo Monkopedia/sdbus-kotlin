@@ -815,7 +815,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
     }
 }
 
-fun MemScope.toStrv(propNames: List<String>) =
+internal fun MemScope.toStrv(propNames: List<String>) =
     allocArray<CPointerVar<ByteVar>>(propNames.size + 1) {
         this.value =
             if (it == propNames.size) {
