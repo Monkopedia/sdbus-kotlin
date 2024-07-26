@@ -27,7 +27,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 
 class DBusMethodTests : BaseTest() {
-    private val fixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = SdbusConnectionFixture(this)
 
     @Test
     fun callsEmptyMethodSuccesfully() {
@@ -157,7 +157,7 @@ class DBusMethodTests : BaseTest() {
     }
 
     @Test
-    fun ThrowsTimeoutErrorWhenMethodTimesOut() {
+    fun throwsTimeoutErrorWhenMethodTimesOut() {
         val start = Clock.System.now()
         try {
             fixture.proxy!!.doOperationWithTimeout(
@@ -316,7 +316,7 @@ class DBusMethodTests : BaseTest() {
         val obj = fixture.adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
 
-        val slot = obj.addVTable( interfaceName) {
+        val slot = obj.addVTable(interfaceName) {
             method(MethodName("add")) {
                 call { a: Long, b: Double ->
                     a + b

@@ -1,9 +1,8 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     application
     kotlin("jvm")
     kotlin("plugin.serialization")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 group = "com.monkopedia.sdbus"
@@ -23,11 +22,16 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
 }
 afterEvaluate {
-    tasks["testClasses"].dependsOn(rootProject.tasks.named("publishKotlinMultiplatformPublicationToMavenLocal"))
+    tasks["testClasses"].dependsOn(
+        rootProject.tasks.named("publishKotlinMultiplatformPublicationToMavenLocal")
+    )
 }
 
 application {
     mainClass.set("com.monkopedia.sdbus.Xml2KotlinKt")
+}
+ktlint {
+    this.android.set(true)
 }
 
 tasks.test {

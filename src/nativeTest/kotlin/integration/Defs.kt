@@ -11,7 +11,6 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import platform.posix.getenv
 
-
 val INTERFACE_NAME = InterfaceName("org.sdbuscpp.integrationtests")
 val SERVICE_NAME = ServiceName("org.sdbuscpp.integrationtests")
 val EMPTY_DESTINATION = ServiceName("")

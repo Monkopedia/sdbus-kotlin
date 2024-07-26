@@ -170,16 +170,46 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any> args4() =
         listOf(typed<A>(), typed<B>(), typed<C>(), typed<D>())
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> args5() =
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any
+        > args5() =
         listOf(typed<A>(), typed<B>(), typed<C>(), typed<D>(), typed<E>())
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> args6() =
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any
+        > args6() =
         listOf(typed<A>(), typed<B>(), typed<C>(), typed<D>(), typed<E>(), typed<F>())
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> args7() =
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any
+        > args7() =
         listOf(typed<A>(), typed<B>(), typed<C>(), typed<D>(), typed<E>(), typed<F>(), typed<G>())
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> args8() =
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any
+        > args8() =
         listOf(
             typed<A>(),
             typed<B>(),
@@ -191,7 +221,17 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
             typed<H>()
         )
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> args9() =
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any
+        > args9() =
         listOf(
             typed<A>(),
             typed<B>(),
@@ -204,7 +244,18 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
             typed<I>()
         )
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> args10() =
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any,
+        reified J : Any
+        > args10() =
         listOf(
             typed<A>(),
             typed<B>(),
@@ -240,25 +291,55 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         handler(args[0] as A, args[1] as B, args[2] as C)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any
+        > call(
         crossinline handler: (A, B, C, D) -> R
     ) = createCall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any
+        > call(
         crossinline handler: (A, B, C, D, E) -> R
     ) = createCall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any
+        > call(
         crossinline handler: (A, B, C, D, E, F) -> R
     ) = createCall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E, args[5] as F)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any
+        > call(
         crossinline handler: (A, B, C, D, E, F, G) -> R
     ) = createCall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
         handler(
@@ -272,7 +353,17 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         )
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any
+        > call(
         crossinline handler: (A, B, C, D, E, F, G, H) -> R
     ) = createCall(
         TypedMethod(args8<A, B, C, D, E, F, G, H>(), typed<R>()),
@@ -290,7 +381,18 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         }
     )
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any
+        > call(
         crossinline handler: (A, B, C, D, E, F, G, H, I) -> R
     ) = createCall(
         TypedMethod(args9<A, B, C, D, E, F, G, H, I>(), typed<R>()),
@@ -309,7 +411,19 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         }
     )
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> call(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any,
+        reified J : Any
+        > call(
         crossinline handler: (A, B, C, D, E, F, G, H, I, J) -> R
     ) = createCall(
         TypedMethod(args10<A, B, C, D, E, F, G, H, I, J>(), typed<R>()),
@@ -351,25 +465,55 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         handler(args[0] as A, args[1] as B, args[2] as C)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D) -> R
     ) = createACall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D, E) -> R
     ) = createACall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D, E, F) -> R
     ) = createACall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E, args[5] as F)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D, E, F, G) -> R
     ) = createACall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
         handler(
@@ -383,7 +527,17 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         )
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H) -> R
     ) = createACall(
         TypedMethod(args8<A, B, C, D, E, F, G, H>(), typed<R>()),
@@ -401,7 +555,18 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         }
     )
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H, I) -> R
     ) = createACall(
         TypedMethod(args9<A, B, C, D, E, F, G, H, I>(), typed<R>()),
@@ -420,7 +585,19 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         }
     )
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> acall(
+    inline fun <
+        reified R : Any,
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any,
+        reified J : Any
+        > acall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H, I, J) -> R
     ) = createACall(
         TypedMethod(args10<A, B, C, D, E, F, G, H, I, J>(), typed<R>()),
@@ -464,7 +641,13 @@ open class TypedArgumentsBuilderContext {
         d: D
     ) = createCall(TypedMethodBuilderContext().args4<A, B, C, D>(), listOf(a, b, c, d))
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> call(
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any
+        > call(
         a: A,
         b: B,
         c: C,
@@ -472,7 +655,14 @@ open class TypedArgumentsBuilderContext {
         e: E
     ) = createCall(TypedMethodBuilderContext().args5<A, B, C, D, E>(), listOf(a, b, c, d, e))
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> call(
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any
+        > call(
         a: A,
         b: B,
         c: C,
@@ -484,7 +674,15 @@ open class TypedArgumentsBuilderContext {
         listOf(a, b, c, d, e, f)
     )
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> call(
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any
+        > call(
         a: A,
         b: B,
         c: C,
@@ -497,7 +695,16 @@ open class TypedArgumentsBuilderContext {
         listOf(a, b, c, d, e, f, g)
     )
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> call(
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any
+        > call(
         a: A,
         b: B,
         c: C,
@@ -511,7 +718,17 @@ open class TypedArgumentsBuilderContext {
         listOf(a, b, c, d, e, f, g, h)
     )
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> call(
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any
+        > call(
         a: A,
         b: B,
         c: C,
@@ -526,7 +743,18 @@ open class TypedArgumentsBuilderContext {
         listOf(a, b, c, d, e, f, g, h, i)
     )
 
-    inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> call(
+    inline fun <
+        reified A : Any,
+        reified B : Any,
+        reified C : Any,
+        reified D : Any,
+        reified E : Any,
+        reified F : Any,
+        reified G : Any,
+        reified H : Any,
+        reified I : Any,
+        reified J : Any
+        > call(
         a: A,
         b: B,
         c: C,

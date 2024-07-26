@@ -24,15 +24,13 @@ typealias ComplexType = Map<ULong, ComplexTypeForMessageValue>
 
 class MessageTest {
 
-    fun ASSERT_NO_THROW(any: Any?) = any
-
     /*-------------------------------------*/
     /* --          TEST CASES           -- */
     /*-------------------------------------*/
 
     @Test
     fun `AMessage CanBeDefaultConstructed`() {
-        ASSERT_NO_THROW(PlainMessage.createPlainMessage())
+        PlainMessage.createPlainMessage()
     }
 
     @Test
@@ -356,19 +354,19 @@ class MessageTest {
     }
 
     fun `AMessage ThrowsWhenDestinationStdVariantHasWrongTypeDuringDeserialization`() {
-            val msg = PlainMessage.createPlainMessage()
+        val msg = PlainMessage.createPlainMessage()
 
-            val dataWritten = Variant(5)
+        val dataWritten = Variant(5)
 
-            msg.serialize(dataWritten)
-            msg.seal()
+        msg.serialize(dataWritten)
+        msg.seal()
 
-            try {
-                val variant = msg.deserialize<Variant>()
-                variant.get<Boolean>()
-                fail("Error")
-            } catch (t: Error) {
-                // Expected exception
-            }
+        try {
+            val variant = msg.deserialize<Variant>()
+            variant.get<Boolean>()
+            fail("Error")
+        } catch (t: Error) {
+            // Expected exception
         }
+    }
 }

@@ -30,7 +30,7 @@ class AdaptorAndProxy {
 }
 
 class CppEventLoop : BaseTest() {
-    private val fixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = SdbusConnectionFixture(this)
 
     /*-------------------------------------*/
     /* --          TEST CASES           -- */
@@ -144,20 +144,20 @@ class CppEventLoop : BaseTest() {
 }
 
 class DirectConnectionTest : BaseTest() {
-    private val fixture = TextFixtureWithDirectConnection(this)
+    private val fixture = DirectConnectionFixture(this)
 
     // A simple direct connection test similar in nature to https://github.com/systemd/systemd/blob/main/src/libsystemd/sd-bus/test-bus-server.c
     @Test
     fun canBeUsedBetweenClientAndServer() {
-        val v = fixture.m_proxy!!.sumArrayItems(
+        val v = fixture.proxy!!.sumArrayItems(
             listOf(1u.toUShort(), 7u.toUShort()),
             arrayOf(2u, 3u, 4u)
         )
-        fixture.m_adaptor?.emitSimpleSignal()
+        fixture.adaptor?.emitSimpleSignal()
 
         // Make sure method call passes and emitted signal is received
         assertEquals(1u + 7u + 2u + 3u + 4u, v)
-        assertTrue(waitUntil(fixture.m_proxy!!.gotSimpleSignal))
+        assertTrue(waitUntil(fixture.proxy!!.gotSimpleSignal))
         println("Done with test")
     }
 }

@@ -27,7 +27,7 @@ internal interface InternalConnection : com.monkopedia.sdbus.Connection {
         objectPath: ObjectPath,
         interfaceName: InterfaceName,
         vtable: CValuesRef<sd_bus_vtable>,
-        userData: Any?,
+        userData: Any?
     ): Reference<*>
 
     fun createPlainMessage(): PlainMessage
@@ -95,8 +95,9 @@ internal interface InternalConnection : com.monkopedia.sdbus.Connection {
 
         private var instance: InternalConnection? = null
 
-        fun getPseudoConnectionInstance(): InternalConnection = instance ?: createPseudoConnection().also {
-            instance = it
-        }
+        fun getPseudoConnectionInstance(): InternalConnection =
+            instance ?: createPseudoConnection().also {
+                instance = it
+            }
     }
 }

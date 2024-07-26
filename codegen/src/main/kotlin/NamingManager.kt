@@ -6,9 +6,28 @@ import com.monkopedia.sdbus.NamingManager.GeneratedType
 import com.monkopedia.sdbus.NamingManager.LazyType
 import com.monkopedia.sdbus.NamingManager.NamingType
 import com.monkopedia.sdbus.NamingManager.SimpleType
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.BOOLEAN
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.DOUBLE
+import com.squareup.kotlinpoet.Dynamic
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.LIST
+import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.LambdaTypeName
+import com.squareup.kotlinpoet.MAP
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import kotlin.math.sign
+import com.squareup.kotlinpoet.SHORT
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeVariableName
+import com.squareup.kotlinpoet.UNIT
+import com.squareup.kotlinpoet.U_BYTE
+import com.squareup.kotlinpoet.U_INT
+import com.squareup.kotlinpoet.U_LONG
+import com.squareup.kotlinpoet.U_SHORT
+import com.squareup.kotlinpoet.WildcardTypeName
 
 class NamingManager(doc: XmlRootNode) {
 

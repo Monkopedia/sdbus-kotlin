@@ -39,7 +39,6 @@ abstract class BaseTest {
             }
         }
     }
-
 }
 
 interface TestFixture {

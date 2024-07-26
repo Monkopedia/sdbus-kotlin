@@ -28,7 +28,7 @@ inline fun <reified T> Variant.containsValueOfType(): Boolean {
 
 @Serializable(Variant.Companion::class)
 class Variant constructor() {
-    private val msg_: PlainMessage = createPlainMessage()
+    private val msg: PlainMessage = createPlainMessage()
 
     internal constructor(message: Message) : this() {
         // Do nothing, message wil deserialize
@@ -39,11 +39,11 @@ class Variant constructor() {
         module: SerializersModule,
         value: Any
     ) : this() {
-        msg_.openVariant(strategy.descriptor.asSignature.value)
+        msg.openVariant(strategy.descriptor.asSignature.value)
         @Suppress("UNCHECKED_CAST")
-        msg_.serialize(strategy as SerializationStrategy<Any>, module, value)
-        msg_.closeVariant()
-        msg_.seal()
+        msg.serialize(strategy as SerializationStrategy<Any>, module, value)
+        msg.closeVariant()
+        msg.seal()
     }
 
     inline fun <reified T : Any> get(): T {
@@ -61,32 +61,32 @@ class Variant constructor() {
         module: SerializersModule,
         signature: SdbusSig
     ): T {
-        msg_.rewind(false)
+        msg.rewind(false)
 
-        msg_.enterVariant(signature.value)
+        msg.enterVariant(signature.value)
         @Suppress("UNCHECKED_CAST")
-        val v: T = msg_.deserialize(type, module)
-        msg_.exitVariant()
+        val v: T = msg.deserialize(type, module)
+        msg.exitVariant()
         return v
     }
 
     val isEmpty: Boolean
-        get() = msg_.isEmpty
+        get() = msg.isEmpty
 
     fun serializeTo(msg: Message) {
-        msg_.rewind(true)
-        msg_.copyTo(msg, true)
+        this.msg.rewind(true)
+        this.msg.copyTo(msg, true)
     }
 
     fun deserializeFrom(msg: Message) {
-        msg.copyTo(msg_, false)
-        msg_.seal()
-        msg_.rewind(false)
+        msg.copyTo(this.msg, false)
+        this.msg.seal()
+        this.msg.rewind(false)
     }
 
     fun peekValueType(): String? {
-        msg_.rewind(false)
-        val (_, contents) = msg_.peekType()
+        msg.rewind(false)
+        val (_, contents) = msg.peekType()
         return contents
     }
 
@@ -248,11 +248,10 @@ value class Signature(val value: String) {
  * an explicitly provided fd by either duplicating or adopting that fd as-is.
  *
  ***********************************************/
-expect class UnixFd(fd: Int, adopt_fd: Unit): Resource {
+expect class UnixFd(fd: Int, adopt_fd: Unit) : Resource {
     override fun release()
 
     companion object {
         val SERIAL_NAME: String
     }
 }
-

@@ -32,7 +32,7 @@ import platform.posix.F_OK
 import platform.posix.access
 
 class DBusStandardInterfacesTests : BaseTest() {
-    private val fixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = SdbusConnectionFixture(this)
 
     @Test
     fun pingsViaPeerInterface() {
@@ -45,7 +45,8 @@ class DBusStandardInterfacesTests : BaseTest() {
             access("/var/lib/dbus/machine-id", F_OK) == -1
         ) {
             println(
-                "/etc/machine-id and /var/lib/dbus/machine-id files do not exist, GetMachineId() will not work"
+                "/etc/machine-id and /var/lib/dbus/machine-id files do not exist, " +
+                    "GetMachineId() will not work"
             )
         }
 

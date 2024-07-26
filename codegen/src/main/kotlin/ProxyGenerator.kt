@@ -3,9 +3,17 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Direction.OUT
-import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.KModifier.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier.OVERRIDE
+import com.squareup.kotlinpoet.KModifier.PUBLIC
+import com.squareup.kotlinpoet.KModifier.SUSPEND
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.UNIT
+import com.squareup.kotlinpoet.withIndent
 
 class ProxyGenerator : BaseGenerator() {
 

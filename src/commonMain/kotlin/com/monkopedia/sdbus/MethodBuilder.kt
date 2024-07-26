@@ -3,8 +3,6 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.Flags.GeneralFlags.DEPRECATED
 import com.monkopedia.sdbus.Flags.GeneralFlags.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
-import com.monkopedia.sdbus.TypedMethodCall.AsyncMethodCall
-import com.monkopedia.sdbus.TypedMethodCall.SyncMethodCall
 import kotlin.coroutines.CoroutineContext
 
 fun VTableBuilder.method(methodName: MethodName, builder: MethodVTableItem.() -> Unit) {

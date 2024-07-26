@@ -10,17 +10,19 @@ import com.squareup.kotlinpoet.TypeSpec
 
 fun GeneratedType.generateType(): FileSpec {
     return FileSpec.builder(reference.packageName, reference.simpleName).apply {
-        addType(TypeSpec.classBuilder(reference.simpleName).apply {
-            addModifiers(KModifier.DATA)
-            addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
-            val constructorBuilder = FunSpec.constructorBuilder()
+        addType(
+            TypeSpec.classBuilder(reference.simpleName).apply {
+                addModifiers(KModifier.DATA)
+                addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
+                val constructorBuilder = FunSpec.constructorBuilder()
 
-            for ((name, type) in args) {
-                constructorBuilder.addParameter(name, type)
-                addProperty(PropertySpec.builder(name, type).initializer("%N", name).build())
-            }
+                for ((name, type) in args) {
+                    constructorBuilder.addParameter(name, type)
+                    addProperty(PropertySpec.builder(name, type).initializer("%N", name).build())
+                }
 
-            primaryConstructor(constructorBuilder.build())
-        }.build())
+                primaryConstructor(constructorBuilder.build())
+            }.build()
+        )
     }.build()
 }

@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.cinterop.ExperimentalForeignApi
 
 class DBusSignalsTest : BaseTest() {
-    private val fixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = SdbusConnectionFixture(this)
 
     @Test
     fun emitsSimpleSignalSuccesfully() {

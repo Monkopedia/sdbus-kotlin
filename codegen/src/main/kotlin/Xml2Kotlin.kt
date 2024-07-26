@@ -25,7 +25,7 @@ class Xml2Kotlin : CliktCommand() {
         .flag()
     val adaptor by option("-a", "--adaptor", help = "Generate the code for an adaptor")
         .flag()
-    val  proxy by option("-p", "--proxy", help = "Generate the code for a proxy")
+    val proxy by option("-p", "--proxy", help = "Generate the code for a proxy")
         .flag()
 
     override fun run() {

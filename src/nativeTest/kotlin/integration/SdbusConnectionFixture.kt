@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import platform.posix.usleep
 
-class TestFixtureSdBusCppLoop(test: BaseTest) : BaseTestFixture(test) {
+class SdbusConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
 
     private var objectManagerAdaptor: ObjectManagerTestAdaptor? = null
 

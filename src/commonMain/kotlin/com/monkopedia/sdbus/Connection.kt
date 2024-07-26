@@ -381,4 +381,3 @@ expect fun createDirectBusConnection(fd: Int): Connection
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
 expect fun createServerBus(fd: Int): Connection
-

@@ -19,6 +19,7 @@ plugins {
     kotlin("multiplatform") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.15.1"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 
     `maven-publish`
 }
@@ -41,14 +42,14 @@ apiValidation {
 }
 
 kotlin {
-    val SYSTEMD_VERSION = "256.2-1"
+    val systemdVersion = "256.2-1"
     linuxX64 {
         binaries {
             sharedLib { }
         }
         compilations.getByName("main") {
             cinterops {
-                create("sdbus-x86_64-$SYSTEMD_VERSION")
+                create("sdbus-x86_64-$systemdVersion")
             }
         }
         compilerOptions {
@@ -66,7 +67,7 @@ kotlin {
         }
         compilations.getByName("main") {
             cinterops {
-                create("sdbus-aarch64-$SYSTEMD_VERSION")
+                create("sdbus-aarch64-$systemdVersion")
             }
         }
         compilerOptions {
@@ -104,10 +105,14 @@ kotlin {
     }
 }
 
+ktlint {
+    this.android.set(true)
+}
+
 val overrides = mapOf(
     "linker.linux_x64" to "/usr/bin/ld.gold",
     "linker.linux_x64-linux_arm64" to "/usr/bin/aarch64-linux-gnu-ld.gold"
-).entries.joinToString(" ") { "-Xoverride-konan-properties=${it.key}=${it.value}"}
+).entries.joinToString(" ") { "-Xoverride-konan-properties=${it.key}=${it.value}" }
 
 afterEvaluate {
     tasks.all {

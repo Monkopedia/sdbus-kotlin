@@ -11,7 +11,7 @@ import kotlin.test.fail
 import kotlinx.cinterop.ExperimentalForeignApi
 
 class DBusPropertiesTest : BaseTest() {
-    private val fixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = SdbusConnectionFixture(this)
 
     @Test
     fun readsReadOnlyPropertySuccesfully() {

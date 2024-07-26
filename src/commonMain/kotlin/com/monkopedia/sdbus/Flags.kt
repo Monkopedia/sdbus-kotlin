@@ -52,4 +52,3 @@ class Flags {
 
     fun test(flag: PropertyUpdateBehaviorFlags): Boolean = flag.value in flags
 }
-

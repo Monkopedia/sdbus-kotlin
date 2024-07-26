@@ -612,19 +612,19 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
         val connection: WeakReference<ConnectionImpl>
     )
 
-    private class EventLoopThread(private val bus_: BusPtr, private val sdbus_: ISdBus) {
-        private val loopExitFd_: EventFd = EventFd()
-        private val eventFd_: EventFd = EventFd()
+    private class EventLoopThread(private val bus: BusPtr, private val sdbus: ISdBus) {
+        private val loopExitFd: EventFd = EventFd()
+        private val eventFd: EventFd = EventFd()
 
         val exitFd: EventFd
-            get() = EventFd(loopExitFd_.fd)
+            get() = EventFd(loopExitFd.fd)
 
         fun notifyEventLoopToExit() {
-            loopExitFd_.notify()
+            loopExitFd.notify()
         }
 
         fun notifyEventLoopToWakeUpFromPoll() {
-            eventFd_.notify()
+            eventFd.notify()
         }
 
         fun wakeUpEventLoopIfMessagesInQueue() {
@@ -656,33 +656,33 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
         }
 
         fun processPendingEvent(): Boolean {
-            val bus = bus_.get()
+            val bus = bus.get()
             require(bus != null)
 
-            val r = sdbus_.sd_bus_process(bus, null)
+            val r = sdbus.sd_bus_process(bus, null)
             sdbusRequire(r < 0, "Failed to process bus requests", -r)
 
             // In correct use of sdbus-c++ API, r can be 0 only when processPendingEvent()
             // is called from an external event loop as a reaction to event fd being signalled.
             // If there are no more D-Bus messages to process, we know we have to clear event fd.
             if (r == 0) {
-                eventFd_.clear()
+                eventFd.clear()
             }
 
             return r > 0
         }
 
         suspend fun waitForNextEvent(): Boolean = memScoped {
-            require(loopExitFd_.fd >= 0)
-            require(eventFd_.fd >= 0)
+            require(loopExitFd.fd >= 0)
+            require(eventFd.fd >= 0)
 
             val sdbusPollData = getEventLoopPollData()
             val fdsCount = 3
             val fds = allocArray<pollfd>(fdsCount) { index: Int ->
                 when (index) {
                     0 -> initFd(sdbusPollData.fd, sdbusPollData.events, 0)
-                    1 -> initFd(eventFd_.fd, POLLIN.toShort(), 0)
-                    else -> initFd(loopExitFd_.fd, POLLIN.toShort(), 0)
+                    1 -> initFd(eventFd.fd, POLLIN.toShort(), 0)
+                    else -> initFd(loopExitFd.fd, POLLIN.toShort(), 0)
                 }
             }
 
@@ -697,7 +697,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
 
             // Wake up notification, in order that we re-enter poll with freshly read PollData (namely, new poll timeout thereof)
             if ((fds[1].revents.toInt() and POLLIN) != 0) {
-                val cleared = eventFd_?.clear()
+                val cleared = eventFd?.clear()
                 sdbusRequire(
                     cleared != true,
                     "Failed to read from the event descriptor",
@@ -708,7 +708,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
             }
             // Loop exit notification
             if ((fds[2].revents.toInt() and POLLIN) != 0) {
-                val cleared = loopExitFd_?.clear()
+                val cleared = loopExitFd?.clear()
                 sdbusRequire(
                     cleared != true,
                     "Failed to read from the loop exit descriptor",
@@ -722,10 +722,10 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
 
         fun getEventLoopPollData(): PollData {
             val pollData = ISdBus.PollData()
-            val r = sdbus_.sd_bus_get_poll_data(bus_.value, pollData)
+            val r = sdbus.sd_bus_get_poll_data(bus.value, pollData)
             sdbusRequire(r < 0, "Failed to get bus poll data", -r)
 
-            require(eventFd_.fd >= 0)
+            require(eventFd.fd >= 0)
 
             val timeout = if (pollData.timeout_usec == UINT64_MAX) {
                 Duration.INFINITE
@@ -743,7 +743,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
         fun arePendingMessagesInReadQueue(): Boolean = memScoped {
             val readQueueSize = cValue<uint64_tVar>().getPointer(this)
 
-            val r = sdbus_.sd_bus_get_n_queued_read(bus_.get(), readQueueSize)
+            val r = sdbus.sd_bus_get_n_queued_read(bus.get(), readQueueSize)
             sdbusRequire(
                 r < 0,
                 "Failed to get number of pending messages in read queue",
@@ -815,9 +815,6 @@ internal class ConnectionImpl(private val sdbus: ISdBus, bus: BusPtr) : Internal
 
         fun serverConnection(intf: ISdBus, fd: Int) =
             ConnectionImpl(intf) { intf.sd_bus_open_server(it, fd) }
-
-        fun Connection(intf: ISdBus, bus: CPointer<sd_bus>) =
-            ConnectionImpl(intf) { it.set(0, bus).let { 0 } }
 
         fun pseudoConnection(intf: ISdBus) = ConnectionImpl(intf, openPseudoBus(intf))
     }

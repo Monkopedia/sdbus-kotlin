@@ -535,7 +535,6 @@ actual open class Message internal constructor(
         sdbusRequire(r < 0, "Failed to exit a struct", -r)
     }
 
-
     internal actual operator fun invoke(): Boolean = isOk
     internal actual fun clearFlags() {
         isOk = true
@@ -699,8 +698,7 @@ internal actual inline fun <T> Message.deserializeArrayFast(
     converter.readNativeInto(arrayPtr[0]?.reinterpret()!!, count.convert(), items)
 }
 
-
-internal  fun Message.appendArray(type: Char, ptr: CPointer<*>, size: size_t) {
+internal fun Message.appendArray(type: Char, ptr: CPointer<*>, size: size_t) {
     debugPrint { "append array $type $size" }
     val r = sd_bus_message_append_array(msg, type.code.toByte(), ptr, size)
     sdbusRequire(r < 0, "Failed to serialize an array", -r)

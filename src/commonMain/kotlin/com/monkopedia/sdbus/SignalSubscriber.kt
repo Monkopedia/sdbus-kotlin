@@ -1,7 +1,5 @@
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.TypedMethodCall.AsyncMethodCall
-import com.monkopedia.sdbus.TypedMethodCall.SyncMethodCall
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking

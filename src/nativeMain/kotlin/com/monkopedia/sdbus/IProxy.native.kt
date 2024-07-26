@@ -7,7 +7,7 @@ import kotlin.experimental.ExperimentalNativeApi
 import kotlinx.cinterop.memScoped
 import platform.posix.EINVAL
 
-    /**
+/**
  * Creates a proxy object for a specific remote D-Bus object
  *
  * @param connection D-Bus connection to be used by the proxy object
@@ -29,58 +29,58 @@ import platform.posix.EINVAL
  * auto proxy = sdbus::createProxy(connection, "com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-    actual fun createProxy(
-        connection: Connection,
-        destination: ServiceName,
-        objectPath: ObjectPath,
-        dontRunEventLoopThread: Boolean
-    ): Proxy {
-        val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
-        sdbusRequire(
-            sdbusConnection == null,
-            "Connection is not a real sdbus-c++ connection",
-            EINVAL
-        )
+actual fun createProxy(
+    connection: Connection,
+    destination: ServiceName,
+    objectPath: ObjectPath,
+    dontRunEventLoopThread: Boolean
+): Proxy {
+    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
+    sdbusRequire(
+        sdbusConnection == null,
+        "Connection is not a real sdbus-c++ connection",
+        EINVAL
+    )
 
-        return ProxyImpl(
-            sdbusConnection!!,
-            destination,
-            objectPath,
-            dontRunEventLoopThread = dontRunEventLoopThread
-        )
-    }
+    return ProxyImpl(
+        sdbusConnection!!,
+        destination,
+        objectPath,
+        dontRunEventLoopThread = dontRunEventLoopThread
+    )
+}
 
-    /**
-     * Creates a proxy object for a specific remote D-Bus object
-     *
-     * @param destination Bus name that provides the remote D-Bus object
-     * @param objectPath Path of the remote D-Bus object
-     * @return Pointer to the object proxy instance
-     *
-     * No D-Bus connection is provided here, so the object proxy will create and manage
-     * his own connection, and will automatically start an event loop upon that connection
-     * in a separate internal thread. Handlers for incoming signals and asynchronous
-     * method replies will be executed in the context of that thread.
-     *
-     * Code example:
-     * @code
-     * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
-     * @endcode
-     */
-    actual fun createProxy(
-        destination: ServiceName,
-        objectPath: ObjectPath,
-        dontRunEventLoopThread: Boolean
-    ): Proxy = memScoped {
-        val connection = createBusConnection()
+/**
+ * Creates a proxy object for a specific remote D-Bus object
+ *
+ * @param destination Bus name that provides the remote D-Bus object
+ * @param objectPath Path of the remote D-Bus object
+ * @return Pointer to the object proxy instance
+ *
+ * No D-Bus connection is provided here, so the object proxy will create and manage
+ * his own connection, and will automatically start an event loop upon that connection
+ * in a separate internal thread. Handlers for incoming signals and asynchronous
+ * method replies will be executed in the context of that thread.
+ *
+ * Code example:
+ * @code
+ * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
+ * @endcode
+ */
+actual fun createProxy(
+    destination: ServiceName,
+    objectPath: ObjectPath,
+    dontRunEventLoopThread: Boolean
+): Proxy = memScoped {
+    val connection = createBusConnection()
 
-        val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
-        assert(sdbusConnection != null)
+    val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
+    assert(sdbusConnection != null)
 
-        ProxyImpl(
-            sdbusConnection!!,
-            destination,
-            objectPath,
-            dontRunEventLoopThread = dontRunEventLoopThread
-        )
-    }
+    ProxyImpl(
+        sdbusConnection!!,
+        destination,
+        objectPath,
+        dontRunEventLoopThread = dontRunEventLoopThread
+    )
+}

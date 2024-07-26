@@ -1,9 +1,9 @@
 @file:Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
+
 package com.monkopedia.sdbus.mocks
 
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KFunction
@@ -128,7 +128,9 @@ class MappingHandler(val fallback: CallHandler) : CallHandler {
     inline fun method(method: KFunction<*>): MappingMatcher {
         val methodName = method.name
         return { type, args ->
-            println("Matching ${args.toList().map { (it as? Array<*>)?.toList() ?: it }} $methodName")
+            println(
+                "Matching ${args.toList().map { (it as? Array<*>)?.toList() ?: it }} $methodName"
+            )
             args[0] == methodName
         }
     }

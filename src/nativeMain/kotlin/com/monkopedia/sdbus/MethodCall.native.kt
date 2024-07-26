@@ -40,30 +40,27 @@ actual class MethodCall internal constructor(
     actual fun send(timeout: ULong): MethodReply =
         if (dontExpectReply) sendWithNoReply() else sendWithReply(timeout)
 
-    fun send(
-        callback: sd_bus_message_handler_t,
-        userData: Any?,
-        timeout: ULong
-    ): Resource = memScoped {
-        val slot: CPointer<CPointerVar<sd_bus_slot>> =
-            cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-        val userDataRef = userData?.let { StableRef.create(it) }
+    fun send(callback: sd_bus_message_handler_t, userData: Any?, timeout: ULong): Resource =
+        memScoped {
+            val slot: CPointer<CPointerVar<sd_bus_slot>> =
+                cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
+            val userDataRef = userData?.let { StableRef.create(it) }
 
-        val r = sdbus.sd_bus_call_async(
-            null,
-            slot,
-            msg,
-            callback,
-            userDataRef?.asCPointer(),
-            timeout
-        )
-        sdbusRequire(r < 0, "Failed to call method asynchronously", -r)
+            val r = sdbus.sd_bus_call_async(
+                null,
+                slot,
+                msg,
+                callback,
+                userDataRef?.asCPointer(),
+                timeout
+            )
+            sdbusRequire(r < 0, "Failed to call method asynchronously", -r)
 
-        Reference(slot[0]) {
-            sd_bus_slot_unref(it)
-            userDataRef?.dispose()
+            Reference(slot[0]) {
+                sd_bus_slot_unref(it)
+                userDataRef?.dispose()
+            }
         }
-    }
 
     actual fun createReply(): MethodReply = memScoped {
         val sdbusReply = cValue<CPointerVar<sd_bus_message>>().getPointer(this)

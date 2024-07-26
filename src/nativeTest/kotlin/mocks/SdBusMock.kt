@@ -36,8 +36,7 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         bus: CValuesRef<sd_bus>?,
         m: CValuesRef<sd_bus_message>?,
         cookie: CValuesRef<uint64_tVar>?
-    ): Int =
-        invoke("sd_bus_send", bus, m, cookie)
+    ): Int = invoke("sd_bus_send", bus, m, cookie)
 
     override fun sd_bus_call(
         bus: CValuesRef<sd_bus>?,
@@ -45,8 +44,7 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         usec: uint64_t,
         ret_error: CValuesRef<sd_bus_error>?,
         reply: CValuesRef<CPointerVar<sd_bus_message>>?
-    ): Int =
-        invoke("sd_bus_call", m, usec, ret_error, reply)
+    ): Int = invoke("sd_bus_call", m, usec, ret_error, reply)
 
     override fun sd_bus_call_async(
         bus: CValuesRef<sd_bus>?,
@@ -55,15 +53,13 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         callback: sd_bus_message_handler_t?,
         userdata: CValuesRef<*>?,
         usec: uint64_t
-    ): Int =
-        invoke("sd_bus_call_async", bus, slot, m, callback, userdata, usec)
+    ): Int = invoke("sd_bus_call_async", bus, slot, m, callback, userdata, usec)
 
     override fun sd_bus_message_new(
         bus: CValuesRef<sd_bus>?,
         m: CValuesRef<CPointerVar<sd_bus_message>>?,
         type: uint8_t
-    ): Int =
-        invoke("sd_bus_message_new", bus, m, type)
+    ): Int = invoke("sd_bus_message_new", bus, m, type)
 
     override fun sd_bus_message_new_method_call(
         bus: CValuesRef<sd_bus>?,
@@ -81,21 +77,18 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         path: String?,
         `interface`: String?,
         member: String?
-    ): Int =
-        invoke("sd_bus_message_new_signal", bus, m, path, `interface`, member)
+    ): Int = invoke("sd_bus_message_new_signal", bus, m, path, `interface`, member)
 
     override fun sd_bus_message_new_method_return(
         call: CValuesRef<sd_bus_message>?,
         m: CValuesRef<CPointerVar<sd_bus_message>>?
-    ): Int =
-        invoke("sd_bus_message_new_method_return", call, m)
+    ): Int = invoke("sd_bus_message_new_method_return", call, m)
 
     override fun sd_bus_message_new_method_error(
         call: CValuesRef<sd_bus_message>?,
         m: CValuesRef<CPointerVar<sd_bus_message>>?,
         e: CValuesRef<sd_bus_error>?
-    ): Int =
-        invoke("sd_bus_message_new_method_error", call, m, e)
+    ): Int = invoke("sd_bus_message_new_method_error", call, m, e)
 
     override fun sd_bus_set_method_call_timeout(bus: CValuesRef<sd_bus>?, usec: uint64_t): Int =
         invoke("sd_bus_set_method_call_timeout", bus, usec)
@@ -103,16 +96,14 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
     override fun sd_bus_get_method_call_timeout(
         bus: CValuesRef<sd_bus>?,
         ret: CValuesRef<uint64_tVar>?
-    ): Int =
-        invoke("sd_bus_get_method_call_timeout", bus, ret)
+    ): Int = invoke("sd_bus_get_method_call_timeout", bus, ret)
 
     override fun sd_bus_emit_properties_changed_strv(
         bus: CValuesRef<sd_bus>?,
         path: String?,
         `interface`: String?,
         names: CValuesRef<CPointerVar<ByteVar>>?
-    ): Int =
-        invoke("sd_bus_emit_properties_changed_strv", bus, path, `interface`, names)
+    ): Int = invoke("sd_bus_emit_properties_changed_strv", bus, path, `interface`, names)
 
     override fun sd_bus_emit_object_added(bus: CValuesRef<sd_bus>?, path: String?): Int =
         invoke("sd_bus_emit_object_added", bus, path)
@@ -124,15 +115,13 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         bus: CValuesRef<sd_bus>?,
         path: String?,
         interfaces: CValuesRef<CPointerVar<ByteVar>>?
-    ): Int =
-        invoke("sd_bus_emit_interfaces_added_strv", bus, path, interfaces)
+    ): Int = invoke("sd_bus_emit_interfaces_added_strv", bus, path, interfaces)
 
     override fun sd_bus_emit_interfaces_removed_strv(
         bus: CValuesRef<sd_bus>?,
         path: String?,
         interfaces: CValuesRef<CPointerVar<ByteVar>>?
-    ): Int =
-        invoke("sd_bus_emit_interfaces_removed_strv", bus, path, interfaces)
+    ): Int = invoke("sd_bus_emit_interfaces_removed_strv", bus, path, interfaces)
 
     override fun sd_bus_open(ret: CValuesRef<CPointerVar<sd_bus>>?): Int =
         invoke("sd_bus_open", ret)
@@ -146,14 +135,12 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
     override fun sd_bus_open_user_with_address(
         ret: CValuesRef<CPointerVar<sd_bus>>?,
         address: String
-    ): Int =
-        invoke("sd_bus_open_user_with_address", ret, address)
+    ): Int = invoke("sd_bus_open_user_with_address", ret, address)
 
     override fun sd_bus_open_system_remote(
         ret: CValuesRef<CPointerVar<sd_bus>>?,
         host: String?
-    ): Int =
-        invoke("sd_bus_open_system_remote", ret, host)
+    ): Int = invoke("sd_bus_open_system_remote", ret, host)
 
     override fun sd_bus_open_direct(ret: CValuesRef<CPointerVar<sd_bus>>?, address: String): Int =
         invoke("sd_bus_open_direct", ret, address)
@@ -168,8 +155,7 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         bus: CValuesRef<sd_bus>?,
         name: String?,
         flags: uint64_t
-    ): Int =
-        invoke("sd_bus_request_name", bus, name, flags)
+    ): Int = invoke("sd_bus_request_name", bus, name, flags)
 
     override fun sd_bus_release_name(bus: CValuesRef<sd_bus>?, name: String?): Int =
         invoke("sd_bus_release_name", bus, name)
@@ -177,8 +163,7 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
     override fun sd_bus_get_unique_name(
         bus: CValuesRef<sd_bus>?,
         unique: CValuesRef<CPointerVar<ByteVar>>?
-    ): Int =
-        invoke("sd_bus_get_unique_name", bus, unique)
+    ): Int = invoke("sd_bus_get_unique_name", bus, unique)
 
     override fun sd_bus_add_object_vtable(
         bus: CValuesRef<sd_bus>?,
@@ -187,15 +172,13 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         `interface`: String?,
         vtable: CValuesRef<sd_bus_vtable>?,
         userdata: CValuesRef<*>?
-    ): Int =
-        invoke("sd_bus_add_object_vtable", bus, slot, path, `interface`, vtable, userdata)
+    ): Int = invoke("sd_bus_add_object_vtable", bus, slot, path, `interface`, vtable, userdata)
 
     override fun sd_bus_add_object_manager(
         bus: CValuesRef<sd_bus>?,
         slot: CValuesRef<CPointerVar<sd_bus_slot>>?,
         path: String?
-    ): Int =
-        invoke("sd_bus_add_object_manager", bus, slot, path)
+    ): Int = invoke("sd_bus_add_object_manager", bus, slot, path)
 
     override fun sd_bus_add_match(
         bus: CValuesRef<sd_bus>?,
@@ -203,8 +186,7 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         match: String?,
         callback: sd_bus_message_handler_t?,
         userdata: CValuesRef<*>?
-    ): Int =
-        invoke("sd_bus_add_match", bus, slot, match, callback, userdata)
+    ): Int = invoke("sd_bus_add_match", bus, slot, match, callback, userdata)
 
     override fun sd_bus_add_match_async(
         bus: CValuesRef<sd_bus>?,
@@ -225,33 +207,29 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
         member: String?,
         callback: sd_bus_message_handler_t?,
         userdata: CValuesRef<*>?
-    ): Int =
-        invoke(
-            "sd_bus_match_signal",
-            bus,
-            ret,
-            sender,
-            path,
-            `interface`,
-            member,
-            callback,
-            userdata
-        )
+    ): Int = invoke(
+        "sd_bus_match_signal",
+        bus,
+        ret,
+        sender,
+        path,
+        `interface`,
+        member,
+        callback,
+        userdata
+    )
 
     override fun sd_bus_slot_unref(slot: CValuesRef<sd_bus_slot>?): CPointer<sd_bus_slot>? =
         invoke("sd_bus_slot_unref", slot)
 
-    override fun sd_bus_new(ret: CValuesRef<CPointerVar<sd_bus>>?): Int =
-        invoke("sd_bus_new", ret)
+    override fun sd_bus_new(ret: CValuesRef<CPointerVar<sd_bus>>?): Int = invoke("sd_bus_new", ret)
 
-    override fun sd_bus_start(bus: CValuesRef<sd_bus>?): Int =
-        invoke("sd_bus_start", bus)
+    override fun sd_bus_start(bus: CValuesRef<sd_bus>?): Int = invoke("sd_bus_start", bus)
 
     override fun sd_bus_process(
         bus: CValuesRef<sd_bus>?,
         r: CValuesRef<CPointerVar<sd_bus_message>>?
-    ): Int =
-        invoke("sd_bus_process", bus, r)
+    ): Int = invoke("sd_bus_process", bus, r)
 
     override fun sd_bus_get_current_message(bus: CValuesRef<sd_bus>?): CPointer<sd_bus_message>? =
         invoke("sd_bus_get_current_message", bus)
@@ -262,11 +240,9 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
     override fun sd_bus_get_n_queued_read(
         bus: CValuesRef<sd_bus>?,
         ret: CValuesRef<uint64_tVar>?
-    ): Int =
-        invoke("sd_bus_get_n_queued_read", bus, ret)
+    ): Int = invoke("sd_bus_get_n_queued_read", bus, ret)
 
-    override fun sd_bus_flush(bus: CValuesRef<sd_bus>?): Int =
-        invoke("sd_bus_flush", bus)
+    override fun sd_bus_flush(bus: CValuesRef<sd_bus>?): Int = invoke("sd_bus_flush", bus)
 
     override fun sd_bus_flush_close_unref(bus: CValuesRef<sd_bus>?): CPointer<sd_bus>? =
         invoke("sd_bus_flush_close_unref", bus)
@@ -277,15 +253,13 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
     override fun sd_bus_message_set_destination(
         m: CValuesRef<sd_bus_message>?,
         destination: String?
-    ): Int =
-        invoke("sd_bus_message_set_destination", m, destination)
+    ): Int = invoke("sd_bus_message_set_destination", m, destination)
 
     override fun sd_bus_query_sender_creds(
         m: CValuesRef<sd_bus_message>?,
         mask: uint64_t,
         creds: CValuesRef<CPointerVar<sd_bus_creds>>?
-    ): Int =
-        invoke("sd_bus_query_sender_creds", m, mask, creds)
+    ): Int = invoke("sd_bus_query_sender_creds", m, mask, creds)
 
     override fun sd_bus_creds_unref(c: CValuesRef<sd_bus_creds>?): CPointer<sd_bus_creds>? =
         invoke("sd_bus_creds_unref", c)
@@ -293,42 +267,35 @@ internal class SdBusMock : Fake by FakeHelper(), ISdBus {
     override fun sd_bus_creds_get_pid(
         c: CValuesRef<sd_bus_creds>?,
         pid: CValuesRef<pid_tVar>?
-    ): Int =
-        invoke("sd_bus_creds_get_pid", c, pid)
+    ): Int = invoke("sd_bus_creds_get_pid", c, pid)
 
     override fun sd_bus_creds_get_uid(
         c: CValuesRef<sd_bus_creds>?,
         uid: CValuesRef<uid_tVar>?
-    ): Int =
-        invoke("sd_bus_creds_get_uid", c, uid)
+    ): Int = invoke("sd_bus_creds_get_uid", c, uid)
 
     override fun sd_bus_creds_get_euid(
         c: CValuesRef<sd_bus_creds>?,
         euid: CValuesRef<uid_tVar>?
-    ): Int =
-        invoke("sd_bus_creds_get_euid", c, euid)
+    ): Int = invoke("sd_bus_creds_get_euid", c, euid)
 
     override fun sd_bus_creds_get_gid(
         c: CValuesRef<sd_bus_creds>?,
         gid: CValuesRef<gid_tVar>?
-    ): Int =
-        invoke("sd_bus_creds_get_gid", c, gid)
+    ): Int = invoke("sd_bus_creds_get_gid", c, gid)
 
     override fun sd_bus_creds_get_egid(
         c: CValuesRef<sd_bus_creds>?,
         egid: CValuesRef<gid_tVar>?
-    ): Int =
-        invoke("sd_bus_creds_get_egid", c, egid)
+    ): Int = invoke("sd_bus_creds_get_egid", c, egid)
 
     override fun sd_bus_creds_get_supplementary_gids(
         c: CValuesRef<sd_bus_creds>?,
         gids: CValuesRef<CPointerVar<gid_tVar>>?
-    ): Int =
-        invoke("sd_bus_creds_get_supplementary_gids", c, gids)
+    ): Int = invoke("sd_bus_creds_get_supplementary_gids", c, gids)
 
     override fun sd_bus_creds_get_selinux_context(
         c: CValuesRef<sd_bus_creds>?,
         context: CValuesRef<CPointerVar<ByteVar>>?
-    ): Int =
-        invoke("sd_bus_creds_get_selinux_context", c, context)
+    ): Int = invoke("sd_bus_creds_get_selinux_context", c, context)
 }

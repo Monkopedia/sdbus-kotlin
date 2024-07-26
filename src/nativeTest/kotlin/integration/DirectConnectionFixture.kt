@@ -2,6 +2,8 @@
 
 package com.monkopedia.sdbus.integration
 
+import com.monkopedia.sdbus.createDirectBusConnection
+import com.monkopedia.sdbus.createServerBus
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -42,7 +44,7 @@ val globalAdaptorConnection = com.monkopedia.sdbus.createBusConnection()
 @ThreadLocal
 val globalProxyConnection = com.monkopedia.sdbus.createBusConnection()
 
-class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
+class DirectConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onBeforeTest() {
         super.onBeforeTest()
@@ -55,45 +57,49 @@ class TextFixtureWithDirectConnection(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onAfterTest() {
         runBlocking {
-            m_proxyConnection?.leaveEventLoop()
-            m_adaptorConnection?.leaveEventLoop()
+            proxyConnection?.leaveEventLoop()
+            adaptorConnection?.leaveEventLoop()
             context.close()
-            m_proxyConnection = null
-            m_adaptorConnection = null
+            proxyConnection = null
+            adaptorConnection = null
         }
     }
 
     private suspend fun CoroutineScope.createClientAndServerConnections(sock: Int) {
         val job = launch(context) {
             val fd = accept(sock, null, null)
-            val set = fcntl(fd, F_SETFD, /*SOCK_NONBLOCK|*/SOCK_CLOEXEC)
-            m_adaptorConnection = com.monkopedia.sdbus.createServerBus(fd)
+            val set = fcntl(
+                fd,
+                F_SETFD,
+                // SOCK_NONBLOCK |
+                SOCK_CLOEXEC
+            )
+            adaptorConnection = createServerBus(fd)
             // This is necessary so that createDirectBusConnection() below does not block
-            m_adaptorConnection?.enterEventLoopAsync()
+            adaptorConnection?.enterEventLoopAsync()
         }
-        m_proxyConnection =
-            com.monkopedia.sdbus.createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
-        m_proxyConnection?.enterEventLoopAsync()
+        proxyConnection = createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
+        proxyConnection?.enterEventLoopAsync()
 
         job.join()
     }
 
     fun createAdaptorAndProxyObjects() {
-        require(m_adaptorConnection != null)
-        require(m_proxyConnection != null)
+        require(adaptorConnection != null)
+        require(proxyConnection != null)
 
-        m_adaptor = TestAdaptor(m_adaptorConnection!!, OBJECT_PATH)
-        m_adaptor?.registerAdaptor()
+        adaptor = TestAdaptor(adaptorConnection!!, OBJECT_PATH)
+        adaptor?.registerAdaptor()
         // Destination parameter can be empty in case of direct connections
-        m_proxy = TestProxy(m_proxyConnection!!, EMPTY_DESTINATION, OBJECT_PATH)
-        m_proxy?.registerProxy()
+        proxy = TestProxy(proxyConnection!!, EMPTY_DESTINATION, OBJECT_PATH)
+        proxy?.registerProxy()
     }
 
     private val context = newFixedThreadPoolContext(4, "test-context")
-    var m_adaptorConnection: com.monkopedia.sdbus.Connection? = null
-    var m_proxyConnection: com.monkopedia.sdbus.Connection? = null
-    var m_adaptor: TestAdaptor? = null
-    var m_proxy: TestProxy? = null
+    var adaptorConnection: com.monkopedia.sdbus.Connection? = null
+    var proxyConnection: com.monkopedia.sdbus.Connection? = null
+    var adaptor: TestAdaptor? = null
+    var proxy: TestProxy? = null
 
     companion object {
         fun openUnixSocket(): Int = memScoped {

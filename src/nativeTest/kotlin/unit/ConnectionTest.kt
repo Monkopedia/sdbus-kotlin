@@ -22,51 +22,51 @@ import kotlinx.cinterop.toCPointer
 
 internal class ConnectionTest {
 
-    val sdBusIntfMock_ = SdBusMock().withDefaults()
-    val fakeBusPtr_ = 1.toLong().toCPointer<sd_bus>()
+    val sdBusIntfMock = SdBusMock().withDefaults()
+    val fakeBusPtr = 1.toLong().toCPointer<sd_bus>()
 
     private val openHandler = { type: KType, args: Array<out Any?> ->
         @Suppress("UNCHECKED_CAST")
-        (args[1] as CPointer<CPointerVar<sd_bus>>)[0] = fakeBusPtr_
+        (args[1] as CPointer<CPointerVar<sd_bus>>)[0] = fakeBusPtr
         1
     }
 
     @Test
     fun `ADefaultBusConnection OpensAndFlushesBusWhenCreated`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open) answers openHandler
         }
-        val calls = sdBusIntfMock_.record { defaultConnection(it) }
+        val calls = sdBusIntfMock.record { defaultConnection(it) }
         assertEquals(2, calls.size)
         assertEquals("sd_bus_flush", calls[1].args[0])
     }
 
     @Test
     fun `ASystemBusConnection OpensAndFlushesBusWhenCreated`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_system) answers openHandler
         }
-        val calls = sdBusIntfMock_.record { systemConnection(it) }
+        val calls = sdBusIntfMock.record { systemConnection(it) }
         assertEquals(2, calls.size)
         assertEquals("sd_bus_flush", calls[1].args[0])
     }
 
     @Test
     fun `ASessionBusConnection OpensAndFlushesBusWhenCreated`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_user) answers openHandler
         }
-        val calls = sdBusIntfMock_.record { sessionConnection(it) }
+        val calls = sdBusIntfMock.record { sessionConnection(it) }
         assertEquals(2, calls.size)
         assertEquals("sd_bus_flush", calls[1].args[0])
     }
 
     @Test
     fun `ADefaultBusConnection ClosesAndUnrefsBusWhenDestructed`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open) answers openHandler
         }
-        val calls = sdBusIntfMock_.record {
+        val calls = sdBusIntfMock.record {
             defaultConnection(it).release()
         }
         assertEquals(3, calls.size)
@@ -75,10 +75,10 @@ internal class ConnectionTest {
 
     @Test
     fun `ASystemBusConnection ClosesAndUnrefsBusWhenDestructed`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_system) answers openHandler
         }
-        val calls = sdBusIntfMock_.record {
+        val calls = sdBusIntfMock.record {
             systemConnection(it).release()
         }
         assertEquals(3, calls.size)
@@ -87,10 +87,10 @@ internal class ConnectionTest {
 
     @Test
     fun `ASessionBusConnection ClosesAndUnrefsBusWhenDestructed`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_user) answers openHandler
         }
-        val calls = sdBusIntfMock_.record {
+        val calls = sdBusIntfMock.record {
             sessionConnection(it).release()
         }
         assertEquals(3, calls.size)
@@ -99,11 +99,11 @@ internal class ConnectionTest {
 
     @Test
     fun `ADefaultBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open) returns -1
         }
         try {
-            val calls = sdBusIntfMock_.record { defaultConnection(it) }
+            val calls = sdBusIntfMock.record { defaultConnection(it) }
             fail("Expected failure, not $calls")
         } catch (t: Throwable) {
             // Expected failure
@@ -112,11 +112,11 @@ internal class ConnectionTest {
 
     @Test
     fun `ASystemBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_system) returns -1
         }
         try {
-            val calls = sdBusIntfMock_.record { systemConnection(it) }
+            val calls = sdBusIntfMock.record { systemConnection(it) }
             fail("Expected failure, not $calls")
         } catch (t: Throwable) {
             // Expected failure
@@ -125,11 +125,11 @@ internal class ConnectionTest {
 
     @Test
     fun `ASessionBusConnection ThrowsErrorWhenOpeningTheBusFailsDuringConstruction`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_user) returns -1
         }
         try {
-            val calls = sdBusIntfMock_.record { sessionConnection(it) }
+            val calls = sdBusIntfMock.record { sessionConnection(it) }
             fail("Expected failure, not $calls")
         } catch (t: Throwable) {
             // Expected failure
@@ -138,12 +138,12 @@ internal class ConnectionTest {
 
     @Test
     fun `ADefaultBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open) answers openHandler
             method(SdBusMock::sd_bus_flush) returns -1
         }
         try {
-            val calls = sdBusIntfMock_.record { defaultConnection(it) }
+            val calls = sdBusIntfMock.record { defaultConnection(it) }
             fail("Expected failure, not $calls")
         } catch (t: Throwable) {
             // Expected failure
@@ -152,12 +152,12 @@ internal class ConnectionTest {
 
     @Test
     fun `ASystemBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_system) answers openHandler
             method(SdBusMock::sd_bus_flush) returns -1
         }
         try {
-            val calls = sdBusIntfMock_.record { systemConnection(it) }
+            val calls = sdBusIntfMock.record { systemConnection(it) }
             fail("Expected failure, not $calls")
         } catch (t: Throwable) {
             // Expected failure
@@ -166,12 +166,12 @@ internal class ConnectionTest {
 
     @Test
     fun `ASessionBusConnection ThrowsErrorWhenFlushingTheBusFailsDuringConstruction`() {
-        sdBusIntfMock_.configure {
+        sdBusIntfMock.configure {
             method(SdBusMock::sd_bus_open_user) answers openHandler
             method(SdBusMock::sd_bus_flush) returns -1
         }
         try {
-            val calls = sdBusIntfMock_.record { sessionConnection(it) }
+            val calls = sdBusIntfMock.record { sessionConnection(it) }
             fail("Expected failure, not $calls")
         } catch (t: Throwable) {
             // Expected failure

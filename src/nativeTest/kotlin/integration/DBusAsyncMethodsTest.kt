@@ -32,7 +32,7 @@ import kotlinx.datetime.Clock
 import platform.posix.size_t
 
 class DBusAsyncMethodsTest : BaseTest() {
-    private val fixture = TestFixtureSdBusCppLoop(this)
+    private val fixture = SdbusConnectionFixture(this)
 
     @Test
     fun throwsTimeoutErrorWhenClientSideAsyncMethodTimesOut(): Unit = runTest {

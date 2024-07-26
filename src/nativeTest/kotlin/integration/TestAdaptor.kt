@@ -2,11 +2,11 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ManagedObjectAdaptor
 import com.monkopedia.sdbus.MemberName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertiesAdaptor
 import com.monkopedia.sdbus.Signature
@@ -171,4 +171,3 @@ class TestAdaptor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath)
     var propertySetMessage: Message? = null
     var propertySetSender: String? = null
 }
-
