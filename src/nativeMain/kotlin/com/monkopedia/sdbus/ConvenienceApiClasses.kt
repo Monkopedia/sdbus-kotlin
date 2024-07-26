@@ -11,43 +11,6 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
-class VTableAdder(private val object_: IObject, private val vtable: List<VTableItem>) {
-    fun forInterface(interfaceName: InterfaceName) {
-        object_.addVTable(interfaceName, vtable)
-    }
-
-    fun forInterface(interfaceName: String) {
-        forInterface(InterfaceName(interfaceName))
-    }
-}
-
-class SignalEmitter {
-    private var signal_: Signal? = null
-    private val object_: IObject
-    private val signalName_: String
-
-    constructor(obj: IObject, signalName: String) {
-        this.object_ = obj
-        this.signalName_ = signalName
-    }
-
-    constructor(obj: IObject, signalName: SignalName) : this(obj, signalName.value)
-
-    fun onInterface(interfaceName: InterfaceName): SignalEmitter = onInterface(interfaceName.value)
-
-    fun onInterface(interfaceName: String): SignalEmitter = apply {
-        signal_ = object_.createSignal(interfaceName, signalName_)
-    }
-
-    inline fun emit(builder: TypedArgumentsBuilder) = emit(build(builder))
-
-    fun emit(typedArgs: TypedArguments) {
-        require(signal_ != null)
-        signal_!!.serialize(typedArgs)
-        object_.emitSignal(signal_!!)
-    }
-}
-
 class MethodInvoker {
     private var timeout_: ULong = 0u
     private var method_: MethodCall? = null
@@ -76,7 +39,7 @@ class MethodInvoker {
         withTimeout(timeout.inWholeMicroseconds.toULong())
 
     inline fun withArguments(builder: TypedArgumentsBuilder): MethodInvoker =
-        withArguments(build(builder))
+        withArguments(buildArgs(builder))
 
     fun withArguments(typedArgs: TypedArguments): MethodInvoker = apply {
         require(method_?.isValid == true)
@@ -149,7 +112,7 @@ class AsyncMethodInvoker {
         withTimeout(timeout.inWholeMicroseconds.toULong())
 
     inline fun withArguments(builder: TypedArgumentsBuilder): AsyncMethodInvoker =
-        withArguments(build(builder))
+        withArguments(buildArgs(builder))
 
     fun withArguments(typedArgs: TypedArguments): AsyncMethodInvoker = apply {
         require(method_?.isValid == true)
@@ -164,7 +127,7 @@ class AsyncMethodInvoker {
     }
 
     inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder): PendingAsyncCall =
-        uponReplyInvoke(build(callbackBuilder))
+        uponReplyInvoke(buildCall(callbackBuilder))
 
     suspend inline fun <reified T> getResult(): T {
         val completable = CompletableDeferred<T>()
@@ -201,7 +164,7 @@ class SignalSubscriber(private val proxy: IProxy, private val signalName: String
         interfaceName_ = interfaceName
     }
 
-    inline fun call(builder: TypedMethodBuilder): Resource = call(build(builder))
+    inline fun call(builder: TypedMethodBuilder): Resource = call(buildCall(builder))
     fun call(callback: TypedMethodCall<*>): Resource {
         require(interfaceName_ != null)
 
@@ -275,7 +238,7 @@ class AsyncPropertyGetter(private val proxy: IProxy, private val propertyName: S
     }
 
     inline fun uponReplyInvoke(crossinline callbackBuilder: TypedMethodBuilder) =
-        uponReplyInvoke(build(callbackBuilder))
+        uponReplyInvoke(buildCall(callbackBuilder))
 
     fun uponReplyInvoke(callback: TypedMethodCall<*>): PendingAsyncCall {
         require(interfaceName_?.isNotEmpty() == true)

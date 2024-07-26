@@ -7,9 +7,11 @@ import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
+import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.registerMethod
 import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
@@ -283,21 +285,18 @@ class DBusMethodTests : BaseTest() {
     fun canRegisterAdditionalVTableDynamicallyAtAnyTime() {
         val obj = fixture.m_adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
-        val vtableSlot = obj.addVTable(
-            interfaceName,
-            listOf(
-                registerMethod("add").implementedAs {
-                    call { a: Long, b: Double ->
-                        a + b
-                    }
-                },
-                registerMethod("subtract").implementedAs {
-                    call { a: Int, b: Int ->
-                        a - b
-                    }
+        val vtableSlot = obj.addVTable(interfaceName) {
+            method("add") {
+                call { a: Long, b: Double ->
+                    a + b
                 }
-            )
-        )
+            }
+            method("subtract") {
+                call { a: Int, b: Int ->
+                    a - b
+                }
+            }
+        }
 
         // The new remote vtable is registered as long as we keep vtableSlot, so remote method calls now should pass
         val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
@@ -315,21 +314,18 @@ class DBusMethodTests : BaseTest() {
         val obj = fixture.m_adaptor!!.obj
         val interfaceName = InterfaceName("org.sdbuscpp.integrationtests2")
 
-        val slot = obj.addVTable(
-            interfaceName,
-            listOf(
-                registerMethod("add").implementedAs {
-                    call { a: Long, b: Double ->
-                        a + b
-                    }
-                },
-                registerMethod("subtract").implementedAs {
-                    call { a: Int, b: Int ->
-                        a - b
-                    }
+        val slot = obj.addVTable( interfaceName) {
+            method("add") {
+                call { a: Long, b: Double ->
+                    a + b
                 }
-            )
-        )
+            }
+            method("subtract") {
+                call { a: Int, b: Int ->
+                    a - b
+                }
+            }
+        }
         slot.release()
 
         // No such remote D-Bus method under given interface exists anymore...

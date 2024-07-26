@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:function-literal")
+
 package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE
@@ -11,138 +13,165 @@ import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.emitSignal
-import com.monkopedia.sdbus.registerMethod
-import com.monkopedia.sdbus.registerProperty
-import com.monkopedia.sdbus.registerSignal
-import com.monkopedia.sdbus.setInterfaceFlags
+import com.monkopedia.sdbus.interfaceFlags
+import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.property
+import com.monkopedia.sdbus.signal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 
 abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdaptor {
 
     open fun registerAdaptor() {
-        obj.addVTable(
-            setInterfaceFlags().markAsDeprecated()
-                .withPropertyUpdateBehavior(EMITS_NO_SIGNAL),
-            registerMethod("noArgNoReturn").implementedAs { call { -> noArgNoReturn() } },
-            registerMethod("getInt").withOutputParamNames("anInt")
-                .implementedAs { call { -> getInt() } },
-            registerMethod("getTuple").withOutputParamNames("arg0", "arg1")
-                .implementedAs { call { -> getTuple() } },
-            registerMethod("multiply").withInputParamNames("a", "b").withOutputParamNames("result")
-                .implementedAs {
-                    call { a: Long, b: Double ->
-                        multiply(a, b)
-                    }
-                },
-            registerMethod("multiplyWithNoReply").withInputParamNames("a", "b")
-                .implementedAs {
-                    call { a: Long, b: Double ->
-                        multiplyWithNoReply(a, b)
-                    }
-                }.markAsDeprecated().withNoReply(),
-            registerMethod("processVariant").withInputParamNames("variant")
-                .withOutputParamNames("result").implementedAs {
-                    call { variant: Variant ->
-                        processVariant(variant)
-                    }
-                },
-            registerMethod("sumArrayItems").withInputParamNames("arg0", "arg1")
-                .withOutputParamNames("arg0").implementedAs {
-                    call { arg0: List<UShort>, arg1: Array<ULong> ->
-                        sumArrayItems(arg0, arg1)
-                    }
-                },
-            registerMethod("doOperation").withInputParamNames("arg0").withOutputParamNames("arg0")
-                .implementedAs {
-                    call { arg0: UInt ->
-                        doOperation(arg0)
-                    }
-                },
-            registerMethod("doOperationAsync").withInputParamNames("arg0")
-                .withOutputParamNames("arg0").implementedAs {
+        obj.addVTable(INTERFACE_NAME) {
+            interfaceFlags {
+                isDeprecated = true
+                +EMITS_NO_SIGNAL
+            }
+            method("noArgNoReturn") { call { -> noArgNoReturn() } }
+            method("getInt") {
+                outputParamNames = listOf("anInt")
+                call { -> getInt() }
+            }
+            method("getTuple") {
+                outputParamNames = listOf("arg0", "arg1")
+                call { -> getTuple() }
+            }
+            method("multiply") {
+                inputParamNames = listOf("a", "b")
+                outputParamNames = listOf("result")
+                call { a: Long, b: Double ->
+                    multiply(a, b)
+                }
+            }
+            method("multiplyWithNoReply") {
+                inputParamNames = listOf("a", "b")
+                isDeprecated = true
+                hasNoReply = true
+                call { a: Long, b: Double ->
+                    multiplyWithNoReply(a, b)
+                }
+            }
+            method("processVariant") {
+                inputParamNames = listOf("variant")
+                outputParamNames = listOf("result")
+                call { variant: Variant ->
+                    processVariant(variant)
+                }
+            }
+            method("sumArrayItems") {
+                inputParamNames = listOf("arg0", "arg1")
+                outputParamNames = listOf("arg0")
+                call { arg0: List<UShort>, arg1: Array<ULong> ->
+                    sumArrayItems(arg0, arg1)
+                }
+            }
+            method("doOperation") {
+                inputParamNames = listOf("arg0")
+                outputParamNames = listOf("arg0")
+                call { arg0: UInt ->
+                    doOperation(arg0)
+                }
+            }
+            method("doOperationAsync") {
+                inputParamNames = listOf("arg0")
+                outputParamNames = listOf("arg0")
+                implementedAs(
                     acall { arg0: UInt ->
                         doOperationAsync(arg0)
                     } withContext Dispatchers.Unconfined
-                },
-            registerMethod("getSignature").withOutputParamNames("arg0")
-                .implementedAs {
-                    call { -> getSignature() }
-                },
-            registerMethod("getObjPath").withOutputParamNames("arg0")
-                .implementedAs {
-                    call { -> getObjPath() }
-                },
-            registerMethod("getUnixFd").withOutputParamNames("arg0")
-                .implementedAs {
-                    call { -> getUnixFd() }
-                },
-            registerMethod("throwError").implementedAs {
+                )
+            }
+            method("getSignature") {
+                outputParamNames = listOf("arg0")
+                call { -> getSignature() }
+            }
+            method("getObjPath") {
+                outputParamNames = listOf("arg0")
+                call { -> getObjPath() }
+            }
+            method("getUnixFd") {
+                outputParamNames = listOf("arg0")
+                call { -> getUnixFd() }
+            }
+            method("throwError") {
                 call { -> throwError() }
-            },
-            registerMethod("throwErrorWithNoReply").implementedAs {
+            }
+            method("throwErrorWithNoReply") {
+                hasNoReply = true
                 call { -> throwErrorWithNoReply() }
             }
-                .withNoReply(),
-            registerMethod("doPrivilegedStuff").implementedAs {
+            method("doPrivilegedStuff") {
+                isPrivileged = true
                 call { -> doPrivilegedStuff() }
             }
-                .markAsPrivileged(),
-            registerMethod("emitTwoSimpleSignals").implementedAs {
+            method("emitTwoSimpleSignals") {
                 call { -> emitTwoSimpleSignals() }
-            },
-            registerSignal("simpleSignal").markAsDeprecated(),
-            registerSignal("signalWithMap").withParameters<Map<Int, String>>("aMap"),
-            registerSignal("signalWithVariant").withParameters<Variant>("aVariant"),
-            registerProperty("action").withGetter { action() }
-                .withSetter { value: UInt ->
+            }
+            signal("simpleSignal") {
+                isDeprecated = true
+            }
+            signal("signalWithMap") { withParameters<Map<Int, String>>("aMap") }
+            signal("signalWithVariant") { withParameters<Variant>("aVariant") }
+            property("action") {
+                withGetter { action() }
+                withSetter { value: UInt ->
                     action(value)
                 }
-                .withUpdateBehavior(EMITS_INVALIDATION_SIGNAL),
-            registerProperty("blocking").withGetter { blocking() }
-                .withSetter { value: Boolean ->
+                +EMITS_INVALIDATION_SIGNAL
+            }
+            property("blocking") {
+                withGetter { blocking() }
+                withSetter { value: Boolean ->
                     blocking(value)
-                },
-            registerProperty("state").withGetter { state() }
-                .markAsDeprecated().withUpdateBehavior(CONST_PROPERTY_VALUE),
-
-            registerMethod("getMapOfVariants").withInputParamNames("x", "y")
-                .withOutputParamNames("aMapOfVariants").implementedAs {
-                    call { x: List<Int>, y: Pair<Variant, Variant> ->
-                        getMapOfVariants(x, y)
-                    }
-                },
-            registerMethod("getStructInStruct").withOutputParamNames("aMapOfVariants")
-                .implementedAs { call { ->getStructInStruct() } },
-            registerMethod("sumStructItems").withInputParamNames("arg0", "arg1")
-                .withOutputParamNames("arg0").implementedAs {
-                    call { arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long> ->
-                        sumStructItems(arg0, arg1)
-                    }
-                },
-            registerMethod("getComplex").withOutputParamNames("arg0")
-                .implementedAs {
-                    call { -> getComplex() }
-                }.markAsDeprecated(),
-            registerMethod("getInts16FromStruct").withInputParamNames("arg0")
-                .withOutputParamNames("arg0").implementedAs {
-                    call { arg0: IntStruct ->
-                        getInts16FromStruct(arg0)
-                    }
                 }
-        ).forInterface(INTERFACE_NAME)
+            }
+            property("state") {
+                withGetter { state() }
+                isDeprecated = true
+                +CONST_PROPERTY_VALUE
+            }
+
+            method("getMapOfVariants") {
+                inputParamNames = listOf("x", "y")
+                outputParamNames = listOf("aMapOfVariants")
+                call { x: List<Int>, y: Pair<Variant, Variant> ->
+                    getMapOfVariants(x, y)
+                }
+            }
+            method("getStructInStruct") {
+                outputParamNames = listOf("aMapOfVariants")
+                call { -> getStructInStruct() }
+            }
+            method("sumStructItems") {
+                inputParamNames = listOf("arg0", "arg1")
+                outputParamNames = listOf("arg0")
+                call { arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long> ->
+                    sumStructItems(arg0, arg1)
+                }
+            }
+            method("getComplex") {
+                outputParamNames = listOf("arg0")
+                isDeprecated = true
+                call { -> getComplex() }
+            }
+            method("getInts16FromStruct") {
+                inputParamNames = listOf("arg0")
+                outputParamNames = listOf("arg0")
+                call { arg0: IntStruct ->
+                    getInts16FromStruct(arg0)
+                }
+            }
+        }
     }
 
-    fun emitSimpleSignal() =
-        obj.emitSignal("simpleSignal").onInterface(INTERFACE_NAME).emit { call() }
+    fun emitSimpleSignal() = obj.emitSignal(INTERFACE_NAME, "simpleSignal") { call() }
 
     fun emitSignalWithMap(aMap: Map<Int, String>) =
-        obj.emitSignal("signalWithMap").onInterface(INTERFACE_NAME)
-            .emit { call(aMap) }
+        obj.emitSignal(INTERFACE_NAME, "signalWithMap") { call(aMap) }
 
     fun emitSignalWithVariant(aVariant: Variant) =
-        obj.emitSignal("signalWithVariant").onInterface(INTERFACE_NAME)
-            .emit { call(aVariant) }
+        obj.emitSignal(INTERFACE_NAME, "signalWithVariant") { call(aVariant) }
 
     protected abstract fun noArgNoReturn(): Unit
     protected abstract fun getInt(): Int

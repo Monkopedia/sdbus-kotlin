@@ -1,16 +1,5 @@
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args1
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args10
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args2
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args3
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args4
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args5
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args6
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args7
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args8
-import com.monkopedia.sdbus.TypedMethodBuilderContext.args9
 import com.monkopedia.sdbus.TypedMethodCall.AsyncMethodCall
 import com.monkopedia.sdbus.TypedMethodCall.SyncMethodCall
 import kotlin.coroutines.CoroutineContext
@@ -144,13 +133,26 @@ infix fun TypedMethodCall<*>.onError(handler: (Throwable?) -> Unit) = when (this
 typealias TypedMethodBuilder = TypedMethodBuilderContext.() -> TypedMethodCall<*>
 typealias TypedArgumentsBuilder = TypedArgumentsBuilderContext.() -> TypedArguments
 
-inline fun build(builder: TypedMethodBuilder): TypedMethodCall<*> =
-    TypedMethodBuilderContext.builder()
+inline fun buildCall(builder: TypedMethodBuilder): TypedMethodCall<*> =
+    TypedMethodBuilderContext().builder()
 
-inline fun build(builder: TypedArgumentsBuilder): TypedArguments =
-    TypedArgumentsBuilderContext.builder()
+inline fun buildArgs(builder: TypedArgumentsBuilder): TypedArguments =
+    TypedArgumentsBuilderContext().builder()
 
-object TypedMethodBuilderContext {
+open class TypedMethodBuilderContext {
+
+    open fun createCall(
+        method: TypedMethod,
+        handler: (List<Any?>) -> Any?,
+        errorCall: ((Throwable?) -> Unit)? = null
+    ): SyncMethodCall = SyncMethodCall(method, handler, errorCall)
+
+    open fun createACall(
+        method: TypedMethod,
+        handler: suspend (List<Any?>) -> Any?,
+        errorCall: (suspend (Throwable?) -> Unit)? = null,
+        coroutineContext: CoroutineContext = EmptyCoroutineContext
+    ): AsyncMethodCall = AsyncMethodCall(method, handler, errorCall, coroutineContext)
 
     inline fun args() = listOf<Typed<*>>()
     inline fun <reified A : Any> args1() = listOf(typed<A>())
@@ -210,48 +212,48 @@ object TypedMethodBuilderContext {
         )
 
     inline fun <reified R : Any> call(crossinline handler: () -> R): SyncMethodCall =
-        SyncMethodCall(TypedMethod(args(), typed<R>()), handler = {
+        createCall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })
 
     inline fun <reified R : Any, reified A : Any> call(crossinline handler: (A) -> R) =
-        SyncMethodCall(TypedMethod(args1<A>(), typed<R>()), handler = { args ->
+        createCall(TypedMethod(args1<A>(), typed<R>()), handler = { args ->
             handler(args[0] as A)
         })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any> call(
         crossinline handler: (A, B) -> R
-    ) = SyncMethodCall(TypedMethod(args2<A, B>(), typed<R>()), handler = { args ->
+    ) = createCall(TypedMethod(args2<A, B>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any> call(
         crossinline handler: (A, B, C) -> R
-    ) = SyncMethodCall(TypedMethod(args3<A, B, C>(), typed<R>()), handler = { args ->
+    ) = createCall(TypedMethod(args3<A, B, C>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any> call(
         crossinline handler: (A, B, C, D) -> R
-    ) = SyncMethodCall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
+    ) = createCall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> call(
         crossinline handler: (A, B, C, D, E) -> R
-    ) = SyncMethodCall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
+    ) = createCall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> call(
         crossinline handler: (A, B, C, D, E, F) -> R
-    ) = SyncMethodCall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
+    ) = createCall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E, args[5] as F)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> call(
         crossinline handler: (A, B, C, D, E, F, G) -> R
-    ) = SyncMethodCall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
+    ) = createCall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
         handler(
             args[0] as A,
             args[1] as B,
@@ -265,7 +267,7 @@ object TypedMethodBuilderContext {
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> call(
         crossinline handler: (A, B, C, D, E, F, G, H) -> R
-    ) = SyncMethodCall(
+    ) = createCall(
         TypedMethod(args8<A, B, C, D, E, F, G, H>(), typed<R>()),
         handler = { args ->
             handler(
@@ -283,7 +285,7 @@ object TypedMethodBuilderContext {
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> call(
         crossinline handler: (A, B, C, D, E, F, G, H, I) -> R
-    ) = SyncMethodCall(
+    ) = createCall(
         TypedMethod(args9<A, B, C, D, E, F, G, H, I>(), typed<R>()),
         handler = { args ->
             handler(
@@ -302,7 +304,7 @@ object TypedMethodBuilderContext {
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> call(
         crossinline handler: (A, B, C, D, E, F, G, H, I, J) -> R
-    ) = SyncMethodCall(
+    ) = createCall(
         TypedMethod(args10<A, B, C, D, E, F, G, H, I, J>(), typed<R>()),
         handler = { args ->
             handler(
@@ -321,48 +323,48 @@ object TypedMethodBuilderContext {
     )
 
     inline fun <reified R : Any> acall(crossinline handler: () -> R): AsyncMethodCall =
-        AsyncMethodCall(TypedMethod(args(), typed<R>()), handler = {
+        createACall(TypedMethod(args(), typed<R>()), handler = {
             handler()
         })
 
     inline fun <reified R : Any, reified A : Any> acall(crossinline handler: suspend (A) -> R) =
-        AsyncMethodCall(TypedMethod(args1<A>(), typed<R>()), handler = { args ->
+        createACall(TypedMethod(args1<A>(), typed<R>()), handler = { args ->
             handler(args[0] as A)
         })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any> acall(
         crossinline handler: suspend (A, B) -> R
-    ) = AsyncMethodCall(TypedMethod(args2<A, B>(), typed<R>()), handler = { args ->
+    ) = createACall(TypedMethod(args2<A, B>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any> acall(
         crossinline handler: suspend (A, B, C) -> R
-    ) = AsyncMethodCall(TypedMethod(args3<A, B, C>(), typed<R>()), handler = { args ->
+    ) = createACall(TypedMethod(args3<A, B, C>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any> acall(
         crossinline handler: suspend (A, B, C, D) -> R
-    ) = AsyncMethodCall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
+    ) = createACall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> acall(
         crossinline handler: suspend (A, B, C, D, E) -> R
-    ) = AsyncMethodCall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
+    ) = createACall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> acall(
         crossinline handler: suspend (A, B, C, D, E, F) -> R
-    ) = AsyncMethodCall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
+    ) = createACall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E, args[5] as F)
     })
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> acall(
         crossinline handler: suspend (A, B, C, D, E, F, G) -> R
-    ) = AsyncMethodCall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
+    ) = createACall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
         handler(
             args[0] as A,
             args[1] as B,
@@ -376,7 +378,7 @@ object TypedMethodBuilderContext {
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> acall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H) -> R
-    ) = AsyncMethodCall(
+    ) = createACall(
         TypedMethod(args8<A, B, C, D, E, F, G, H>(), typed<R>()),
         handler = { args ->
             handler(
@@ -394,7 +396,7 @@ object TypedMethodBuilderContext {
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> acall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H, I) -> R
-    ) = AsyncMethodCall(
+    ) = createACall(
         TypedMethod(args9<A, B, C, D, E, F, G, H, I>(), typed<R>()),
         handler = { args ->
             handler(
@@ -413,7 +415,7 @@ object TypedMethodBuilderContext {
 
     inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> acall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H, I, J) -> R
-    ) = AsyncMethodCall(
+    ) = createACall(
         TypedMethod(args10<A, B, C, D, E, F, G, H, I, J>(), typed<R>()),
         handler = { args ->
             handler(
@@ -432,24 +434,28 @@ object TypedMethodBuilderContext {
     )
 }
 
-object TypedArgumentsBuilderContext {
+open class TypedArgumentsBuilderContext {
 
-    inline fun call(): TypedArguments = TypedArguments(args(), emptyList())
+    open fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
+        TypedArguments(inputType, values)
 
-    inline fun <reified A : Any> call(a: A) = TypedArguments(args1<A>(), listOf(a))
+    inline fun call(): TypedArguments = createCall(TypedMethodBuilderContext().args(), emptyList())
+
+    inline fun <reified A : Any> call(a: A) =
+        createCall(TypedMethodBuilderContext().args1<A>(), listOf(a))
 
     inline fun <reified A : Any, reified B : Any> call(a: A, b: B) =
-        TypedArguments(args2<A, B>(), listOf(a, b))
+        createCall(TypedMethodBuilderContext().args2<A, B>(), listOf(a, b))
 
     inline fun <reified A : Any, reified B : Any, reified C : Any> call(a: A, b: B, c: C) =
-        TypedArguments(args3<A, B, C>(), listOf(a, b, c))
+        createCall(TypedMethodBuilderContext().args3<A, B, C>(), listOf(a, b, c))
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any> call(
         a: A,
         b: B,
         c: C,
         d: D
-    ) = TypedArguments(args4<A, B, C, D>(), listOf(a, b, c, d))
+    ) = createCall(TypedMethodBuilderContext().args4<A, B, C, D>(), listOf(a, b, c, d))
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any> call(
         a: A,
@@ -457,7 +463,7 @@ object TypedArgumentsBuilderContext {
         c: C,
         d: D,
         e: E
-    ) = TypedArguments(args5<A, B, C, D, E>(), listOf(a, b, c, d, e))
+    ) = createCall(TypedMethodBuilderContext().args5<A, B, C, D, E>(), listOf(a, b, c, d, e))
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any> call(
         a: A,
@@ -466,7 +472,10 @@ object TypedArgumentsBuilderContext {
         d: D,
         e: E,
         f: F
-    ) = TypedArguments(args6<A, B, C, D, E, F>(), listOf(a, b, c, d, e, f))
+    ) = createCall(
+        TypedMethodBuilderContext().args6<A, B, C, D, E, F>(),
+        listOf(a, b, c, d, e, f)
+    )
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any> call(
         a: A,
@@ -476,7 +485,10 @@ object TypedArgumentsBuilderContext {
         e: E,
         f: F,
         g: G
-    ) = TypedArguments(args7<A, B, C, D, E, F, G>(), listOf(a, b, c, d, e, f, g))
+    ) = createCall(
+        TypedMethodBuilderContext().args7<A, B, C, D, E, F, G>(),
+        listOf(a, b, c, d, e, f, g)
+    )
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any> call(
         a: A,
@@ -487,7 +499,10 @@ object TypedArgumentsBuilderContext {
         f: F,
         g: G,
         h: H
-    ) = TypedArguments(args8<A, B, C, D, E, F, G, H>(), listOf(a, b, c, d, e, f, g, h))
+    ) = createCall(
+        TypedMethodBuilderContext().args8<A, B, C, D, E, F, G, H>(),
+        listOf(a, b, c, d, e, f, g, h)
+    )
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any> call(
         a: A,
@@ -499,7 +514,10 @@ object TypedArgumentsBuilderContext {
         g: G,
         h: H,
         i: I
-    ) = TypedArguments(args9<A, B, C, D, E, F, G, H, I>(), listOf(a, b, c, d, e, f, g, h, i))
+    ) = createCall(
+        TypedMethodBuilderContext().args9<A, B, C, D, E, F, G, H, I>(),
+        listOf(a, b, c, d, e, f, g, h, i)
+    )
 
     inline fun <reified A : Any, reified B : Any, reified C : Any, reified D : Any, reified E : Any, reified F : Any, reified G : Any, reified H : Any, reified I : Any, reified J : Any> call(
         a: A,
@@ -512,5 +530,8 @@ object TypedArgumentsBuilderContext {
         h: H,
         i: I,
         j: J
-    ) = TypedArguments(args10<A, B, C, D, E, F, G, H, I, J>(), listOf(a, b, c, d, e, f, g, h, i, j))
+    ) = createCall(
+        TypedMethodBuilderContext().args10<A, B, C, D, E, F, G, H, I, J>(),
+        listOf(a, b, c, d, e, f, g, h, i, j)
+    )
 }

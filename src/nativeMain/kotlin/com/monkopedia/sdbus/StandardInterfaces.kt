@@ -53,13 +53,12 @@ interface PropertiesProxy : ProxyHolder {
             .uponSignal("PropertiesChanged")
             .onInterface(INTERFACE_NAME)
             .call {
-                call {
-                        interfaceName: InterfaceName,
-                        changedProperties: Map<PropertyName, Variant>,
-                        invalidatedProperties: List<PropertyName>
+                call { interfaceName: InterfaceName,
+                                 changedProperties: Map<PropertyName, Variant>,
+                                 invalidatedProperties: List<PropertyName>
                     ->
 
-                    this@PropertiesProxy.onPropertiesChanged(
+                    onPropertiesChanged(
                         interfaceName,
                         changedProperties,
                         invalidatedProperties
@@ -154,21 +153,19 @@ interface ObjectManagerProxy : ProxyHolder {
         proxy.uponSignal("InterfacesAdded")
             .onInterface(INTERFACE_NAME)
             .call {
-                call {
-                        objectPath: ObjectPath,
-                        interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
+                call { objectPath: ObjectPath,
+                                 interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
                     ->
-                    this@ObjectManagerProxy.onInterfacesAdded(objectPath, interfacesAndProperties)
+                    onInterfacesAdded(objectPath, interfacesAndProperties)
                 }
             }
         proxy.uponSignal("InterfacesRemoved")
             .onInterface(INTERFACE_NAME)
             .call {
-                call {
-                        objectPath: ObjectPath,
-                        interfaces: List<InterfaceName>
+                call { objectPath: ObjectPath,
+                                 interfaces: List<InterfaceName>
                     ->
-                    this@ObjectManagerProxy.onInterfacesRemoved(objectPath, interfaces)
+                    onInterfacesRemoved(objectPath, interfaces)
                 }
             }
     }
