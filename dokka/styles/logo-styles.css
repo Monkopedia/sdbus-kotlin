@@ -1,0 +1,26 @@
+/*.library-name a {
+--    position: relative;
+--    margin-left: 55px;
+--}
+--
+--.library-name a::before {
+--    content: '';
+--    background: url("../images/monkopedia_icon.png") center no-repeat;
+--    background-size: contain;
+--    position: absolute;
+--    width: 50px;
+--    height: 50px;
+--    top: -18px;
+--    left: -55px;
+--} */
+
+/*
+ * Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+:root {
+    --dokka-logo-image-url: url('../images/logo-icon.svg');
+    --dokka-logo-height: 50px;
+    --dokka-logo-width: 50px;
+}
+

@@ -44,4 +44,4 @@ internal inline fun now(): Duration = memScoped {
     return ts[0].tv_nsec.nanoseconds + ts[0].tv_sec.seconds
 }
 
-const val SDBUSCPP_ERROR_NAME = "org.sdbuscpp.Error"
+internal const val SDBUSCPP_ERROR_NAME = "org.sdbuscpp.Error"

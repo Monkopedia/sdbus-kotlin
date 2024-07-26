@@ -22,9 +22,22 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
 }
 
+tasks.register("fatJar", type = Jar::class) {
+    archiveBaseName = "${project.name}-all"
+    manifest {
+        attributes["Implementation-Title"] = "sdbus-kotlin codegen"
+        attributes["Implementation-Version"] = version
+        attributes["Main-Class"] = "com.monkopedia.sdbus.Xml2KotlinKt"
+    }
+    from(configurations["runtimeClasspath"].map { if (it.isDirectory) it else zipTree(it) })
+    with(tasks["jar"] as CopySpec)
+    duplicatesStrategy = DuplicatesStrategy.WARN
+}
+
 application {
     mainClass.set("com.monkopedia.sdbus.Xml2KotlinKt")
 }
+
 ktlint {
     this.android.set(true)
 }
@@ -33,5 +46,5 @@ tasks.test {
     useJUnitPlatform()
 }
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(17)
 }

@@ -254,7 +254,7 @@ internal class ProxyImpl(
     }
 }
 
-val CompletableDeferred<MethodReply>.asAsyncReplyHandler: AsyncReplyHandler
+internal val CompletableDeferred<MethodReply>.asAsyncReplyHandler: AsyncReplyHandler
     get() = { reply, error ->
         if (error != null) {
             completeExceptionally(error)

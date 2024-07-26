@@ -1,21 +1,30 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
 import kotlinx.validation.ExperimentalBCVApi
+import org.jetbrains.dokka.base.DokkaBase
+import org.jetbrains.dokka.base.DokkaBaseConfiguration
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
+buildscript {
+    dependencies {
+        classpath(libs.bundles.dokka)
+    }
+}
 plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.bcv)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.dokka)
 
     `maven-publish`
+    signing
 }
 
 group = "com.monkopedia"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -130,4 +139,79 @@ afterEvaluate {
 //        }
 //    }
 //    println("${linkArm::class}")
+}
+val dokkaJavadoc = tasks.create("dokkaJavadocCustom", DokkaTask::class) {
+    project.dependencies {
+        plugins("org.jetbrains.dokka:kotlin-as-java-plugin:1.9.20")
+    }
+    // outputFormat = "javadoc"
+    outputDirectory.set(File(project.buildDir, "javadoc"))
+    inputs.dir("src/commonMain/kotlin")
+}
+
+val javadocJar = tasks.create("javadocJar", Jar::class) {
+    dependsOn(dokkaJavadoc)
+    archiveClassifier.set("javadoc")
+    from(File(project.buildDir, "javadoc"))
+}
+
+tasks.dokkaHtml.configure {
+    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+        customAssets = file("dokka/assets").listFiles()?.toList().orEmpty()
+        customStyleSheets = file("dokka/styles").listFiles()?.toList().orEmpty()
+    }
+
+    outputDirectory.set(buildDir.resolve("dokka"))
+}
+publishing {
+    publications.all {
+        if (this !is MavenPublication) return@all
+        artifact(javadocJar)
+        pom {
+            name.set(project.name)
+            description.set("A kotlin/native dbus client")
+            url.set("http://www.github.com/Monkopedia/sdbus-kotlin")
+            licenses {
+                license {
+//                    name.set("The Apache License, Version 2.0")
+//                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                }
+            }
+            developers {
+                developer {
+                    id.set("monkopedia")
+                    name.set("Jason Monk")
+                    email.set("monkopedia@gmail.com")
+                }
+            }
+            scm {
+                connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
+                developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
+                url.set("http://github.com/Monkopedia/sdbus-kotlin/")
+            }
+        }
+    }
+    repositories {
+        maven(url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            name = "OSSRH"
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign(publishing.publications)
+}
+
+afterEvaluate {
+    tasks.withType(Sign::class) {
+        val signingTask = this
+        tasks.withType(AbstractPublishToMaven::class) {
+            dependsOn(signingTask)
+        }
+    }
 }
