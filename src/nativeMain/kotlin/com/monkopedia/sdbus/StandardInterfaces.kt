@@ -3,26 +3,15 @@
 package com.monkopedia.sdbus
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 
 interface ProxyHolder {
     val proxy: IProxy
 }
 
 interface PeerProxy : ProxyHolder {
-    fun ping() {
-        memScoped {
-            proxy.callMethod("Ping").onInterface(INTERFACE_NAME)
-        }
-    }
+    fun ping(): Unit = proxy.callMethod(INTERFACE_NAME, "Ping") {}
 
-    fun getMachineId(): String {
-        memScoped {
-            return proxy.callMethod("GetMachineId")
-                .onInterface(INTERFACE_NAME)
-                .readResult<String>()
-        }
-    }
+    fun getMachineId(): String = proxy.callMethod(INTERFACE_NAME, "GetMachineId") {}
 
     companion object {
         const val INTERFACE_NAME = "org.freedesktop.DBus.Peer"
@@ -32,13 +21,7 @@ interface PeerProxy : ProxyHolder {
 // Proxy for introspection
 interface IntrospectableProxy : ProxyHolder {
 
-    fun Introspect(): String {
-        memScoped {
-            return proxy.callMethod("Introspect")
-                .onInterface(INTERFACE_NAME)
-                .readResult<String>()
-        }
-    }
+    fun Introspect(): String = proxy.callMethod(INTERFACE_NAME, "Introspect") {}
 
     companion object {
         const val INTERFACE_NAME = "org.freedesktop.DBus.Introspectable"
@@ -49,22 +32,20 @@ interface IntrospectableProxy : ProxyHolder {
 interface PropertiesProxy : ProxyHolder {
 
     fun registerPropertiesProxy() {
-        proxy
-            .uponSignal("PropertiesChanged")
-            .onInterface(INTERFACE_NAME)
-            .call {
-                call { interfaceName: InterfaceName,
-                                 changedProperties: Map<PropertyName, Variant>,
-                                 invalidatedProperties: List<PropertyName>
-                    ->
+        proxy.onSignal(INTERFACE_NAME, "PropertiesChanged") {
+            call {
+                    interfaceName: InterfaceName,
+                    changedProperties: Map<PropertyName, Variant>,
+                    invalidatedProperties: List<PropertyName>
+                ->
 
-                    onPropertiesChanged(
-                        interfaceName,
-                        changedProperties,
-                        invalidatedProperties
-                    )
-                }
+                onPropertiesChanged(
+                    interfaceName,
+                    changedProperties,
+                    invalidatedProperties
+                )
             }
+        }
     }
 
     fun onPropertiesChanged(
@@ -92,15 +73,6 @@ interface PropertiesProxy : ProxyHolder {
         proxy.setProperty(propertyName).onInterface(interfaceName)
             .toValue(value, dontExpectReply = dontExpectReply)
     }
-
-    fun setAsync(
-        interfaceName: InterfaceName,
-        propertyName: PropertyName,
-        value: Variant,
-        callback: TypedMethodCall<*>
-    ): PendingAsyncCall =
-        proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
-            .uponReplyInvoke(callback)
 
     suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
         proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
@@ -150,24 +122,22 @@ interface PropertiesProxy : ProxyHolder {
 interface ObjectManagerProxy : ProxyHolder {
 
     fun registerObjectManagerProxy() {
-        proxy.uponSignal("InterfacesAdded")
-            .onInterface(INTERFACE_NAME)
-            .call {
-                call { objectPath: ObjectPath,
-                                 interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
-                    ->
-                    onInterfacesAdded(objectPath, interfacesAndProperties)
-                }
+        proxy.onSignal(INTERFACE_NAME, "InterfacesAdded") {
+            call {
+                    objectPath: ObjectPath,
+                    interfacesAndProperties: Map<InterfaceName, Map<PropertyName, Variant>>
+                ->
+                onInterfacesAdded(objectPath, interfacesAndProperties)
             }
-        proxy.uponSignal("InterfacesRemoved")
-            .onInterface(INTERFACE_NAME)
-            .call {
-                call { objectPath: ObjectPath,
-                                 interfaces: List<InterfaceName>
-                    ->
-                    onInterfacesRemoved(objectPath, interfaces)
-                }
+        }
+        proxy.onSignal(INTERFACE_NAME, "InterfacesRemoved") {
+            call {
+                    objectPath: ObjectPath,
+                    interfaces: List<InterfaceName>
+                ->
+                onInterfacesRemoved(objectPath, interfaces)
             }
+        }
     }
 
     fun onInterfacesAdded(
@@ -177,13 +147,9 @@ interface ObjectManagerProxy : ProxyHolder {
 
     fun onInterfacesRemoved(objectPath: ObjectPath, interfaces: List<InterfaceName>)
 
-    fun getManagedObjects(): Map<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>> {
-        memScoped {
-            return proxy.callMethod("GetManagedObjects")
-                .onInterface(INTERFACE_NAME)
-                .readResult()
+    fun getManagedObjects(): Map<ObjectPath, Map<InterfaceName, Map<PropertyName, Variant>>> =
+        proxy.callMethod(INTERFACE_NAME, "GetManagedObjects") {
         }
-    }
 
     companion object {
         const val INTERFACE_NAME = "org.freedesktop.DBus.ObjectManager"

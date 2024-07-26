@@ -20,21 +20,10 @@ data class SignalVTableItem(
     var paramNames: List<String> = emptyList(),
     val flags: Flags = Flags()
 ) : VTableItem {
-    inline fun <reified T> withParameters(): SignalVTableItem = apply {
-        signature = Signature(signatureOf<T>().value)
-    }
 
-    fun withParameters(names: List<String>): SignalVTableItem = apply {
-        paramNames = names
-    }
-
-    inline fun <reified T> withParameters(vararg names: String): SignalVTableItem = apply {
-        signature = Signature(signatureOf<Array<T>>().value)
-        paramNames = names.toList()
-    }
-
-    fun withParameters(vararg names: String): SignalVTableItem = apply {
-        paramNames = names.toList()
+    inline fun <reified T> with(paramName: String) {
+        signature += signatureOf<T>().value
+        paramNames = paramNames + paramName
     }
 
     var isDeprecated: Boolean

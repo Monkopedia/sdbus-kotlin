@@ -176,7 +176,7 @@ class DBusAsyncMethodsTest : BaseTest() {
 
         val call = fixture.m_proxy!!.doOperationClientSideAsync(1000u)
 
-        assertTrue(call.isPending())
+        assertTrue(call.isActive)
     }
 
     @Test
@@ -203,7 +203,7 @@ class DBusAsyncMethodsTest : BaseTest() {
             promise.complete(1u)
         }
 
-        fixture.m_proxy!!.doOperationClientSideAsync(100u).release()
+        fixture.m_proxy!!.doOperationClientSideAsync(100u).cancel()
         // Now the slot is destroyed, cancelling the async call
 
         assertNull(
@@ -223,7 +223,7 @@ class DBusAsyncMethodsTest : BaseTest() {
 
         call.cancel()
 
-        assertFalse(call.isPending())
+        assertFalse(call.isActive)
     }
 
     @Test
@@ -238,7 +238,7 @@ class DBusAsyncMethodsTest : BaseTest() {
 
         assertTrue(
             waitUntil({
-                !call.isPending()
+                !call.isActive
             })
         )
     }

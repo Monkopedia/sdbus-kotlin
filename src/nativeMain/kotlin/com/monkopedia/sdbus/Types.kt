@@ -224,6 +224,8 @@ value class Signature(val value: String) {
 
     override fun toString(): String = value
 
+    operator fun plus(other: String): Signature = Signature(value + other)
+
     companion object : KSerializer<Signature> {
         const val SERIAL_NAME = "sdbus.Signature"
         override val descriptor: SerialDescriptor =
@@ -250,15 +252,16 @@ value class Signature(val value: String) {
  *
  ***********************************************/
 @Serializable(UnixFd.Companion::class)
-class UnixFd(val fd: Int, adopt_fd: Unit): Resource {
+class UnixFd(val fd: Int, adopt_fd: Unit) : Resource {
     private var wasReleased = false
     private val cleaner = createCleaner(fd) {
         if (it >= 0) {
             close(it)
         }
     }
-    constructor(fd: Int = -1): this(checkedDup(fd), Unit)
-    constructor(other: UnixFd): this(checkedDup(other.fd), Unit)
+
+    constructor(fd: Int = -1) : this(checkedDup(fd), Unit)
+    constructor(other: UnixFd) : this(checkedDup(other.fd), Unit)
 
     val isValid: Boolean
         get() = fd >= 0 && !wasReleased

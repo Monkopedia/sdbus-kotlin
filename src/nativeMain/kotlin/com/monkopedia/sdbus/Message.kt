@@ -744,7 +744,7 @@ internal fun Message.serialize(
     }
 }
 
-internal fun Message.serialize(typedArgs: TypedArguments) {
+fun Message.serialize(typedArgs: TypedArguments) {
     val types = typedArgs.inputType.map { it.type }
     val args = typedArgs.values
     val module = typedArgs.module()

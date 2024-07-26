@@ -247,7 +247,7 @@ interface IProxy : Resource {
     fun registerSignalHandler(
         interfaceName: InterfaceName,
         signalName: SignalName,
-        signalHandler: SignalHandler,
+        signalHandler: SignalHandler
     ): Resource
 
     fun createMethodCall(interfaceName: String, methodName: String): MethodCall
@@ -255,7 +255,7 @@ interface IProxy : Resource {
     fun registerSignalHandler(
         interfaceName: String,
         signalName: String,
-        signalHandler: SignalHandler,
+        signalHandler: SignalHandler
     ): Resource
 }
 
@@ -270,7 +270,8 @@ interface IProxy : Resource {
  * It's safe to call its methods even after the Proxy has gone.
  *
  ***********************************************/
-class PendingAsyncCall internal constructor(private val target: WeakReference<AsyncCallInfo>) : Resource {
+class PendingAsyncCall internal constructor(private val target: WeakReference<AsyncCallInfo>) :
+    Resource {
 
     /*!
      * @brief Cancels the delivery of the pending asynchronous call result
@@ -312,104 +313,10 @@ inline fun IProxy.callMethodAsync(
 ): PendingAsyncCall =
     callMethodAsync(message, asyncReplyCallback, timeout.inWholeMicroseconds.toULong())
 
-suspend inline fun IProxy.callMethodAsync(
-    message: MethodCall,
-    timeout: Duration
-): MethodReply = callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
+suspend inline fun IProxy.callMethodAsync(message: MethodCall, timeout: Duration): MethodReply =
+    callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
 
-/*!
- * @brief Calls method on the D-Bus object
- *
- * @param[in] methodName Name of the method
- * @return A helper object for convenient invocation of the method
- *
- * This is a high-level, convenience way of calling D-Bus methods that abstracts
- * from the D-Bus message concept. Method arguments/return value are automatically (de)serialized
- * in a message and D-Bus signatures automatically deduced from the provided native arguments
- * and return values.
- *
- * Example of use:
- * @code
- * int result, a = ..., b = ...;
- * MethodName multiply{"multiply"};
- * object_.callMethod(multiply).onInterface(INTERFACE_NAME).withArguments(a, b).storeResultsTo(result);
- * @endcode
- *
- * @throws sdbus::Error in case of failure
- */
-inline fun IProxy.callMethod(methodName: MethodName): MethodInvoker =
-    MethodInvoker(this@callMethod, methodName)
 
-/*!
- * @copydoc IProxy::callMethod(const MethodName&)
- */
-inline fun IProxy.callMethod(methodName: String): MethodInvoker =
-    MethodInvoker(this@callMethod, methodName)
-
-/*!
- * @brief Calls method on the D-Bus object asynchronously
- *
- * @param[in] methodName Name of the method
- * @return A helper object for convenient asynchronous invocation of the method
- *
- * This is a high-level, convenience way of calling D-Bus methods that abstracts
- * from the D-Bus message concept. Method arguments/return value are automatically (de)serialized
- * in a message and D-Bus signatures automatically deduced from the provided native arguments
- * and return values.
- *
- * Example of use:
- * @code
- * int a = ..., b = ...;
- * MethodName multiply{"multiply"};
- * object_.callMethodAsync(multiply).onInterface(INTERFACE_NAME).withArguments(a, b).uponReplyInvoke([](int result)
- * {
- *     std::cout << "Got result of multiplying " << a << " and " << b << ": " << result << std::endl;
- * });
- * @endcode
- *
- * @throws sdbus::Error in case of failure
- */
-inline fun IProxy.callMethodAsync(methodName: MethodName): AsyncMethodInvoker =
-    AsyncMethodInvoker(this@callMethodAsync, methodName)
-
-/*!
- * @copydoc IProxy::callMethodAsync(const MethodName&)
- */
-inline fun IProxy.callMethodAsync(methodName: String): AsyncMethodInvoker =
-    AsyncMethodInvoker(this@callMethodAsync, methodName)
-
-/*!
- * @brief Registers signal handler for a given signal of the D-Bus object
- *
- * @param[in] signalName Name of the signal
- * @return A helper object for convenient registration of the signal handler
- *
- * This is a high-level, convenience way of registering to D-Bus signals that abstracts
- * from the D-Bus message concept. Signal arguments are automatically serialized
- * in a message and D-Bus signatures automatically deduced from the parameters
- * of the provided native signal callback.
- *
- * A signal can be subscribed to and unsubscribed from at any time during proxy
- * lifetime. The subscription is active immediately after the call.
- *
- * Example of use:
- * @code
- * object_.uponSignal("stateChanged").onInterface("com.kistler.foo").call([this](int arg1, double arg2){ this->onStateChanged(arg1, arg2); });
- * sdbus::InterfaceName foo{"com.kistler.foo"};
- * sdbus::SignalName levelChanged{"levelChanged"};
- * object_.uponSignal(levelChanged).onInterface(foo).call([this](uint16_t level){ this->onLevelChanged(level); });
- * @endcode
- *
- * @throws sdbus::Error in case of failure
- */
-inline fun IProxy.uponSignal(signalName: SignalName): SignalSubscriber =
-    SignalSubscriber(this, signalName)
-
-/*!
- * @copydoc IProxy::uponSignal(const SignalName&)
- */
-inline fun IProxy.uponSignal(signalName: String): SignalSubscriber =
-    SignalSubscriber(this, signalName)
 
 /*!
  * @brief Gets value of a property of the D-Bus object
@@ -581,7 +488,12 @@ inline fun IProxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPr
  * auto proxy = sdbus::createProxy(connection, "com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(connection: IConnection, destination: ServiceName, objectPath: ObjectPath, dontRunEventLoopThread: Boolean = false): IProxy {
+fun createProxy(
+    connection: IConnection,
+    destination: ServiceName,
+    objectPath: ObjectPath,
+    dontRunEventLoopThread: Boolean = false
+): IProxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     sdbusRequire(
         sdbusConnection == null,
@@ -589,7 +501,12 @@ fun createProxy(connection: IConnection, destination: ServiceName, objectPath: O
         EINVAL
     )
 
-    return Proxy(sdbusConnection!!, destination, objectPath, dontRunEventLoopThread = dontRunEventLoopThread)
+    return Proxy(
+        sdbusConnection!!,
+        destination,
+        objectPath,
+        dontRunEventLoopThread = dontRunEventLoopThread
+    )
 }
 
 /*!
@@ -609,11 +526,20 @@ fun createProxy(connection: IConnection, destination: ServiceName, objectPath: O
  * auto proxy = sdbus::createProxy("com.kistler.foo", "/com/kistler/foo");
  * @endcode
  */
-fun createProxy(destination: ServiceName, objectPath: ObjectPath, dontRunEventLoopThread: Boolean = false): IProxy = memScoped {
+fun createProxy(
+    destination: ServiceName,
+    objectPath: ObjectPath,
+    dontRunEventLoopThread: Boolean = false
+): IProxy = memScoped {
     val connection = createBusConnection()
 
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.IConnection
     assert(sdbusConnection != null)
 
-    Proxy(sdbusConnection!!, destination, objectPath, dontRunEventLoopThread = dontRunEventLoopThread)
+    Proxy(
+        sdbusConnection!!,
+        destination,
+        objectPath,
+        dontRunEventLoopThread = dontRunEventLoopThread
+    )
 }

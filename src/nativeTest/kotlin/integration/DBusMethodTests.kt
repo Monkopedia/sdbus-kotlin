@@ -301,9 +301,7 @@ class DBusMethodTests : BaseTest() {
         // The new remote vtable is registered as long as we keep vtableSlot, so remote method calls now should pass
         val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
         val result: Int =
-            proxy.callMethod("subtract").onInterface(interfaceName)
-                .withArguments { call(10, 2) }
-                .readResult()
+            proxy.callMethod(interfaceName.value, "subtract") { call(10, 2) }
 
         assertEquals(8, result)
         vtableSlot.release()
@@ -331,8 +329,7 @@ class DBusMethodTests : BaseTest() {
         // No such remote D-Bus method under given interface exists anymore...
         val proxy = createProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
         try {
-            proxy.callMethod("subtract").onInterface(interfaceName)
-                .withArguments { call(10, 2) }
+            proxy.callMethod<Unit>(interfaceName.value, "subtract") { call(10, 2) }
             fail("Method did not throw")
         } catch (t: Throwable) {
             // Expected

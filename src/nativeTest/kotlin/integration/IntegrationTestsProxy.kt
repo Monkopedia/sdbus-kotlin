@@ -16,12 +16,11 @@ import com.monkopedia.sdbus.getProperty
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.ComplexMapValue
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.IntStruct
 import com.monkopedia.sdbus.integration.IntegrationTestsAdaptor.StructOfStruct
+import com.monkopedia.sdbus.onSignal
 import com.monkopedia.sdbus.setProperty
-import com.monkopedia.sdbus.uponSignal
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
 
 @OptIn(ExperimentalForeignApi::class)
 abstract class IntegrationTestsProxy(override val proxy: IProxy) :
@@ -31,16 +30,17 @@ abstract class IntegrationTestsProxy(override val proxy: IProxy) :
 
     fun registerProxy() {
         val thiz = WeakReference(this)
-        simpleSignalHandler = proxy.uponSignal("simpleSignal").onInterface(INTERFACE_NAME)
-            .call({ call { -> thiz.get()?.onSimpleSignal() ?: Unit } })
-        proxy.uponSignal("signalWithMap").onInterface(INTERFACE_NAME)
-            .call { call { aMap: Map<Int, String> -> thiz.get()?.onSignalWithMap(aMap) ?: Unit } }
-        proxy.uponSignal("signalWithVariant").onInterface(INTERFACE_NAME)
-            .call {
-                call { aVariant: Variant ->
-                    thiz.get()?.onSignalWithVariant(aVariant) ?: Unit
-                }
+        simpleSignalHandler = proxy.onSignal(INTERFACE_NAME, "simpleSignal") {
+            call { -> thiz.get()?.onSimpleSignal() ?: Unit }
+        }
+        proxy.onSignal(INTERFACE_NAME, "signalWithMap") {
+            call { aMap: Map<Int, String> -> thiz.get()?.onSignalWithMap(aMap) ?: Unit }
+        }
+        proxy.onSignal(INTERFACE_NAME, "signalWithVariant") {
+            call { aVariant: Variant ->
+                thiz.get()?.onSignalWithVariant(aVariant) ?: Unit
             }
+        }
         registerPropertiesProxy()
     }
 
@@ -48,96 +48,66 @@ abstract class IntegrationTestsProxy(override val proxy: IProxy) :
     abstract fun onSignalWithMap(aMap: Map<Int, String>)
     abstract fun onSignalWithVariant(aVariant: Variant)
 
-    fun noArgNoReturn() = memScoped {
-        proxy.callMethod("noArgNoReturn").onInterface(INTERFACE_NAME).readResult<Unit>()
+    fun noArgNoReturn(): Unit = proxy.callMethod(INTERFACE_NAME, "noArgNoReturn") {}
+
+    fun getInt(): Int = proxy.callMethod(INTERFACE_NAME, "getInt") {}
+
+    fun getTuple(): Pair<UInt, String> = proxy.callMethod(INTERFACE_NAME, "getTuple") {}
+
+    fun multiply(a: Long, b: Double): Double = proxy.callMethod(INTERFACE_NAME, "multiply") {
+        call(a, b)
     }
 
-    fun getInt(): Int = memScoped {
-        return proxy.callMethod("getInt").onInterface(INTERFACE_NAME).readResult<Int>()
-    }
-
-    fun getTuple(): Pair<UInt, String> = memScoped {
-        return proxy.callMethod("getTuple").onInterface(INTERFACE_NAME).readResult()
-    }
-
-    fun multiply(a: Long, b: Double): Double = memScoped {
-        return proxy.callMethod("multiply").onInterface(INTERFACE_NAME)
-            .withArguments { call(a, b) }
-            .readResult<Double>()
-    }
-
-    fun multiplyWithNoReply(a: Long, b: Double) = memScoped {
-        proxy.callMethod("multiplyWithNoReply").onInterface(INTERFACE_NAME)
-            .withArguments { call(a, b) }
-            .dontExpectReply()
-    }
+    fun multiplyWithNoReply(a: Long, b: Double): Unit =
+        proxy.callMethod(INTERFACE_NAME, "multiplyWithNoReply") {
+            dontExpectReply = true
+            call(a, b)
+        }
 
     fun getInts16FromStruct(arg0: IntStruct): List<Short> = proxy
-        .callMethod("getInts16FromStruct")
-        .onInterface(INTERFACE_NAME)
-        .withArguments { call(arg0) }
-        .readResult()
+        .callMethod(INTERFACE_NAME, "getInts16FromStruct") { call(arg0) }
 
-    fun processVariant(variant: Variant): Variant = memScoped {
-        return proxy.callMethod("processVariant").onInterface(INTERFACE_NAME)
-            .withArguments { call(variant) }
-            .readResult<Variant>()
-    }
+    fun processVariant(variant: Variant): Variant =
+        proxy.callMethod(INTERFACE_NAME, "processVariant") {
+            call(variant)
+        }
 
     fun getMapOfVariants(x: List<Int>, y: Pair<Variant, Variant>): Map<Int, Variant> =
-        proxy.callMethod("getMapOfVariants").onInterface(INTERFACE_NAME)
-            .withArguments { call(x, y) }
-            .readResult()
+        proxy.callMethod(INTERFACE_NAME, "getMapOfVariants") { call(x, y) }
 
     fun getStructInStruct(): StructOfStruct =
-        proxy.callMethod("getStructInStruct").onInterface(INTERFACE_NAME)
-            .readResult()
+        proxy.callMethod(INTERFACE_NAME, "getStructInStruct") {}
 
     fun sumStructItems(arg0: Pair<UByte, UShort>, arg1: Pair<Int, Long>): Int =
-        proxy.callMethod("sumStructItems").onInterface(INTERFACE_NAME)
-            .withArguments { call(arg0, arg1) }
-            .readResult()
+        proxy.callMethod(INTERFACE_NAME, "sumStructItems") { call(arg0, arg1) }
 
     fun sumArrayItems(arg0: List<UShort>, arg1: Array<ULong>): UInt =
-        proxy.callMethod("sumArrayItems").onInterface(INTERFACE_NAME)
-            .withArguments { call(arg0, arg1) }
-            .readResult<UInt>()
+        proxy.callMethod(INTERFACE_NAME, "sumArrayItems") { call(arg0, arg1) }
 
     fun doOperation(arg0: UInt): UInt =
-        proxy.callMethod("doOperation").onInterface(INTERFACE_NAME)
-            .withArguments { call(arg0) }
-            .readResult()
+        proxy.callMethod(INTERFACE_NAME, "doOperation") { call(arg0) }
 
     suspend fun doOperationAsync(arg0: UInt): UInt =
-        proxy.callMethodAsync("doOperationAsync").onInterface(INTERFACE_NAME)
-            .withArguments { call(arg0) }
-            .getResult<UInt>()
+        proxy.callMethodAsync(INTERFACE_NAME, "doOperationAsync") { call(arg0) }
 
-    fun getSignature(): Signature =
-        proxy.callMethod("getSignature").onInterface(INTERFACE_NAME).readResult()
+    fun getSignature(): Signature = proxy.callMethod(INTERFACE_NAME, "getSignature") {}
 
-    fun getObjPath(): ObjectPath = proxy.callMethod("getObjPath").onInterface(INTERFACE_NAME)
-        .readResult()
+    fun getObjPath(): ObjectPath = proxy.callMethod(INTERFACE_NAME, "getObjPath") {}
 
-    fun getUnixFd(): UnixFd =
-        proxy.callMethod("getUnixFd").onInterface(INTERFACE_NAME).readResult()
+    fun getUnixFd(): UnixFd = proxy.callMethod(INTERFACE_NAME, "getUnixFd") {}
 
     fun getComplex(): Map<ULong, ComplexMapValue> =
-        proxy.callMethod("getComplex").onInterface(INTERFACE_NAME).readResult()
+        proxy.callMethod(INTERFACE_NAME, "getComplex") {}
 
-    fun throwError() =
-        proxy.callMethod("throwError").onInterface(INTERFACE_NAME).withArguments { call() }
-            .readResult<Unit>()
+    fun throwError(): Unit = proxy.callMethod(INTERFACE_NAME, "throwError") { call() }
 
-    fun throwErrorWithNoReply() =
-        proxy.callMethod("throwErrorWithNoReply").onInterface(INTERFACE_NAME)
-            .dontExpectReply()
+    fun throwErrorWithNoReply(): Unit = proxy.callMethod(INTERFACE_NAME, "throwErrorWithNoReply") {
+        dontExpectReply = true
+    }
 
-    fun doPrivilegedStuff() =
-        proxy.callMethod("doPrivilegedStuff").onInterface(INTERFACE_NAME).readResult<Unit>()
+    fun doPrivilegedStuff(): Unit = proxy.callMethod(INTERFACE_NAME, "doPrivilegedStuff") {}
 
-    fun emitTwoSimpleSignals() =
-        proxy.callMethod("emitTwoSimpleSignals").onInterface(INTERFACE_NAME).readResult<Unit>()
+    fun emitTwoSimpleSignals(): Unit = proxy.callMethod(INTERFACE_NAME, "emitTwoSimpleSignals") {}
 
     fun unregisterSimpleSignalHandler() {
         simpleSignalHandler?.release()
@@ -146,8 +116,9 @@ abstract class IntegrationTestsProxy(override val proxy: IProxy) :
 
     fun reRegisterSimpleSignalHandler() {
         val thiz = WeakReference(this)
-        simpleSignalHandler = proxy.uponSignal("simpleSignal").onInterface(INTERFACE_NAME)
-            .call({ call { -> thiz.get()?.onSimpleSignal() ?: Unit } })
+        simpleSignalHandler = proxy.onSignal(INTERFACE_NAME, "simpleSignal") {
+            call { -> thiz.get()?.onSimpleSignal() ?: Unit }
+        }
     }
 
     fun action(): UInt = proxy.getProperty("action").onInterface(INTERFACE_NAME)

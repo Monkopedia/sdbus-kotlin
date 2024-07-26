@@ -111,8 +111,8 @@ abstract class IntegrationTestsAdaptor(override val obj: IObject) : ObjectAdapto
             signal("simpleSignal") {
                 isDeprecated = true
             }
-            signal("signalWithMap") { withParameters<Map<Int, String>>("aMap") }
-            signal("signalWithVariant") { withParameters<Variant>("aVariant") }
+            signal("signalWithMap") { with<Map<Int, String>>("aMap") }
+            signal("signalWithVariant") { with<Variant>("aVariant") }
             property("action") {
                 withGetter { action() }
                 withSetter { value: UInt ->
