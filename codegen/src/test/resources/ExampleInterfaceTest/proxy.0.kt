@@ -12,9 +12,7 @@ public class InterestingInterfaceProxy(
   public override fun register() {
   }
 
-  override suspend fun addContact(name: String, email: String): UInt =
-      proxy.callMethodAsync(InterestingInterface.Companion.INTERFACE_NAME, MethodName("AddContact"))
-      {
+  override suspend fun addContact(name: String, email: String): UInt = proxy.callMethodAsync(InterestingInterface.Companion.INTERFACE_NAME, MethodName("AddContact")) {
     call(name, email)
   }
 }

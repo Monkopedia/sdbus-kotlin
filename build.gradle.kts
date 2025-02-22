@@ -42,14 +42,14 @@ apiValidation {
 }
 
 kotlin {
-    val systemdVersion = "256.2-1"
+    val systemdVersion = "257.2-2"
     linuxX64 {
         binaries {
             sharedLib { }
         }
         compilations.getByName("main") {
             cinterops {
-                create("sdbus-x86_64-$systemdVersion")
+                create("sdbus-$systemdVersion")
             }
         }
         compilerOptions {
@@ -62,24 +62,24 @@ kotlin {
         }
     }
     // Not working quite yet.
-//    linuxArm64 {
-//        binaries {
-//            sharedLib { }
-//        }
-//        compilations.getByName("main") {
-//            cinterops {
-//                create("sdbus-aarch64-$systemdVersion")
-//            }
-//        }
-//        compilerOptions {
-//            freeCompilerArgs.set(
-//                listOf(
-//                    "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
-//                    "-Xexpect-actual-classes"
-//                )
-//            )
-//        }
-//    }
+    linuxArm64 {
+        binaries {
+            sharedLib { }
+        }
+        compilations.getByName("main") {
+            cinterops {
+                create("sdbus-$systemdVersion")
+            }
+        }
+        compilerOptions {
+            freeCompilerArgs.set(
+                listOf(
+                    "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
+                    "-Xexpect-actual-classes"
+                )
+            )
+        }
+    }
     applyDefaultHierarchyTemplate()
     sourceSets {
         val commonMain by getting {
@@ -92,7 +92,6 @@ kotlin {
         }
         val nativeMain by getting {
             dependencies {
-                implementation(libs.clikt)
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
                 implementation(libs.kotlinx.datetime)
@@ -107,7 +106,7 @@ kotlin {
     }
 }
 
-val overrides = mapOf(
+val overrides = mapOf<String, String>(
     "linker.linux_x64" to "/usr/bin/ld.gold",
     "linker.linux_x64-linux_arm64" to "/usr/bin/aarch64-linux-gnu-ld.gold"
 ).entries.map { "-Xoverride-konan-properties=${it.key}=${it.value}" }
@@ -140,7 +139,7 @@ afterEvaluate {
 }
 val dokkaJavadoc = tasks.create("dokkaJavadocCustom", DokkaTask::class) {
     project.dependencies {
-        plugins("org.jetbrains.dokka:kotlin-as-java-plugin:1.9.20")
+        plugins("org.jetbrains.dokka:kotlin-as-java-plugin:2.0.0")
     }
     // outputFormat = "javadoc"
     outputDirectory.set(File(project.buildDir, "javadoc"))

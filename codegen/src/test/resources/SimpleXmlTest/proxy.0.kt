@@ -13,26 +13,23 @@ import kotlinx.coroutines.flow.Flow
 public class BackgroundProxy(
   public val proxy: Proxy,
 ) : Background {
-  public val backgroundChanged: Flow<Unit> = proxy.signalFlow(Background.Companion.INTERFACE_NAME,
-      SignalName("backgroundChanged")) {
+  public val backgroundChanged: Flow<Unit> =
+      proxy.signalFlow(Background.Companion.INTERFACE_NAME, SignalName("backgroundChanged")) {
         call { -> Unit }
       }
 
   public override fun register() {
   }
 
-  override suspend fun refreshBackground(): Unit =
-      proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("refreshBackground")) {
+  override suspend fun refreshBackground(): Unit = proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("refreshBackground")) {
     call()
   }
 
-  override suspend fun currentBackground(): String =
-      proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("currentBackground")) {
+  override suspend fun currentBackground(): String = proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("currentBackground")) {
     call()
   }
 
-  override suspend fun setBackground(name: String): Boolean =
-      proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("setBackground")) {
+  override suspend fun setBackground(name: String): Boolean = proxy.callMethodAsync(Background.Companion.INTERFACE_NAME, MethodName("setBackground")) {
     call(name)
   }
 }

@@ -619,7 +619,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
             init {
                 if (fd == 0) {
-                    fd = eventfd(0, EFD_CLOEXEC or EFD_NONBLOCK)
+                    fd = eventfd(0.convert(), EFD_CLOEXEC or EFD_NONBLOCK)
                     sdbusRequire(fd < 0, "Failed to create event object", -errno)
                 }
             }

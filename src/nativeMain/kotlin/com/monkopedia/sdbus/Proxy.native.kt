@@ -44,12 +44,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with sdbus-kotlin. If not, see <http://www.gnu.org/licenses/>.
  */
-@file:OptIn(ExperimentalNativeApi::class)
+@file:OptIn(ExperimentalNativeApi::class, ExperimentalForeignApi::class)
 
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.internal.ProxyImpl
 import kotlin.experimental.ExperimentalNativeApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
 import platform.posix.EINVAL
 

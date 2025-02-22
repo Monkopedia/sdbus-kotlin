@@ -20,8 +20,7 @@ public class PropertiesProxy(
   public override fun register() {
   }
 
-  override suspend fun `get`(interfaceName: String, propertyName: String): Variant =
-      proxy.callMethodAsync(Properties.Companion.INTERFACE_NAME, MethodName("Get")) {
+  override suspend fun `get`(interfaceName: String, propertyName: String): Variant = proxy.callMethodAsync(Properties.Companion.INTERFACE_NAME, MethodName("Get")) {
     call(interfaceName, propertyName)
   }
 }

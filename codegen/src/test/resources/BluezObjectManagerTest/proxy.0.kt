@@ -14,9 +14,7 @@ public class ObjectManagerProxy(
   public override fun register() {
   }
 
-  override suspend fun getManagedObjects(): Map<ObjectPath, Map<String, Map<String, Variant>>> =
-      proxy.callMethodAsync(ObjectManager.Companion.INTERFACE_NAME, MethodName("GetManagedObjects"))
-      {
+  override suspend fun getManagedObjects(): Map<ObjectPath, Map<String, Map<String, Variant>>> = proxy.callMethodAsync(ObjectManager.Companion.INTERFACE_NAME, MethodName("GetManagedObjects")) {
     call()
   }
 }

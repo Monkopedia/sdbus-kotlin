@@ -29,8 +29,7 @@ public abstract class BackgroundAdaptor(
     }
   }
 
-  public suspend fun onBackgroundChanged(): Unit =
-      obj.emitSignal(Background.Companion.INTERFACE_NAME, SignalName("backgroundChanged")) {
+  public suspend fun onBackgroundChanged(): Unit = obj.emitSignal(Background.Companion.INTERFACE_NAME, SignalName("backgroundChanged")) {
     call()
   }
 }

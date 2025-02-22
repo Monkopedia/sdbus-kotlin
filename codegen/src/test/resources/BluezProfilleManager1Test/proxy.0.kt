@@ -19,14 +19,11 @@ public class ProfileManager1Proxy(
     profile: ObjectPath,
     uUID: String,
     options: Map<String, Variant>,
-  ): Unit = proxy.callMethodAsync(ProfileManager1.Companion.INTERFACE_NAME,
-      MethodName("RegisterProfile")) {
+  ): Unit = proxy.callMethodAsync(ProfileManager1.Companion.INTERFACE_NAME, MethodName("RegisterProfile")) {
     call(profile, uUID, options)
   }
 
-  override suspend fun unregisterProfile(profile: ObjectPath): Unit =
-      proxy.callMethodAsync(ProfileManager1.Companion.INTERFACE_NAME,
-      MethodName("UnregisterProfile")) {
+  override suspend fun unregisterProfile(profile: ObjectPath): Unit = proxy.callMethodAsync(ProfileManager1.Companion.INTERFACE_NAME, MethodName("UnregisterProfile")) {
     call(profile)
   }
 }

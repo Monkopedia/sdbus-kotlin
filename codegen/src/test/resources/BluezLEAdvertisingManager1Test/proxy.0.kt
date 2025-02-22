@@ -16,12 +16,11 @@ import kotlin.collections.Map
 public class LEAdvertisingManager1Proxy(
   public val proxy: Proxy,
 ) : LEAdvertisingManager1 {
-  override val activeInstances: UByte by proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME,
-      PropertyName("ActiveInstances")) 
+  override val activeInstances: UByte by
+      proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME, PropertyName("ActiveInstances")) 
 
   override val supportedInstances: UByte by
-      proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME, PropertyName("SupportedInstances"))
-      
+      proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME, PropertyName("SupportedInstances")) 
 
   override val supportedIncludes: List<String> by
       proxy.prop(LEAdvertisingManager1.Companion.INTERFACE_NAME, PropertyName("SupportedIncludes")) 
@@ -29,16 +28,11 @@ public class LEAdvertisingManager1Proxy(
   public override fun register() {
   }
 
-  override suspend fun registerAdvertisement(advertisement: ObjectPath,
-      options: Map<String, Variant>): Unit =
-      proxy.callMethodAsync(LEAdvertisingManager1.Companion.INTERFACE_NAME,
-      MethodName("RegisterAdvertisement")) {
+  override suspend fun registerAdvertisement(advertisement: ObjectPath, options: Map<String, Variant>): Unit = proxy.callMethodAsync(LEAdvertisingManager1.Companion.INTERFACE_NAME, MethodName("RegisterAdvertisement")) {
     call(advertisement, options)
   }
 
-  override suspend fun unregisterAdvertisement(service: ObjectPath): Unit =
-      proxy.callMethodAsync(LEAdvertisingManager1.Companion.INTERFACE_NAME,
-      MethodName("UnregisterAdvertisement")) {
+  override suspend fun unregisterAdvertisement(service: ObjectPath): Unit = proxy.callMethodAsync(LEAdvertisingManager1.Companion.INTERFACE_NAME, MethodName("UnregisterAdvertisement")) {
     call(service)
   }
 }

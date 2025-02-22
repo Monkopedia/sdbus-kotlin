@@ -15,15 +15,11 @@ public class HealthManager1Proxy(
   public override fun register() {
   }
 
-  override suspend fun createApplication(config: Map<String, Variant>): ObjectPath =
-      proxy.callMethodAsync(HealthManager1.Companion.INTERFACE_NAME,
-      MethodName("CreateApplication")) {
+  override suspend fun createApplication(config: Map<String, Variant>): ObjectPath = proxy.callMethodAsync(HealthManager1.Companion.INTERFACE_NAME, MethodName("CreateApplication")) {
     call(config)
   }
 
-  override suspend fun destroyApplication(application: ObjectPath): Unit =
-      proxy.callMethodAsync(HealthManager1.Companion.INTERFACE_NAME,
-      MethodName("DestroyApplication")) {
+  override suspend fun destroyApplication(application: ObjectPath): Unit = proxy.callMethodAsync(HealthManager1.Companion.INTERFACE_NAME, MethodName("DestroyApplication")) {
     call(application)
   }
 }

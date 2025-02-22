@@ -15,15 +15,11 @@ public class GattManager1Proxy(
   public override fun register() {
   }
 
-  override suspend fun registerApplication(application: ObjectPath, options: Map<String, Variant>):
-      Unit = proxy.callMethodAsync(GattManager1.Companion.INTERFACE_NAME,
-      MethodName("RegisterApplication")) {
+  override suspend fun registerApplication(application: ObjectPath, options: Map<String, Variant>): Unit = proxy.callMethodAsync(GattManager1.Companion.INTERFACE_NAME, MethodName("RegisterApplication")) {
     call(application, options)
   }
 
-  override suspend fun unregisterApplication(application: ObjectPath): Unit =
-      proxy.callMethodAsync(GattManager1.Companion.INTERFACE_NAME,
-      MethodName("UnregisterApplication")) {
+  override suspend fun unregisterApplication(application: ObjectPath): Unit = proxy.callMethodAsync(GattManager1.Companion.INTERFACE_NAME, MethodName("UnregisterApplication")) {
     call(application)
   }
 }

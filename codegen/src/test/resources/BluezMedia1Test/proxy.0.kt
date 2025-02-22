@@ -15,24 +15,19 @@ public class Media1Proxy(
   public override fun register() {
   }
 
-  override suspend fun registerEndpoint(endpoint: ObjectPath, properties: Map<String, Variant>):
-      Unit = proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("RegisterEndpoint"))
-      {
+  override suspend fun registerEndpoint(endpoint: ObjectPath, properties: Map<String, Variant>): Unit = proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("RegisterEndpoint")) {
     call(endpoint, properties)
   }
 
-  override suspend fun unregisterEndpoint(endpoint: ObjectPath): Unit =
-      proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("UnregisterEndpoint")) {
+  override suspend fun unregisterEndpoint(endpoint: ObjectPath): Unit = proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("UnregisterEndpoint")) {
     call(endpoint)
   }
 
-  override suspend fun registerPlayer(player: ObjectPath, properties: Map<String, Variant>): Unit =
-      proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("RegisterPlayer")) {
+  override suspend fun registerPlayer(player: ObjectPath, properties: Map<String, Variant>): Unit = proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("RegisterPlayer")) {
     call(player, properties)
   }
 
-  override suspend fun unregisterPlayer(player: ObjectPath): Unit =
-      proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("UnregisterPlayer")) {
+  override suspend fun unregisterPlayer(player: ObjectPath): Unit = proxy.callMethodAsync(Media1.Companion.INTERFACE_NAME, MethodName("UnregisterPlayer")) {
     call(player)
   }
 }

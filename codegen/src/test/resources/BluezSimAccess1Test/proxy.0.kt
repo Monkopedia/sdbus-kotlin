@@ -11,14 +11,13 @@ import kotlin.Unit
 public class SimAccess1Proxy(
   public val proxy: Proxy,
 ) : SimAccess1 {
-  override val connected: Boolean by proxy.prop(SimAccess1.Companion.INTERFACE_NAME,
-      PropertyName("Connected")) 
+  override val connected: Boolean by
+      proxy.prop(SimAccess1.Companion.INTERFACE_NAME, PropertyName("Connected")) 
 
   public override fun register() {
   }
 
-  override suspend fun disconnect(): Unit =
-      proxy.callMethodAsync(SimAccess1.Companion.INTERFACE_NAME, MethodName("Disconnect")) {
+  override suspend fun disconnect(): Unit = proxy.callMethodAsync(SimAccess1.Companion.INTERFACE_NAME, MethodName("Disconnect")) {
     call()
   }
 }

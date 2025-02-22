@@ -13,19 +13,15 @@ public class AgentManager1Proxy(
   public override fun register() {
   }
 
-  override suspend fun registerAgent(agent: ObjectPath, capability: String): Unit =
-      proxy.callMethodAsync(AgentManager1.Companion.INTERFACE_NAME, MethodName("RegisterAgent")) {
+  override suspend fun registerAgent(agent: ObjectPath, capability: String): Unit = proxy.callMethodAsync(AgentManager1.Companion.INTERFACE_NAME, MethodName("RegisterAgent")) {
     call(agent, capability)
   }
 
-  override suspend fun unregisterAgent(agent: ObjectPath): Unit =
-      proxy.callMethodAsync(AgentManager1.Companion.INTERFACE_NAME, MethodName("UnregisterAgent")) {
+  override suspend fun unregisterAgent(agent: ObjectPath): Unit = proxy.callMethodAsync(AgentManager1.Companion.INTERFACE_NAME, MethodName("UnregisterAgent")) {
     call(agent)
   }
 
-  override suspend fun requestDefaultAgent(agent: ObjectPath): Unit =
-      proxy.callMethodAsync(AgentManager1.Companion.INTERFACE_NAME,
-      MethodName("RequestDefaultAgent")) {
+  override suspend fun requestDefaultAgent(agent: ObjectPath): Unit = proxy.callMethodAsync(AgentManager1.Companion.INTERFACE_NAME, MethodName("RequestDefaultAgent")) {
     call(agent)
   }
 }

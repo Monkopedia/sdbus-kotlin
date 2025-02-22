@@ -12,13 +12,11 @@ public class NetworkServer1Proxy(
   public override fun register() {
   }
 
-  override suspend fun register(uuid: String, bridge: String): Unit =
-      proxy.callMethodAsync(NetworkServer1.Companion.INTERFACE_NAME, MethodName("Register")) {
+  override suspend fun register(uuid: String, bridge: String): Unit = proxy.callMethodAsync(NetworkServer1.Companion.INTERFACE_NAME, MethodName("Register")) {
     call(uuid, bridge)
   }
 
-  override suspend fun unregister(uuid: String): Unit =
-      proxy.callMethodAsync(NetworkServer1.Companion.INTERFACE_NAME, MethodName("Unregister")) {
+  override suspend fun unregister(uuid: String): Unit = proxy.callMethodAsync(NetworkServer1.Companion.INTERFACE_NAME, MethodName("Unregister")) {
     call(uuid)
   }
 }
