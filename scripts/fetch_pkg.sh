@@ -1,30 +1,36 @@
 #!/bin/bash
 
-ARCH=$1
-VERSION=$2
-echo "Fetching $ARCH and placing in libs/$ARCH/$VERSION"
+VERSION=$1
+function fetchArch() {
+    ARCH=$1
+    echo "Fetching $ARCH and placing in libs/$ARCH/$VERSION"
 
-rm -rf libs/$ARCH/$VERSION
-mkdir -p libs/$ARCH/$VERSION
-cd libs/$ARCH/$VERSION
+    rm -rf libs/$ARCH/$VERSION
+    mkdir -p libs/$ARCH/$VERSION
+    cd libs/$ARCH/$VERSION
 
-if [[ "$ARCH" == x86_64 ]]; then
-   URL=https://archlinux.org/packages/core/$ARCH/systemd-libs/download/
-elif [[ "$ARCH" == aarch64 ]]; then
-   URL=http://mirror.archlinuxarm.org/$ARCH/core/systemd-libs-$VERSION-$ARCH.pkg.tar.xz
-fi
-wget $URL -Opackage.pkg.tar.zst
-tar xf package.pkg.tar.zst usr/include usr/lib
-mv usr/include include/
-mv usr/lib lib/
-rmdir usr
-rm package.pkg.tar.zst
-cd -
+    if [[ "$ARCH" == x86_64 ]]; then
+       URL=https://archlinux.org/packages/core/$ARCH/systemd-libs/download/
+    elif [[ "$ARCH" == aarch64 ]]; then
+       URL=http://mirror.archlinuxarm.org/$ARCH/core/systemd-libs-$VERSION-$ARCH.pkg.tar.xz
+    fi
+    wget $URL -Opackage.pkg.tar.zst
+    tar xf package.pkg.tar.zst usr/include usr/lib
+    mv usr/include include/
+    mv usr/lib lib/
+    rmdir usr
+    rm package.pkg.tar.zst
+    cd -
+}
+fetchArch x86_64
+fetchArch aarch64
 
-cat >> src/nativeInterop/cinterop/sdbus-$ARCH-$VERSION.def <<EOF
+cat > src/nativeInterop/cinterop/sdbus-$VERSION.def <<EOF
 headers = systemd/sd-bus.h
-compilerOpts.linux = -Ilibs/$ARCH/$VERSION/include
-linkerOpts.linux = -Llibs/$ARCH/$VERSION/lib -lsystemd
+compilerOpts.linux = -Ilibs/aarch64/256.2-1/include
+linkerOpts.linux = -Llibs/aarch64/256.2-1/lib
+compilerOpts.linux_x64 = -Ilibs/x86_64/256.2-1/include
+linkerOpts.linux_x64 = -Llibs/x86_64/256.2-1/lib
 package = sdbus
 
 ---
