@@ -27,21 +27,11 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
 
-      - name: Rename artifacts
-        run: |
-          mv ./build/classes/kotlin/linuxX64/main/cinterop/sdbus-kotlin-cinterop-sdbus-256.2-1.klib sdbus-kotlin-cinterop-sdbus-linuxx64-256.2-1.klib
-          mv ./build/classes/kotlin/linuxX64/main/klib/sdbus-kotlin.klib sdbus-kotlin-linuxx64.klib
-          mv ./build/classes/kotlin/linuxArm64/main/cinterop/sdbus-kotlin-cinterop-sdbus-256.2-1.klib sdbus-kotlin-cinterop-sdbus-linuxarm64-256.2-1.klib
-          mv ./build/classes/kotlin/linuxArm64/main/klib/sdbus-kotlin.klib sdbus-kotlin-linuxarm64.klib
-
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            ./sdbus-kotlin-cinterop-sdbus-linuxx64-256.2-1.klib
-            ./sdbus-kotlin-linuxx64.klib
-            ./sdbus-kotlin-cinterop-sdbus-linuxarm64-256.2-1.klib
-            ./sdbus-kotlin-linuxarm64.klib
-            ./codegen/build/libs/codegen-all-0.1.0.jar
+            ./build/libs/sdbus-kotlin-*.klib
+            ./codegen/build/libs/codegen-all-*.jar
 

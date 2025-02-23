@@ -1,11 +1,11 @@
 // Klib ABI Dump
-// Targets: [linuxX64]
+// Targets: [linuxArm64, linuxX64]
 // Rendering settings:
 // - Signature version: 2
 // - Show manifest properties: true
 // - Show declarations: true
 
-// Library unique name: <com.monkopedia:kotlin_dbus>
+// Library unique name: <com.monkopedia:sdbus-kotlin>
 abstract interface com.monkopedia.sdbus/Connection : com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/Connection|null[0]
     abstract val currentlyProcessedMessage // com.monkopedia.sdbus/Connection.currentlyProcessedMessage|{}currentlyProcessedMessage[0]
         abstract fun <get-currentlyProcessedMessage>(): com.monkopedia.sdbus/Message // com.monkopedia.sdbus/Connection.currentlyProcessedMessage.<get-currentlyProcessedMessage>|<get-currentlyProcessedMessage>(){}[0]
@@ -793,8 +793,6 @@ open class com.monkopedia.sdbus/TypedMethodBuilderContext { // com.monkopedia.sd
 }
 
 sealed class <#A: com.monkopedia.sdbus/TypedMethodCall<#A>> com.monkopedia.sdbus/TypedMethodCall { // com.monkopedia.sdbus/TypedMethodCall|null[0]
-    constructor <init>() // com.monkopedia.sdbus/TypedMethodCall.<init>|<init>(){}[0]
-
     abstract fun <#A1: kotlin/Any?> invoke(com.monkopedia.sdbus/Message, kotlin/Function3<#A, com.monkopedia.sdbus/Typed<kotlin/Any>, kotlin/Any, #A1>, kotlin/Function2<#A, kotlin/Throwable, #A1>, kotlin/Function2<#A, #A1, kotlin/Unit> = ...) // com.monkopedia.sdbus/TypedMethodCall.invoke|invoke(com.monkopedia.sdbus.Message;kotlin.Function3<1:0,com.monkopedia.sdbus.Typed<kotlin.Any>,kotlin.Any,0:0>;kotlin.Function2<1:0,kotlin.Throwable,0:0>;kotlin.Function2<1:0,0:0,kotlin.Unit>){0§<kotlin.Any?>}[0]
     abstract fun invoke(kotlin/Throwable) // com.monkopedia.sdbus/TypedMethodCall.invoke|invoke(kotlin.Throwable){}[0]
     final fun invoke(com.monkopedia.sdbus/Message, kotlin/Function3<#A, com.monkopedia.sdbus/Typed<kotlin/Any>, kotlin/Any, kotlin/Unit> = ...) // com.monkopedia.sdbus/TypedMethodCall.invoke|invoke(com.monkopedia.sdbus.Message;kotlin.Function3<1:0,com.monkopedia.sdbus.Typed<kotlin.Any>,kotlin.Any,kotlin.Unit>){}[0]
@@ -840,8 +838,6 @@ sealed class <#A: com.monkopedia.sdbus/TypedMethodCall<#A>> com.monkopedia.sdbus
 }
 
 sealed class com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/Message|null[0]
-    constructor <init>(kotlinx.cinterop/CPointer<cnames.structs/sd_bus_message>?, com.monkopedia.sdbus.internal/ISdBus, kotlin/Boolean = ...) // com.monkopedia.sdbus/Message.<init>|<init>(kotlinx.cinterop.CPointer<cnames.structs.sd_bus_message>?;com.monkopedia.sdbus.internal.ISdBus;kotlin.Boolean){}[0]
-
     final val isEmpty // com.monkopedia.sdbus/Message.isEmpty|{}isEmpty[0]
         final fun <get-isEmpty>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
     final val isValid // com.monkopedia.sdbus/Message.isValid|{}isValid[0]
@@ -867,8 +863,6 @@ sealed class com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/Message|null
 }
 
 sealed class com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/SdbusSig|null[0]
-    constructor <init>() // com.monkopedia.sdbus/SdbusSig.<init>|<init>(){}[0]
-
     abstract val isTrivial // com.monkopedia.sdbus/SdbusSig.isTrivial|{}isTrivial[0]
         abstract fun <get-isTrivial>(): kotlin/Boolean // com.monkopedia.sdbus/SdbusSig.isTrivial.<get-isTrivial>|<get-isTrivial>(){}[0]
     abstract val valid // com.monkopedia.sdbus/SdbusSig.valid|{}valid[0]
@@ -883,11 +877,6 @@ final object com.monkopedia.sdbus/InvalidSig : com.monkopedia.sdbus/SdbusSig { /
     final fun toString(): kotlin/String // com.monkopedia.sdbus/InvalidSig.toString|toString(){}[0]
 }
 
-final const val com.monkopedia.sdbus.internal/SDBUSCPP_ERROR_NAME // com.monkopedia.sdbus.internal/SDBUSCPP_ERROR_NAME|{}SDBUSCPP_ERROR_NAME[0]
-    final fun <get-SDBUSCPP_ERROR_NAME>(): kotlin/String // com.monkopedia.sdbus.internal/SDBUSCPP_ERROR_NAME.<get-SDBUSCPP_ERROR_NAME>|<get-SDBUSCPP_ERROR_NAME>(){}[0]
-
-final val com.monkopedia.sdbus.internal/asAsyncReplyHandler // com.monkopedia.sdbus.internal/asAsyncReplyHandler|@kotlinx.coroutines.CompletableDeferred<com.monkopedia.sdbus.MethodReply>{}asAsyncReplyHandler[0]
-    final fun (kotlinx.coroutines/CompletableDeferred<com.monkopedia.sdbus/MethodReply>).<get-asAsyncReplyHandler>(): kotlin/Function2<com.monkopedia.sdbus/MethodReply, com.monkopedia.sdbus/Error?, kotlin/Unit> // com.monkopedia.sdbus.internal/asAsyncReplyHandler.<get-asAsyncReplyHandler>|<get-asAsyncReplyHandler>@kotlinx.coroutines.CompletableDeferred<com.monkopedia.sdbus.MethodReply>(){}[0]
 final val com.monkopedia.sdbus/BoolSig // com.monkopedia.sdbus/BoolSig|{}BoolSig[0]
     final fun <get-BoolSig>(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/BoolSig.<get-BoolSig>|<get-BoolSig>(){}[0]
 final val com.monkopedia.sdbus/DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.sdbus/DBUS_PROPERTIES_INTERFACE_NAME|{}DBUS_PROPERTIES_INTERFACE_NAME[0]
