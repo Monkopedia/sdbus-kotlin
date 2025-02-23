@@ -120,22 +120,6 @@ afterEvaluate {
             freeCompilerArgs += overrides
         }
     }
-    val link = tasks.getByName("linkDebugTestLinuxX64")
-    (link as KotlinNativeLink).apply {
-        kotlinOptions {
-            freeCompilerArgs += overrides
-            freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
-        }
-    }
-    println("${link::class}")
-//    val linkArm = tasks.getByName("linkDebugTestLinuxArm64")
-//    (linkArm as KotlinNativeLink).apply {
-//        kotlinOptions {
-//            freeCompilerArgs += overrides
-//            freeCompilerArgs += listOf("-linker-options", "-l systemd -l c")
-//        }
-//    }
-//    println("${linkArm::class}")
 }
 val dokkaJavadoc = tasks.create("dokkaJavadocCustom", DokkaTask::class) {
     project.dependencies {

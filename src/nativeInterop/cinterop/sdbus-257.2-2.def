@@ -1,8 +1,8 @@
 headers = systemd/sd-bus.h
-compilerOpts.linux = -Ilibs/aarch64/256.2-1/include
-linkerOpts.linux = -Llibs/aarch64/256.2-1/lib
-compilerOpts.linux_x64 = -Ilibs/x86_64/256.2-1/include
-linkerOpts.linux_x64 = -Llibs/x86_64/256.2-1/lib
+compilerOpts.linux = -Ilibs/aarch64/257.2-2/include
+linkerOpts.linux = -Llibs/aarch64/257.2-2/lib -l systemd -l c
+compilerOpts.linux_x64 = -Ilibs/x86_64/257.2-2/include
+linkerOpts.linux_x64 = -Llibs/x86_64/257.2-2/lib -l systemd -l c
 package = sdbus
 
 ---
