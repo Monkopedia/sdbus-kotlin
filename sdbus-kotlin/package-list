@@ -19,13 +19,13 @@ $dokka.location:com.monkopedia.sdbus//Variant/#TypeParam(bounds=[kotlin.Any])/Po
 $dokka.location:com.monkopedia.sdbus//VariantSig/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant-sig.html
 $dokka.location:com.monkopedia.sdbus//VoidSig/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-void-sig.html
 $dokka.location:com.monkopedia.sdbus//addVTable/com.monkopedia.sdbus.Object#com.monkopedia.sdbus.InterfaceName#kotlin.Function1[com.monkopedia.sdbus.VTableBuilder,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/add-v-table.html
-$dokka.location:com.monkopedia.sdbus//asSignature/[Error type: Unresolved type for SerialDescriptor]#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/as-signature.html
+$dokka.location:com.monkopedia.sdbus//asSignature/kotlinx.serialization.descriptors.SerialDescriptor#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/as-signature.html
 $dokka.location:com.monkopedia.sdbus//buildArgs/#kotlin.Function1[com.monkopedia.sdbus.TypedArgumentsBuilderContext,com.monkopedia.sdbus.TypedArguments]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/build-args.html
 $dokka.location:com.monkopedia.sdbus//callMethod/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.MethodInvoker,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method.html
-$dokka.location:com.monkopedia.sdbus//callMethod/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MethodCall#[Error type: Unresolved type for Duration]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method.html
+$dokka.location:com.monkopedia.sdbus//callMethod/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MethodCall#kotlin.time.Duration/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method.html
 $dokka.location:com.monkopedia.sdbus//callMethodAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.MethodInvoker,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method-async.html
-$dokka.location:com.monkopedia.sdbus//callMethodAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MethodCall#[Error type: Unresolved type for Duration]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method-async.html
-$dokka.location:com.monkopedia.sdbus//callMethodAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MethodCall#kotlin.Function2[com.monkopedia.sdbus.MethodReply,com.monkopedia.sdbus.Error?,kotlin.Unit]#[Error type: Unresolved type for Duration]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method-async.html
+$dokka.location:com.monkopedia.sdbus//callMethodAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MethodCall#kotlin.Function2[com.monkopedia.sdbus.MethodReply,com.monkopedia.sdbus.Error?,kotlin.Unit]#kotlin.time.Duration/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method-async.html
+$dokka.location:com.monkopedia.sdbus//callMethodAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MethodCall#kotlin.time.Duration/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/call-method-async.html
 $dokka.location:com.monkopedia.sdbus//containsValueOfType/com.monkopedia.sdbus.Variant#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/contains-value-of-type.html
 $dokka.location:com.monkopedia.sdbus//createBusConnection/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/create-bus-connection.html
 $dokka.location:com.monkopedia.sdbus//createBusConnection/#com.monkopedia.sdbus.BusName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/create-bus-connection.html
@@ -42,6 +42,7 @@ $dokka.location:com.monkopedia.sdbus//createSessionBusConnection/#com.monkopedia
 $dokka.location:com.monkopedia.sdbus//createSessionBusConnectionWithAddress/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/create-session-bus-connection-with-address.html
 $dokka.location:com.monkopedia.sdbus//createSystemBusConnection/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/create-system-bus-connection.html
 $dokka.location:com.monkopedia.sdbus//createSystemBusConnection/#com.monkopedia.sdbus.BusName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/create-system-bus-connection.html
+$dokka.location:com.monkopedia.sdbus//deserialize/com.monkopedia.sdbus.Message#kotlinx.serialization.DeserializationStrategy[TypeParam(bounds=[kotlin.Any])]#kotlinx.serialization.modules.SerializersModule/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/deserialize.html
 $dokka.location:com.monkopedia.sdbus//emit/com.monkopedia.sdbus.Object#com.monkopedia.sdbus.SignalEmitter/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/emit.html
 $dokka.location:com.monkopedia.sdbus//emitSignal/com.monkopedia.sdbus.Object#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.SignalEmitter,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/emit-signal.html
 $dokka.location:com.monkopedia.sdbus//getAllProperties/com.monkopedia.sdbus.Proxy#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/get-all-properties.html
@@ -54,6 +55,7 @@ $dokka.location:com.monkopedia.sdbus//onSignal/com.monkopedia.sdbus.Proxy#com.mo
 $dokka.location:com.monkopedia.sdbus//prop/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/prop.html
 $dokka.location:com.monkopedia.sdbus//prop/com.monkopedia.sdbus.VTableBuilder#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.PropertyVTableItem,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/prop.html
 $dokka.location:com.monkopedia.sdbus//registerProperty/#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/register-property.html
+$dokka.location:com.monkopedia.sdbus//serialize/com.monkopedia.sdbus.Message#kotlinx.serialization.SerializationStrategy[TypeParam(bounds=[kotlin.Any?])]#kotlinx.serialization.modules.SerializersModule#TypeParam(bounds=[kotlin.Any?])/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/serialize.html
 $dokka.location:com.monkopedia.sdbus//setProperty/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName#TypeParam(bounds=[kotlin.Any])#kotlin.Boolean/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/set-property.html
 $dokka.location:com.monkopedia.sdbus//setPropertyAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/set-property-async.html
 $dokka.location:com.monkopedia.sdbus//signal/com.monkopedia.sdbus.VTableBuilder#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.SignalVTableItem,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/signal.html
@@ -78,7 +80,7 @@ $dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter.Companion/DBUS_PROPERTI
 $dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-getter/index.html
 $dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter/AsyncPropertyGetter/#com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-getter/-async-property-getter.html
 $dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter/get/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-getter/get.html
-$dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter/get/#[Error type: Unresolved type for DeserializationStrategy<T>][TypeParam(bounds=[kotlin.Any])]#[Error type: Unresolved type for SerializersModule]#com.monkopedia.sdbus.SdbusSig/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-getter/get.html
+$dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter/get/#kotlinx.serialization.DeserializationStrategy[TypeParam(bounds=[kotlin.Any])]#kotlinx.serialization.modules.SerializersModule#com.monkopedia.sdbus.SdbusSig/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-getter/get.html
 $dokka.location:com.monkopedia.sdbus/AsyncPropertyGetter/onInterface/#com.monkopedia.sdbus.InterfaceName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-getter/on-interface.html
 $dokka.location:com.monkopedia.sdbus/AsyncPropertySetter.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-setter/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/AsyncPropertySetter.Companion/DBUS_PROPERTIES_INTERFACE_NAME/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-property-setter/-companion/-d-b-u-s_-p-r-o-p-e-r-t-i-e-s_-i-n-t-e-r-f-a-c-e_-n-a-m-e.html
@@ -90,8 +92,8 @@ $dokka.location:com.monkopedia.sdbus/AsyncPropertySetter/toValue/#TypeParam(boun
 $dokka.location:com.monkopedia.sdbus/AsyncReplyHandler///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-async-reply-handler/index.html
 $dokka.location:com.monkopedia.sdbus/BusName.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/BusName.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/BusName.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/BusName.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.BusName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/BusName.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/BusName.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.BusName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/BusName///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/index.html
 $dokka.location:com.monkopedia.sdbus/BusName/BusName/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/-bus-name.html
 $dokka.location:com.monkopedia.sdbus/BusName/toString/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-bus-name/to-string.html
@@ -107,13 +109,14 @@ $dokka.location:com.monkopedia.sdbus/Connection/getUniqueName/#/PointingToDeclar
 $dokka.location:com.monkopedia.sdbus/Connection/leaveEventLoop/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-connection/leave-event-loop.html
 $dokka.location:com.monkopedia.sdbus/Connection/releaseName/#com.monkopedia.sdbus.BusName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-connection/release-name.html
 $dokka.location:com.monkopedia.sdbus/Connection/requestName/#com.monkopedia.sdbus.BusName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-connection/request-name.html
-$dokka.location:com.monkopedia.sdbus/Connection/setMethodCallTimeout/#[Error type: Unresolved type for Duration]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-connection/set-method-call-timeout.html
+$dokka.location:com.monkopedia.sdbus/Connection/setMethodCallTimeout/#kotlin.time.Duration/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-connection/set-method-call-timeout.html
 $dokka.location:com.monkopedia.sdbus/Error///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-error/index.html
 $dokka.location:com.monkopedia.sdbus/Error/Error/#kotlin.String#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-error/-error.html
 $dokka.location:com.monkopedia.sdbus/Error/errorMessage/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-error/error-message.html
 $dokka.location:com.monkopedia.sdbus/Error/name/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-error/name.html
 $dokka.location:com.monkopedia.sdbus/Flags.Count.FLAG_COUNT///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}sdbus-kotlin/com.monkopedia.sdbus/-flags/-count/-f-l-a-g_-c-o-u-n-t/index.html
 $dokka.location:com.monkopedia.sdbus/Flags.Count///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-count/index.html
+$dokka.location:com.monkopedia.sdbus/Flags.Count/entries/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-count/entries.html
 $dokka.location:com.monkopedia.sdbus/Flags.Count/value/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-count/value.html
 $dokka.location:com.monkopedia.sdbus/Flags.Count/valueOf/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-count/value-of.html
 $dokka.location:com.monkopedia.sdbus/Flags.Count/values/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-count/values.html
@@ -121,6 +124,7 @@ $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags.DEPRECATED///PointingToD
 $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags.METHOD_NO_REPLY///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/-m-e-t-h-o-d_-n-o_-r-e-p-l-y/index.html
 $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags.PRIVILEGED///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/-p-r-i-v-i-l-e-g-e-d/index.html
 $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/index.html
+$dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags/entries/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/entries.html
 $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags/value/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/value.html
 $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags/valueOf/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/value-of.html
 $dokka.location:com.monkopedia.sdbus/Flags.GeneralFlags/values/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-general-flags/values.html
@@ -129,6 +133,7 @@ $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags.EMITS_CHA
 $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/-e-m-i-t-s_-i-n-v-a-l-i-d-a-t-i-o-n_-s-i-g-n-a-l/index.html
 $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/-e-m-i-t-s_-n-o_-s-i-g-n-a-l/index.html
 $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/index.html
+$dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags/entries/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/entries.html
 $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags/value/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/value.html
 $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags/valueOf/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/value-of.html
 $dokka.location:com.monkopedia.sdbus/Flags.PropertyUpdateBehaviorFlags/values/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-flags/-property-update-behavior-flags/values.html
@@ -148,8 +153,8 @@ $dokka.location:com.monkopedia.sdbus/InterfaceFlagsVTableItem/plusAssign/#com.mo
 $dokka.location:com.monkopedia.sdbus/InterfaceFlagsVTableItem/unaryPlus/com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-flags-v-table-item/unary-plus.html
 $dokka.location:com.monkopedia.sdbus/InterfaceName.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/InterfaceName.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/InterfaceName.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/InterfaceName.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.InterfaceName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/InterfaceName.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/InterfaceName.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.InterfaceName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/InterfaceName///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/index.html
 $dokka.location:com.monkopedia.sdbus/InterfaceName/InterfaceName/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/-interface-name.html
 $dokka.location:com.monkopedia.sdbus/InterfaceName/toString/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-interface-name/to-string.html
@@ -166,8 +171,8 @@ $dokka.location:com.monkopedia.sdbus/MapSig/t1/#/PointingToDeclaration/sdbus-ko
 $dokka.location:com.monkopedia.sdbus/MapSig/t2/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-map-sig/t2.html
 $dokka.location:com.monkopedia.sdbus/MemberName.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/MemberName.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/MemberName.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/MemberName.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/MemberName.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/MemberName.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/MemberName///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/index.html
 $dokka.location:com.monkopedia.sdbus/MemberName/MemberName/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/-member-name.html
 $dokka.location:com.monkopedia.sdbus/MemberName/toString/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-member-name/to-string.html
@@ -198,8 +203,8 @@ $dokka.location:com.monkopedia.sdbus/MethodCall/MethodCall/#com.monkopedia.sdbus
 $dokka.location:com.monkopedia.sdbus/MethodCall/createErrorReply/#com.monkopedia.sdbus.Error/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/create-error-reply.html
 $dokka.location:com.monkopedia.sdbus/MethodCall/createReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/create-reply.html
 $dokka.location:com.monkopedia.sdbus/MethodCall/dontExpectReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/dont-expect-reply.html
-$dokka.location:com.monkopedia.sdbus/MethodCall/send/#[Error type: Unresolved type for ULong]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
-$dokka.location:com.monkopedia.sdbus/MethodCall/send/#[Error type: Unresolved type for sd_bus_message_handler_t]#kotlin.Any?#[Error type: Unresolved type for ULong]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
+$dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
+$dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlinx.cinterop.CPointer[kotlinx.cinterop.CFunction[kotlin.Function3[kotlinx.cinterop.CPointer[cnames.structs.sd_bus_message]?,kotlinx.cinterop.CPointer[kotlinx.cinterop.CPointed]?,kotlinx.cinterop.CPointer[sdbus.sd_bus_error]?,kotlin.Int]]]#kotlin.Any?#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
 $dokka.location:com.monkopedia.sdbus/MethodCallback///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-callback/index.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/index.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/args/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/args.html
@@ -250,8 +255,8 @@ $dokka.location:com.monkopedia.sdbus/ObjectManagerProxy/proxy/#/PointingToDeclar
 $dokka.location:com.monkopedia.sdbus/ObjectPath.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/ObjectPath.Companion/SERIAL_NAME/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/-s-e-r-i-a-l_-n-a-m-e.html
 $dokka.location:com.monkopedia.sdbus/ObjectPath.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/ObjectPath.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/ObjectPath.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.ObjectPath/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/ObjectPath.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/ObjectPath.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.ObjectPath/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/ObjectPath///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/index.html
 $dokka.location:com.monkopedia.sdbus/ObjectPath/ObjectPath/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/-object-path.html
 $dokka.location:com.monkopedia.sdbus/ObjectPath/toString/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-object-path/to-string.html
@@ -302,11 +307,11 @@ $dokka.location:com.monkopedia.sdbus/PropertyVTableItem/with/#kotlin.reflect.KPr
 $dokka.location:com.monkopedia.sdbus/PropertyVTableItem/withGetter/#kotlin.Function0[TypeParam(bounds=[kotlin.Any])]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-property-v-table-item/with-getter.html
 $dokka.location:com.monkopedia.sdbus/PropertyVTableItem/withSetter/#kotlin.Function1[TypeParam(bounds=[kotlin.Any]),kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-property-v-table-item/with-setter.html
 $dokka.location:com.monkopedia.sdbus/Proxy///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/index.html
-$dokka.location:com.monkopedia.sdbus/Proxy/callMethod/#com.monkopedia.sdbus.MethodCall#[Error type: Unresolved type for ULong]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method.html
+$dokka.location:com.monkopedia.sdbus/Proxy/callMethod/#com.monkopedia.sdbus.MethodCall#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method.html
 $dokka.location:com.monkopedia.sdbus/Proxy/callMethod/#com.monkopedia.sdbus.MethodCall/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method.html
-$dokka.location:com.monkopedia.sdbus/Proxy/callMethodAsync/#com.monkopedia.sdbus.MethodCall#[Error type: Unresolved type for ULong]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method-async.html
-$dokka.location:com.monkopedia.sdbus/Proxy/callMethodAsync/#com.monkopedia.sdbus.MethodCall#kotlin.Function2[com.monkopedia.sdbus.MethodReply,com.monkopedia.sdbus.Error?,kotlin.Unit]#[Error type: Unresolved type for ULong]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method-async.html
+$dokka.location:com.monkopedia.sdbus/Proxy/callMethodAsync/#com.monkopedia.sdbus.MethodCall#kotlin.Function2[com.monkopedia.sdbus.MethodReply,com.monkopedia.sdbus.Error?,kotlin.Unit]#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method-async.html
 $dokka.location:com.monkopedia.sdbus/Proxy/callMethodAsync/#com.monkopedia.sdbus.MethodCall#kotlin.Function2[com.monkopedia.sdbus.MethodReply,com.monkopedia.sdbus.Error?,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method-async.html
+$dokka.location:com.monkopedia.sdbus/Proxy/callMethodAsync/#com.monkopedia.sdbus.MethodCall#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method-async.html
 $dokka.location:com.monkopedia.sdbus/Proxy/callMethodAsync/#com.monkopedia.sdbus.MethodCall/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/call-method-async.html
 $dokka.location:com.monkopedia.sdbus/Proxy/connection/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/connection.html
 $dokka.location:com.monkopedia.sdbus/Proxy/createMethodCall/#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-proxy/create-method-call.html
@@ -351,8 +356,8 @@ $dokka.location:com.monkopedia.sdbus/SignalVTableItem/with/#kotlin.String/Pointi
 $dokka.location:com.monkopedia.sdbus/Signature.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/Signature.Companion/SERIAL_NAME/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/-s-e-r-i-a-l_-n-a-m-e.html
 $dokka.location:com.monkopedia.sdbus/Signature.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/Signature.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/Signature.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.Signature/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/Signature.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/Signature.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.Signature/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/Signature///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/index.html
 $dokka.location:com.monkopedia.sdbus/Signature/Signature/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/-signature.html
 $dokka.location:com.monkopedia.sdbus/Signature/plus/#kotlin.String/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-signature/plus.html
@@ -404,12 +409,12 @@ $dokka.location:com.monkopedia.sdbus/TypedMethodBuilderContext/call/#kotlin.Func
 $dokka.location:com.monkopedia.sdbus/TypedMethodBuilderContext/call/#kotlin.Function9[TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any]),TypeParam(bounds=[kotlin.Any])]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-typed-method-builder-context/call.html
 $dokka.location:com.monkopedia.sdbus/TypedMethodCall///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-typed-method-call/index.html
 $dokka.location:com.monkopedia.sdbus/TypedMethodCall/invoke/#kotlin.Throwable/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-typed-method-call/invoke.html
-$dokka.location:com.monkopedia.sdbus/TypedMethodCall/withContext/#[Error type: Unresolved type for CoroutineContext]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-typed-method-call/with-context.html
+$dokka.location:com.monkopedia.sdbus/TypedMethodCall/withContext/#kotlin.coroutines.CoroutineContext/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-typed-method-call/with-context.html
 $dokka.location:com.monkopedia.sdbus/UnixFd.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/UnixFd.Companion/SERIAL_NAME/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/-s-e-r-i-a-l_-n-a-m-e.html
 $dokka.location:com.monkopedia.sdbus/UnixFd.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.UnixFd/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.UnixFd/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/UnixFd///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/index.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/UnixFd/#com.monkopedia.sdbus.UnixFd/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-unix-fd.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/UnixFd/#kotlin.Int#kotlin.Unit/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-unix-fd.html
@@ -424,11 +429,11 @@ $dokka.location:com.monkopedia.sdbus/VTableItem///PointingToDeclaration/sdbus-k
 $dokka.location:com.monkopedia.sdbus/Variant.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/Variant.Companion/SERIAL_NAME/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/-s-e-r-i-a-l_-n-a-m-e.html
 $dokka.location:com.monkopedia.sdbus/Variant.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/Variant.Companion/deserialize/#[Error type: Unresolved type for Decoder]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/Variant.Companion/serialize/#[Error type: Unresolved type for Encoder]#com.monkopedia.sdbus.Variant/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/Variant.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/deserialize.html
+$dokka.location:com.monkopedia.sdbus/Variant.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.Variant/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-companion/serialize.html
 $dokka.location:com.monkopedia.sdbus/Variant///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/index.html
 $dokka.location:com.monkopedia.sdbus/Variant/Variant/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-variant.html
-$dokka.location:com.monkopedia.sdbus/Variant/Variant/#[Error type: Unresolved type for SerializationStrategy<*>][[Error type: Error type projection]]#[Error type: Unresolved type for SerializersModule]#kotlin.Any/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-variant.html
+$dokka.location:com.monkopedia.sdbus/Variant/Variant/#kotlinx.serialization.SerializationStrategy[*]#kotlinx.serialization.modules.SerializersModule#kotlin.Any/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/-variant.html
 $dokka.location:com.monkopedia.sdbus/Variant/deserializeFrom/#com.monkopedia.sdbus.Message/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/deserialize-from.html
 $dokka.location:com.monkopedia.sdbus/Variant/get/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/get.html
 $dokka.location:com.monkopedia.sdbus/Variant/isEmpty/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/is-empty.html
@@ -436,4 +441,3 @@ $dokka.location:com.monkopedia.sdbus/Variant/peekValueType/#/PointingToDeclarati
 $dokka.location:com.monkopedia.sdbus/Variant/serializeTo/#com.monkopedia.sdbus.Message/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/serialize-to.html
 $dokka.location:com.monkopedia.sdbus/Variant/toString/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-variant/to-string.html
 com.monkopedia.sdbus
-
