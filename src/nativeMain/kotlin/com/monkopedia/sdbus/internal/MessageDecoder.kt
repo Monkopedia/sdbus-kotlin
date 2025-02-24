@@ -313,6 +313,13 @@ internal class ListDecoder<K, N : CVariable>(
         lastInline = null
     }
 
+    override fun decodeByte(): Byte {
+        if (isUnsigned) {
+            return (decodeValue() as UByte).toByte()
+        }
+        return super.decodeByte()
+    }
+
     override fun decodeShort(): Short {
         if (isUnsigned) {
             return (decodeValue() as UShort).toShort()
