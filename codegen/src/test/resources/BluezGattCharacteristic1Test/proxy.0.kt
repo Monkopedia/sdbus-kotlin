@@ -57,10 +57,12 @@ public class GattCharacteristic1Proxy(
   }
 
   override suspend fun acquireWrite(options: Map<String, Variant>): AcquireType = proxy.callMethodAsync(GattCharacteristic1.Companion.INTERFACE_NAME, MethodName("AcquireWrite")) {
+    isGroupedReturn = true
     call(options)
   }
 
   override suspend fun acquireNotify(options: Map<String, Variant>): AcquireType = proxy.callMethodAsync(GattCharacteristic1.Companion.INTERFACE_NAME, MethodName("AcquireNotify")) {
+    isGroupedReturn = true
     call(options)
   }
 

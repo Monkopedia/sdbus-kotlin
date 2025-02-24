@@ -103,6 +103,9 @@ class ProxyGenerator : BaseGenerator() {
                         method.name
                     )
                     withIndent {
+                        if (outputs.size > 1) {
+                            add("isGroupedReturn = true\n")
+                        }
                         add(
                             "call(${
                                 params.joinToString(", ") {
