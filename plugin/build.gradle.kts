@@ -55,10 +55,10 @@ publishing {
             pom {
                 name.set("sdbus-kotlin-gradle-plugin")
                 description.set(project.description)
-                url.set("http://www.github.com/Monkopedia/sdbus-kotlin")
+                url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
                 licenses {
                     license {
-                        name.set("GNU LESSER GENERAL PUBLIC LICENSE, version 3")
+                        name.set("GNU LESSER GENERAL PUBLIC LICENSE, version 3, 29 June 2007")
                         url.set("https://www.gnu.org/licenses/")
                     }
                 }
@@ -72,7 +72,7 @@ publishing {
                 scm {
                     connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
                     developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
-                    url.set("http://github.com/Monkopedia/sdbus-kotlin/")
+                    url.set("https://github.com/Monkopedia/sdbus-kotlin/")
                 }
             }
         }

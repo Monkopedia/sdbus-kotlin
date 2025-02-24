@@ -151,7 +151,7 @@ publishing {
         pom {
             name.set(project.name)
             description.set("A kotlin/native dbus client")
-            url.set("http://www.github.com/Monkopedia/sdbus-kotlin")
+            url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
             licenses {
                 license {
                     name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
@@ -168,7 +168,7 @@ publishing {
             scm {
                 connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
                 developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
-                url.set("http://github.com/Monkopedia/sdbus-kotlin/")
+                url.set("https://github.com/Monkopedia/sdbus-kotlin/")
             }
         }
     }

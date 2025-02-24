@@ -59,11 +59,11 @@ publishing {
                 pom {
                     name.set("sdbus-kotlin-codegen")
                     description.set(project.description)
-                    url.set("http://www.github.com/Monkopedia/sdbus-kotlin")
+                    url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
                     licenses {
                         license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                            name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
+                            url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
                         }
                     }
                     developers {
@@ -78,7 +78,7 @@ publishing {
                         developerConnection.set(
                             "scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git"
                         )
-                        url.set("http://github.com/Monkopedia/sdbus-kotlin/")
+                        url.set("https://github.com/Monkopedia/sdbus-kotlin/")
                     }
                 }
             }
