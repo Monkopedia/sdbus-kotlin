@@ -3,6 +3,8 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     id("org.jlleitschuh.gradle.ktlint")
+    `maven-publish`
+    signing
 }
 
 group = "com.monkopedia.sdbus"
@@ -13,9 +15,9 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.xmlutil)
-    implementation(libs.clikt)
-    implementation(libs.kotlinpoet)
+    api(libs.xmlutil)
+    api(libs.clikt)
+    api(libs.kotlinpoet)
     testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
@@ -47,4 +49,52 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(17)
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication::class.java) {
+            afterEvaluate {
+                from(components["java"])
+                pom {
+                    name.set("sdbus-kotlin-codegen")
+                    description.set(project.description)
+                    url.set("http://www.github.com/Monkopedia/sdbus-kotlin")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("monkopedia")
+                            name.set("Jason Monk")
+                            email.set("monkopedia@gmail.com")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
+                        developerConnection.set(
+                            "scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git"
+                        )
+                        url.set("http://github.com/Monkopedia/sdbus-kotlin/")
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven(url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            name = "OSSRH"
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
 }
