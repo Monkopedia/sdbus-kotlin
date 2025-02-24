@@ -144,8 +144,7 @@ class NamingManager(doc: XmlRootNode) {
         private val TypeName.asVarName: String
             get() = when (this) {
                 is ClassName -> simpleName.decapitalized
-                is ParameterizedTypeName -> baseTypes.firstOrNull()?.reference?.asVarName
-                    ?: toString().decapitalized
+                is ParameterizedTypeName -> rawType.asVarName
 
                 is TypeVariableName -> toString().decapitalized
                 is LambdaTypeName -> error("No lambda")
