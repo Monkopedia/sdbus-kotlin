@@ -44,6 +44,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with sdbus-kotlin. If not, see <http://www.gnu.org/licenses/>.
  */
+@file:OptIn(ExperimentalForeignApi::class)
+
 package com.monkopedia.sdbus.unit
 
 import com.monkopedia.sdbus.Error
@@ -57,6 +59,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.convert
 import platform.linux.EFD_NONBLOCK
 import platform.linux.EFD_SEMAPHORE
 import platform.linux.eventfd
@@ -220,7 +224,7 @@ class TypesTest {
 
     @Test
     fun aUnixFd_DuplicatesAndOwnsFdUponStandardConstruction() {
-        val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
+        val fd = eventfd(0.convert(), EFD_SEMAPHORE or EFD_NONBLOCK)
 
         assertTrue(UnixFd(fd).fd > fd)
         assertEquals(0, close(fd))
@@ -228,7 +232,7 @@ class TypesTest {
 
     @Test
     fun aUnixFd_AdoptsAndOwnsFdAsIsUponAdoptionConstruction() {
-        val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
+        val fd = eventfd(0.convert(), EFD_SEMAPHORE or EFD_NONBLOCK)
 
         val unixFd = UnixFd(fd, adoptFd = Unit)
         assertEquals(fd, unixFd.fd)
@@ -238,7 +242,7 @@ class TypesTest {
 
     @Test
     fun aUnixFd_DuplicatesFdUponCopyConstruction() {
-        val unixFd = UnixFd(eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK))
+        val unixFd = UnixFd(eventfd(0.convert(), EFD_SEMAPHORE or EFD_NONBLOCK))
 
         val unixFdCopy = UnixFd(unixFd)
 
@@ -247,7 +251,7 @@ class TypesTest {
 
     @Test
     fun aUnixFd_ClosesFdProperlyUponDestruction() {
-        val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
+        val fd = eventfd(0.convert(), EFD_SEMAPHORE or EFD_NONBLOCK)
         val unixFd = UnixFd(fd, adoptFd = Unit)
         val unixFdCopy = UnixFd(unixFd)
         val fdCopy = unixFdCopy.fd
@@ -260,7 +264,7 @@ class TypesTest {
 
     @Test
     fun aUnixFd_ClosesFdOnRelease() {
-        val fd = eventfd(0, EFD_SEMAPHORE or EFD_NONBLOCK)
+        val fd = eventfd(0.convert(), EFD_SEMAPHORE or EFD_NONBLOCK)
         val unixFd = UnixFd(fd, adoptFd = Unit)
 
         unixFd.release()
