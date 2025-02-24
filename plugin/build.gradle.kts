@@ -15,7 +15,7 @@ repositories {
 }
 
 group = "com.monkopedia.sdbus"
-description = "Tool to link kotlin/native binaries with clang or other linkers"
+description = "Tool to generate sd-bus wrapper code for use with sdbus-kotlin"
 
 dependencies {
     implementation(libs.kotlin.gradle)
