@@ -1,0 +1,37 @@
+package com.monkopedia.sdbus.plugin
+
+import com.monkopedia.sdbus.capitalized
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+class SdbusPlugin : Plugin<Project> {
+    override fun apply(target: Project) {
+        val ext = target.extensions.create("sdbus", SdbusExtension::class.java)
+        target.afterEvaluate {
+            val outputDirectory = target.layout.buildDirectory.dir("generated/sdbus")
+            val rootTask = target.tasks.create("generateSdbusWrappers")
+            ext.outputs.ifEmpty { mutableListOf("linuxMain") }.forEach {
+                target.kotlinExtension.sourceSets.findByName(it)?.apply {
+                    kotlin.srcDirs(outputDirectory)
+                }
+            }
+            target.tasks.all { task ->
+                if (task is KotlinCompile && task.sources.contains(outputDirectory.get().asFile)) {
+                    task.dependsOn(rootTask)
+                }
+            }
+            ext.sources.asFileTree.filter { it.isFile && it.extension == "xml" }.forEach { file ->
+                val name = "generateSdbusWrappers${file.nameWithoutExtension.capitalized}"
+                val task = target.tasks.register(name, SdbusGenerationTask::class.java) {
+                    it.outputDir = outputDirectory.get().dir(file.nameWithoutExtension).asFile
+                    it.inputXmlFile = file
+                    it.generateProxies = ext.generateProxies == true
+                    it.generateAdapters = ext.generateAdapters == true
+                }
+                rootTask.dependsOn(task)
+            }
+        }
+    }
+}
