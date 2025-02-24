@@ -75,10 +75,7 @@ fun GeneratedType.generateType(): FileSpec {
     }.build()
 }
 
-private fun makeUnique(
-    baseName: String,
-    usedNames: MutableSet<String>
-): String {
+private fun makeUnique(baseName: String, usedNames: MutableSet<String>): String {
     var name = baseName
     var count = 0
     while (usedNames.contains(name)) {
