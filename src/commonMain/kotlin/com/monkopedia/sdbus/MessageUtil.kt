@@ -131,7 +131,11 @@ internal fun Message.deserialize(typedArgs: TypedMethod): List<Any> {
     return deserialize(types, module)
 }
 
-internal fun <T : Any> Message.serialize(outputType: Typed<T>, result: T) {
+internal fun <T : Any> Message.serialize(
+    outputType: Typed<T>,
+    result: T,
+    needsDegrouping: Boolean = false
+) {
     val module = serializersModuleOf(outputType.cls, outputType.type)
-    serialize(outputType.type, module, result)
+    serialize(outputType.type.maybeDegrouped(needsDegrouping), module, result)
 }

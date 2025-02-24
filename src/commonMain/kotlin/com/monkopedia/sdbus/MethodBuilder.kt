@@ -88,12 +88,14 @@ data class MethodVTableItem(
         val inputType = callback.method.inputType
         inputSignature = Signature(inputType.joinToString("") { it.signature.value })
         outputSignature = Signature(callback.method.outputType.signature.value)
+            .maybeDegrouped(outputParamNames.size > 1)
+
         callbackHandler = { call ->
             callback.invoke(
                 call,
                 onSuccess = { type, result ->
                     call.createReply().also {
-                        it.serialize(type, result)
+                        it.serialize(type, result, outputParamNames.size > 1)
                     }
                 },
                 onFailure = {

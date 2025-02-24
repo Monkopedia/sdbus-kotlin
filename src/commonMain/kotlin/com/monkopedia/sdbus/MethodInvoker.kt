@@ -95,8 +95,15 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
             if (error != null) {
                 completable.completeExceptionally(error)
             } else {
+                val serializer = serializer<R>()
+                val module = serializersModuleOf(serializer)
                 try {
-                    completable.complete(reply.deserialize<R>())
+                    completable.complete(
+                        reply.deserialize(
+                            serializer.maybeDegrouped(invoker.isGroupedReturn),
+                            module
+                        )
+                    )
                 } catch (t: Throwable) {
                     completable.completeExceptionally(t)
                 }
@@ -153,7 +160,10 @@ inline fun <reified R : Any> Proxy.callMethod(
         val module = serializersModuleOf(serializer)
         val reply = callMethod(method, invoker.timeout)
 
-        return reply.deserialize(serializer, module)
+        return reply.deserialize(
+            serializer.maybeDegrouped(invoker.isGroupedReturn),
+            module
+        )
     }
 }
 
@@ -161,6 +171,7 @@ class MethodInvoker @PublishedApi internal constructor(private val method: Metho
     TypedArgumentsBuilderContext() {
 
     var args: TypedArguments? = null
+    var isGroupedReturn: Boolean = false
     var dontExpectReply by method::dontExpectReply
 
     var timeout: Duration = INFINITE

@@ -102,7 +102,9 @@ abstract class IntegrationTestsProxy(override val proxy: Proxy) :
 
     fun getInt(): Int = proxy.callMethod(INTERFACE_NAME, MethodName("getInt")) {}
 
-    fun getTuple(): Pair<UInt, String> = proxy.callMethod(INTERFACE_NAME, MethodName("getTuple")) {}
+    fun getTuple(): Pair<UInt, String> = proxy.callMethod(INTERFACE_NAME, MethodName("getTuple")) {
+        isGroupedReturn = true
+    }
 
     fun multiply(a: Long, b: Double): Double =
         proxy.callMethod(INTERFACE_NAME, MethodName("multiply")) {

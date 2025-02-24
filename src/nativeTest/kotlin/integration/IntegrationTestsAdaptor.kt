@@ -83,7 +83,7 @@ abstract class IntegrationTestsAdaptor(val obj: Object) {
                 call { -> getInt() }
             }
             method(MethodName("getTuple")) {
-                outputParamNames = listOf("arg0", "arg1")
+                outputParamNames = listOf("u", "s")
                 call { -> getTuple() }
             }
             method(MethodName("multiply")) {
