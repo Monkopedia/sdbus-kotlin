@@ -197,50 +197,60 @@ afterEvaluate {
     }
 }
 
+tasks.register(
+    "licenseCheckForKotlin",
+    com.hierynomus.gradle.license.tasks.LicenseCheck::class
+) {
+    source = fileTree(project.projectDir) {
+        include("**/*.kt")
+        exclude("**/test/resources/**/*.kt")
+        exclude("**/compile_test/**/*.kt")
+    }
+}
+tasks["license"].dependsOn("licenseCheckForKotlin")
+tasks.register(
+    "licenseFormatForKotlin",
+    com.hierynomus.gradle.license.tasks.LicenseFormat::class
+) {
+    source = fileTree(project.projectDir) {
+        include("**/*.kt")
+        exclude("**/test/resources/**/*.kt")
+        exclude("**/compile_test/**/*.kt")
+    }
+}
+tasks["licenseFormat"].dependsOn("licenseFormatForKotlin")
+
+license {
+    header = rootProject.file("license-header.txt")
+    skipExistingHeaders = true
+    strictCheck = false
+    ext["year"] = Calendar.getInstance().get(Calendar.YEAR)
+    ext["name"] = "Jason Monk"
+    ext["email"] = "monkopedia@gmail.com"
+}
+
+afterEvaluate {
+    tasks.findByName("licenseCheckForKotlin")?.let {
+        tasks.all {
+            if ((this.name.startsWith("ktlint") && this.name.endsWith("Check")) ||
+                (this.name.startsWith("transform") && this.name.endsWith("Metadata")) ||
+                (this.name.startsWith("compile") && this.name.contains("Kotlin")) ||
+                this.name.startsWith("link") || this.name == "copyLib" ||
+                this.name.endsWith("Test") || this.name.endsWith("Tests") ||
+                this.name == "processTestResources" || this.name == "test"
+            ) {
+                it.dependsOn(this)
+            }
+        }
+    }
+}
 allprojects {
     if (name == "compile_test") return@allprojects
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
-    apply(plugin = "com.github.hierynomus.license")
-    tasks.register(
-        "licenseCheckForKotlin",
-        com.hierynomus.gradle.license.tasks.LicenseCheck::class
-    ) {
-        source = fileTree(project.projectDir) { include("**/*.kt") }
-    }
-    tasks["license"].dependsOn("licenseCheckForKotlin")
-    tasks.register(
-        "licenseFormatForKotlin",
-        com.hierynomus.gradle.license.tasks.LicenseFormat::class
-    ) {
-        source = fileTree(project.projectDir) { include("**/*.kt") }
-    }
-    tasks["licenseFormat"].dependsOn("licenseFormatForKotlin")
-
-    this.license {
-        header = rootProject.file("license-header.txt")
-        includes(listOf("**/*.kt"))
-        excludes(listOf("**/test/resources/**/*.kt", "**/compile_test/**/*.kt"))
-        strictCheck = true
-        ext["year"] = Calendar.getInstance().get(Calendar.YEAR)
-        ext["name"] = "Jason Monk"
-        ext["email"] = "monkopedia@gmail.com"
-    }
-
     configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         android.set(true)
-    }
-    afterEvaluate {
-        tasks.findByName("licenseCheckForKotlin")?.let {
-            tasks.all {
-                if ((this.name.startsWith("ktlint") && this.name.endsWith("Check")) ||
-                    (this.name.startsWith("transform") && this.name.endsWith("Metadata")) ||
-                    (this.name.startsWith("compile") && this.name.contains("Kotlin")) ||
-                    this.name.startsWith("link") || this.name == "copyLib" ||
-                    this.name.endsWith("Test") || this.name.endsWith("Tests")
-                ) {
-                    it.dependsOn(this)
-                }
-            }
+        filter {
+            exclude("**/test/resources/**/*.kt", "**/compile_test/**/*.kt")
         }
     }
 }
