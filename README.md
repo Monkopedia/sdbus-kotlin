@@ -1,8 +1,8 @@
 # sdbus-kotlin
 
 ![GitHub License](https://img.shields.io/github/license/monkopedia/sdbus-kotlin)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.0.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/kotlin-sdbus/0.1.0)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin/0.1.0/pom)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.1.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/kotlin-sdbus/0.3.0)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin/0.3.0/pom)
 [![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/sdbus-kotlin/com.monkopedia.sdbus/index.html)
 
 sdbus-kotlin is a direct port of sdbus-c++ to kotlin/native. Once the port completed, some
@@ -20,48 +20,46 @@ the types and wrappers. Its recommended to use the codegenerator whenever possib
 
 ## Code Generation
 
-The code generation tool can be found as a jar attached to the [latest
-release](https://github.com/Monkopedia/sdbus-kotlin/releases).
+There is a gradle plugin which can generate sources as part of the the build when given xml files.
 
 ```
-java -jar codegen-all-0.1.0.jar --help
-Usage: xml2kotlin [<options>] <input>
+plugins {
+    ...
+    id("com.monkopedia.sdbus.plugin") version "<version>"
+}
 
-Options:
-  -o, --output=<path>  Output directory
-  -k, --keep           Do not delete existing content in output
-  -a, --adaptor        Generate the code for an adaptor
-  -p, --proxy          Generate the code for a proxy
-  -h, --help           Show this message and exit
+sdbus {
+    sources.srcDirs("src/dbusMain")
+    outputs.add("linuxX64Main")
+    generateProxies = true
+    generateAdapters = true
+}
+...
 ```
 
-By default, the code generator will delete all other files in the output directory before
-generating, so be sure to use `-k` if generating multiple interfaces separately.
-
-```
-$ java -jar codegen-all-0.1.0.jar -k -p -o src/nativeMain/kotlin/generated src/dbusMain/Adapter1.xml
-```
+This will generate the proxies and adapters for any interfaces declared in src/dbusMain and make
+them available from the `linuxX64Main` sources.
 
 ## Build Setup
 
-Currently, there is no plugin to aid in configuring gradle, so a few steps are needed to use
-sdbus-kotlin. The simple part is depending on the library.
+To access the APIs, make sure the module depends on sdbus-kotlin. While the API is available as
+a common kotlin module, its implementations are currently only for linuxX64 and linuxArm64.
 
 ```
 val nativeMain by getting {
     dependencies {
-       implementation("com.monkopedia:sdbus-kotlin:0.1.0")
+       implementation("com.monkopedia:sdbus-kotlin:0.3.0")
     }
 }
 ```
 
 Since sdbus-kotlin compiles against libsystemd, you have to specify some extra flags for the linker
-to be successful. Make sure your system has libsystemd matching or newer than sdbus-kotlin
-(currently 256.2).
+to be successful. Generally, this is just allowing the linker access to your system libs, but alse
+be sure your system has libsystemd matching or newer than sdbus-kotlin (currently 257.3).
 
 ```
 compilerOptions {
-    freeCompilerArgs.set(listOf("-linker-options", "-L /usr/lib -l systemd"))
+    freeCompilerArgs.set(listOf("-linker-options", "-L /usr/lib"))
 }
 ```
 
@@ -70,8 +68,8 @@ that must be applied as well.
 
 ```
 plugins {
-    kotlin("multiplatform") version "2.0.0"
-    kotlin("plugin.serialization") version "2.0.0"
+    kotlin("multiplatform") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
 }
 ```
 
