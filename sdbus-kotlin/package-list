@@ -50,6 +50,8 @@ $dokka.location:com.monkopedia.sdbus//getAllPropertiesAsync/com.monkopedia.sdbus
 $dokka.location:com.monkopedia.sdbus//getProperty/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/get-property.html
 $dokka.location:com.monkopedia.sdbus//getPropertyAsync/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/get-property-async.html
 $dokka.location:com.monkopedia.sdbus//interfaceFlags/com.monkopedia.sdbus.VTableBuilder#kotlin.Function1[com.monkopedia.sdbus.InterfaceFlagsVTableItem,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/interface-flags.html
+$dokka.location:com.monkopedia.sdbus//maybeDegrouped/com.monkopedia.sdbus.Signature#kotlin.Boolean/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/maybe-degrouped.html
+$dokka.location:com.monkopedia.sdbus//maybeDegrouped/kotlinx.serialization.KSerializer[TypeParam(bounds=[kotlin.Any?])]#kotlin.Boolean/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/maybe-degrouped.html
 $dokka.location:com.monkopedia.sdbus//method/com.monkopedia.sdbus.VTableBuilder#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.MethodVTableItem,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/method.html
 $dokka.location:com.monkopedia.sdbus//onSignal/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName#kotlin.Function1[com.monkopedia.sdbus.SignalSubscriber,kotlin.Unit]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/on-signal.html
 $dokka.location:com.monkopedia.sdbus//prop/com.monkopedia.sdbus.Proxy#com.monkopedia.sdbus.InterfaceName#com.monkopedia.sdbus.MemberName/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/prop.html
@@ -210,6 +212,7 @@ $dokka.location:com.monkopedia.sdbus/MethodInvoker///PointingToDeclaration/sdbu
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/args/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/args.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/createCall/#kotlin.collections.List[com.monkopedia.sdbus.Typed[*]]#kotlin.collections.List[kotlin.Any]/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/create-call.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/dontExpectReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/dont-expect-reply.html
+$dokka.location:com.monkopedia.sdbus/MethodInvoker/isGroupedReturn/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/is-grouped-return.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/timeout/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/timeout.html
 $dokka.location:com.monkopedia.sdbus/MethodName///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-name/index.html
 $dokka.location:com.monkopedia.sdbus/MethodReply///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-reply/index.html
