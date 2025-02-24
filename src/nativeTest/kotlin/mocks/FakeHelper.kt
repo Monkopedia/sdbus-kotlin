@@ -133,7 +133,6 @@ class MappingHandler(val fallback: CallHandler) : CallHandler {
 
     override fun <T> invoke(retType: KType, vararg any: Any?): T {
         val match = map.firstOrNull { (matcher, _) -> matcher(retType, any) }?.second ?: fallback
-        println("Handling ${any.toList()} $match ${match::class}")
         return match.invoke(retType, *any)
     }
 
@@ -157,7 +156,6 @@ class MappingHandler(val fallback: CallHandler) : CallHandler {
         map.add(
             this to object : CallHandler {
                 override fun <T> invoke(retType: KType, vararg any: Any?): T {
-                    println("Got args ${any.toList()}")
                     val continuation = any[any.size - 2] as Continuation<Any?>
                     val context = any[any.size - 1] as CoroutineContext
                     val scope = CoroutineScope(context)
@@ -174,9 +172,6 @@ class MappingHandler(val fallback: CallHandler) : CallHandler {
     inline fun method(method: KFunction<*>): MappingMatcher {
         val methodName = method.name
         return { type, args ->
-            println(
-                "Matching ${args.toList().map { (it as? Array<*>)?.toList() ?: it }} $methodName"
-            )
             args[0] == methodName
         }
     }
