@@ -62,7 +62,9 @@ fun GeneratedType.generateType(): FileSpec {
                 addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
                 val constructorBuilder = FunSpec.constructorBuilder()
 
-                for ((name, type) in args) {
+                val usedNames = mutableSetOf<String>()
+                for ((baseName, type) in args) {
+                    val name = makeUnique(baseName, usedNames)
                     constructorBuilder.addParameter(name, type)
                     addProperty(PropertySpec.builder(name, type).initializer("%N", name).build())
                 }
@@ -71,4 +73,17 @@ fun GeneratedType.generateType(): FileSpec {
             }.build()
         )
     }.build()
+}
+
+private fun makeUnique(
+    baseName: String,
+    usedNames: MutableSet<String>
+): String {
+    var name = baseName
+    var count = 0
+    while (usedNames.contains(name)) {
+        name = baseName + ++count
+    }
+    usedNames.add(name)
+    return name
 }
