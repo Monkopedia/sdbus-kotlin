@@ -1,8 +1,13 @@
+import org.jetbrains.dokka.base.DokkaBase
+import org.jetbrains.dokka.base.DokkaBaseConfiguration
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
     application
     kotlin("jvm")
     kotlin("plugin.serialization")
     id("org.jlleitschuh.gradle.ktlint")
+    alias(libs.plugins.dokka)
     `maven-publish`
     signing
 }
@@ -50,15 +55,41 @@ tasks.test {
 kotlin {
     jvmToolchain(17)
 }
+java {
+    withSourcesJar()
+}
+val dokkaJavadoc = tasks.create("dokkaJavadocCustom", DokkaTask::class) {
+    project.dependencies {
+        plugins("org.jetbrains.dokka:kotlin-as-java-plugin:2.0.0")
+    }
+    // outputFormat = "javadoc"
+    outputDirectory.set(File(project.buildDir, "javadoc"))
+    inputs.dir("src/main/kotlin")
+}
+
+val javadocJar = tasks.create("javadocJar", Jar::class) {
+    dependsOn(dokkaJavadoc)
+    archiveClassifier.set("javadoc")
+    from(File(project.buildDir, "javadoc"))
+}
+tasks.dokkaHtml.configure {
+    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+        customAssets = file("dokka/assets").listFiles()?.toList().orEmpty()
+        customStyleSheets = file("dokka/styles").listFiles()?.toList().orEmpty()
+    }
+
+    outputDirectory.set(buildDir.resolve("dokka"))
+}
 
 publishing {
     publications {
         create("mavenJava", MavenPublication::class.java) {
             afterEvaluate {
                 from(components["java"])
+                artifact(javadocJar)
                 pom {
                     name.set("sdbus-kotlin-codegen")
-                    description.set(project.description)
+                    description.set("A kotlin/native dbus client code generator")
                     url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
                     licenses {
                         license {
@@ -97,4 +128,5 @@ publishing {
 
 signing {
     useGpgCmd()
+    sign(publishing.publications)
 }
