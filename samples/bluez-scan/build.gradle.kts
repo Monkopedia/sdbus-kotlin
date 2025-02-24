@@ -1,7 +1,7 @@
 plugins {
     kotlin("multiplatform") version "2.1.10"
     kotlin("plugin.serialization") version "2.1.10"
-    id("com.monkopedia.sdbus.plugin") version "0.2.2"
+    id("com.monkopedia.sdbus.plugin") version "0.3.0"
 }
 
 repositories {
@@ -31,7 +31,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
                 implementation(kotlin("stdlib"))
-                implementation("com.monkopedia:sdbus-kotlin:0.2.2")
+                implementation("com.monkopedia:sdbus-kotlin:0.3.0")
             }
         }
         val nativeTest by getting {
