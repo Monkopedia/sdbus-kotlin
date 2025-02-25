@@ -1,6 +1,7 @@
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
@@ -52,11 +53,13 @@ ktlint {
 tasks.test {
     useJUnitPlatform()
 }
-kotlin {
-    jvmToolchain(17)
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }
 java {
     withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 val dokkaJavadoc = tasks.create("dokkaJavadocCustom", DokkaTask::class) {
     project.dependencies {
