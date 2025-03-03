@@ -22,89 +22,97 @@
  */
 package com.monkopedia.sdbus
 
+import com.monkopedia.sdbus.Properties.PropertiesChanged
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
 
-interface ProxyHolder {
-    val proxy: Proxy
-}
+interface Peer {
+    fun ping(): Unit
 
-interface PeerProxy : ProxyHolder {
-    fun ping(): Unit = proxy.callMethod(INTERFACE_NAME, SignalName("Ping")) {}
-
-    fun getMachineId(): String = proxy.callMethod(INTERFACE_NAME, SignalName("GetMachineId")) {}
+    fun getMachineId(): String
 
     companion object {
         val INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Peer")
     }
 }
 
-// Proxy for properties
-interface PropertiesProxy : ProxyHolder {
+class PeerProxy(val proxy: Proxy) : Peer {
+    override fun ping(): Unit = proxy.callMethod(Peer.INTERFACE_NAME, SignalName("Ping")) {}
 
-    fun registerPropertiesProxy() {
-        proxy.onSignal(INTERFACE_NAME, SignalName("PropertiesChanged")) {
-            call {
-                    interfaceName: InterfaceName,
-                    changedProperties: Map<PropertyName, Variant>,
-                    invalidatedProperties: List<PropertyName>
-                ->
+    override fun getMachineId(): String =
+        proxy.callMethod(Peer.INTERFACE_NAME, SignalName("GetMachineId")) {}
+}
 
-                onPropertiesChanged(
-                    interfaceName,
-                    changedProperties,
-                    invalidatedProperties
-                )
-            }
-        }
-    }
+interface Properties {
 
-    fun onPropertiesChanged(
+    val propertiesChanged: Flow<PropertiesChanged>
+    suspend fun setProperty(
         interfaceName: InterfaceName,
-        changedProperties: Map<PropertyName, Variant>,
-        invalidatedProperties: List<PropertyName>
-    ) = Unit
+        propertyName: PropertyName,
+        value: Variant
+    )
 
-    suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
-        proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
-            .getResult()
+    suspend fun getAll(interfaceName: InterfaceName): Map<PropertyName, Variant>
+    suspend fun getProperty(
+        interfaceName: InterfaceName,
+        propertyName: PropertyName
+    ): AsyncPropertyGetter
 
-    fun getAll(interfaceName: InterfaceName): Map<PropertyName, Variant> =
-        proxy.getAllProperties().onInterface(interfaceName)
-
-    suspend fun getAllAsync(interfaceName: InterfaceName): Map<PropertyName, Variant> =
-        proxy.getAllPropertiesAsync().onInterface(interfaceName).getResult()
+    @Serializable
+    data class PropertiesChanged(
+        val intf: String,
+        val changedProperties: Map<String, Variant>,
+        val invalidatedProperties: List<String>
+    )
 
     companion object {
 
-        inline fun <reified T : Any> PropertiesProxy.set(
+        suspend inline fun <reified T : Any> Properties.set(
             interfaceName: InterfaceName,
             propertyName: PropertyName,
-            value: T,
-            dontExpectReply: Boolean = false
+            value: T
         ) {
-            proxy.setProperty(
+            setProperty(
                 interfaceName,
                 propertyName,
-                value,
-                dontExpectReply = dontExpectReply
+                Variant(value)
             )
         }
 
-        suspend inline fun <reified T> PropertiesProxy.getAsync(
+        suspend inline fun <reified T> Properties.get(
             interfaceName: InterfaceName,
             propertyName: PropertyName
-        ): T = proxy.getPropertyAsync(propertyName).onInterface(interfaceName).get()
-
-        inline fun <reified T> PropertiesProxy.get(
-            interfaceName: InterfaceName,
-            propertyName: PropertyName
-        ): T = proxy.getProperty(interfaceName, propertyName)
+        ): T = getProperty(interfaceName, propertyName).get()
 
         val INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")
     }
+}
+
+// Proxy for properties
+class PropertiesProxy(val proxy: Proxy) : Properties {
+
+    override val propertiesChanged: Flow<PropertiesChanged> =
+        proxy.signalFlow(Properties.INTERFACE_NAME, SignalName("PropertiesChanged")) {
+            call(::PropertiesChanged)
+        }
+
+    override suspend fun setProperty(
+        interfaceName: InterfaceName,
+        propertyName: PropertyName,
+        value: Variant
+    ) = proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
+        .getResult()
+
+    override suspend fun getAll(interfaceName: InterfaceName): Map<PropertyName, Variant> =
+        proxy.getAllPropertiesAsync().onInterface(interfaceName).getResult()
+
+    override suspend fun getProperty(
+        interfaceName: InterfaceName,
+        propertyName: PropertyName
+    ): AsyncPropertyGetter = proxy.getPropertyAsync(propertyName).onInterface(interfaceName)
 }
 
 /**

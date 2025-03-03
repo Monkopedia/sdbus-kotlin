@@ -30,6 +30,10 @@ import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.Peer
+import com.monkopedia.sdbus.PeerProxy
+import com.monkopedia.sdbus.Properties
+import com.monkopedia.sdbus.PropertiesProxy
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.ServiceName
@@ -48,7 +52,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
-class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy) {
+class TestProxy private constructor(proxy: Proxy) :
+    IntegrationTestsProxy(proxy),
+    Properties by PropertiesProxy(proxy),
+    Peer by PeerProxy(proxy) {
 
     constructor(destination: ServiceName, objectPath: ObjectPath) : this(
         createProxy(destination, objectPath)
@@ -73,10 +80,6 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
     var variantFromSignal = 0.0
 
     var doOperationClientSideAsyncReplyHandler: ((UInt, Error?) -> Unit)? = null
-    var propertiesChangedHandler: (
-        (InterfaceName, Map<PropertyName, Variant>, List<PropertyName>) -> Unit
-    )? =
-        null
 
     var signalMsg: Message? = null
     var signalName: SignalName? = null
@@ -100,18 +103,6 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
 
     fun onDoOperationReply(returnValue: UInt, error: Error?) {
         doOperationClientSideAsyncReplyHandler?.invoke(returnValue, error)
-    }
-
-    override fun onPropertiesChanged(
-        interfaceName: InterfaceName,
-        changedProperties: Map<PropertyName, Variant>,
-        invalidatedProperties: List<PropertyName>
-    ) {
-        propertiesChangedHandler?.invoke(
-            interfaceName,
-            changedProperties,
-            invalidatedProperties
-        )
     }
 
     fun installDoOperationClientSideAsyncReplyHandler(handler: (UInt, Error?) -> Unit) {

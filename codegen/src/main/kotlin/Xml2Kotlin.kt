@@ -77,9 +77,9 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import com.monkopedia.sdbus.com.monkopedia.sdbus.GenerationConfig
 import java.io.File
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.serialization.XML
 
 fun main(args: Array<String>) = Xml2Kotlin().main(args)
@@ -96,23 +96,34 @@ class Xml2Kotlin : CliktCommand() {
         .flag()
     val proxy by option("-p", "--proxy", help = "Generate the code for a proxy")
         .flag()
+    val propertyFlows by option(
+        "-f",
+        "--property-flow",
+        help = "Generate properties as Flow types, " +
+            "assuming the object implements org.freedesktop.DBus.Properties"
+    ).flag()
 
     override fun run() {
+        val generationConfig = GenerationConfig(
+            generateAdaptors = adaptor,
+            generateProxies = proxy,
+            usePropertyFlows = propertyFlows
+        )
         val xml = XML.decodeFromString<XmlRootNode>(input.readText())
         if (!keep) {
             output.deleteRecursively()
         }
         output.mkdirs()
-        InterfaceGenerator().transformXmlToFile(xml).forEach {
+        InterfaceGenerator(generationConfig).transformXmlToFile(xml).forEach {
             it.writeTo(output)
         }
         if (adaptor) {
-            AdaptorGenerator().transformXmlToFile(xml).forEach {
+            AdaptorGenerator(generationConfig).transformXmlToFile(xml).forEach {
                 it.writeTo(output)
             }
         }
         if (proxy) {
-            ProxyGenerator().transformXmlToFile(xml).forEach {
+            ProxyGenerator(generationConfig).transformXmlToFile(xml).forEach {
                 it.writeTo(output)
             }
         }

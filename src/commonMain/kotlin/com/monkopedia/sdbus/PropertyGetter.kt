@@ -22,8 +22,12 @@
  */
 package com.monkopedia.sdbus
 
+import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onStart
 
 /**
  * Gets value of a property of the D-Bus object
@@ -49,6 +53,19 @@ inline fun <reified T : Any> Proxy.getProperty(
     call(interfaceName, propertyName)
 }.get<T>()
 
+inline fun <reified T : Any> Proxy.getFlowProperty(
+    interfaceName: InterfaceName,
+    propertyName: PropertyName
+): Flow<T> = PropertiesProxy(this).propertiesChanged.mapNotNull { (intf, changedProperties, _) ->
+    changedProperties[propertyName.value]?.takeIf { intf == interfaceName.value }?.get<T>()
+}.onStart {
+    emit(
+        callMethod<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Get")) {
+            call(interfaceName, propertyName)
+        }.get<T>()
+    )
+}
+
 inline fun <reified T : Any> Proxy.setProperty(
     interfaceName: InterfaceName,
     propertyName: PropertyName,
@@ -71,6 +88,14 @@ inline fun <R, reified T : Any> Proxy.prop(
     override fun setValue(thisRef: R, property: KProperty<*>, value: T) {
         setProperty(interfaceName, propertyName, value)
     }
+}
+
+inline fun <R, reified T : Any> Proxy.flowProp(
+    interfaceName: InterfaceName,
+    propertyName: PropertyName
+): ReadOnlyProperty<R, Flow<T>> = object : ReadOnlyProperty<R, Flow<T>> {
+    override fun getValue(thisRef: R, property: KProperty<*>): Flow<T> =
+        getFlowProperty(interfaceName, propertyName)
 }
 
 val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")

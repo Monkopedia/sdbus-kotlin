@@ -23,6 +23,7 @@
 package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.Direction.OUT
+import com.monkopedia.sdbus.com.monkopedia.sdbus.GenerationConfig
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -35,14 +36,14 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeSpec.Builder
 import com.squareup.kotlinpoet.withIndent
 
-class AdaptorGenerator : BaseGenerator() {
+class AdaptorGenerator(generationConfig: GenerationConfig) : BaseGenerator(generationConfig) {
 
     private val obj = ClassName.bestGuess("com.monkopedia.sdbus.Object")
     override val fileSuffix: String
         get() = "Adaptor"
 
     override fun classBuilder(intf: Interface): Builder =
-        TypeSpec.classBuilder(intf.name.simpleName + "Adaptor").apply {
+        TypeSpec.classBuilder(intf.adapterName).apply {
             addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
             addModifiers(ABSTRACT)
             addProperty(
@@ -124,11 +125,7 @@ class AdaptorGenerator : BaseGenerator() {
                                 *outs.map { it.name }.toTypedArray()
                             )
                         }
-                        add(
-                            "acall(this@%N::%N)\n",
-                            intf.name.simpleName + "Adaptor",
-                            it.name.decapitalCamelCase
-                        )
+                        add("acall(this@%N::%N)\n", intf.adapterName, it.methodName())
                     }
                     add("}\n")
                 }
@@ -147,17 +144,23 @@ class AdaptorGenerator : BaseGenerator() {
                     add("}\n")
                 }
                 intf.properties.forEach {
+                    val propType =
+                        if (isFlowProperty(it)) {
+                            "flowProp"
+                        } else {
+                            "prop"
+                        }
                     add(
                         "%T(%T(%S)) {\n",
-                        ClassName("com.monkopedia.sdbus", "prop"),
+                        ClassName("com.monkopedia.sdbus", propType),
                         ClassName("com.monkopedia.sdbus", "PropertyName"),
                         it.name
                     )
                     withIndent {
                         add(
                             "with(this@%N::%N)\n",
-                            intf.name.simpleName + "Adaptor",
-                            it.name.decapitalCamelCase
+                            intf.adapterName,
+                            it.propName()
                         )
                     }
                     add("}\n")
@@ -167,4 +170,6 @@ class AdaptorGenerator : BaseGenerator() {
         }.build()
         addCode(codeBlock)
     }
+
+    private val Interface.adapterName get() = name.simpleName + "Adaptor"
 }

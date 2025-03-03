@@ -36,7 +36,7 @@ class GeneratorTest {
     fun testInterface(testRoot: File) {
         val xmlStr = File(testRoot, "test.xml").readText()
         val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
-        val gen = InterfaceGenerator().transformXmlToFile(xml).sortedBy { it.name }
+        val gen = InterfaceGenerator(generationConfig).transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "interface", gen)
     }
 
@@ -45,7 +45,7 @@ class GeneratorTest {
     fun testAdaptor(testRoot: File) {
         val xmlStr = File(testRoot, "test.xml").readText()
         val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
-        val gen = AdaptorGenerator().transformXmlToFile(xml).sortedBy { it.name }
+        val gen = AdaptorGenerator(generationConfig).transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "adaptor", gen)
     }
 
@@ -54,7 +54,7 @@ class GeneratorTest {
     fun testProxy(testRoot: File) {
         val xmlStr = File(testRoot, "test.xml").readText()
         val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
-        val gen = ProxyGenerator().transformXmlToFile(xml).sortedBy { it.name }
+        val gen = ProxyGenerator(generationConfig).transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "proxy", gen)
     }
 

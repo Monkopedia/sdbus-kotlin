@@ -25,6 +25,7 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Direction.OUT
+import com.monkopedia.sdbus.com.monkopedia.sdbus.GenerationConfig
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -37,7 +38,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.withIndent
 
-class ProxyGenerator : BaseGenerator() {
+class ProxyGenerator(generationConfig: GenerationConfig) : BaseGenerator(generationConfig) {
 
     private val proxy = ClassName.bestGuess("com.monkopedia.sdbus.Proxy")
     override val fileSuffix: String
@@ -60,7 +61,7 @@ class ProxyGenerator : BaseGenerator() {
         }
 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder =
-        FunSpec.builder(method.name.decapitalCamelCase).apply {
+        FunSpec.builder(method.methodName()).apply {
             addModifiers(OVERRIDE)
             addModifiers(SUSPEND)
             val params = method.args.filter { it.direction != OUT }.withIndex()
@@ -95,18 +96,23 @@ class ProxyGenerator : BaseGenerator() {
             )
         }
 
-    override fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder =
-        PropertySpec.builder(method.name.decapitalCamelCase, namingManager[method]).apply {
+    override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder =
+        propBuilder(prop).apply {
             addModifiers(OVERRIDE)
-            if (method.access == WRITE || method.access == READWRITE) {
+            if (prop.access == WRITE || prop.access == READWRITE) {
                 mutable(true)
+            }
+            val delegateName = if (isFlowProperty(prop)) {
+                "flowProp"
+            } else {
+                "prop"
             }
             delegate(
                 "proxy.%T(%T, %T(%S)) ",
-                ClassName("com.monkopedia.sdbus", "prop"),
+                ClassName("com.monkopedia.sdbus", delegateName),
                 intfName(intf),
                 ClassName("com.monkopedia.sdbus", "PropertyName"),
-                method.name
+                prop.name
             )
         }
 

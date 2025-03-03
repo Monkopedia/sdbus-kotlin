@@ -27,9 +27,8 @@ package com.monkopedia.sdbus.integration
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectManagerProxy
 import com.monkopedia.sdbus.ObjectPath
-import com.monkopedia.sdbus.PropertiesProxy.Companion.get
-import com.monkopedia.sdbus.PropertiesProxy.Companion.getAsync
-import com.monkopedia.sdbus.PropertiesProxy.Companion.set
+import com.monkopedia.sdbus.Properties.Companion.get
+import com.monkopedia.sdbus.Properties.Companion.set
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
@@ -44,8 +43,11 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -76,7 +78,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     }
 
     @Test
-    fun getsPropertyViaPropertiesInterface() {
+    fun getsPropertyViaPropertiesInterface() = runTest {
         assertEquals(
             DEFAULT_STATE_VALUE,
             fixture.proxy!!.get(INTERFACE_NAME, PropertyName("state"))
@@ -85,13 +87,13 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun getsPropertyAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
-        val future: String = fixture.proxy!!.getAsync(INTERFACE_NAME, PropertyName("state"))
+        val future: String = fixture.proxy!!.get(INTERFACE_NAME, PropertyName("state"))
 
         assertEquals(DEFAULT_STATE_VALUE, future)
     }
 
     @Test
-    fun setsPropertyViaPropertiesInterface() {
+    fun setsPropertyViaPropertiesInterface() = runTest {
         val newActionValue = 2345u
 
         fixture.proxy!!.set(INTERFACE_NAME, PropertyName("action"), newActionValue)
@@ -103,7 +105,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     fun setsPropertyAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
         val newActionValue = 2347u
 
-        fixture.proxy!!.setAsync(
+        fixture.proxy!!.setProperty(
             INTERFACE_NAME,
             PropertyName("action"),
             Variant(newActionValue)
@@ -113,7 +115,7 @@ class DBusStandardInterfacesTests : BaseTest() {
     }
 
     @Test
-    fun getsAllPropertiesViaPropertiesInterface() {
+    fun getsAllPropertiesViaPropertiesInterface() = runTest {
         val properties = fixture.proxy!!.getAll(INTERFACE_NAME)
 
         assertEquals(3, properties.size)
@@ -133,7 +135,7 @@ class DBusStandardInterfacesTests : BaseTest() {
 
     @Test
     fun getsAllPropertiesAsynchronouslyViaPropertiesInterfaceWithFuture() = runTest {
-        val properties = fixture.proxy!!.getAllAsync(INTERFACE_NAME)
+        val properties = fixture.proxy!!.getAll(INTERFACE_NAME)
 
         assertEquals(3, properties.size)
         assertEquals(
@@ -151,44 +153,43 @@ class DBusStandardInterfacesTests : BaseTest() {
     }
 
     @Test
-    fun emitsPropertyChangedSignalForSelectedProperties() {
-        val signalReceived = atomic(false)
-        fixture.proxy!!.propertiesChangedHandler = { interfaceName, changedProperties, _ ->
-            assertEquals(INTERFACE_NAME, interfaceName)
-            assertEquals(1, changedProperties.size)
-            assertEquals(
-                !DEFAULT_BLOCKING_VALUE,
-                changedProperties[BLOCKING_PROPERTY]?.get<Boolean>()
-            )
-            signalReceived.value = true
+    fun emitsPropertyChangedSignalForSelectedProperties() = runTest {
+        val signals = async {
+            fixture.proxy!!.propertiesChanged.take(1).toList()
         }
+        testScheduler.advanceUntilIdle()
 
         fixture.proxy!!.blocking(!DEFAULT_BLOCKING_VALUE)
         fixture.proxy!!.action(DEFAULT_ACTION_VALUE * 2u)
         fixture.adaptor!!.obj.emitPropertiesChangedSignal(INTERFACE_NAME, listOf(BLOCKING_PROPERTY))
 
-        assertTrue(waitUntil(signalReceived))
+        val (interfaceName, changedProperties, _) = signals.await().first()
+        assertEquals(INTERFACE_NAME.value, interfaceName)
+        assertEquals(1, changedProperties.size)
+        assertEquals(
+            !DEFAULT_BLOCKING_VALUE,
+            changedProperties[BLOCKING_PROPERTY.value]?.get<Boolean>()
+        )
     }
 
     @Test
-    fun emitsPropertyChangedSignalForAllProperties() {
-        val signalReceived = atomic(false)
-        fixture.proxy!!.propertiesChangedHandler =
-            { interfaceName, changedProperties, invalidatedProperties ->
-                assertEquals(INTERFACE_NAME, interfaceName)
-                assertEquals(1, changedProperties.size)
-                assertEquals(
-                    DEFAULT_BLOCKING_VALUE,
-                    changedProperties[BLOCKING_PROPERTY]?.get<Boolean>()
-                )
-                assertEquals(1, invalidatedProperties.size)
-                assertEquals("action", invalidatedProperties[0].value)
-                signalReceived.value = true
-            }
+    fun emitsPropertyChangedSignalForAllProperties() = runTest {
+        val signals = async {
+            fixture.proxy!!.propertiesChanged.take(1).toList()
+        }
+        testScheduler.advanceUntilIdle()
 
         fixture.adaptor!!.obj.emitPropertiesChangedSignal(INTERFACE_NAME)
 
-        assertTrue(waitUntil(signalReceived))
+        val (interfaceName, changedProperties, invalidatedProperties) = signals.await().first()
+        assertEquals(INTERFACE_NAME.value, interfaceName)
+        assertEquals(1, changedProperties.size)
+        assertEquals(
+            DEFAULT_BLOCKING_VALUE,
+            changedProperties[BLOCKING_PROPERTY.value]?.get<Boolean>()
+        )
+        assertEquals(1, invalidatedProperties.size)
+        assertEquals("action", invalidatedProperties[0])
     }
 
     @Test

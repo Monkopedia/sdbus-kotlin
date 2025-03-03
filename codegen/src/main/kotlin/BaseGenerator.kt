@@ -22,14 +22,18 @@
  */
 package com.monkopedia.sdbus
 
+import com.monkopedia.sdbus.Access.READ
+import com.monkopedia.sdbus.InterfaceGenerator.Companion.FLOW
+import com.monkopedia.sdbus.com.monkopedia.sdbus.GenerationConfig
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import java.util.*
 
-abstract class BaseGenerator {
+abstract class BaseGenerator(protected val generationConfig: GenerationConfig) {
 
     protected lateinit var namingManager: NamingManager
     protected abstract val fileSuffix: String
@@ -85,6 +89,21 @@ abstract class BaseGenerator {
         null
 
     protected abstract fun FunSpec.Builder.buildRegistration(intf: Interface)
+
+    protected fun propBuilder(prop: Property) = PropertySpec.builder(
+        prop.propName(),
+        if (isFlowProperty(prop)) {
+            FLOW.parameterizedBy(namingManager[prop])
+        } else {
+            namingManager[prop]
+        }
+    )
+
+    protected fun Property.propName() = name.decapitalCamelCase
+    protected fun Method.methodName() = name.decapitalCamelCase
+
+    protected fun isFlowProperty(method: Property) =
+        generationConfig.usePropertyFlows && method.access == READ
 
     protected fun intfName(intf: Interface) =
         ClassName(intf.name.pkg, intf.name.simpleName).nestedClass("Companion")

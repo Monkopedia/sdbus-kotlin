@@ -22,14 +22,17 @@
  */
 package com.monkopedia.sdbus
 
+import com.monkopedia.sdbus.Access.READ
 import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Direction.OUT
+import com.monkopedia.sdbus.com.monkopedia.sdbus.GenerationConfig
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier.ABSTRACT
 import com.squareup.kotlinpoet.KModifier.SUSPEND
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeSpec.Builder
@@ -56,7 +59,7 @@ val String.decapitalized: String
 val String.capitalCamelCase: String
     get() = decapitalCamelCase.capitalized
 
-class InterfaceGenerator : BaseGenerator() {
+class InterfaceGenerator(generationConfig: GenerationConfig) : BaseGenerator(generationConfig) {
     override val fileSuffix: String
         get() = ""
 
@@ -82,7 +85,7 @@ class InterfaceGenerator : BaseGenerator() {
     override fun constructorBuilder(intf: Interface): FunSpec.Builder? = null
 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder =
-        FunSpec.builder(method.name.decapitalCamelCase).apply {
+        FunSpec.builder(method.methodName()).apply {
             addModifiers(SUSPEND)
             addModifiers(ABSTRACT)
             for ((index, arg) in method.args.filter { it.direction != OUT }.withIndex()) {
@@ -93,7 +96,7 @@ class InterfaceGenerator : BaseGenerator() {
         }
 
     override fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder =
-        PropertySpec.builder(method.name.decapitalCamelCase, namingManager[method]).apply {
+        propBuilder(method).apply {
             addModifiers(ABSTRACT)
             if (method.access == WRITE || method.access == READWRITE) {
                 mutable(true)
@@ -104,5 +107,9 @@ class InterfaceGenerator : BaseGenerator() {
 
     override fun FunSpec.Builder.buildRegistration(intf: Interface) {
         addModifiers(ABSTRACT)
+    }
+
+    companion object {
+        val FLOW = ClassName("kotlinx.coroutines.flow", "Flow")
     }
 }

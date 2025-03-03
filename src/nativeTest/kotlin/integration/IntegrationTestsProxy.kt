@@ -27,7 +27,9 @@ package com.monkopedia.sdbus.integration
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.Peer
 import com.monkopedia.sdbus.PeerProxy
+import com.monkopedia.sdbus.Properties
 import com.monkopedia.sdbus.PropertiesProxy
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
@@ -49,9 +51,9 @@ import kotlin.native.ref.WeakReference
 import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
-abstract class IntegrationTestsProxy(override val proxy: Proxy) :
-    PropertiesProxy,
-    PeerProxy {
+abstract class IntegrationTestsProxy(val proxy: Proxy) :
+    Properties by PropertiesProxy(proxy),
+    Peer by PeerProxy(proxy) {
     private var simpleSignalHandler: Resource? = null
 
     fun registerProxy() {
@@ -67,7 +69,6 @@ abstract class IntegrationTestsProxy(override val proxy: Proxy) :
                 thiz.get()?.onSignalWithVariant(aVariant) ?: Unit
             }
         }
-        registerPropertiesProxy()
     }
 
     abstract fun onSimpleSignal()
