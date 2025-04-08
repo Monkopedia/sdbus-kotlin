@@ -157,14 +157,14 @@ class NamingManager(doc: XmlRootNode) {
             .forEach { it.generateName(usedNames) }
     }
 
-    operator fun get(arg: Arg): TypeName =
-        typeMap[arg.type]?.reference ?: error("Unexpected argument ${arg.type}")
+    operator fun get(arg: Arg): NamingType =
+        typeMap[arg.type] ?: error("Unexpected argument ${arg.type}")
 
-    operator fun get(outputs: List<Arg>): TypeName {
-        if (outputs.isEmpty()) return UNIT
+    operator fun get(outputs: List<Arg>): NamingType {
+        if (outputs.isEmpty()) return SimpleType("", UNIT)
         if (outputs.size == 1) return this[outputs.first()]
         val key = structKey(outputs.map { typeMap[it.type] ?: error("Unexpected argument $it") })
-        return typeMap[key]?.reference ?: error("Unexpected argument $key")
+        return typeMap[key] ?: error("Unexpected argument $key")
     }
 
     operator fun get(method: Property): TypeName =

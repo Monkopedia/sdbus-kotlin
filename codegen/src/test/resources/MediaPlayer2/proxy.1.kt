@@ -66,7 +66,7 @@ public class PlayerProxy(
 
   public val seeked: Flow<Long> =
       proxy.signalFlow(Player.Companion.INTERFACE_NAME, SignalName("Seeked")) {
-        call(::Long)
+        call { a: Long -> a }
       }
 
   public override fun register() {

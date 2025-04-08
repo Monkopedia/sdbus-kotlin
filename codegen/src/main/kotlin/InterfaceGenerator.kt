@@ -86,10 +86,13 @@ class InterfaceGenerator : BaseGenerator() {
             addModifiers(SUSPEND)
             addModifiers(ABSTRACT)
             for ((index, arg) in method.args.filter { it.direction != OUT }.withIndex()) {
-                addParameter((arg.name ?: "arg$index").decapitalCamelCase, namingManager[arg])
+                addParameter(
+                    (arg.name ?: "arg$index").decapitalCamelCase,
+                    namingManager[arg].reference
+                )
             }
             val outputs = method.args.filter { it.direction == OUT }
-            returns(namingManager[outputs])
+            returns(namingManager[outputs].reference)
         }
 
     override fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder =

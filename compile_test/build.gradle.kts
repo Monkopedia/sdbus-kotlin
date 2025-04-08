@@ -19,6 +19,9 @@ kotlin {
         binaries {
             sharedLib { }
         }
+        compilerOptions {
+            freeCompilerArgs.set(listOf("-linker-options", "-L /usr/lib"))
+        }
     }
     applyDefaultHierarchyTemplate()
     sourceSets {

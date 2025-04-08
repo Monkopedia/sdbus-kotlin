@@ -69,7 +69,7 @@ class AdaptorGenerator : BaseGenerator() {
         addModifiers(PUBLIC)
         val params = signal.args.filter { it.direction != OUT }.withIndex()
         for ((index, arg) in params) {
-            addParameter((arg.name ?: "arg$index").decapitalCamelCase, namingManager[arg])
+            addParameter((arg.name ?: "arg$index").decapitalCamelCase, namingManager[arg].reference)
         }
         addCode(
             CodeBlock.builder().apply {
@@ -141,7 +141,7 @@ class AdaptorGenerator : BaseGenerator() {
                     )
                     withIndent {
                         it.args.forEachIndexed { index, arg ->
-                            add("with<%T>(%S)\n", namingManager[arg], arg.name ?: "arg$index")
+                            add("with<%T>(%S)\n", namingManager[arg].reference, arg.name ?: "arg$index")
                         }
                     }
                     add("}\n")

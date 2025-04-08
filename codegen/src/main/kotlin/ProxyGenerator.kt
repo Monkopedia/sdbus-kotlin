@@ -25,6 +25,7 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Direction.OUT
+import com.monkopedia.sdbus.NamingManager.SimpleType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -65,10 +66,13 @@ class ProxyGenerator : BaseGenerator() {
             addModifiers(SUSPEND)
             val params = method.args.filter { it.direction != OUT }.withIndex()
             for ((index, arg) in params) {
-                addParameter((arg.name ?: "arg$index").decapitalCamelCase, namingManager[arg])
+                addParameter(
+                    (arg.name ?: "arg$index").decapitalCamelCase,
+                    namingManager[arg].reference
+                )
             }
             val outputs = method.args.filter { it.direction == OUT }
-            returns(namingManager[outputs])
+            returns(namingManager[outputs].reference)
             addCode(
                 CodeBlock.builder().apply {
                     add(
@@ -113,10 +117,10 @@ class ProxyGenerator : BaseGenerator() {
     override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder? = null
 
     override fun signalValBuilder(intf: Interface, signal: Signal): PropertySpec.Builder? {
-        val type = namingManager.get(signal.args)
+        val type = namingManager[signal.args]
         return PropertySpec.builder(
             signal.name.decapitalCamelCase,
-            ClassName.bestGuess("kotlinx.coroutines.flow.Flow").parameterizedBy(type)
+            ClassName.bestGuess("kotlinx.coroutines.flow.Flow").parameterizedBy(type.reference)
         ).apply {
             addModifiers(PUBLIC)
             initializer(
@@ -129,10 +133,12 @@ class ProxyGenerator : BaseGenerator() {
                         signal.name
                     )
                     withIndent {
-                        if (type == UNIT) {
+                        if (type.reference == UNIT) {
                             add("call { -> Unit }\n")
+                        } else if (type is SimpleType) {
+                            add("call { a: %T -> a }\n", type.reference)
                         } else {
-                            add("call(::%T)\n", type)
+                            add("call(::%T)\n", type.reference)
                         }
                     }
                     add("}\n")
