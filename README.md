@@ -1,8 +1,8 @@
 # sdbus-kotlin
 
 ![GitHub License](https://img.shields.io/github/license/monkopedia/sdbus-kotlin)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.1.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/kotlin-sdbus/0.3.0)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin/0.3.0/pom)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.1.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/kotlin-sdbus/0.3.3)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin/0.3.3/pom)
 [![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/sdbus-kotlin/com.monkopedia.sdbus/index.html)
 
 sdbus-kotlin is a direct port of sdbus-c++ to kotlin/native. Once the port completed, some
@@ -48,7 +48,7 @@ a common kotlin module, its implementations are currently only for linuxX64 and 
 ```
 val nativeMain by getting {
     dependencies {
-       implementation("com.monkopedia:sdbus-kotlin:0.3.0")
+       implementation("com.monkopedia:sdbus-kotlin:0.3.3")
     }
 }
 ```
