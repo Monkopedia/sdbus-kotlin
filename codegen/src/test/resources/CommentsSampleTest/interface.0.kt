@@ -1,4 +1,4 @@
-package org.freedesktop.DBus
+package org.freedesktop.dbus
 
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Variant

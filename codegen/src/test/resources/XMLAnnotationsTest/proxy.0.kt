@@ -1,4 +1,4 @@
-package org.freedesktop.two.DBus
+package org.freedesktop.two.dbus
 
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.Proxy

@@ -101,5 +101,5 @@ abstract class BaseGenerator {
 
 val String.pkg: String
     get() {
-        return split(".").dropLast(1).joinToString(".")
+        return split(".").dropLast(1).joinToString(".").lowercase()
     }

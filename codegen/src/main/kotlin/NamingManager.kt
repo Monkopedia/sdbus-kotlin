@@ -85,6 +85,7 @@ class NamingManager(doc: XmlRootNode) {
                 actualName to reference
             }
             val pkg = pkgs.groupBy { it }.values.maxByOrNull { it.single() }?.firstOrNull()
+                ?.lowercase()
                 ?: "sdbus.generated"
             if (nameReferences.size == 1) {
                 val selectedName = nameReferences.single().capitalCamelCase

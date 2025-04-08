@@ -1,4 +1,4 @@
-package com.example.MyService1
+package com.example.myservice1
 
 import com.monkopedia.sdbus.InterfaceName
 import kotlin.String

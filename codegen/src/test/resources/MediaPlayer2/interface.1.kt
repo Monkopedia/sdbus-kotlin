@@ -1,4 +1,4 @@
-package org.mpris.MediaPlayer2
+package org.mpris.mediaplayer2
 
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectPath
