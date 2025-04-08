@@ -24,18 +24,37 @@ package com.monkopedia.sdbus
 
 import com.squareup.kotlinpoet.FileSpec
 import java.io.File
+import kotlinx.serialization.decodeFromString
+import nl.adaptivity.xmlutil.QName
+import nl.adaptivity.xmlutil.XmlReader
+import nl.adaptivity.xmlutil.serialization.DefaultXmlSerializationPolicy
+import nl.adaptivity.xmlutil.serialization.InputKind
 import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.serialization.XML.ParsedData
+import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class GeneratorTest {
+    val xml = XML {
+        isUnchecked = true
+        policy = object : DefaultXmlSerializationPolicy(policy) {
+            override fun handleUnknownContentRecovering(
+                input: XmlReader,
+                inputKind: InputKind,
+                descriptor: XmlDescriptor,
+                name: QName?,
+                candidates: Collection<Any>
+            ): List<ParsedData<*>> = emptyList()
+        }
+    }
 
     @ParameterizedTest
     @MethodSource("data")
     fun testInterface(testRoot: File) {
         val xmlStr = File(testRoot, "test.xml").readText()
-        val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
+        val xml = xml.decodeFromString<XmlRootNode>(xmlStr)
         val gen = InterfaceGenerator().transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "interface", gen)
     }
@@ -44,7 +63,7 @@ class GeneratorTest {
     @MethodSource("data")
     fun testAdaptor(testRoot: File) {
         val xmlStr = File(testRoot, "test.xml").readText()
-        val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
+        val xml = xml.decodeFromString<XmlRootNode>(xmlStr)
         val gen = AdaptorGenerator().transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "adaptor", gen)
     }
@@ -53,7 +72,7 @@ class GeneratorTest {
     @MethodSource("data")
     fun testProxy(testRoot: File) {
         val xmlStr = File(testRoot, "test.xml").readText()
-        val xml = XML.decodeFromString<XmlRootNode>(xmlStr)
+        val xml = xml.decodeFromString<XmlRootNode>(xmlStr)
         val gen = ProxyGenerator().transformXmlToFile(xml).sortedBy { it.name }
         assertFiles(testRoot, "proxy", gen)
     }
