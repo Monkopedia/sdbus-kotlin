@@ -45,6 +45,7 @@ import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.sdbusRequire
+import kotlin.coroutines.coroutineContext
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.internal.NativePtr.Companion.NULL
 import kotlin.native.ref.WeakReference
@@ -74,6 +75,7 @@ import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import platform.linux.EFD_CLOEXEC
@@ -656,22 +658,16 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             }
         }
 
-        val method: suspend CoroutineScope.() -> Unit = {
-            enterEventLoop()
-        }
+        suspend fun enterEventLoop(): Result<Unit> = runCatching {
+            while (true) {
+                // Process one pending event
+                processPendingEvent()
 
-        suspend fun enterEventLoop() {
-            runCatching {
-                while (true) {
-                    // Process one pending event
-                    processPendingEvent()
-
-                    // And go to poll(), which wakes us up right away
-                    // if there's another pending event, or sleeps otherwise.
-                    val success = waitForNextEvent()
-                    if (!success) break
-                }
-            }.onFailure { println(it.stackTraceToString()) }
+                // And go to poll(), which wakes us up right away
+                // if there's another pending event, or sleeps otherwise.
+                val success = waitForNextEvent()
+                if (!success) break
+            }
         }
 
         fun processPendingEvent(): Boolean {

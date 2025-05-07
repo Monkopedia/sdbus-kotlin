@@ -31,6 +31,10 @@ interface ProxyHolder {
     val proxy: Proxy
 }
 
+fun PeerProxy(proxy: Proxy): PeerProxy = object : PeerProxy {
+    override val proxy: Proxy = proxy
+}
+
 interface PeerProxy : ProxyHolder {
     fun ping(): Unit = proxy.callMethod(INTERFACE_NAME, SignalName("Ping")) {}
 
@@ -39,6 +43,10 @@ interface PeerProxy : ProxyHolder {
     companion object {
         val INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Peer")
     }
+}
+
+fun PropertiesProxy(proxy: Proxy): PropertiesProxy = object : PropertiesProxy {
+    override val proxy: Proxy = proxy
 }
 
 // Proxy for properties
