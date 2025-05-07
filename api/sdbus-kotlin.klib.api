@@ -107,6 +107,13 @@ final class <#A: kotlin/Any> com.monkopedia.sdbus/Typed { // com.monkopedia.sdbu
     final fun toString(): kotlin/String // com.monkopedia.sdbus/Typed.toString|toString(){}[0]
 }
 
+final class <#A: kotlin/Any?, #B: kotlin/Any> com.monkopedia.sdbus/MutablePropertyDelegate : com.monkopedia.sdbus/PropertyDelegate<#A, #B>, kotlin.properties/ReadWriteProperty<#A, #B> { // com.monkopedia.sdbus/MutablePropertyDelegate|null[0]
+    constructor <init>(com.monkopedia.sdbus/Proxy, com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName, kotlinx.serialization/KSerializer<#B>, kotlinx.serialization.modules/SerializersModule, com.monkopedia.sdbus/SdbusSig) // com.monkopedia.sdbus/MutablePropertyDelegate.<init>|<init>(com.monkopedia.sdbus.Proxy;com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;kotlinx.serialization.KSerializer<1:1>;kotlinx.serialization.modules.SerializersModule;com.monkopedia.sdbus.SdbusSig){}[0]
+
+    final fun set(#B) // com.monkopedia.sdbus/MutablePropertyDelegate.set|set(1:1){}[0]
+    final fun setValue(#A, kotlin.reflect/KProperty<*>, #B) // com.monkopedia.sdbus/MutablePropertyDelegate.setValue|setValue(1:0;kotlin.reflect.KProperty<*>;1:1){}[0]
+}
+
 final class <#A: kotlin/Any?, #B: kotlinx.cinterop/CVariable> com.monkopedia.sdbus/PrimitiveSig : com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/PrimitiveSig|null[0]
     final fun copy(kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., com.monkopedia.sdbus.internal/NativeTypeConverter<#A, #B>? = ...): com.monkopedia.sdbus/PrimitiveSig<#A, #B> // com.monkopedia.sdbus/PrimitiveSig.copy|copy(kotlin.String;kotlin.Boolean;kotlin.Boolean;com.monkopedia.sdbus.internal.NativeTypeConverter<1:0,1:1>?){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.monkopedia.sdbus/PrimitiveSig.equals|equals(kotlin.Any?){}[0]
@@ -458,7 +465,7 @@ final class com.monkopedia.sdbus/ServiceConnection { // com.monkopedia.sdbus/Ser
         final fun <get-serviceName>(): com.monkopedia.sdbus/BusName // com.monkopedia.sdbus/ServiceConnection.serviceName.<get-serviceName>|<get-serviceName>(){}[0]
 
     final fun createObject(com.monkopedia.sdbus/ObjectPath): com.monkopedia.sdbus/Object // com.monkopedia.sdbus/ServiceConnection.createObject|createObject(com.monkopedia.sdbus.ObjectPath){}[0]
-    final fun createProxy(com.monkopedia.sdbus/ObjectPath): com.monkopedia.sdbus/Proxy // com.monkopedia.sdbus/ServiceConnection.createProxy|createProxy(com.monkopedia.sdbus.ObjectPath){}[0]
+    final fun createProxy(com.monkopedia.sdbus/ObjectPath, kotlin/Boolean = ...): com.monkopedia.sdbus/Proxy // com.monkopedia.sdbus/ServiceConnection.createProxy|createProxy(com.monkopedia.sdbus.ObjectPath;kotlin.Boolean){}[0]
 }
 
 final class com.monkopedia.sdbus/Signal : com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/Signal|null[0]
@@ -738,6 +745,34 @@ final value class com.monkopedia.sdbus/VTableBuilder { // com.monkopedia.sdbus/V
     final fun toString(): kotlin/String // com.monkopedia.sdbus/VTableBuilder.toString|toString(){}[0]
 }
 
+open class <#A: kotlin/Any?, #B: kotlin/Any> com.monkopedia.sdbus/PropertyDelegate : kotlin.properties/ReadOnlyProperty<#A, #B> { // com.monkopedia.sdbus/PropertyDelegate|null[0]
+    constructor <init>(com.monkopedia.sdbus/Proxy, com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName, kotlinx.serialization/KSerializer<#B>, kotlinx.serialization.modules/SerializersModule, com.monkopedia.sdbus/SdbusSig) // com.monkopedia.sdbus/PropertyDelegate.<init>|<init>(com.monkopedia.sdbus.Proxy;com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;kotlinx.serialization.KSerializer<1:1>;kotlinx.serialization.modules.SerializersModule;com.monkopedia.sdbus.SdbusSig){}[0]
+
+    final val interfaceName // com.monkopedia.sdbus/PropertyDelegate.interfaceName|{}interfaceName[0]
+        final fun <get-interfaceName>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/PropertyDelegate.interfaceName.<get-interfaceName>|<get-interfaceName>(){}[0]
+    final val module // com.monkopedia.sdbus/PropertyDelegate.module|{}module[0]
+        final fun <get-module>(): kotlinx.serialization.modules/SerializersModule // com.monkopedia.sdbus/PropertyDelegate.module.<get-module>|<get-module>(){}[0]
+    final val name // com.monkopedia.sdbus/PropertyDelegate.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.sdbus/PropertyDelegate.name.<get-name>|<get-name>(){}[0]
+    final val propertyName // com.monkopedia.sdbus/PropertyDelegate.propertyName|{}propertyName[0]
+        final fun <get-propertyName>(): com.monkopedia.sdbus/MemberName // com.monkopedia.sdbus/PropertyDelegate.propertyName.<get-propertyName>|<get-propertyName>(){}[0]
+    final val proxy // com.monkopedia.sdbus/PropertyDelegate.proxy|{}proxy[0]
+        final fun <get-proxy>(): com.monkopedia.sdbus/Proxy // com.monkopedia.sdbus/PropertyDelegate.proxy.<get-proxy>|<get-proxy>(){}[0]
+    final val signature // com.monkopedia.sdbus/PropertyDelegate.signature|{}signature[0]
+        final fun <get-signature>(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/PropertyDelegate.signature.<get-signature>|<get-signature>(){}[0]
+    final val type // com.monkopedia.sdbus/PropertyDelegate.type|{}type[0]
+        final fun <get-type>(): kotlinx.serialization/KSerializer<#B> // com.monkopedia.sdbus/PropertyDelegate.type.<get-type>|<get-type>(){}[0]
+
+    final fun changes(): kotlinx.coroutines.flow/Flow<#B> // com.monkopedia.sdbus/PropertyDelegate.changes|changes(){}[0]
+    final fun changesOrNull(): kotlinx.coroutines.flow/Flow<#B?> // com.monkopedia.sdbus/PropertyDelegate.changesOrNull|changesOrNull(){}[0]
+    final fun flow(): kotlinx.coroutines.flow/Flow<#B> // com.monkopedia.sdbus/PropertyDelegate.flow|flow(){}[0]
+    final fun flowOrNull(): kotlinx.coroutines.flow/Flow<#B?> // com.monkopedia.sdbus/PropertyDelegate.flowOrNull|flowOrNull(){}[0]
+    final fun get(): #B // com.monkopedia.sdbus/PropertyDelegate.get|get(){}[0]
+    final fun getOrNull(): #B? // com.monkopedia.sdbus/PropertyDelegate.getOrNull|getOrNull(){}[0]
+    final suspend fun await(): #B // com.monkopedia.sdbus/PropertyDelegate.await|await(){}[0]
+    open fun getValue(#A, kotlin.reflect/KProperty<*>): #B // com.monkopedia.sdbus/PropertyDelegate.getValue|getValue(1:0;kotlin.reflect.KProperty<*>){}[0]
+}
+
 open class com.monkopedia.sdbus/TypedArgumentsBuilderContext { // com.monkopedia.sdbus/TypedArgumentsBuilderContext|null[0]
     constructor <init>() // com.monkopedia.sdbus/TypedArgumentsBuilderContext.<init>|<init>(){}[0]
 
@@ -923,6 +958,8 @@ final fun (com.monkopedia.sdbus/VTableBuilder).com.monkopedia.sdbus/method(com.m
 final fun <#A: kotlin/Any> (com.monkopedia.sdbus/Message).com.monkopedia.sdbus/deserialize(kotlinx.serialization/DeserializationStrategy<#A>, kotlinx.serialization.modules/SerializersModule): #A // com.monkopedia.sdbus/deserialize|deserialize@com.monkopedia.sdbus.Message(kotlinx.serialization.DeserializationStrategy<0:0>;kotlinx.serialization.modules.SerializersModule){0§<kotlin.Any>}[0]
 final fun <#A: kotlin/Any?> (com.monkopedia.sdbus/Message).com.monkopedia.sdbus/serialize(kotlinx.serialization/SerializationStrategy<#A>, kotlinx.serialization.modules/SerializersModule, #A) // com.monkopedia.sdbus/serialize|serialize@com.monkopedia.sdbus.Message(kotlinx.serialization.SerializationStrategy<0:0>;kotlinx.serialization.modules.SerializersModule;0:0){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlinx.serialization/KSerializer<#A>).com.monkopedia.sdbus/maybeDegrouped(kotlin/Boolean): kotlinx.serialization/KSerializer<#A> // com.monkopedia.sdbus/maybeDegrouped|maybeDegrouped@kotlinx.serialization.KSerializer<0:0>(kotlin.Boolean){0§<kotlin.Any?>}[0]
+final fun com.monkopedia.sdbus/PeerProxy(com.monkopedia.sdbus/Proxy): com.monkopedia.sdbus/PeerProxy // com.monkopedia.sdbus/PeerProxy|PeerProxy(com.monkopedia.sdbus.Proxy){}[0]
+final fun com.monkopedia.sdbus/PropertiesProxy(com.monkopedia.sdbus/Proxy): com.monkopedia.sdbus/PropertiesProxy // com.monkopedia.sdbus/PropertiesProxy|PropertiesProxy(com.monkopedia.sdbus.Proxy){}[0]
 final fun com.monkopedia.sdbus/createBusConnection(): com.monkopedia.sdbus/Connection // com.monkopedia.sdbus/createBusConnection|createBusConnection(){}[0]
 final fun com.monkopedia.sdbus/createBusConnection(com.monkopedia.sdbus/BusName): com.monkopedia.sdbus/Connection // com.monkopedia.sdbus/createBusConnection|createBusConnection(com.monkopedia.sdbus.BusName){}[0]
 final fun com.monkopedia.sdbus/createDirectBusConnection(kotlin/Int): com.monkopedia.sdbus/Connection // com.monkopedia.sdbus/createDirectBusConnection|createDirectBusConnection(kotlin.Int){}[0]
@@ -952,7 +989,9 @@ final inline fun (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/setPropertyAs
 final inline fun (com.monkopedia.sdbus/VTableBuilder).com.monkopedia.sdbus/interfaceFlags(kotlin/Function1<com.monkopedia.sdbus/InterfaceFlagsVTableItem, kotlin/Unit>) // com.monkopedia.sdbus/interfaceFlags|interfaceFlags@com.monkopedia.sdbus.VTableBuilder(kotlin.Function1<com.monkopedia.sdbus.InterfaceFlagsVTableItem,kotlin.Unit>){}[0]
 final inline fun (com.monkopedia.sdbus/VTableBuilder).com.monkopedia.sdbus/prop(com.monkopedia.sdbus/MemberName, kotlin/Function1<com.monkopedia.sdbus/PropertyVTableItem, kotlin/Unit>) // com.monkopedia.sdbus/prop|prop@com.monkopedia.sdbus.VTableBuilder(com.monkopedia.sdbus.MemberName;kotlin.Function1<com.monkopedia.sdbus.PropertyVTableItem,kotlin.Unit>){}[0]
 final inline fun (com.monkopedia.sdbus/VTableBuilder).com.monkopedia.sdbus/signal(com.monkopedia.sdbus/MemberName, kotlin/Function1<com.monkopedia.sdbus/SignalVTableItem, kotlin/Unit>) // com.monkopedia.sdbus/signal|signal@com.monkopedia.sdbus.VTableBuilder(com.monkopedia.sdbus.MemberName;kotlin.Function1<com.monkopedia.sdbus.SignalVTableItem,kotlin.Unit>){}[0]
+final inline fun <#A: kotlin/Any?, #B: reified kotlin/Any> (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/mutableDelegate(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName): com.monkopedia.sdbus/MutablePropertyDelegate<#A, #B> // com.monkopedia.sdbus/mutableDelegate|mutableDelegate@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName){0§<kotlin.Any?>;1§<kotlin.Any>}[0]
 final inline fun <#A: kotlin/Any?, #B: reified kotlin/Any> (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/prop(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName): kotlin.properties/ReadWriteProperty<#A, #B> // com.monkopedia.sdbus/prop|prop@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName){0§<kotlin.Any?>;1§<kotlin.Any>}[0]
+final inline fun <#A: kotlin/Any?, #B: reified kotlin/Any> (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/propDelegate(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName): com.monkopedia.sdbus/PropertyDelegate<#A, #B> // com.monkopedia.sdbus/propDelegate|propDelegate@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName){0§<kotlin.Any?>;1§<kotlin.Any>}[0]
 final inline fun <#A: kotlin/Any?> (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/signalFlow(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName, kotlin/Function1<com.monkopedia.sdbus/SignalSubscriber, kotlin/Unit>): kotlinx.coroutines.flow/Flow<#A> // com.monkopedia.sdbus/signalFlow|signalFlow@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;kotlin.Function1<com.monkopedia.sdbus.SignalSubscriber,kotlin.Unit>){0§<kotlin.Any?>}[0]
 final inline fun <#A: reified kotlin/Any> (com.monkopedia.sdbus/Message).com.monkopedia.sdbus/deserialize(): #A // com.monkopedia.sdbus/deserialize|deserialize@com.monkopedia.sdbus.Message(){0§<kotlin.Any>}[0]
 final inline fun <#A: reified kotlin/Any> (com.monkopedia.sdbus/Message).com.monkopedia.sdbus/serialize(#A) // com.monkopedia.sdbus/serialize|serialize@com.monkopedia.sdbus.Message(0:0){0§<kotlin.Any>}[0]
