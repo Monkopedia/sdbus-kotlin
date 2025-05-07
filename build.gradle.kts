@@ -16,6 +16,7 @@ buildscript {
     }
 }
 plugins {
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.bcv)

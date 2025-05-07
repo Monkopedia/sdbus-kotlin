@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
-    kotlin("jvm")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     id("org.jlleitschuh.gradle.ktlint")
     alias(libs.plugins.dokka)
     alias(libs.plugins.vannik.publish)
@@ -25,6 +25,7 @@ dependencies {
     api(libs.xmlutil)
     api(libs.clikt)
     api(libs.kotlinpoet)
+    api(libs.kotlinx.serialization)
     testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
