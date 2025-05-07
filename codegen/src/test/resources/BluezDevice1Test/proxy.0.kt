@@ -1,12 +1,15 @@
 package org.bluez
 
 import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.MutablePropertyDelegate
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PropertyDelegate
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethodAsync
-import com.monkopedia.sdbus.prop
+import com.monkopedia.sdbus.mutableDelegate
+import com.monkopedia.sdbus.propDelegate
 import kotlin.Boolean
 import kotlin.Short
 import kotlin.String
@@ -20,69 +23,120 @@ import kotlin.collections.Map
 public class Device1Proxy(
   public val proxy: Proxy,
 ) : Device1 {
-  override val address: String by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Address")) 
+  public val addressProperty: PropertyDelegate<Device1Proxy, String> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Address")) 
 
-  override val addressType: String by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("AddressType")) 
+  public val addressTypeProperty: PropertyDelegate<Device1Proxy, String> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("AddressType")) 
 
-  override val name: String by proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Name")) 
+  public val nameProperty: PropertyDelegate<Device1Proxy, String> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Name")) 
 
-  override val icon: String by proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Icon")) 
+  public val iconProperty: PropertyDelegate<Device1Proxy, String> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Icon")) 
 
-  override val `class`: UInt by proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Class")) 
+  public val classProperty: PropertyDelegate<Device1Proxy, UInt> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Class")) 
 
-  override val appearance: UShort by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Appearance")) 
+  public val appearanceProperty: PropertyDelegate<Device1Proxy, UShort> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Appearance")) 
 
-  override val uUIDs: List<String> by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("UUIDs")) 
+  public val uUIDsProperty: PropertyDelegate<Device1Proxy, List<String>> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("UUIDs")) 
 
-  override val paired: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Paired")) 
+  public val pairedProperty: PropertyDelegate<Device1Proxy, Boolean> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Paired")) 
 
-  override val connected: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Connected")) 
+  public val connectedProperty: PropertyDelegate<Device1Proxy, Boolean> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Connected")) 
 
-  override var trusted: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Trusted")) 
+  public var trustedProperty: MutablePropertyDelegate<Device1Proxy, Boolean> =
+      proxy.mutableDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Trusted")) 
 
-  override var blocked: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Blocked")) 
+  public var blockedProperty: MutablePropertyDelegate<Device1Proxy, Boolean> =
+      proxy.mutableDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Blocked")) 
 
-  override var wakeAllowed: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("WakeAllowed")) 
+  public var wakeAllowedProperty: MutablePropertyDelegate<Device1Proxy, Boolean> =
+      proxy.mutableDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("WakeAllowed")) 
 
-  override var alias: String by proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Alias")) 
+  public var aliasProperty: MutablePropertyDelegate<Device1Proxy, String> =
+      proxy.mutableDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Alias")) 
 
-  override val adapter: ObjectPath by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Adapter")) 
+  public val adapterProperty: PropertyDelegate<Device1Proxy, ObjectPath> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Adapter")) 
 
-  override val legacyPairing: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("LegacyPairing")) 
+  public val legacyPairingProperty: PropertyDelegate<Device1Proxy, Boolean> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("LegacyPairing")) 
 
-  override val modalias: String by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("Modalias")) 
+  public val modaliasProperty: PropertyDelegate<Device1Proxy, String> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("Modalias")) 
 
-  override val rSSI: Short by proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("RSSI")) 
+  public val rSSIProperty: PropertyDelegate<Device1Proxy, Short> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("RSSI")) 
 
-  override val txPower: Short by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("TxPower")) 
+  public val txPowerProperty: PropertyDelegate<Device1Proxy, Short> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("TxPower")) 
 
-  override val manufacturerData: Map<UShort, Variant> by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("ManufacturerData")) 
+  public val manufacturerDataProperty: PropertyDelegate<Device1Proxy, Map<UShort, Variant>> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("ManufacturerData")) 
 
-  override val serviceData: Map<String, Variant> by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("ServiceData")) 
+  public val serviceDataProperty: PropertyDelegate<Device1Proxy, Map<String, Variant>> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("ServiceData")) 
 
-  override val servicesResolved: Boolean by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("ServicesResolved")) 
+  public val servicesResolvedProperty: PropertyDelegate<Device1Proxy, Boolean> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("ServicesResolved")) 
 
-  override val advertisingFlags: List<Boolean> by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("AdvertisingFlags")) 
+  public val advertisingFlagsProperty: PropertyDelegate<Device1Proxy, List<Boolean>> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("AdvertisingFlags")) 
 
-  override val advertisingData: Map<UByte, Variant> by
-      proxy.prop(Device1.Companion.INTERFACE_NAME, PropertyName("AdvertisingData")) 
+  public val advertisingDataProperty: PropertyDelegate<Device1Proxy, Map<UByte, Variant>> =
+      proxy.propDelegate(Device1.Companion.INTERFACE_NAME, PropertyName("AdvertisingData")) 
+
+  override val address: String by addressProperty
+
+  override val addressType: String by addressTypeProperty
+
+  override val name: String by nameProperty
+
+  override val icon: String by iconProperty
+
+  override val `class`: UInt by classProperty
+
+  override val appearance: UShort by appearanceProperty
+
+  override val uUIDs: List<String> by uUIDsProperty
+
+  override val paired: Boolean by pairedProperty
+
+  override val connected: Boolean by connectedProperty
+
+  override var trusted: Boolean by trustedProperty
+
+  override var blocked: Boolean by blockedProperty
+
+  override var wakeAllowed: Boolean by wakeAllowedProperty
+
+  override var alias: String by aliasProperty
+
+  override val adapter: ObjectPath by adapterProperty
+
+  override val legacyPairing: Boolean by legacyPairingProperty
+
+  override val modalias: String by modaliasProperty
+
+  override val rSSI: Short by rSSIProperty
+
+  override val txPower: Short by txPowerProperty
+
+  override val manufacturerData: Map<UShort, Variant> by manufacturerDataProperty
+
+  override val serviceData: Map<String, Variant> by serviceDataProperty
+
+  override val servicesResolved: Boolean by servicesResolvedProperty
+
+  override val advertisingFlags: List<Boolean> by advertisingFlagsProperty
+
+  override val advertisingData: Map<UByte, Variant> by advertisingDataProperty
 
   public override fun register() {
   }

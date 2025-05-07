@@ -95,10 +95,10 @@ class InterfaceGenerator : BaseGenerator() {
             returns(namingManager[outputs].reference)
         }
 
-    override fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder =
-        PropertySpec.builder(method.name.decapitalCamelCase, namingManager[method]).apply {
+    override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder =
+        PropertySpec.builder(prop.name.decapitalCamelCase, namingManager[prop]).apply {
             addModifiers(ABSTRACT)
-            if (method.access == WRITE || method.access == READWRITE) {
+            if (prop.access == WRITE || prop.access == READWRITE) {
                 mutable(true)
             }
         }

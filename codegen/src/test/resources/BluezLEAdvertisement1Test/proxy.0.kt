@@ -1,11 +1,12 @@
 package org.bluez
 
 import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.PropertyDelegate
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethodAsync
-import com.monkopedia.sdbus.prop
+import com.monkopedia.sdbus.propDelegate
 import kotlin.Boolean
 import kotlin.String
 import kotlin.UByte
@@ -17,41 +18,66 @@ import kotlin.collections.Map
 public class LEAdvertisement1Proxy(
   public val proxy: Proxy,
 ) : LEAdvertisement1 {
-  override val type: String by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Type")) 
+  public val typeProperty: PropertyDelegate<LEAdvertisement1Proxy, String> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Type")) 
 
-  override val serviceUUIDs: List<String> by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("ServiceUUIDs")) 
+  public val serviceUUIDsProperty: PropertyDelegate<LEAdvertisement1Proxy, List<String>> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("ServiceUUIDs")) 
 
-  override val serviceData: Map<String, Variant> by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("ServiceData")) 
+  public val serviceDataProperty: PropertyDelegate<LEAdvertisement1Proxy, Map<String, Variant>> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("ServiceData")) 
 
-  override val manufacturerData: Map<UShort, Variant> by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("ManufacturerData")) 
+  public val manufacturerDataProperty: PropertyDelegate<LEAdvertisement1Proxy, Map<UShort, Variant>>
+      =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("ManufacturerData")) 
 
-  override val `data`: Map<UByte, Variant> by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Data")) 
+  public val dataProperty: PropertyDelegate<LEAdvertisement1Proxy, Map<UByte, Variant>> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Data")) 
 
-  override val discoverable: Boolean by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Discoverable")) 
+  public val discoverableProperty: PropertyDelegate<LEAdvertisement1Proxy, Boolean> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Discoverable")) 
 
-  override val discoverableTimeout: UShort by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("DiscoverableTimeout")) 
+  public val discoverableTimeoutProperty: PropertyDelegate<LEAdvertisement1Proxy, UShort> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("DiscoverableTimeout")) 
 
-  override val includes: List<String> by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Includes")) 
+  public val includesProperty: PropertyDelegate<LEAdvertisement1Proxy, List<String>> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Includes")) 
 
-  override val localName: String by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("LocalName")) 
+  public val localNameProperty: PropertyDelegate<LEAdvertisement1Proxy, String> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("LocalName")) 
 
-  override val appearance: UShort by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Appearance")) 
+  public val appearanceProperty: PropertyDelegate<LEAdvertisement1Proxy, UShort> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Appearance")) 
 
-  override val duration: UShort by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Duration")) 
+  public val durationProperty: PropertyDelegate<LEAdvertisement1Proxy, UShort> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Duration")) 
 
-  override val timeout: UShort by
-      proxy.prop(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Timeout")) 
+  public val timeoutProperty: PropertyDelegate<LEAdvertisement1Proxy, UShort> =
+      proxy.propDelegate(LEAdvertisement1.Companion.INTERFACE_NAME, PropertyName("Timeout")) 
+
+  override val type: String by typeProperty
+
+  override val serviceUUIDs: List<String> by serviceUUIDsProperty
+
+  override val serviceData: Map<String, Variant> by serviceDataProperty
+
+  override val manufacturerData: Map<UShort, Variant> by manufacturerDataProperty
+
+  override val `data`: Map<UByte, Variant> by dataProperty
+
+  override val discoverable: Boolean by discoverableProperty
+
+  override val discoverableTimeout: UShort by discoverableTimeoutProperty
+
+  override val includes: List<String> by includesProperty
+
+  override val localName: String by localNameProperty
+
+  override val appearance: UShort by appearanceProperty
+
+  override val duration: UShort by durationProperty
+
+  override val timeout: UShort by timeoutProperty
 
   public override fun register() {
   }

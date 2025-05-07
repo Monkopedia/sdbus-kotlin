@@ -66,6 +66,9 @@ abstract class BaseGenerator {
                     methodBuilder(intf, method)?.build()?.let { addFunction(it) }
                 }
                 for (property in intf.properties) {
+                    extraPropertyBuilder(intf, property)?.build()?.let { addProperty(it) }
+                }
+                for (property in intf.properties) {
                     propertyBuilder(intf, property)?.build()?.let { addProperty(it) }
                 }
                 for (signal in intf.signals) {
@@ -79,8 +82,14 @@ abstract class BaseGenerator {
     protected abstract fun classBuilder(intf: Interface): TypeSpec.Builder
     protected abstract fun constructorBuilder(intf: Interface): FunSpec.Builder?
     protected abstract fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder?
-    protected abstract fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder?
+    protected abstract fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder?
     protected abstract fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder?
+
+    protected open fun extraPropertyBuilder(
+        intf: Interface,
+        prop: Property
+    ): PropertySpec.Builder? = null
+
     protected open fun signalValBuilder(intf: Interface, signal: Signal): PropertySpec.Builder? =
         null
 

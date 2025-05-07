@@ -44,8 +44,10 @@ class ProxyGenerator : BaseGenerator() {
     override val fileSuffix: String
         get() = "Proxy"
 
+    private fun Interface.baseName(): String = name.simpleName + "Proxy"
+
     override fun classBuilder(intf: Interface): TypeSpec.Builder =
-        TypeSpec.classBuilder(intf.name.simpleName + "Proxy").apply {
+        TypeSpec.classBuilder(intf.baseName()).apply {
             addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
             addProperty(
                 PropertySpec.builder("proxy", proxy).apply {
@@ -99,19 +101,38 @@ class ProxyGenerator : BaseGenerator() {
             )
         }
 
-    override fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder =
-        PropertySpec.builder(method.name.decapitalCamelCase, namingManager[method]).apply {
-            addModifiers(OVERRIDE)
-            if (method.access == WRITE || method.access == READWRITE) {
-                mutable(true)
-            }
-            delegate(
+    override fun extraPropertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder? {
+        val mutable = prop.access == WRITE || prop.access == READWRITE
+        val type = namingManager[prop]
+        val propertyDelegateType = ClassName(
+            "com.monkopedia.sdbus",
+            if (mutable) "MutablePropertyDelegate" else "PropertyDelegate"
+        )
+        return PropertySpec.builder(
+            prop.name.decapitalCamelCase + "Property",
+            propertyDelegateType.parameterizedBy(ClassName.bestGuess(intf.baseName()), type)
+        ).apply {
+            mutable(mutable)
+            initializer(
                 "proxy.%T(%T, %T(%S)) ",
-                ClassName("com.monkopedia.sdbus", "prop"),
+                ClassName(
+                    "com.monkopedia.sdbus",
+                    if (mutable) "mutableDelegate" else "propDelegate"
+                ),
                 intfName(intf),
                 ClassName("com.monkopedia.sdbus", "PropertyName"),
-                method.name
+                prop.name
             )
+        }
+    }
+
+    override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder =
+        PropertySpec.builder(prop.name.decapitalCamelCase, namingManager[prop]).apply {
+            addModifiers(OVERRIDE)
+            if (prop.access == WRITE || prop.access == READWRITE) {
+                mutable(true)
+            }
+            delegate(prop.name.decapitalCamelCase + "Property")
         }
 
     override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder? = null

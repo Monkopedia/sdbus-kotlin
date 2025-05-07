@@ -1,13 +1,16 @@
 package org.mpris.mediaplayer2
 
 import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.MutablePropertyDelegate
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.PropertyDelegate
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethodAsync
-import com.monkopedia.sdbus.prop
+import com.monkopedia.sdbus.mutableDelegate
+import com.monkopedia.sdbus.propDelegate
 import com.monkopedia.sdbus.signalFlow
 import kotlin.Boolean
 import kotlin.Double
@@ -20,49 +23,80 @@ import kotlinx.coroutines.flow.Flow
 public class PlayerProxy(
   public val proxy: Proxy,
 ) : Player {
-  override val playbackStatus: String by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("PlaybackStatus")) 
+  public val playbackStatusProperty: PropertyDelegate<PlayerProxy, String> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("PlaybackStatus")) 
 
-  override var loopStatus: String by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("LoopStatus")) 
+  public var loopStatusProperty: MutablePropertyDelegate<PlayerProxy, String> =
+      proxy.mutableDelegate(Player.Companion.INTERFACE_NAME, PropertyName("LoopStatus")) 
 
-  override var rate: Double by proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("Rate")) 
+  public var rateProperty: MutablePropertyDelegate<PlayerProxy, Double> =
+      proxy.mutableDelegate(Player.Companion.INTERFACE_NAME, PropertyName("Rate")) 
 
-  override var shuffle: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("Shuffle")) 
+  public var shuffleProperty: MutablePropertyDelegate<PlayerProxy, Boolean> =
+      proxy.mutableDelegate(Player.Companion.INTERFACE_NAME, PropertyName("Shuffle")) 
 
-  override val metadata: Map<String, Variant> by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("Metadata")) 
+  public val metadataProperty: PropertyDelegate<PlayerProxy, Map<String, Variant>> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("Metadata")) 
 
-  override var volume: Double by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("Volume")) 
+  public var volumeProperty: MutablePropertyDelegate<PlayerProxy, Double> =
+      proxy.mutableDelegate(Player.Companion.INTERFACE_NAME, PropertyName("Volume")) 
 
-  override val position: Long by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("Position")) 
+  public val positionProperty: PropertyDelegate<PlayerProxy, Long> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("Position")) 
 
-  override val minimumRate: Double by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("MinimumRate")) 
+  public val minimumRateProperty: PropertyDelegate<PlayerProxy, Double> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("MinimumRate")) 
 
-  override val maximumRate: Double by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("MaximumRate")) 
+  public val maximumRateProperty: PropertyDelegate<PlayerProxy, Double> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("MaximumRate")) 
 
-  override val canGoNext: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("CanGoNext")) 
+  public val canGoNextProperty: PropertyDelegate<PlayerProxy, Boolean> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("CanGoNext")) 
 
-  override val canGoPrevious: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("CanGoPrevious")) 
+  public val canGoPreviousProperty: PropertyDelegate<PlayerProxy, Boolean> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("CanGoPrevious")) 
 
-  override val canPlay: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("CanPlay")) 
+  public val canPlayProperty: PropertyDelegate<PlayerProxy, Boolean> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("CanPlay")) 
 
-  override val canPause: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("CanPause")) 
+  public val canPauseProperty: PropertyDelegate<PlayerProxy, Boolean> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("CanPause")) 
 
-  override val canSeek: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("CanSeek")) 
+  public val canSeekProperty: PropertyDelegate<PlayerProxy, Boolean> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("CanSeek")) 
 
-  override val canControl: Boolean by
-      proxy.prop(Player.Companion.INTERFACE_NAME, PropertyName("CanControl")) 
+  public val canControlProperty: PropertyDelegate<PlayerProxy, Boolean> =
+      proxy.propDelegate(Player.Companion.INTERFACE_NAME, PropertyName("CanControl")) 
+
+  override val playbackStatus: String by playbackStatusProperty
+
+  override var loopStatus: String by loopStatusProperty
+
+  override var rate: Double by rateProperty
+
+  override var shuffle: Boolean by shuffleProperty
+
+  override val metadata: Map<String, Variant> by metadataProperty
+
+  override var volume: Double by volumeProperty
+
+  override val position: Long by positionProperty
+
+  override val minimumRate: Double by minimumRateProperty
+
+  override val maximumRate: Double by maximumRateProperty
+
+  override val canGoNext: Boolean by canGoNextProperty
+
+  override val canGoPrevious: Boolean by canGoPreviousProperty
+
+  override val canPlay: Boolean by canPlayProperty
+
+  override val canPause: Boolean by canPauseProperty
+
+  override val canSeek: Boolean by canSeekProperty
+
+  override val canControl: Boolean by canControlProperty
 
   public val seeked: Flow<Long> =
       proxy.signalFlow(Player.Companion.INTERFACE_NAME, SignalName("Seeked")) {

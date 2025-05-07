@@ -60,7 +60,7 @@ class AdaptorGenerator : BaseGenerator() {
 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder? = null
 
-    override fun propertyBuilder(intf: Interface, method: Property): PropertySpec.Builder? = null
+    override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder? = null
 
     override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder = FunSpec.builder(
         "on" + signal.signalName()
