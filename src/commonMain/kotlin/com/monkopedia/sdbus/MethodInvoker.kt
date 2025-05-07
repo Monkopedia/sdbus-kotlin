@@ -88,6 +88,8 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
 
         try {
             return completable.await()
+        } catch (t: Error) {
+            throw Error(t.name, t.errorMessage)
         } catch (t: CancellationException) {
             call.release()
             throw t

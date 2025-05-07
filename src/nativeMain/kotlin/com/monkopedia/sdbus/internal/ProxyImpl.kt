@@ -146,7 +146,11 @@ internal class ProxyImpl(
 
         callMethodAsync(message, deferred.asAsyncReplyHandler, timeout)
 
-        return deferred.await()
+        try {
+            return deferred.await()
+        } catch (e: Error) {
+            throw Error(e.name, e.errorMessage)
+        }
     }
 
     override fun registerSignalHandler(
@@ -236,7 +240,7 @@ internal class ProxyImpl(
                                 asyncCallInfo.callback(message, null)
                             } else {
                                 val exception = Error(
-                                    error.get(0).name?.toKString() ?: "",
+                                    error[0].name?.toKString() ?: "",
                                     error[0].message?.toKString() ?: ""
                                 )
                                 asyncCallInfo.callback(message, exception)
