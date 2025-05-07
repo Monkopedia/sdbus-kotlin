@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -9,7 +10,7 @@ plugins {
     kotlin("plugin.serialization")
     id("org.jlleitschuh.gradle.ktlint")
     alias(libs.plugins.dokka)
-    `maven-publish`
+    alias(libs.plugins.vannik.publish)
     signing
 }
 
@@ -84,38 +85,30 @@ tasks.dokkaHtml.configure {
     outputDirectory.set(buildDir.resolve("dokka"))
 }
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication::class.java) {
-            afterEvaluate {
-                from(components["java"])
-                artifact(javadocJar)
-                pom {
-                    name.set("sdbus-kotlin-codegen")
-                    description.set("A kotlin/native dbus client code generator")
-                    url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
-                    licenses {
-                        license {
-                            name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
-                            url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("monkopedia")
-                            name.set("Jason Monk")
-                            email.set("monkopedia@gmail.com")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
-                        developerConnection.set(
-                            "scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git"
-                        )
-                        url.set("https://github.com/Monkopedia/sdbus-kotlin/")
-                    }
-                }
+mavenPublishing {
+    pom {
+        name.set("sdbus-kotlin-codegen")
+        description.set("A kotlin/native dbus client code generator")
+        url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
+        licenses {
+            license {
+                name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
+                url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
             }
+        }
+        developers {
+            developer {
+                id.set("monkopedia")
+                name.set("Jason Monk")
+                email.set("monkopedia@gmail.com")
+            }
+        }
+        scm {
+            connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
+            developerConnection.set(
+                "scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git"
+            )
+            url.set("https://github.com/Monkopedia/sdbus-kotlin/")
         }
     }
     repositories {
@@ -127,6 +120,9 @@ publishing {
             }
         }
     }
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    signAllPublications()
 }
 
 signing {

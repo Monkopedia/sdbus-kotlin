@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
+import com.vanniktech.maven.publish.SonatypeHost
 import java.util.*
 import kotlinx.validation.ExperimentalBCVApi
 import org.jetbrains.dokka.base.DokkaBase
@@ -21,8 +22,7 @@ plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.hierynomus.license)
     alias(libs.plugins.dokka)
-
-    `maven-publish`
+    alias(libs.plugins.vannik.publish)
     signing
 }
 
@@ -144,58 +144,43 @@ tasks.dokkaHtml.configure {
 
     outputDirectory.set(buildDir.resolve("dokka"))
 }
-publishing {
-    publications.all {
-        if (this !is MavenPublication) return@all
-        artifact(javadocJar)
-        pom {
-            name.set(project.name)
-            description.set("A kotlin/native dbus client")
-            url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
-            licenses {
-                license {
-                    name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
-                    url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
-                }
-            }
-            developers {
-                developer {
-                    id.set("monkopedia")
-                    name.set("Jason Monk")
-                    email.set("monkopedia@gmail.com")
-                }
-            }
-            scm {
-                connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
-                developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
-                url.set("https://github.com/Monkopedia/sdbus-kotlin/")
+mavenPublishing {
+    pom {
+        name.set(project.name)
+        description.set("A kotlin/native dbus client")
+        url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
+        licenses {
+            license {
+                name.set("GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007")
+                url.set("https://www.gnu.org/licenses/lgpl-3.0.txt")
             }
         }
-    }
-    repositories {
-        maven(url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            name = "OSSRH"
-            credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_PASSWORD")
+        developers {
+            developer {
+                id.set("monkopedia")
+                name.set("Jason Monk")
+                email.set("monkopedia@gmail.com")
             }
         }
+        scm {
+            connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
+            developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
+            url.set("https://github.com/Monkopedia/sdbus-kotlin/")
+        }
     }
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    signAllPublications()
 }
 
-signing {
-    useGpgCmd()
-    sign(publishing.publications)
-}
-
-afterEvaluate {
-    tasks.withType(Sign::class) {
-        val signingTask = this
-        tasks.withType(AbstractPublishToMaven::class) {
-            dependsOn(signingTask)
-        }
-    }
-}
+//afterEvaluate {
+//    tasks.withType(Sign::class) {
+//        val signingTask = this
+//        tasks.withType(AbstractPublishToMaven::class) {
+//            dependsOn(signingTask)
+//        }
+//    }
+//}
 
 tasks.register(
     "licenseCheckForKotlin",
@@ -253,4 +238,9 @@ allprojects {
             exclude("**/test/resources/**/*.kt", "**/compile_test/**/*.kt")
         }
     }
+}
+
+signing {
+    useGpgCmd()
+    sign(publishing.publications)
 }

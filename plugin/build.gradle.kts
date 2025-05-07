@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -5,8 +6,8 @@ plugins {
 
     id("org.jetbrains.kotlin.jvm")
     alias(libs.plugins.gradle.publish)
-    `maven-publish`
-    `signing`
+    alias(libs.plugins.vannik.publish)
+    signing
 }
 
 repositories {
@@ -52,47 +53,36 @@ gradlePlugin {
     }
 }
 
-publishing {
-    publications.all {
-        if (this !is MavenPublication) return@all
+mavenPublishing {
+    pom {
+        name.set("sdbus-kotlin-gradle-plugin")
+        description.set(project.description)
+        url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
+        licenses {
+            license {
+                name.set("GNU LESSER GENERAL PUBLIC LICENSE, version 3, 29 June 2007")
+                url.set("https://www.gnu.org/licenses/")
+            }
+        }
+        developers {
+            developer {
+                id.set("monkopedia")
+                name.set("Jason Monk")
+                email.set("monkopedia@gmail.com")
+            }
+        }
+        scm {
+            connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
+            developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
+            url.set("https://github.com/Monkopedia/sdbus-kotlin/")
+        }
+    }
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-        afterEvaluate {
-            pom {
-                name.set("sdbus-kotlin-gradle-plugin")
-                description.set(project.description)
-                url.set("https://www.github.com/Monkopedia/sdbus-kotlin")
-                licenses {
-                    license {
-                        name.set("GNU LESSER GENERAL PUBLIC LICENSE, version 3, 29 June 2007")
-                        url.set("https://www.gnu.org/licenses/")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("monkopedia")
-                        name.set("Jason Monk")
-                        email.set("monkopedia@gmail.com")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:git://github.com/Monkopedia/sdbus-kotlin.git")
-                    developerConnection.set("scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git")
-                    url.set("https://github.com/Monkopedia/sdbus-kotlin/")
-                }
-            }
-        }
-    }
-    repositories {
-        maven(url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            name = "OSSRH"
-            credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_PASSWORD")
-            }
-        }
-    }
+    signAllPublications()
 }
 
 signing {
     useGpgCmd()
+    sign(publishing.publications)
 }
