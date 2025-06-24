@@ -1,6 +1,5 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
-import com.vanniktech.maven.publish.SonatypeHost
 import java.util.*
 import kotlinx.validation.ExperimentalBCVApi
 import org.jetbrains.dokka.base.DokkaBase
@@ -114,11 +113,11 @@ val overrides = mapOf<String, String>(
 
 afterEvaluate {
     tasks.all {
-        (this as? KotlinNativeLink)?.kotlinOptions {
-            freeCompilerArgs += overrides
+        (this as? KotlinNativeLink)?.toolOptions {
+            freeCompilerArgs.addAll(overrides)
         }
-        (this as? KotlinNativeCompile)?.kotlinOptions {
-            freeCompilerArgs += overrides
+        (this as? KotlinNativeCompile)?.compilerOptions {
+            freeCompilerArgs .addAll( overrides)
         }
     }
 }
@@ -169,7 +168,7 @@ mavenPublishing {
             url.set("https://github.com/Monkopedia/sdbus-kotlin/")
         }
     }
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     signAllPublications()
 }
