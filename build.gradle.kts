@@ -174,15 +174,6 @@ mavenPublishing {
     signAllPublications()
 }
 
-//afterEvaluate {
-//    tasks.withType(Sign::class) {
-//        val signingTask = this
-//        tasks.withType(AbstractPublishToMaven::class) {
-//            dependsOn(signingTask)
-//        }
-//    }
-//}
-
 tasks.register(
     "licenseCheckForKotlin",
     com.hierynomus.gradle.license.tasks.LicenseCheck::class

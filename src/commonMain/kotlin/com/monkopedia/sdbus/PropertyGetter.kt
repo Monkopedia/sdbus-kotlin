@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -100,7 +99,7 @@ inline fun <R, reified T : Any> Proxy.mutableDelegate(
     )
 }
 
-open class PropertyDelegate<R, T: Any>(
+open class PropertyDelegate<R, T : Any>(
     protected val proxy: Proxy,
     val interfaceName: InterfaceName,
     val propertyName: PropertyName,

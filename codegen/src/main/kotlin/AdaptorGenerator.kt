@@ -141,7 +141,11 @@ class AdaptorGenerator : BaseGenerator() {
                     )
                     withIndent {
                         it.args.forEachIndexed { index, arg ->
-                            add("with<%T>(%S)\n", namingManager[arg].reference, arg.name ?: "arg$index")
+                            add(
+                                "with<%T>(%S)\n",
+                                namingManager[arg].reference,
+                                arg.name ?: "arg$index"
+                            )
                         }
                     }
                     add("}\n")

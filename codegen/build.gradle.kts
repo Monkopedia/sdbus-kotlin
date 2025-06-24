@@ -2,7 +2,7 @@ import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     application
@@ -25,7 +25,6 @@ dependencies {
     api(libs.xmlutil)
     api(libs.clikt)
     api(libs.kotlinpoet)
-    api(libs.kotlinx.serialization)
     testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
@@ -55,8 +54,12 @@ ktlint {
 tasks.test {
     useJUnitPlatform()
 }
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+        freeCompilerArgs.add("-Xjvm-default=all-compatibility")
+    }
 }
 java {
     withSourcesJar()
