@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * sdbus-kotlin. If not, see <https://www.gnu.org/licenses/>.
  */
-@file:OptIn(ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
 
 package com.monkopedia.sdbus.integration
 
@@ -33,9 +33,11 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
@@ -50,7 +52,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.datetime.Clock
 import platform.posix.size_t
 
 class DBusAsyncMethodsTest : BaseTest() {

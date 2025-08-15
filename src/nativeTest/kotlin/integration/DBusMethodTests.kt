@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * sdbus-kotlin. If not, see <https://www.gnu.org/licenses/>.
  */
-@file:OptIn(ExperimentalForeignApi::class, NativeRuntimeApi::class)
+@file:OptIn(ExperimentalForeignApi::class, NativeRuntimeApi::class, ExperimentalTime::class)
 
 package com.monkopedia.sdbus.integration
 
@@ -41,12 +41,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
 
 class DBusMethodTests : BaseTest() {
     private val fixture = SdbusConnectionFixture(this)
