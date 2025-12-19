@@ -1,19 +1,19 @@
 [versions]
-kotlin = "2.2.20"
+kotlin = "2.3.0"
 kotlin-coroutines = "1.10.2"
-kotlin-serialization = "1.9.0"
+kotlin-serialization = "1.10.0-RC"
 kotlin-datetime = "0.7.1"
 clikt = "5.0.3"
 kotlin-atomicfu = "0.30.0-beta"
-dokka = "2.1.0-Beta"
+dokka = "2.1.0"
 gradleplugin = "2.0.0"
 kotlin-bcv = "0.18.1"
-pdvrieze-xmlutil = "0.91.2"
+pdvrieze-xmlutil = "0.91.3"
 kotlinpoet = "2.2.0"
 hierynomus = "0.16.1"
-ktlint = "13.1.0"
-buildconfig = "5.6.8"
-vannik = "0.34.0"
+ktlint = "14.0.1"
+buildconfig = "6.0.6"
+vannik = "0.35.0"
 
 [libraries]
 dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
