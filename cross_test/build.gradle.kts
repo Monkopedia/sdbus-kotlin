@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.testing.Test
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 plugins {
     kotlin("multiplatform")
@@ -55,5 +56,26 @@ tasks.register<Test>("jvmInteropTest") {
     systemProperty("kdbus.nativeTestBinary", crossNativeTestBinary.get().asFile.absolutePath)
     filter {
         includeTestsMatching("com.monkopedia.sdbus.integration.CrossRuntimeInteropSmokeTest")
+    }
+}
+
+val systemdVersion = "257.2-2"
+val localSystemdLibDir = rootProject
+    .file("libs/x86_64/$systemdVersion/lib")
+    .takeIf { it.exists() }
+    ?.absolutePath
+
+tasks.withType<KotlinNativeLink>().configureEach {
+    if (name.contains("LinuxX64", ignoreCase = true) && localSystemdLibDir != null) {
+        toolOptions {
+            freeCompilerArgs.addAll(
+                listOf(
+                    "-linker-option",
+                    "-L$localSystemdLibDir",
+                    "-linker-option",
+                    "-Wl,-rpath,$localSystemdLibDir"
+                )
+            )
+        }
     }
 }

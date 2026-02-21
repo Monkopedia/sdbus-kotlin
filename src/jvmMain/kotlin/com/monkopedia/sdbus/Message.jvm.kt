@@ -463,12 +463,7 @@ internal actual fun <T> Message.serialize(
     module: SerializersModule,
     arg: T
 ) {
-    payload.add(
-        when (arg) {
-            is UnixFd -> arg.fd
-            else -> arg
-        }
-    )
+    payload.add(arg)
 }
 
 @PublishedApi
