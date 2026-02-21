@@ -28,9 +28,9 @@ fetchArch aarch64
 cat > src/nativeInterop/cinterop/sdbus-$VERSION.def <<EOF
 headers = systemd/sd-bus.h
 compilerOpts.linux = -Ilibs/aarch64/$VERSION/include
-linkerOpts.linux = -Llibs/aarch64/$VERSION/lib -l systemd -l c
+linkerOpts.linux = -l systemd -l c
 compilerOpts.linux_x64 = -Ilibs/x86_64/$VERSION/include
-linkerOpts.linux_x64 = -Llibs/x86_64/$VERSION/lib -l systemd -l c
+linkerOpts.linux_x64 = -l systemd -l c
 package = sdbus
 
 ---
@@ -75,5 +75,4 @@ void sd_bus_vtable_end(sd_bus_vtable* ret)
     *ret = vt;
 }
 EOF
-
 

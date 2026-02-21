@@ -21,7 +21,6 @@
  * sdbus-kotlin. If not, see <https://www.gnu.org/licenses/>.
  */
 import com.monkopedia.sdbus.Error
-import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.ObjectManagerProxy
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.ServiceName

@@ -33,6 +33,8 @@ sdbus {
     outputs.add("linuxX64Main")
     generateProxies = true
     generateAdapters = true
+    // optional: force generated Kotlin package
+    outputPackage = "com.example.generated"
 }
 ...
 ```
@@ -53,13 +55,19 @@ val nativeMain by getting {
 }
 ```
 
-Since sdbus-kotlin compiles against libsystemd, you have to specify some extra flags for the linker
-to be successful. Generally, this is just allowing the linker access to your system libs, but alse
-be sure your system has libsystemd matching or newer than sdbus-kotlin (currently 257.3).
+Since sdbus-kotlin compiles against libsystemd, your target must provide libsystemd at link and
+runtime. Published artifacts do not embed a libsystemd path, so configure linker options in your
+native binary.
 
 ```
-compilerOptions {
-    freeCompilerArgs.set(listOf("-linker-options", "-L /usr/lib"))
+linuxX64 {
+    binaries {
+        executable {
+            linkerOpts("-lsystemd")
+            // If libsystemd is outside default linker/runtime paths:
+            linkerOpts("-L/usr/lib", "-Wl,-rpath,/usr/lib")
+        }
+    }
 }
 ```
 
