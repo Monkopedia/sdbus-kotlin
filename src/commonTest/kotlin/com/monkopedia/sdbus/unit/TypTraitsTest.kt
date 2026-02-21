@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * sdbus-kotlin. If not, see <https://www.gnu.org/licenses/>.
  */
-package unit
+package com.monkopedia.sdbus.unit
 
 import com.monkopedia.sdbus.BusName
 import com.monkopedia.sdbus.InterfaceName
@@ -47,7 +47,6 @@ private data class A(
 private data class B(
     val map: Map<UByte, List<A>>,
     val sig: Signature,
-    val unixFd: UnixFd,
     val str: String,
     val str2: String
 )
@@ -154,13 +153,13 @@ class TypTraitsTest {
     @Test
     fun testArrayShort() = assertType<Array<Short>>("an")
 
-//    @Test
+    //    @Test
     fun testSomeEnumClass() = assertType<SomeEnumClass>("y")
 
-//    @Test
+    //    @Test
     fun testSomeEnumStruct() = assertType<SomeEnumStruct>("x")
 
-//    @Test
+    //    @Test
     fun testSomeClassicEnum() = assertType<SomeClassicEnum>("u")
 
     @Test
@@ -170,5 +169,5 @@ class TypTraitsTest {
     fun testMapType() = assertType<HashMap<Int, Long>>("a{ix}")
 
     @Test
-    fun testComplexType() = assertType<ComplexTypeCheck>("a{t(a{ya(oanbva{is})}ghss)}")
+    fun testComplexType() = assertType<ComplexTypeCheck>("a{t(a{ya(oanbva{is})}gss)}")
 }

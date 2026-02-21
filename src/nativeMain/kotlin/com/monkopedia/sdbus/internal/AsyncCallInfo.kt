@@ -25,12 +25,28 @@ package com.monkopedia.sdbus.internal
 import com.monkopedia.sdbus.AsyncReplyHandler
 import com.monkopedia.sdbus.Proxy
 import com.monkopedia.sdbus.Resource
+import kotlinx.atomicfu.atomic
 
 internal data class AsyncCallInfo(
     val callback: AsyncReplyHandler,
     val proxy: Proxy,
-    val floating: Boolean,
-    var finished: Boolean = false
+    val floating: Boolean
 ) {
-    var methodCall: Resource? = null
+    private val finishedState = atomic(false)
+    private val methodCallState = atomic<Resource?>(null)
+
+    val finished: Boolean
+        get() = finishedState.value
+
+    fun markFinishedOnce(): Boolean = finishedState.compareAndSet(false, true)
+
+    fun attachMethodCall(slot: Resource) {
+        if (!methodCallState.compareAndSet(null, slot)) {
+            slot.release()
+        }
+    }
+
+    fun releaseMethodCallOnce() {
+        methodCallState.getAndSet(null)?.release()
+    }
 }

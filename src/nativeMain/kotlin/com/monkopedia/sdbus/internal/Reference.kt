@@ -27,6 +27,7 @@ package com.monkopedia.sdbus.internal
 import com.monkopedia.sdbus.Resource
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
+import kotlinx.atomicfu.atomic
 
 internal class Reference<T>(val value: T, onLeaveScopes: (T) -> Unit) : Resource {
     private val resource = value to singleCall(onLeaveScopes)
@@ -52,10 +53,9 @@ internal class Reference<T>(val value: T, onLeaveScopes: (T) -> Unit) : Resource
 
 private fun <T> singleCall(callback: (T) -> Unit): (T) -> Unit {
     return object : (T) -> Unit {
-        private var hasCalled = false
+        private val called = atomic(false)
         override fun invoke(p1: T) {
-            if (hasCalled) return
-            hasCalled = true
+            if (!called.compareAndSet(false, true)) return
             callback(p1)
         }
     }

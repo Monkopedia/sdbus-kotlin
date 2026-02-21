@@ -42,8 +42,7 @@ import com.monkopedia.sdbus.sdbusRequire
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlin.native.ref.createCleaner
-import kotlinx.atomicfu.locks.ReentrantLock
-import kotlinx.atomicfu.locks.withLock
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -125,11 +124,13 @@ internal class ProxyImpl(
             proxy = this@ProxyImpl,
             floating = false
         ).also { asyncCallInfo ->
-            asyncCallInfo.methodCall = connection.callMethod(
-                message,
-                sdbus_async_reply_handler,
-                WeakReference(asyncCallInfo),
-                timeout
+            asyncCallInfo.attachMethodCall(
+                connection.callMethod(
+                    message,
+                    sdbus_async_reply_handler,
+                    WeakReference(asyncCallInfo),
+                    timeout
+                )
             )
 
             allocs.floatingAsyncCallSlots.pushBack(asyncCallInfo)
@@ -186,28 +187,39 @@ internal class ProxyImpl(
 
     // Container keeping track of pending async calls
     internal class FloatingAsyncCallSlots {
-        private val lock = ReentrantLock()
-        private val asyncSlots = mutableListOf<AsyncCallInfo>()
+        private val asyncSlots = atomic<List<AsyncCallInfo>>(emptyList())
 
         fun pushBack(asyncCallInfo: AsyncCallInfo) {
-            lock.withLock {
-                asyncSlots.add(asyncCallInfo)
+            if (asyncCallInfo.finished) return
+            while (true) {
+                val current = asyncSlots.value
+                if (asyncCallInfo.finished) return
+                val updated = current + asyncCallInfo
+                if (asyncSlots.compareAndSet(current, updated)) {
+                    return
+                }
             }
         }
 
         fun erase(info: AsyncCallInfo) {
-            lock.withLock {
-                info.methodCall?.release()
-                info.methodCall = null
-                info.finished = true
-                asyncSlots.remove(info)
+            if (!info.markFinishedOnce()) return
+            info.releaseMethodCallOnce()
+            while (true) {
+                val current = asyncSlots.value
+                val idx = current.indexOf(info)
+                if (idx < 0) return
+                val updated = current.toMutableList().also { it.removeAt(idx) }
+                if (asyncSlots.compareAndSet(current, updated)) {
+                    return
+                }
             }
         }
 
         fun clear() {
-            lock.withLock {
-                asyncSlots.forEach { it.methodCall?.release() }
-                asyncSlots.clear()
+            val current = asyncSlots.getAndSet(emptyList())
+            current.forEach {
+                it.markFinishedOnce()
+                it.releaseMethodCallOnce()
             }
         }
     }

@@ -26,6 +26,7 @@ package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.createBusConnection
+import com.monkopedia.sdbus.createSessionBusConnection
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -113,41 +114,66 @@ class CppEventLoop : BaseTest() {
     fun canAddFloatingMatchRule() {
         val matchingMessageReceived = atomic(false)
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
-        val con = createBusConnection()
-        con.enterEventLoopAsync()
-        val callback = { msg: Message ->
-            if (msg.getPath() == OBJECT_PATH.value) {
-                matchingMessageReceived.value = true
+        val con = createSessionBusConnection()
+        var connectionReleased = false
+        try {
+            con.enterEventLoopAsync()
+            val callback = { msg: Message ->
+                if (msg.getPath() == OBJECT_PATH.value) {
+                    matchingMessageReceived.value = true
+                }
+            }
+            // Keep the returned slot as a floating match rule bound to the connection lifetime.
+            con.addMatch(matchRule, callback)
+            fixture.adaptor?.emitSimpleSignal()
+            assertTrue(waitUntil(matchingMessageReceived, 20.seconds))
+            matchingMessageReceived.value = false
+            con.release()
+            connectionReleased = true
+            fixture.adaptor?.emitSimpleSignal()
+            assertFalse(waitUntil(matchingMessageReceived, 1.seconds))
+        } finally {
+            if (!connectionReleased) {
+                con.release()
             }
         }
-        con.addMatch(matchRule, callback)
-        fixture.adaptor?.emitSimpleSignal()
-        assertTrue(waitUntil(matchingMessageReceived, 2.seconds))
-        matchingMessageReceived.value = false
-        con.release()
-        fixture.adaptor?.emitSimpleSignal()
-
-        assertFalse(waitUntil(matchingMessageReceived, 1.seconds))
     }
 
     @Test
     fun willNotPassToMatchCallbackMessagesThatDoNotMatchTheRule() {
-        val matchRule = "type='signal',interface='${INTERFACE_NAME.value}',member='simpleSignal'"
+        val matchRule =
+            "type='signal',interface='${INTERFACE_NAME.value}',member='simpleSignal'"
+        val matchRuleInstalled = atomic(false)
         val numberOfMatchingMessages = atomic(0.convert<size_t>())
-        val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
-            if (msg.getMemberName() == "simpleSignal") {
-                numberOfMatchingMessages.value++
-            }
+        val slot = globalProxyConnection.addMatchAsync(
+            match = matchRule,
+            callback = { msg: Message ->
+                if (msg.getMemberName() == "simpleSignal") {
+                    numberOfMatchingMessages.value++
+                }
+            },
+            installCallback = { matchRuleInstalled.value = true }
+        )
+        val adaptor2 = TestAdaptor(globalAdaptorConnection, OBJECT_PATH_2).apply {
+            registerAdaptor()
         }
-        val adaptor2 = TestAdaptor(globalAdaptorConnection, OBJECT_PATH_2)
+        try {
+            assertTrue(waitUntil(matchRuleInstalled))
+            fixture.adaptor?.emitSignalWithMap(emptyMap())
+            adaptor2.emitSimpleSignal()
+            fixture.adaptor?.emitSimpleSignal()
 
-        fixture.adaptor?.emitSignalWithMap(emptyMap())
-        adaptor2.emitSimpleSignal()
-        fixture.adaptor?.emitSimpleSignal()
-
-        assertTrue(waitUntil({ numberOfMatchingMessages.value == 2u.convert<size_t>() }))
-        assertFalse(waitUntil({ numberOfMatchingMessages.value > 2u }, 1.seconds))
-        slot.release()
+            assertTrue(
+                waitUntil(
+                    { numberOfMatchingMessages.value == 2u.convert<size_t>() },
+                    8.seconds
+                )
+            )
+            assertFalse(waitUntil({ numberOfMatchingMessages.value > 2u }, 1.seconds))
+        } finally {
+            slot.release()
+            adaptor2.obj.release()
+        }
     }
 
     // A simple direct connection test similar in nature to https://github.com/systemd/systemd/blob/main/src/libsystemd/sd-bus/test-bus-server.c

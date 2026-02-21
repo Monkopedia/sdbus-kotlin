@@ -46,7 +46,9 @@ import sdbus.sd_bus_error
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
 
-internal class SdBusMock : Fake by FakeHelper(), ISdBus {
+internal class SdBusMock :
+    Fake by FakeHelper(),
+    ISdBus {
 
     override fun sd_bus_message_ref(m: CValuesRef<sd_bus_message>?): CPointer<sd_bus_message>? =
         invoke("sd_bus_message_ref", m)

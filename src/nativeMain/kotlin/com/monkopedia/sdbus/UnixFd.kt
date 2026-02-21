@@ -24,6 +24,7 @@ package com.monkopedia.sdbus
 
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
+import kotlinx.atomicfu.atomic
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind.INT
@@ -50,10 +51,13 @@ import platform.posix.errno
 @Serializable(UnixFd.Companion::class)
 actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
     private var wasReleased = false
-    private val cleaner = createCleaner(fd) {
+    private val resource = fd to singleCall<Int> {
         if (it >= 0) {
             close(it)
         }
+    }
+    private val cleaner = createCleaner(resource) { (fd, closeOnce) ->
+        closeOnce(fd)
     }
 
     actual constructor(fd: Int) : this(checkedDup(fd), Unit)
@@ -63,7 +67,7 @@ actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
         get() = fd >= 0 && !wasReleased
 
     actual override fun release() {
-        close(fd)
+        resource.second(resource.first)
         wasReleased = true
     }
 
@@ -89,6 +93,16 @@ actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
 
         override fun serialize(encoder: Encoder, value: UnixFd) {
             encoder.encodeInline(descriptor).encodeInt(value.fd)
+        }
+    }
+}
+
+private fun <T> singleCall(callback: (T) -> Unit): (T) -> Unit {
+    return object : (T) -> Unit {
+        private val called = atomic(false)
+        override fun invoke(p1: T) {
+            if (!called.compareAndSet(false, true)) return
+            callback(p1)
         }
     }
 }

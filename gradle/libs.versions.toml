@@ -14,6 +14,8 @@ hierynomus = "0.16.1"
 ktlint = "14.0.1"
 buildconfig = "6.0.6"
 vannik = "0.35.0"
+dbus-java = "5.1.1"
+mockk = "1.13.13"
 
 [libraries]
 dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
@@ -28,6 +30,9 @@ kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "k
 xmlutil = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "pdvrieze-xmlutil" }
 kotlinpoet = { module = "com.squareup:kotlinpoet-jvm", version.ref = "kotlinpoet" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt"}
+dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbus-java" }
+dbus-java-transport-junixsocket = { module = "com.github.hypfvieh:dbus-java-transport-junixsocket", version.ref = "dbus-java" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
 dokka = ["dokka-base", "dokka-gradle"]

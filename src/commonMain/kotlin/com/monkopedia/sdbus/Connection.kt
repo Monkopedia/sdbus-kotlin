@@ -121,6 +121,11 @@ interface Connection : Resource {
      * sends a control message requesting the match to be added to the broker and waits until the broker
      * confirms the match has been installed successfully.
      *
+     * Note: synchronous installation does not imply synchronous callback delivery. Matching messages are
+     * still dispatched via the connection's event loop and may be observed with scheduler/runtime delay.
+     * In timing-sensitive flows, avoid immediate delivery assumptions and consider `addMatchAsync()` with
+     * an `installCallback` as an explicit readiness barrier before emitting test or control signals.
+     *
      * The lifetime of the match rule is bound to the lifetime of the returned resource instance.
      * Releasing the resource instance implies uninstalling of the match rule from the bus connection.
      *
@@ -278,6 +283,9 @@ expect fun createDirectBusConnection(address: String): Connection
 /**
  * Opens direct D-Bus connection at the given file descriptor
  *
+ * Native-only API.
+ * On JVM, fd-backed direct connections are not supported by the underlying transport stack.
+ *
  * @param fd File descriptor used to communicate directly from/to a D-Bus server
  * @return [Connection] instance
  *
@@ -290,6 +298,9 @@ expect fun createDirectBusConnection(fd: Int): Connection
 
 /**
  * Opens direct D-Bus connection at fd as a server
+ *
+ * Native-only API.
+ * On JVM, fd-backed server buses are not supported by the underlying transport stack.
  *
  * @param fd File descriptor to use for server DBus connection
  * @return [Connection] server instance

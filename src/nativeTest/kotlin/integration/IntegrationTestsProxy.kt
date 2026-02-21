@@ -20,6 +20,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * sdbus-kotlin. If not, see <https://www.gnu.org/licenses/>.
  */
+@file:Suppress("ktlint:standard:function-literal")
 @file:OptIn(ExperimentalNativeApi::class)
 
 package com.monkopedia.sdbus.integration

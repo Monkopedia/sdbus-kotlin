@@ -84,6 +84,7 @@ package com.monkopedia.sdbus
 inline fun Object.addVTable(interfaceName: InterfaceName, builder: VTableBuilder.() -> Unit) =
     addVTable(interfaceName, buildList { VTableBuilder(this).builder() })
 
+@kotlin.jvm.JvmInline
 value class VTableBuilder(val items: MutableList<VTableItem>)
 
 sealed interface VTableItem

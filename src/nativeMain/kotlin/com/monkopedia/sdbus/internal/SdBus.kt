@@ -43,6 +43,8 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.set
+import kotlinx.cinterop.toKString
+import platform.posix.getenv
 import platform.posix.gid_tVar
 import platform.posix.pid_tVar
 import platform.posix.uid_tVar
@@ -57,6 +59,9 @@ import sdbus.sd_id128_t
 
 internal class SdBus : ISdBus {
     private val lock = ReentrantLock()
+    private val useAnonymousDirectAuth by lazy {
+        getenv("KDBUS_INTEROP_USE_ANONYMOUS_AUTH")?.toKString() == "true"
+    }
 
     override fun sd_bus_message_ref(m: CValuesRef<sd_bus_message>?): CPointer<sd_bus_message>? =
         lock.withLock {
@@ -236,6 +241,20 @@ internal class SdBus : ISdBus {
             if (r < 0) {
                 return@memScoped r
             }
+            r = sdbus.sd_bus_set_bus_client(bus, 0)
+            if (r < 0) {
+                return@memScoped r
+            }
+            if (useAnonymousDirectAuth) {
+                r = sdbus.sd_bus_set_anonymous(bus, 1)
+                if (r < 0) {
+                    return@memScoped r
+                }
+            }
+            r = sdbus.sd_bus_set_trusted(bus, 1)
+            if (r < 0) {
+                return@memScoped r
+            }
             r = sdbus.sd_bus_start(bus)
             if (r < 0) {
                 return@memScoped r
@@ -253,6 +272,14 @@ internal class SdBus : ISdBus {
             if (r < 0) return@memScoped r
             val bus = cValue[0]
             r = sdbus.sd_bus_set_fd(bus, fd, fd)
+            if (r < 0) return@memScoped r
+            r = sdbus.sd_bus_set_bus_client(bus, 0)
+            if (r < 0) return@memScoped r
+            if (useAnonymousDirectAuth) {
+                r = sdbus.sd_bus_set_anonymous(bus, 1)
+                if (r < 0) return@memScoped r
+            }
+            r = sdbus.sd_bus_set_trusted(bus, 1)
             if (r < 0) return@memScoped r
             r = sdbus.sd_bus_start(bus)
             if (r < 0) return@memScoped r

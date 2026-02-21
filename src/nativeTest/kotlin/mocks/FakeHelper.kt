@@ -52,9 +52,8 @@ interface Fake {
     var callHandler: CallHandler
 
     companion object {
-        inline fun <reified T> Fake.invoke(vararg any: Any?): T {
-            return callHandler.invoke(typeOf<T>(), *any)
-        }
+        inline fun <reified T> Fake.invoke(vararg any: Any?): T =
+            callHandler.invoke(typeOf<T>(), *any)
 
         suspend inline fun <reified T> Fake.coInvoke(vararg any: Any?): T {
             val context = coroutineContext
@@ -66,19 +65,14 @@ interface Fake {
 }
 
 class RecordingHandler(val baseHandler: CallHandler) : CallHandler {
-    class FakeCall(
-        val retClass: KType,
-        val args: Array<out Any?>,
-        val returnValue: Any?
-    )
+    class FakeCall(val retClass: KType, val args: Array<out Any?>, val returnValue: Any?)
 
     val calls = mutableListOf<FakeCall>()
 
-    override fun <T> invoke(retType: KType, vararg any: Any?): T {
-        return baseHandler.invoke<T>(retType, *any).also {
+    override fun <T> invoke(retType: KType, vararg any: Any?): T =
+        baseHandler.invoke<T>(retType, *any).also {
             calls.add(FakeCall(retType, any, it))
         }
-    }
 
     companion object {
         inline fun <T : Fake> T.record(exec: (T) -> Unit): List<FakeCall> {
@@ -94,12 +88,8 @@ class RecordingHandler(val baseHandler: CallHandler) : CallHandler {
     }
 }
 
-inline fun always(value: Any?): CallHandler {
-    return object : CallHandler {
-        override fun <T> invoke(retType: KType, vararg any: Any?): T {
-            return value as T
-        }
-    }
+inline fun always(value: Any?): CallHandler = object : CallHandler {
+    override fun <T> invoke(retType: KType, vararg any: Any?): T = value as T
 }
 
 typealias MappingMatcher = (KType, Array<out Any?>) -> Boolean
@@ -119,9 +109,8 @@ class MappingHandler(val fallback: CallHandler) : CallHandler {
     inline infix fun MappingMatcher.answers(crossinline answer: (KType, Array<out Any?>) -> Any?) {
         map.add(
             this to object : CallHandler {
-                override fun <T> invoke(retType: KType, vararg any: Any?): T {
-                    return answer(retType, any) as T
-                }
+                override fun <T> invoke(retType: KType, vararg any: Any?): T =
+                    answer(retType, any) as T
             }
         )
     }
@@ -163,9 +152,7 @@ class MappingHandler(val fallback: CallHandler) : CallHandler {
 }
 
 object DefaultResponses : CallHandler {
-    override fun <T> invoke(retType: KType, vararg any: Any?): T {
-        return defaultValue(retType) as T
-    }
+    override fun <T> invoke(retType: KType, vararg any: Any?): T = defaultValue(retType) as T
 
     fun defaultValue(retType: KType): Any? {
         if (retType.isMarkedNullable) return null

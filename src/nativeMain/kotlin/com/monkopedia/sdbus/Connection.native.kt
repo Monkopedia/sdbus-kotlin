@@ -46,7 +46,7 @@ actual fun createBusConnection(name: ServiceName): Connection =
 actual fun createSystemBusConnection(): Connection = systemConnection(SdBus())
 
 actual fun createSystemBusConnection(name: ServiceName): Connection =
-    defaultConnection(SdBus()).also { it.requestName(name) }
+    systemConnection(SdBus()).also { it.requestName(name) }
 
 actual fun createSessionBusConnection(): Connection = sessionConnection(SdBus())
 

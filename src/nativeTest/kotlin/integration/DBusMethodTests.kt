@@ -245,10 +245,14 @@ class DBusMethodTests : BaseTest() {
         val proxy =
             TestProxy(ServiceName("sdbuscpp.destination.that.does.not.exist"), OBJECT_PATH)
         try {
-            proxy.getInt()
-            fail("Expected error")
-        } catch (t: Error) {
-            // Expected error
+            try {
+                proxy.getInt()
+                fail("Expected error")
+            } catch (t: Error) {
+                // Expected error
+            }
+        } finally {
+            proxy.proxy.release()
         }
     }
 
@@ -256,10 +260,14 @@ class DBusMethodTests : BaseTest() {
     fun failsCallingMethodOnNonexistentObject() {
         val proxy = TestProxy(SERVICE_NAME, ObjectPath("/sdbuscpp/path/that/does/not/exist"))
         try {
-            proxy.getInt()
-            fail("Expected error")
-        } catch (t: Error) {
-            // Expected error
+            try {
+                proxy.getInt()
+                fail("Expected error")
+            } catch (t: Error) {
+                // Expected error
+            }
+        } finally {
+            proxy.proxy.release()
         }
     }
 
@@ -298,10 +306,12 @@ class DBusMethodTests : BaseTest() {
     @Test
     fun canCallMethodSynchronouslyWithoutAnEventLoopThread() {
         val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
-
-        val multiplyRes = proxy.multiply(INT64_VALUE, DOUBLE_VALUE)
-
-        assertEquals(INT64_VALUE * DOUBLE_VALUE, multiplyRes)
+        try {
+            val multiplyRes = proxy.multiply(INT64_VALUE, DOUBLE_VALUE)
+            assertEquals(INT64_VALUE * DOUBLE_VALUE, multiplyRes)
+        } finally {
+            proxy.proxy.release()
+        }
     }
 
     @Test
@@ -327,11 +337,14 @@ class DBusMethodTests : BaseTest() {
             OBJECT_PATH,
             dontRunEventLoopThread = true
         )
-        val result: Int =
-            proxy.callMethod(interfaceName, MethodName("subtract")) { call(10, 2) }
-
-        assertEquals(8, result)
-        vtableSlot.release()
+        try {
+            val result: Int =
+                proxy.callMethod(interfaceName, MethodName("subtract")) { call(10, 2) }
+            assertEquals(8, result)
+        } finally {
+            proxy.release()
+            vtableSlot.release()
+        }
     }
 
     @Test
@@ -360,10 +373,14 @@ class DBusMethodTests : BaseTest() {
             dontRunEventLoopThread = true
         )
         try {
-            proxy.callMethod<Unit>(interfaceName, MethodName("subtract")) { call(10, 2) }
-            fail("Method did not throw")
-        } catch (t: Throwable) {
-            // Expected
+            try {
+                proxy.callMethod<Unit>(interfaceName, MethodName("subtract")) { call(10, 2) }
+                fail("Method did not throw")
+            } catch (t: Throwable) {
+                // Expected
+            }
+        } finally {
+            proxy.release()
         }
     }
 }

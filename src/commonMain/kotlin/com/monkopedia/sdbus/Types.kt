@@ -95,6 +95,9 @@ class Variant constructor() {
         get() = msg.isEmpty
 
     fun serializeTo(msg: Message) {
+        if (isEmpty) {
+            throw createError(-1, "Cannot serialize an empty variant")
+        }
         this.msg.rewind(true)
         this.msg.copyTo(msg, true)
     }
@@ -134,6 +137,7 @@ class Variant constructor() {
  *
  ***********************************************/
 @Serializable(ObjectPath.Companion::class)
+@kotlin.jvm.JvmInline
 value class ObjectPath(val value: String) {
     override fun toString(): String = value
 
@@ -158,6 +162,7 @@ value class ObjectPath(val value: String) {
  *
  ***********************************************/
 @Serializable(BusName.Companion::class)
+@kotlin.jvm.JvmInline
 value class BusName(val value: String) {
     override fun toString(): String = value
 
@@ -180,6 +185,7 @@ typealias ServiceName = BusName
  * Strong type representing the D-Bus interface name
  */
 @Serializable(InterfaceName.Companion::class)
+@kotlin.jvm.JvmInline
 value class InterfaceName(val value: String) {
     override fun toString(): String = value
 
@@ -200,6 +206,7 @@ value class InterfaceName(val value: String) {
  * Strong type representing the D-Bus member name
  */
 @Serializable(MemberName.Companion::class)
+@kotlin.jvm.JvmInline
 value class MemberName(val value: String) {
     override fun toString(): String = value
 
@@ -224,6 +231,7 @@ typealias PropertyName = MemberName
  * Strong type representing the D-Bus object path
  */
 @Serializable(Signature.Companion::class)
+@kotlin.jvm.JvmInline
 value class Signature(val value: String) {
 
     override fun toString(): String = value
