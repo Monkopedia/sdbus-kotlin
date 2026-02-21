@@ -30,8 +30,8 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
-fun GeneratedType.generateType(): FileSpec {
-    return FileSpec.builder(reference.packageName, reference.simpleName).apply {
+fun GeneratedType.generateType(): FileSpec =
+    FileSpec.builder(reference.packageName, reference.simpleName).apply {
         addType(
             TypeSpec.classBuilder(reference.simpleName).apply {
                 addModifiers(KModifier.DATA)
@@ -49,7 +49,6 @@ fun GeneratedType.generateType(): FileSpec {
             }.build()
         )
     }.build()
-}
 
 private fun makeUnique(baseName: String, usedNames: MutableSet<String>): String {
     var name = baseName

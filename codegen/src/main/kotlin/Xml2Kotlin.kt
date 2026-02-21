@@ -102,8 +102,13 @@ class Xml2Kotlin : CliktCommand() {
         .flag()
     val proxy by option("-p", "--proxy", help = "Generate the code for a proxy")
         .flag()
+    val outputPackage by option(
+        "--output-package",
+        help = "Override Kotlin package for generated files"
+    )
 
     override fun run() {
+        val packageOverride = outputPackage?.trim()?.takeUnless { it.isEmpty() }
         val xml = XML {
             isUnchecked = true
             policy = object : DefaultXmlSerializationPolicy(policy) {
@@ -120,16 +125,16 @@ class Xml2Kotlin : CliktCommand() {
             output.deleteRecursively()
         }
         output.mkdirs()
-        InterfaceGenerator().transformXmlToFile(xml).forEach {
+        InterfaceGenerator(packageOverride).transformXmlToFile(xml).forEach {
             it.writeTo(output)
         }
         if (adaptor) {
-            AdaptorGenerator().transformXmlToFile(xml).forEach {
+            AdaptorGenerator(packageOverride).transformXmlToFile(xml).forEach {
                 it.writeTo(output)
             }
         }
         if (proxy) {
-            ProxyGenerator().transformXmlToFile(xml).forEach {
+            ProxyGenerator(packageOverride).transformXmlToFile(xml).forEach {
                 it.writeTo(output)
             }
         }

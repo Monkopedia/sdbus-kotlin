@@ -5,6 +5,7 @@ import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Optional
 
 open class SdbusExtension(
     @Inject
@@ -17,6 +18,10 @@ open class SdbusExtension(
 
     @Input
     open var generateAdapters: Boolean = false
+
+    @get:Input
+    @get:Optional
+    open var outputPackage: String? = null
 
     @get:InputDirectory
     open val sources: SourceDirectorySet by lazy {

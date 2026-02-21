@@ -29,7 +29,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import java.util.*
 
-abstract class BaseGenerator {
+abstract class BaseGenerator(private val packageOverride: String? = null) {
 
     protected lateinit var namingManager: NamingManager
     protected abstract val fileSuffix: String
@@ -39,7 +39,7 @@ abstract class BaseGenerator {
         }
 
     open fun transformXmlToFile(doc: XmlRootNode): List<FileSpec> {
-        namingManager = NamingManager(doc)
+        namingManager = NamingManager(doc, packageOverride)
         return fileSpecs(doc) + doc.nodes.flatMap { fileSpecs(it) }
     }
 
@@ -48,9 +48,11 @@ abstract class BaseGenerator {
     }
 
     private fun generateFile(intf: Interface): FileSpec =
-        FileSpec.builder(intf.name.pkg, intf.name.simpleName + fileSuffix)
+        FileSpec.builder(kotlinPackage(intf), intf.name.simpleName + fileSuffix)
             .buildInterface(intf)
             .build()
+
+    protected fun kotlinPackage(intf: Interface): String = packageOverride ?: intf.name.pkg
 
     private fun FileSpec.Builder.buildInterface(intf: Interface): FileSpec.Builder = apply {
         addType(
@@ -96,7 +98,7 @@ abstract class BaseGenerator {
     protected abstract fun FunSpec.Builder.buildRegistration(intf: Interface)
 
     protected fun intfName(intf: Interface) =
-        ClassName(intf.name.pkg, intf.name.simpleName).nestedClass("Companion")
+        ClassName(kotlinPackage(intf), intf.name.simpleName).nestedClass("Companion")
             .nestedClass("INTERFACE_NAME")
 
     protected fun Signal.signalName() = name.replaceFirstChar {

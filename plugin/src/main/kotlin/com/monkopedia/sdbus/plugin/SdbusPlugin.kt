@@ -17,18 +17,17 @@ class SdbusPlugin : Plugin<Project> {
                     kotlin.srcDirs(outputDirectory)
                 }
             }
-            target.tasks.all { task ->
-                if (task is KotlinCompile && task.sources.contains(outputDirectory.get().asFile)) {
-                    task.dependsOn(rootTask)
-                }
+            target.tasks.withType(KotlinCompile::class.java).configureEach { task ->
+                task.dependsOn(rootTask)
             }
             ext.sources.asFileTree.filter { it.isFile && it.extension == "xml" }.forEach { file ->
                 val name = "generateSdbusWrappers${file.nameWithoutExtension.capitalized}"
                 val task = target.tasks.register(name, SdbusGenerationTask::class.java) {
                     it.outputDir = outputDirectory.get().dir(file.nameWithoutExtension).asFile
                     it.inputXmlFile = file
-                    it.generateProxies = ext.generateProxies == true
-                    it.generateAdapters = ext.generateAdapters == true
+                    it.generateProxies = ext.generateProxies
+                    it.generateAdapters = ext.generateAdapters
+                    it.outputPackage = ext.outputPackage
                 }
                 rootTask.dependsOn(task)
             }

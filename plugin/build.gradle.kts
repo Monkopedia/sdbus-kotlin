@@ -24,8 +24,8 @@ dependencies {
     implementation(libs.clikt)
     api(project(":codegen"))
 
+    testImplementation(gradleTestKit())
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 

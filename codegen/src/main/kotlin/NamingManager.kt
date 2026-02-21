@@ -51,7 +51,7 @@ import com.squareup.kotlinpoet.U_LONG
 import com.squareup.kotlinpoet.U_SHORT
 import com.squareup.kotlinpoet.WildcardTypeName
 
-class NamingManager(doc: XmlRootNode) {
+class NamingManager(doc: XmlRootNode, packageOverride: String? = null) {
 
     sealed class NamingType {
         abstract val type: String
@@ -144,7 +144,7 @@ class NamingManager(doc: XmlRootNode) {
     }
 
     val typeMap: Map<String, NamingType> = buildMap {
-        buildRootTypes(doc)
+        buildRootTypes(doc, packageOverride)
     }
 
     val extraFiles: List<FileSpec>
@@ -171,28 +171,41 @@ class NamingManager(doc: XmlRootNode) {
         typeMap[method.type]?.reference ?: error("Unexpected argument ${method.type}")
 }
 
-private fun MutableMap<String, NamingType>.buildRootTypes(node: XmlRootNode) {
-    buildRootsTypes(node.nodes)
-    buildInterfacesTypes(node.interfaces)
+private fun MutableMap<String, NamingType>.buildRootTypes(
+    node: XmlRootNode,
+    packageOverride: String?
+) {
+    buildRootsTypes(node.nodes, packageOverride)
+    buildInterfacesTypes(node.interfaces, packageOverride)
 }
 
-private fun MutableMap<String, NamingType>.buildRootsTypes(nodes: List<XmlRootNode>) {
+private fun MutableMap<String, NamingType>.buildRootsTypes(
+    nodes: List<XmlRootNode>,
+    packageOverride: String?
+) {
     for (node in nodes) {
-        buildRootTypes(node)
+        buildRootTypes(node, packageOverride)
     }
 }
 
-private fun MutableMap<String, NamingType>.buildInterfacesTypes(intfs: List<Interface>) {
+private fun MutableMap<String, NamingType>.buildInterfacesTypes(
+    intfs: List<Interface>,
+    packageOverride: String?
+) {
     for (intf in intfs) {
-        buildInterfaceTypes(intf)
+        buildInterfaceTypes(intf, packageOverride)
     }
 }
 
-private fun MutableMap<String, NamingType>.buildInterfaceTypes(intf: Interface) {
-    buildSignalsTypes(intf.name.pkg, intf.signals)
-    buildMethodsTypes(intf.name.pkg, intf.methods)
-    buildPropertiesTypes(intf.name.pkg, intf.properties)
-    buildAnnotationsTypes(intf.name.pkg, intf.annotations)
+private fun MutableMap<String, NamingType>.buildInterfaceTypes(
+    intf: Interface,
+    packageOverride: String?
+) {
+    val pkg = packageOverride ?: intf.name.pkg
+    buildSignalsTypes(pkg, intf.signals)
+    buildMethodsTypes(pkg, intf.methods)
+    buildPropertiesTypes(pkg, intf.properties)
+    buildAnnotationsTypes(pkg, intf.annotations)
 }
 
 private fun MutableMap<String, NamingType>.buildAnnotationsTypes(
@@ -272,8 +285,10 @@ private fun MutableMap<String, NamingType>.buildSingleType(
 
 fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: String): NamingType {
     (this[type] as? SimpleType)?.let { return it }
-    if (type == "") {
-        this[type] = SimpleType(type, UNIT)
+    if (type.isEmpty()) {
+        return this.getOrPut(type) {
+            SimpleType(type, UNIT)
+        }
     }
     val namingType: NamingType = when (val typeStart = type[0]) {
         'b' -> SimpleType(typeStart.toString(), BOOLEAN)
@@ -299,6 +314,9 @@ fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: St
         'h' -> SimpleType(typeStart.toString(), ClassName.bestGuess("com.monkopedia.sdbus.UnixFd"))
         'v' -> SimpleType(typeStart.toString(), ClassName.bestGuess("com.monkopedia.sdbus.Variant"))
         'a' -> {
+            require(type.length > 1) {
+                "Array type missing element signature: $type"
+            }
             if (type[1] == '{') {
                 // Map
                 val keyTypeStr = type.substring(2)
@@ -311,7 +329,10 @@ fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: St
                 require(valueTypeStr.startsWith(valueType.type)) {
                     "Invalid type parsed out, expected $valueTypeStr but got ${valueType.type}"
                 }
-                require(valueTypeStr[valueType.type.length] == '}') {
+                require(
+                    valueTypeStr.length > valueType.type.length &&
+                        valueTypeStr[valueType.type.length] == '}'
+                ) {
                     "Map did not close after value."
                 }
                 LazyType(

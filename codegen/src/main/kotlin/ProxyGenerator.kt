@@ -38,7 +38,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.withIndent
 
-class ProxyGenerator : BaseGenerator() {
+class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
 
     private val proxy = ClassName.bestGuess("com.monkopedia.sdbus.Proxy")
     override val fileSuffix: String
@@ -48,7 +48,7 @@ class ProxyGenerator : BaseGenerator() {
 
     override fun classBuilder(intf: Interface): TypeSpec.Builder =
         TypeSpec.classBuilder(intf.baseName()).apply {
-            addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
+            addSuperinterface(ClassName(kotlinPackage(intf), intf.name.simpleName))
             addProperty(
                 PropertySpec.builder("proxy", proxy).apply {
                     initializer(CodeBlock.of("proxy"))

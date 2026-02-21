@@ -35,7 +35,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeSpec.Builder
 import com.squareup.kotlinpoet.withIndent
 
-class AdaptorGenerator : BaseGenerator() {
+class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
 
     private val obj = ClassName.bestGuess("com.monkopedia.sdbus.Object")
     override val fileSuffix: String
@@ -43,7 +43,7 @@ class AdaptorGenerator : BaseGenerator() {
 
     override fun classBuilder(intf: Interface): Builder =
         TypeSpec.classBuilder(intf.name.simpleName + "Adaptor").apply {
-            addSuperinterface(ClassName(intf.name.pkg, intf.name.simpleName))
+            addSuperinterface(ClassName(kotlinPackage(intf), intf.name.simpleName))
             addModifiers(ABSTRACT)
             addProperty(
                 PropertySpec.builder("obj", obj).apply {
