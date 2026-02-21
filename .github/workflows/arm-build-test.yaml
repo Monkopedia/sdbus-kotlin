@@ -1,0 +1,171 @@
+name: ARM Build and Test
+
+on:
+  push:
+    branches:
+      - feature/cross-test-boundaries
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-tests-x64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Test Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus
+
+      - name: Run Full Test Suite on x64
+        run: |
+          set -euo pipefail
+          X64_SYSTEMD_LIB="$(find "${GITHUB_WORKSPACE}/libs/x86_64" -maxdepth 2 -type d -name lib | head -n 1 || true)"
+          if [ -n "${X64_SYSTEMD_LIB}" ]; then
+            export LD_LIBRARY_PATH="${X64_SYSTEMD_LIB}:${LD_LIBRARY_PATH:-}"
+          fi
+
+          dbus-run-session -- bash -lc '
+            set -euo pipefail
+            export DBUS_STARTER_BUS_TYPE=session
+            export DBUS_STARTER_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
+            export DBUS_SYSTEM_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
+            ./gradlew allTests test crossRuntimeInteropTests --stacktrace
+          '
+
+      - name: Upload Failure Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-tests-x64-${{ github.run_id }}
+          retention-days: 14
+          path: |
+            build/test-results/**
+            build/reports/tests/**
+            codegen/build/test-results/**
+            codegen/build/reports/tests/**
+            plugin/build/test-results/**
+            plugin/build/reports/tests/**
+            cross_test/build/test-results/**
+            cross_test/build/reports/tests/**
+            stress_test/build/test-results/**
+            stress_test/build/reports/tests/**
+
+  native-build-x64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Native Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcurl4-openssl-dev \
+            libsystemd-dev \
+            binutils-aarch64-linux-gnu \
+            gcc-aarch64-linux-gnu \
+            libc6-dev-arm64-cross
+
+      - name: Build Native Test Binaries (linuxX64 and linuxArm64)
+        run: |
+          set -euo pipefail
+          ./gradlew \
+            :linkDebugTestLinuxX64 \
+            :linkDebugTestLinuxArm64 \
+            --stacktrace
+
+      - name: Upload Native Test Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-test-binaries-${{ github.run_id }}
+          retention-days: 14
+          path: |
+            build/bin/linuxX64/debugTest/test.kexe
+            build/bin/linuxArm64/debugTest/test.kexe
+
+  arm-runtime-tests:
+    needs: native-build-x64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Runtime Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus
+
+      - name: Download Native Test Binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: native-test-binaries-${{ github.run_id }}
+          path: .
+
+      - name: Run linuxArm64 Native Tests
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/libs/aarch64/257.2-2/lib
+        run: |
+          set -euo pipefail
+          TEST_BINARY="$(find . -type f -path '*/linuxArm64/debugTest/test.kexe' | head -n 1)"
+          if [ -z "${TEST_BINARY}" ]; then
+            echo "Could not locate linuxArm64 test binary after artifact download."
+            find . -maxdepth 4 -type f | sort
+            exit 1
+          fi
+          chmod +x "${TEST_BINARY}"
+          dbus-run-session --version
+
+          echo "Running non-integration suites directly on ARM"
+          "${TEST_BINARY}" '--gtest_filter=*-com.monkopedia.sdbus.integration.*'
+
+          echo "Running integration suites on ARM inside dbus-run-session"
+          export TEST_BINARY
+          export ARM_INTEGRATION_FILTER="com.monkopedia.sdbus.integration.*"
+          dbus-run-session -- bash -lc '
+            set -euo pipefail
+            export DBUS_STARTER_BUS_TYPE=session
+            export DBUS_STARTER_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
+            export DBUS_SYSTEM_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
+            "${TEST_BINARY}" "--gtest_filter=${ARM_INTEGRATION_FILTER}"
+          '
+
+      - name: Upload Failure Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm-build-test-${{ github.run_id }}
+          retention-days: 14
+          path: |
+            build/test-results/**
+            build/reports/tests/**
+            codegen/build/test-results/**
+            codegen/build/reports/tests/**
+            plugin/build/test-results/**
+            plugin/build/reports/tests/**
+            cross_test/build/test-results/**
+            cross_test/build/reports/tests/**
+            stress_test/build/test-results/**
+            stress_test/build/reports/tests/**

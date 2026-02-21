@@ -1,0 +1,225 @@
+name: Cross Runtime Stress Matrix
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Which stress tier to run"
+        type: choice
+        options:
+          - smoke
+          - nightly
+        default: smoke
+      repeats:
+        description: "Repeat count override for nightly tier"
+        required: false
+        default: "25"
+
+permissions:
+  contents: read
+
+jobs:
+  pr-smoke:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.tier == 'smoke')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: scalar
+            scenario_type: happy_path
+            case_filter: jvm-client-increment
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: scalar
+            scenario_type: happy_path
+            case_filter: native-client-increment
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: timeout
+            case_filter: jvm-client-timeout
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: control
+            scenario_type: timeout
+            case_filter: native-client-timeout
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: error
+            case_filter: jvm-client-error
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: control
+            scenario_type: error
+            case_filter: native-client-error
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: dropped_peer
+            case_filter: jvm-client-drop
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: control
+            scenario_type: dropped_peer
+            case_filter: native-client-drop
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: cancellation
+            case_filter: jvm-client-cancel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Native Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev
+
+      - name: Run Smoke Stress Case
+        run: |
+          set -euo pipefail
+          LOG_FILE="stress-smoke-${{ matrix.direction }}-${{ matrix.scenario_type }}-${{ matrix.payload_class }}.log"
+          ./gradlew :stress_test:jvmInteropStressTest \
+            -Dkdbus.crossRuntimeInterop.reverse.enabled=${{ matrix.reverse_enabled }} \
+            -Dkdbus.stress.caseFilter=${{ matrix.case_filter }} \
+            -Dkdbus.stress.repeat=2 \
+            --rerun-tasks --stacktrace | tee "$LOG_FILE"
+
+      - name: Upload Failure Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-smoke-${{ matrix.direction }}-${{ matrix.scenario_type }}-${{ github.run_id }}
+          retention-days: 14
+          path: |
+            stress-*.log
+            build/test-results/**
+            build/reports/tests/**
+            cross_test/build/test-results/**
+            cross_test/build/reports/tests/**
+            stress_test/build/test-results/**
+            stress_test/build/reports/tests/**
+
+      - name: Flake Triage Pointer
+        if: failure()
+        run: |
+          echo "Stress flake triage policy: docs/FLAKE_TRIAGE.md"
+          echo "Re-run locally with the failing matrix case filter and direction."
+
+  nightly-stress:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tier == 'nightly')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      STRESS_REPEATS: ${{ github.event_name == 'workflow_dispatch' && inputs.repeats || '25' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: scalar
+            scenario_type: happy_path
+            case_filter: jvm-client-increment
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: scalar
+            scenario_type: happy_path
+            case_filter: native-client-increment
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: timeout
+            case_filter: jvm-client-timeout
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: control
+            scenario_type: timeout
+            case_filter: native-client-timeout
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: error
+            case_filter: jvm-client-error
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: control
+            scenario_type: error
+            case_filter: native-client-error
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: dropped_peer
+            case_filter: jvm-client-drop
+          - direction: reverse
+            reverse_enabled: "true"
+            payload_class: control
+            scenario_type: dropped_peer
+            case_filter: native-client-drop
+          - direction: forward
+            reverse_enabled: "false"
+            payload_class: control
+            scenario_type: cancellation
+            case_filter: jvm-client-cancel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Native Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev
+
+      - name: Run Nightly Stress Case
+        run: |
+          set -euo pipefail
+          LOG_FILE="stress-nightly-${{ matrix.direction }}-${{ matrix.scenario_type }}-${{ matrix.payload_class }}.log"
+          ./gradlew :stress_test:jvmInteropStressTest \
+            -Dkdbus.crossRuntimeInterop.reverse.enabled=${{ matrix.reverse_enabled }} \
+            -Dkdbus.stress.caseFilter=${{ matrix.case_filter }} \
+            -Dkdbus.stress.repeat="${STRESS_REPEATS}" \
+            --rerun-tasks --stacktrace | tee "$LOG_FILE"
+
+      - name: Upload Failure Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-nightly-${{ matrix.direction }}-${{ matrix.scenario_type }}-${{ github.run_id }}
+          retention-days: 30
+          path: |
+            stress-*.log
+            build/test-results/**
+            build/reports/tests/**
+            cross_test/build/test-results/**
+            cross_test/build/reports/tests/**
+            stress_test/build/test-results/**
+            stress_test/build/reports/tests/**
+
+      - name: Flake Triage Pointer
+        if: failure()
+        run: |
+          echo "Stress flake triage policy: docs/FLAKE_TRIAGE.md"
+          echo "Re-run locally with the failing matrix case filter and direction."
