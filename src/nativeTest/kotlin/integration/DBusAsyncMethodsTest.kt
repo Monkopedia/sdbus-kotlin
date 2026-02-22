@@ -30,30 +30,28 @@ import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.convert
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.coroutines.test.runTest
-import platform.posix.size_t
 
 class DBusAsyncMethodsTest : BaseTest() {
     private val fixture = SdbusConnectionFixture(this)
 
     @Test
     fun handlesCorrectlyABulkOfParallelServerSideAsyncMethods(): Unit = runTest {
-        var resultCount by atomic(0.convert<size_t>())
-        var invoke by atomic(false)
-        var startedCount by atomic(0)
+        val resultCount = atomic(0)
+        val invoke = atomic(false)
+        val startedCount = atomic(0)
         val call: suspend () -> Unit = {
             // Reuse the fixture-managed connection to avoid creating/destroying extra
             // per-thread bus connections while stress-testing async method behavior.
             val proxy = TestProxy(globalProxyConnection, SERVICE_NAME, OBJECT_PATH)
             try {
-                ++startedCount
-                while (!invoke);
+                startedCount.incrementAndGet()
+                while (!invoke.value);
 
-                var localResultCount = 0.convert<size_t>()
+                var localResultCount = 0
                 for (i in 0 until 500) {
                     val result = proxy.doOperationAsync(i.mod(2).toUInt())
                     if (result == i.mod(2).toUInt()) { // Correct return value?
@@ -61,7 +59,7 @@ class DBusAsyncMethodsTest : BaseTest() {
                     }
                 }
 
-                resultCount += localResultCount
+                resultCount.addAndGet(localResultCount)
             } finally {
                 proxy.proxy.release()
             }
@@ -73,11 +71,11 @@ class DBusAsyncMethodsTest : BaseTest() {
                 call()
             }
         }
-        while (startedCount != 3);
-        invoke = true
+        while (startedCount.value != 3);
+        invoke.value = true
         invocations.joinAll()
 
-        assertEquals(1500.convert<size_t>(), resultCount)
+        assertEquals(1500, resultCount.value)
         pool.close()
     }
 
