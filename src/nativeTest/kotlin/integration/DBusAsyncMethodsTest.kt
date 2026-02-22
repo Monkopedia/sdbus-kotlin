@@ -46,7 +46,9 @@ class DBusAsyncMethodsTest : BaseTest() {
         var invoke by atomic(false)
         var startedCount by atomic(0)
         val call: suspend () -> Unit = {
-            val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH)
+            // Reuse the fixture-managed connection to avoid creating/destroying extra
+            // per-thread bus connections while stress-testing async method behavior.
+            val proxy = TestProxy(globalProxyConnection, SERVICE_NAME, OBJECT_PATH)
             try {
                 ++startedCount
                 while (!invoke);
