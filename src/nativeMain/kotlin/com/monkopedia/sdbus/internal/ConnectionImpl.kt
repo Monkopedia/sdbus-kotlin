@@ -183,6 +183,8 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr) :
     InternalConnection {
     private var asyncLoopThread: Job? = null
+    private var eventLoopStarting = false
+    private val asyncLoopStateLock = atomic(false)
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
@@ -194,7 +196,15 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
-        val loopJob = asyncLoopThread
+        var loopJob: Job? = null
+        while (true) {
+            val isStarting = withAsyncLoopStateLock {
+                loopJob = asyncLoopThread
+                eventLoopStarting
+            }
+            if (!isStarting) break
+            usleep(1_000u)
+        }
         if (loopJob != null) {
             eventThread.notifyEventLoopToExit()
             var waitedMs = 0
@@ -206,7 +216,11 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             // Fail-safe: if the loop never exits, avoid unref-ing resources
             // that may still be touched by the running event loop.
             if (!loopJob.isCompleted) return
-            asyncLoopThread = null
+            withAsyncLoopStateLock {
+                if (asyncLoopThread === loopJob) {
+                    asyncLoopThread = null
+                }
+            }
         }
         loopExitResource.release()
         floatingMatchRules.forEach { it.release() }
@@ -219,7 +233,16 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     suspend fun joinWithEventLoop() {
         checkNotReleased()
-        asyncLoopThread?.join()
+        var loopJob: Job? = null
+        while (true) {
+            val isStarting = withAsyncLoopStateLock {
+                loopJob = asyncLoopThread
+                eventLoopStarting
+            }
+            if (!isStarting) break
+            usleep(1_000u)
+        }
+        loopJob?.join()
     }
 
     override fun requestName(name: ServiceName) {
@@ -261,14 +284,53 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun enterEventLoopAsync() {
         checkNotReleased()
-        if (asyncLoopThread == null) {
+        val shouldLaunch = withAsyncLoopStateLock {
+            if (asyncLoopThread != null || eventLoopStarting || released.value) {
+                false
+            } else {
+                eventLoopStarting = true
+                true
+            }
+        }
+        if (!shouldLaunch) return
+
+        val launchedLoop = try {
             // TODO: Create local scope
-            val thiz = WeakReference(this)
-            asyncLoopThread = eventThread.launch(GlobalScope).also {
-                it.invokeOnCompletion {
-                    thiz.get()?.asyncLoopThread = null
+            eventThread.launch(GlobalScope)
+        } catch (throwable: Throwable) {
+            withAsyncLoopStateLock {
+                eventLoopStarting = false
+            }
+            throw throwable
+        }
+
+        val thiz = WeakReference(this)
+        launchedLoop.invokeOnCompletion {
+            thiz.get()?.withAsyncLoopStateLock {
+                if (asyncLoopThread === launchedLoop) {
+                    asyncLoopThread = null
                 }
             }
+        }
+
+        val notifyExit = withAsyncLoopStateLock {
+            eventLoopStarting = false
+            asyncLoopThread = launchedLoop
+            released.value
+        }
+        if (notifyExit) {
+            eventThread.notifyEventLoopToExit()
+        }
+    }
+
+    private inline fun <T> withAsyncLoopStateLock(block: () -> T): T {
+        while (!asyncLoopStateLock.compareAndSet(false, true)) {
+            usleep(1_000u)
+        }
+        return try {
+            block()
+        } finally {
+            asyncLoopStateLock.value = false
         }
     }
 
