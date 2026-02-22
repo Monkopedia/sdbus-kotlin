@@ -1,0 +1,901 @@
+public final class com/monkopedia/sdbus/AllPropertiesGetter {
+	public static final field Companion Lcom/monkopedia/sdbus/AllPropertiesGetter$Companion;
+	public fun <init> (Lcom/monkopedia/sdbus/Proxy;)V
+	public final fun getProxy ()Lcom/monkopedia/sdbus/Proxy;
+	public final fun onInterface-95cHxEc (Ljava/lang/String;)Ljava/util/Map;
+}
+
+public final class com/monkopedia/sdbus/AllPropertiesGetter$Companion {
+	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/AsyncAllPropertiesGetter {
+	public static final field Companion Lcom/monkopedia/sdbus/AsyncAllPropertiesGetter$Companion;
+	public fun <init> (Lcom/monkopedia/sdbus/Proxy;)V
+	public final fun getResult (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun onInterface-95cHxEc (Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncAllPropertiesGetter;
+}
+
+public final class com/monkopedia/sdbus/AsyncAllPropertiesGetter$Companion {
+	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/AsyncPropertyGetter {
+	public static final field Companion Lcom/monkopedia/sdbus/AsyncPropertyGetter$Companion;
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun get (Lkotlinx/serialization/DeserializationStrategy;Lkotlinx/serialization/modules/SerializersModule;Lcom/monkopedia/sdbus/SdbusSig;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun onInterface-95cHxEc (Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertyGetter;
+}
+
+public final class com/monkopedia/sdbus/AsyncPropertyGetter$Companion {
+	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/AsyncPropertySetter {
+	public static final field Companion Lcom/monkopedia/sdbus/AsyncPropertySetter$Companion;
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getResult (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun onInterface-95cHxEc (Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertySetter;
+	public final fun toValue (Lcom/monkopedia/sdbus/Typed;Ljava/lang/Object;)Lcom/monkopedia/sdbus/AsyncPropertySetter;
+}
+
+public final class com/monkopedia/sdbus/AsyncPropertySetter$Companion {
+	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/BusName {
+	public static final field Companion Lcom/monkopedia/sdbus/BusName$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/monkopedia/sdbus/BusName;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/BusName$Companion : kotlinx/serialization/KSerializer {
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-EgnLW3Q (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-YEstYiw (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/monkopedia/sdbus/Connection : com/monkopedia/sdbus/Resource {
+	public abstract fun addMatch (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
+	public abstract fun addMatchAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
+	public abstract fun addObjectManager-PVsJK3s (Ljava/lang/String;)Lcom/monkopedia/sdbus/Resource;
+	public abstract fun enterEventLoopAsync ()V
+	public abstract fun getCurrentlyProcessedMessage ()Lcom/monkopedia/sdbus/Message;
+	public abstract fun getMethodCallTimeout-UwyO8pc ()J
+	public abstract fun getUniqueName-AwvMx1g ()Ljava/lang/String;
+	public abstract fun leaveEventLoop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun releaseName-em-jQOc (Ljava/lang/String;)V
+	public abstract fun requestName-em-jQOc (Ljava/lang/String;)V
+	public abstract fun setMethodCallTimeout-LRDsOJo (J)V
+}
+
+public final class com/monkopedia/sdbus/Connection_jvmKt {
+	public static final fun createBusConnection ()Lcom/monkopedia/sdbus/Connection;
+	public static final fun createBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createDirectBusConnection (I)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createDirectBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createRemoteSystemBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createServerBus (I)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createSessionBusConnection ()Lcom/monkopedia/sdbus/Connection;
+	public static final fun createSessionBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createSessionBusConnectionWithAddress (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createSystemBusConnection ()Lcom/monkopedia/sdbus/Connection;
+	public static final fun createSystemBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
+}
+
+public final class com/monkopedia/sdbus/DegroupingReturnsKt {
+	public static final fun maybeDegrouped (Lkotlinx/serialization/KSerializer;Z)Lkotlinx/serialization/KSerializer;
+	public static final fun maybeDegrouped-qeoUwEc (Ljava/lang/String;Z)Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Error : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Error_jvmKt {
+	public static final fun createError (ILjava/lang/String;)Lcom/monkopedia/sdbus/Error;
+}
+
+public final class com/monkopedia/sdbus/Flags {
+	public fun <init> ()V
+	public final fun set (Lcom/monkopedia/sdbus/Flags$GeneralFlags;Z)V
+	public final fun set (Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;Z)V
+	public static synthetic fun set$default (Lcom/monkopedia/sdbus/Flags;Lcom/monkopedia/sdbus/Flags$GeneralFlags;ZILjava/lang/Object;)V
+	public static synthetic fun set$default (Lcom/monkopedia/sdbus/Flags;Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;ZILjava/lang/Object;)V
+	public final fun test (Lcom/monkopedia/sdbus/Flags$GeneralFlags;)Z
+	public final fun test (Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;)Z
+}
+
+public final class com/monkopedia/sdbus/Flags$Count : java/lang/Enum {
+	public static final field FLAG_COUNT Lcom/monkopedia/sdbus/Flags$Count;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue-w2LRezQ ()B
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/Flags$Count;
+	public static fun values ()[Lcom/monkopedia/sdbus/Flags$Count;
+}
+
+public final class com/monkopedia/sdbus/Flags$GeneralFlags : java/lang/Enum {
+	public static final field DEPRECATED Lcom/monkopedia/sdbus/Flags$GeneralFlags;
+	public static final field METHOD_NO_REPLY Lcom/monkopedia/sdbus/Flags$GeneralFlags;
+	public static final field PRIVILEGED Lcom/monkopedia/sdbus/Flags$GeneralFlags;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue-w2LRezQ ()B
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/Flags$GeneralFlags;
+	public static fun values ()[Lcom/monkopedia/sdbus/Flags$GeneralFlags;
+}
+
+public final class com/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags : java/lang/Enum {
+	public static final field CONST_PROPERTY_VALUE Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;
+	public static final field EMITS_CHANGE_SIGNAL Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;
+	public static final field EMITS_INVALIDATION_SIGNAL Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;
+	public static final field EMITS_NO_SIGNAL Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue-w2LRezQ ()B
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;
+	public static fun values ()[Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;
+}
+
+public final class com/monkopedia/sdbus/InterfaceFlagsBuilderKt {
+	public static final fun interfaceFlags-iWtU_rw (Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/monkopedia/sdbus/InterfaceFlagsVTableItem : com/monkopedia/sdbus/VTableItem {
+	public fun <init> ()V
+	public fun <init> (Lcom/monkopedia/sdbus/Flags;)V
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Flags;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/monkopedia/sdbus/Flags;
+	public final fun copy (Lcom/monkopedia/sdbus/Flags;)Lcom/monkopedia/sdbus/InterfaceFlagsVTableItem;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/InterfaceFlagsVTableItem;Lcom/monkopedia/sdbus/Flags;ILjava/lang/Object;)Lcom/monkopedia/sdbus/InterfaceFlagsVTableItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFlags ()Lcom/monkopedia/sdbus/Flags;
+	public final fun getHasNoReply ()Z
+	public fun hashCode ()I
+	public final fun isDeprecated ()Z
+	public final fun isPrivileged ()Z
+	public final fun plusAssign (Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;)V
+	public final fun setDeprecated (Z)V
+	public final fun setHasNoReply (Z)V
+	public final fun setPrivileged (Z)V
+	public fun toString ()Ljava/lang/String;
+	public final fun unaryPlus (Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;)V
+}
+
+public final class com/monkopedia/sdbus/InterfaceName {
+	public static final field Companion Lcom/monkopedia/sdbus/InterfaceName$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/monkopedia/sdbus/InterfaceName;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/InterfaceName$Companion : kotlinx/serialization/KSerializer {
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-XB8G6VY (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-y7Q0YME (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/InvalidSig : com/monkopedia/sdbus/SdbusSig {
+	public static final field INSTANCE Lcom/monkopedia/sdbus/InvalidSig;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getValid ()Z
+	public synthetic fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public synthetic fun isTrivial ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/ListSig : com/monkopedia/sdbus/SdbusSig {
+	public fun <init> (Lcom/monkopedia/sdbus/SdbusSig;)V
+	public final fun component1 ()Lcom/monkopedia/sdbus/SdbusSig;
+	public final fun copy (Lcom/monkopedia/sdbus/SdbusSig;)Lcom/monkopedia/sdbus/ListSig;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/ListSig;Lcom/monkopedia/sdbus/SdbusSig;ILjava/lang/Object;)Lcom/monkopedia/sdbus/ListSig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getElement ()Lcom/monkopedia/sdbus/SdbusSig;
+	public synthetic fun getValid ()Z
+	public synthetic fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public synthetic fun isTrivial ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/MapSig : com/monkopedia/sdbus/SdbusSig {
+	public fun <init> (Lcom/monkopedia/sdbus/SdbusSig;Lcom/monkopedia/sdbus/SdbusSig;)V
+	public final fun component1 ()Lcom/monkopedia/sdbus/SdbusSig;
+	public final fun component2 ()Lcom/monkopedia/sdbus/SdbusSig;
+	public final fun copy (Lcom/monkopedia/sdbus/SdbusSig;Lcom/monkopedia/sdbus/SdbusSig;)Lcom/monkopedia/sdbus/MapSig;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/MapSig;Lcom/monkopedia/sdbus/SdbusSig;Lcom/monkopedia/sdbus/SdbusSig;ILjava/lang/Object;)Lcom/monkopedia/sdbus/MapSig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContents ()Ljava/lang/String;
+	public final fun getDictValue ()Ljava/lang/String;
+	public final fun getT1 ()Lcom/monkopedia/sdbus/SdbusSig;
+	public final fun getT2 ()Lcom/monkopedia/sdbus/SdbusSig;
+	public synthetic fun getValid ()Z
+	public synthetic fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public synthetic fun isTrivial ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/MemberName {
+	public static final field Companion Lcom/monkopedia/sdbus/MemberName$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/monkopedia/sdbus/MemberName;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/MemberName$Companion : kotlinx/serialization/KSerializer {
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-ilIZDo0 (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-NRJcMk0 (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class com/monkopedia/sdbus/Message {
+	public final fun copyTo (Lcom/monkopedia/sdbus/Message;Z)V
+	public final fun getCredsEgid-pVg5ArA ()I
+	public final fun getCredsEuid-pVg5ArA ()I
+	public final fun getCredsGid-pVg5ArA ()I
+	public final fun getCredsPid ()I
+	public final fun getCredsSupplementaryGids ()Ljava/util/List;
+	public final fun getCredsUid-pVg5ArA ()I
+	public final fun getDestination ()Ljava/lang/String;
+	public final fun getInterfaceName ()Ljava/lang/String;
+	public final fun getMemberName ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getSELinuxContext ()Ljava/lang/String;
+	public final fun getSender ()Ljava/lang/String;
+	public final fun isAtEnd (Z)Z
+	public final fun isEmpty ()Z
+	public final fun isValid ()Z
+	public final fun peekType ()Lkotlin/Pair;
+	public final fun rewind (Z)V
+	public final fun seal ()V
+}
+
+public final class com/monkopedia/sdbus/MessageUtilKt {
+	public static final fun serialize (Lcom/monkopedia/sdbus/Message;Lcom/monkopedia/sdbus/TypedArguments;)V
+}
+
+public final class com/monkopedia/sdbus/Message_jvmKt {
+	public static final fun deserialize (Lcom/monkopedia/sdbus/Message;Lkotlinx/serialization/DeserializationStrategy;Lkotlinx/serialization/modules/SerializersModule;)Ljava/lang/Object;
+	public static final fun serialize (Lcom/monkopedia/sdbus/Message;Lkotlinx/serialization/SerializationStrategy;Lkotlinx/serialization/modules/SerializersModule;Ljava/lang/Object;)V
+}
+
+public final class com/monkopedia/sdbus/MethodBuilderKt {
+	public static final fun method-Nk3cuW0 (Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/monkopedia/sdbus/MethodCall : com/monkopedia/sdbus/Message {
+	public final fun createErrorReply (Lcom/monkopedia/sdbus/Error;)Lcom/monkopedia/sdbus/MethodReply;
+	public final fun createReply ()Lcom/monkopedia/sdbus/MethodReply;
+	public final fun getDontExpectReply ()Z
+	public final fun send-VKZWuLQ (J)Lcom/monkopedia/sdbus/MethodReply;
+	public final fun setDontExpectReply (Z)V
+}
+
+public final class com/monkopedia/sdbus/MethodInvoker : com/monkopedia/sdbus/TypedArgumentsBuilderContext {
+	public fun <init> (Lcom/monkopedia/sdbus/MethodCall;)V
+	public fun createCall (Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/sdbus/TypedArguments;
+	public final fun getArgs ()Lcom/monkopedia/sdbus/TypedArguments;
+	public final fun getDontExpectReply ()Z
+	public final fun getTimeout-UwyO8pc ()J
+	public final fun isGroupedReturn ()Z
+	public final fun setArgs (Lcom/monkopedia/sdbus/TypedArguments;)V
+	public final fun setDontExpectReply (Z)V
+	public final fun setGroupedReturn (Z)V
+	public final fun setTimeout-LRDsOJo (J)V
+}
+
+public final class com/monkopedia/sdbus/MethodReply : com/monkopedia/sdbus/Message {
+	public fun <init> ()V
+	public final fun send ()V
+}
+
+public final class com/monkopedia/sdbus/MethodVTableItem : com/monkopedia/sdbus/TypedMethodBuilderContext, com/monkopedia/sdbus/VTableItem {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-t13AQBo ()Ljava/lang/String;
+	public final fun component2-tYgBbDs ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4-tYgBbDs ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Lkotlin/jvm/functions/Function1;
+	public final fun component7 ()Lcom/monkopedia/sdbus/Flags;
+	public final fun copy-uQYAnIU (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;)Lcom/monkopedia/sdbus/MethodVTableItem;
+	public static synthetic fun copy-uQYAnIU$default (Lcom/monkopedia/sdbus/MethodVTableItem;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;ILjava/lang/Object;)Lcom/monkopedia/sdbus/MethodVTableItem;
+	public synthetic fun createACall (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public synthetic fun createCall (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCallbackHandler ()Lkotlin/jvm/functions/Function1;
+	public final fun getFlags ()Lcom/monkopedia/sdbus/Flags;
+	public final fun getHasNoReply ()Z
+	public final fun getInputParamNames ()Ljava/util/List;
+	public final fun getInputSignature-tYgBbDs ()Ljava/lang/String;
+	public final fun getName-t13AQBo ()Ljava/lang/String;
+	public final fun getOutputParamNames ()Ljava/util/List;
+	public final fun getOutputSignature-tYgBbDs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun implementedAs (Lcom/monkopedia/sdbus/TypedMethodCall;)Lcom/monkopedia/sdbus/MethodVTableItem;
+	public final fun isDeprecated ()Z
+	public final fun isPrivileged ()Z
+	public final fun setCallbackHandler (Lkotlin/jvm/functions/Function1;)V
+	public final fun setDeprecated (Z)V
+	public final fun setHasNoReply (Z)V
+	public final fun setInputParamNames (Ljava/util/List;)V
+	public final fun setInputSignature-m1s-3tE (Ljava/lang/String;)V
+	public final fun setOutputParamNames (Ljava/util/List;)V
+	public final fun setOutputSignature-m1s-3tE (Ljava/lang/String;)V
+	public final fun setPrivileged (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/MutablePropertyDelegate : com/monkopedia/sdbus/PropertyDelegate, kotlin/properties/ReadWriteProperty {
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/modules/SerializersModule;Lcom/monkopedia/sdbus/SdbusSig;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun set (Ljava/lang/Object;)V
+	public fun setValue (Ljava/lang/Object;Lkotlin/reflect/KProperty;Ljava/lang/Object;)V
+}
+
+public abstract interface class com/monkopedia/sdbus/Object : com/monkopedia/sdbus/Resource {
+	public abstract fun addObjectManager ()Lcom/monkopedia/sdbus/Resource;
+	public abstract fun addVTable-0XWHKp4 (Ljava/lang/String;Ljava/util/List;)Lcom/monkopedia/sdbus/Resource;
+	public abstract fun createSignal-QGofiho (Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/sdbus/Signal;
+	public abstract fun emitInterfacesAddedSignal ()V
+	public abstract fun emitInterfacesAddedSignal (Ljava/util/List;)V
+	public abstract fun emitInterfacesRemovedSignal ()V
+	public abstract fun emitInterfacesRemovedSignal (Ljava/util/List;)V
+	public abstract fun emitPropertiesChangedSignal-0XWHKp4 (Ljava/lang/String;Ljava/util/List;)V
+	public abstract fun emitPropertiesChangedSignal-95cHxEc (Ljava/lang/String;)V
+	public abstract fun emitSignal (Lcom/monkopedia/sdbus/Signal;)V
+	public abstract fun getConnection ()Lcom/monkopedia/sdbus/Connection;
+	public abstract fun getCurrentlyProcessedMessage ()Lcom/monkopedia/sdbus/Message;
+	public abstract fun getObjectPath-qg5VnaA ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/ObjectManagerProxy {
+	public static final field Companion Lcom/monkopedia/sdbus/ObjectManagerProxy$Companion;
+	public fun <init> (Lcom/monkopedia/sdbus/Proxy;)V
+	public final fun getManagedObjects ()Ljava/util/Map;
+	public final fun getObjects ()Lkotlinx/coroutines/flow/Flow;
+	public final fun getProxy ()Lcom/monkopedia/sdbus/Proxy;
+	public final fun interfacesFor-PVsJK3s (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public final fun objectData-PVsJK3s (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public final fun objectsFor-95cHxEc (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/monkopedia/sdbus/ObjectManagerProxy$Companion {
+	public final fun getINTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/ObjectPath {
+	public static final field Companion Lcom/monkopedia/sdbus/ObjectPath$Companion;
+	public static final field SERIAL_NAME Ljava/lang/String;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/monkopedia/sdbus/ObjectPath;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/ObjectPath$Companion : kotlinx/serialization/KSerializer {
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-Jb-t8TQ (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-NvYYnfA (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/Object_jvmKt {
+	public static final fun createObject-NvYYnfA (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;)Lcom/monkopedia/sdbus/Object;
+}
+
+public abstract interface class com/monkopedia/sdbus/PeerProxy : com/monkopedia/sdbus/ProxyHolder {
+	public static final field Companion Lcom/monkopedia/sdbus/PeerProxy$Companion;
+	public fun getMachineId ()Ljava/lang/String;
+	public fun ping ()V
+}
+
+public final class com/monkopedia/sdbus/PeerProxy$Companion {
+	public final fun getINTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/PeerProxy$DefaultImpls {
+	public static fun getMachineId (Lcom/monkopedia/sdbus/PeerProxy;)Ljava/lang/String;
+	public static fun ping (Lcom/monkopedia/sdbus/PeerProxy;)V
+}
+
+public final class com/monkopedia/sdbus/PendingAsyncCall : com/monkopedia/sdbus/Resource {
+	public fun <init> ()V
+	public final fun isPending ()Z
+	public fun release ()V
+}
+
+public final class com/monkopedia/sdbus/PlainMessage : com/monkopedia/sdbus/Message {
+	public static final field Companion Lcom/monkopedia/sdbus/PlainMessage$Companion;
+}
+
+public final class com/monkopedia/sdbus/PlainMessage$Companion {
+	public final fun createPlainMessage ()Lcom/monkopedia/sdbus/PlainMessage;
+}
+
+public abstract interface class com/monkopedia/sdbus/PropertiesProxy : com/monkopedia/sdbus/ProxyHolder {
+	public static final field Companion Lcom/monkopedia/sdbus/PropertiesProxy$Companion;
+	public fun getAll-95cHxEc (Ljava/lang/String;)Ljava/util/Map;
+	public fun getAllAsync-0XWHKp4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onPropertiesChanged-arTsWcw (Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)V
+	public fun registerPropertiesProxy ()V
+	public fun setAsync-UeWJu_8 (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Variant;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/monkopedia/sdbus/PropertiesProxy$Companion {
+	public final fun getINTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/PropertiesProxy$DefaultImpls {
+	public static fun getAll-95cHxEc (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;)Ljava/util/Map;
+	public static fun getAllAsync-0XWHKp4 (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun onPropertiesChanged-arTsWcw (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)V
+	public static fun registerPropertiesProxy (Lcom/monkopedia/sdbus/PropertiesProxy;)V
+	public static fun setAsync-UeWJu_8 (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Variant;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public class com/monkopedia/sdbus/PropertyDelegate : kotlin/properties/ReadOnlyProperty {
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/modules/SerializersModule;Lcom/monkopedia/sdbus/SdbusSig;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun changes ()Lkotlinx/coroutines/flow/Flow;
+	public final fun changesOrNull ()Lkotlinx/coroutines/flow/Flow;
+	public final fun flow ()Lkotlinx/coroutines/flow/Flow;
+	public final fun flowOrNull ()Lkotlinx/coroutines/flow/Flow;
+	public final fun get ()Ljava/lang/Object;
+	public final fun getInterfaceName-DgtVVXE ()Ljava/lang/String;
+	protected final fun getModule ()Lkotlinx/serialization/modules/SerializersModule;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOrNull ()Ljava/lang/Object;
+	public final fun getPropertyName-t13AQBo ()Ljava/lang/String;
+	protected final fun getProxy ()Lcom/monkopedia/sdbus/Proxy;
+	protected final fun getSignature ()Lcom/monkopedia/sdbus/SdbusSig;
+	protected final fun getType ()Lkotlinx/serialization/KSerializer;
+	public fun getValue (Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
+}
+
+public final class com/monkopedia/sdbus/PropertyGetReply : com/monkopedia/sdbus/Message {
+}
+
+public final class com/monkopedia/sdbus/PropertyGetterKt {
+	public static final fun getDBUS_PROPERTIES_INTERFACE_NAME ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/PropertySetCall : com/monkopedia/sdbus/Message {
+}
+
+public final class com/monkopedia/sdbus/PropertyVTableItem : com/monkopedia/sdbus/VTableItem {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-t13AQBo ()Ljava/lang/String;
+	public final fun component2-tYgBbDs ()Ljava/lang/String;
+	public final fun component3 ()Lkotlin/jvm/functions/Function1;
+	public final fun component4 ()Lkotlin/jvm/functions/Function1;
+	public final fun component5 ()Lcom/monkopedia/sdbus/Flags;
+	public final fun copy-TCenpxY (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;)Lcom/monkopedia/sdbus/PropertyVTableItem;
+	public static synthetic fun copy-TCenpxY$default (Lcom/monkopedia/sdbus/PropertyVTableItem;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/monkopedia/sdbus/Flags;ILjava/lang/Object;)Lcom/monkopedia/sdbus/PropertyVTableItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFlags ()Lcom/monkopedia/sdbus/Flags;
+	public final fun getGetter ()Lkotlin/jvm/functions/Function1;
+	public final fun getName-t13AQBo ()Ljava/lang/String;
+	public final fun getSetter ()Lkotlin/jvm/functions/Function1;
+	public final fun getSignature-tYgBbDs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isDeprecated ()Z
+	public final fun isPrivileged ()Z
+	public final fun plusAssign (Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;)V
+	public final fun setDeprecated (Z)V
+	public final fun setGetter (Lkotlin/jvm/functions/Function1;)V
+	public final fun setPrivileged (Z)V
+	public final fun setSetter (Lkotlin/jvm/functions/Function1;)V
+	public final fun setSignature-m1s-3tE (Ljava/lang/String;)V
+	public fun toString ()Ljava/lang/String;
+	public final fun unaryPlus (Lcom/monkopedia/sdbus/Flags$PropertyUpdateBehaviorFlags;)V
+}
+
+public final class com/monkopedia/sdbus/PropertyVTableItemKt {
+	public static final fun prop-Nk3cuW0 (Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static final fun registerProperty-WB_EH-c (Ljava/lang/String;)Lcom/monkopedia/sdbus/PropertyVTableItem;
+}
+
+public abstract interface class com/monkopedia/sdbus/Proxy : com/monkopedia/sdbus/Resource {
+	public abstract fun callMethod (Lcom/monkopedia/sdbus/MethodCall;)Lcom/monkopedia/sdbus/MethodReply;
+	public abstract fun callMethod-2TYgG_w (Lcom/monkopedia/sdbus/MethodCall;J)Lcom/monkopedia/sdbus/MethodReply;
+	public abstract fun callMethodAsync (Lcom/monkopedia/sdbus/MethodCall;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun callMethodAsync (Lcom/monkopedia/sdbus/MethodCall;Lkotlin/jvm/functions/Function2;)Lcom/monkopedia/sdbus/PendingAsyncCall;
+	public abstract fun callMethodAsync-aPcrCvc (Lcom/monkopedia/sdbus/MethodCall;Lkotlin/jvm/functions/Function2;J)Lcom/monkopedia/sdbus/PendingAsyncCall;
+	public abstract fun callMethodAsync-z13BHRw (Lcom/monkopedia/sdbus/MethodCall;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun createMethodCall-QGofiho (Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/sdbus/MethodCall;
+	public abstract fun getConnection ()Lcom/monkopedia/sdbus/Connection;
+	public abstract fun getCurrentlyProcessedMessage ()Lcom/monkopedia/sdbus/Message;
+	public abstract fun getObjectPath-qg5VnaA ()Ljava/lang/String;
+	public abstract fun registerSignalHandler-kQgV_DE (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
+}
+
+public abstract interface class com/monkopedia/sdbus/ProxyHolder {
+	public abstract fun getProxy ()Lcom/monkopedia/sdbus/Proxy;
+}
+
+public final class com/monkopedia/sdbus/ProxyKt {
+	public static final fun callMethod-SxA4cEA (Lcom/monkopedia/sdbus/Proxy;Lcom/monkopedia/sdbus/MethodCall;J)Lcom/monkopedia/sdbus/MethodReply;
+	public static final fun callMethodAsync-Wn2Vu4Y (Lcom/monkopedia/sdbus/Proxy;Lcom/monkopedia/sdbus/MethodCall;Lkotlin/jvm/functions/Function2;J)Lcom/monkopedia/sdbus/PendingAsyncCall;
+	public static final fun callMethodAsync-exY8QGI (Lcom/monkopedia/sdbus/Proxy;Lcom/monkopedia/sdbus/MethodCall;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun getAllProperties (Lcom/monkopedia/sdbus/Proxy;)Lcom/monkopedia/sdbus/AllPropertiesGetter;
+	public static final fun getAllPropertiesAsync (Lcom/monkopedia/sdbus/Proxy;)Lcom/monkopedia/sdbus/AsyncAllPropertiesGetter;
+	public static final fun getPropertyAsync-NRJcMk0 (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertyGetter;
+	public static final fun setPropertyAsync-NRJcMk0 (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertySetter;
+}
+
+public final class com/monkopedia/sdbus/Proxy_jvmKt {
+	public static final fun createProxy-C_B2loI (Ljava/lang/String;Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Proxy;
+	public static synthetic fun createProxy-C_B2loI$default (Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Proxy;
+	public static final fun createProxy-M1YkbpM (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Proxy;
+	public static synthetic fun createProxy-M1YkbpM$default (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Proxy;
+}
+
+public abstract interface class com/monkopedia/sdbus/Resource {
+	public abstract fun release ()V
+}
+
+public abstract class com/monkopedia/sdbus/SdbusSig {
+	public abstract fun getValid ()Z
+	public abstract fun getValue ()Ljava/lang/String;
+	public abstract fun isTrivial ()Z
+}
+
+public final class com/monkopedia/sdbus/ServiceConnection {
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createObject-PVsJK3s (Ljava/lang/String;)Lcom/monkopedia/sdbus/Object;
+	public final fun createProxy-jeFENQc (Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Proxy;
+	public static synthetic fun createProxy-jeFENQc$default (Lcom/monkopedia/sdbus/ServiceConnection;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Proxy;
+	public final fun getConnection ()Lcom/monkopedia/sdbus/Connection;
+	public final fun getServiceName-AwvMx1g ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/ServiceConnectionKt {
+	public static final fun withService-YEstYiw (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;)Lcom/monkopedia/sdbus/ServiceConnection;
+}
+
+public final class com/monkopedia/sdbus/Signal : com/monkopedia/sdbus/Message {
+	public final fun send ()V
+	public final fun setDestination (Ljava/lang/String;)V
+}
+
+public final class com/monkopedia/sdbus/SignalBuilderKt {
+	public static final fun signal-Nk3cuW0 (Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/monkopedia/sdbus/SignalEmitter : com/monkopedia/sdbus/TypedArgumentsBuilderContext {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/TypedArguments;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/TypedArguments;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-DgtVVXE ()Ljava/lang/String;
+	public final fun component2-t13AQBo ()Ljava/lang/String;
+	public final fun component3 ()Lcom/monkopedia/sdbus/TypedArguments;
+	public final fun copy-kQgV_DE (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/TypedArguments;)Lcom/monkopedia/sdbus/SignalEmitter;
+	public static synthetic fun copy-kQgV_DE$default (Lcom/monkopedia/sdbus/SignalEmitter;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/TypedArguments;ILjava/lang/Object;)Lcom/monkopedia/sdbus/SignalEmitter;
+	public fun createCall (Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/sdbus/TypedArguments;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInterfaceName-DgtVVXE ()Ljava/lang/String;
+	public final fun getSignalName-t13AQBo ()Ljava/lang/String;
+	public final fun getTypedMethodArguments ()Lcom/monkopedia/sdbus/TypedArguments;
+	public fun hashCode ()I
+	public final fun setInterfaceName-95cHxEc (Ljava/lang/String;)V
+	public final fun setSignalName-WB_EH-c (Ljava/lang/String;)V
+	public final fun setTypedMethodArguments (Lcom/monkopedia/sdbus/TypedArguments;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/SignalEmitterKt {
+	public static final fun emit (Lcom/monkopedia/sdbus/Object;Lcom/monkopedia/sdbus/SignalEmitter;)V
+	public static final fun emitSignal-ad17TgA (Lcom/monkopedia/sdbus/Object;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun emitSignal-ad17TgA$default (Lcom/monkopedia/sdbus/Object;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class com/monkopedia/sdbus/SignalSubscriber : com/monkopedia/sdbus/TypedMethodBuilderContext {
+	public fun <init> ()V
+	public synthetic fun createACall (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public synthetic fun createCall (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public final fun getMethodCall ()Lcom/monkopedia/sdbus/TypedMethodCall;
+	public final fun setMethodCall (Lcom/monkopedia/sdbus/TypedMethodCall;)V
+}
+
+public final class com/monkopedia/sdbus/SignalSubscriberKt {
+	public static final fun onSignal-ad17TgA (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
+	public static final fun signalFlow-ad17TgA (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/monkopedia/sdbus/SignalVTableItem : com/monkopedia/sdbus/VTableItem {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/sdbus/Flags;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/sdbus/Flags;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-t13AQBo ()Ljava/lang/String;
+	public final fun component2-43r-HVQ ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lcom/monkopedia/sdbus/Flags;
+	public final fun copy-tosnBmc (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/sdbus/Flags;)Lcom/monkopedia/sdbus/SignalVTableItem;
+	public static synthetic fun copy-tosnBmc$default (Lcom/monkopedia/sdbus/SignalVTableItem;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/monkopedia/sdbus/Flags;ILjava/lang/Object;)Lcom/monkopedia/sdbus/SignalVTableItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFlags ()Lcom/monkopedia/sdbus/Flags;
+	public final fun getName-t13AQBo ()Ljava/lang/String;
+	public final fun getParamNames ()Ljava/util/List;
+	public final fun getSignature-43r-HVQ ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isDeprecated ()Z
+	public final fun setDeprecated (Z)V
+	public final fun setParamNames (Ljava/util/List;)V
+	public final fun setSignature-vDL3D-A (Ljava/lang/String;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Signature {
+	public static final field Companion Lcom/monkopedia/sdbus/Signature$Companion;
+	public static final field SERIAL_NAME Ljava/lang/String;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/monkopedia/sdbus/Signature;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public static final fun plus-eA2nxms (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Signature$Companion : kotlinx/serialization/KSerializer {
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-eA2nxms (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-U44PY7Q (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/StandardInterfacesKt {
+	public static final fun PeerProxy (Lcom/monkopedia/sdbus/Proxy;)Lcom/monkopedia/sdbus/PeerProxy;
+	public static final fun PropertiesProxy (Lcom/monkopedia/sdbus/Proxy;)Lcom/monkopedia/sdbus/PropertiesProxy;
+}
+
+public final class com/monkopedia/sdbus/StructSig : com/monkopedia/sdbus/SdbusSig {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/monkopedia/sdbus/StructSig;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/StructSig;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/sdbus/StructSig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContents ()Ljava/lang/String;
+	public final fun getSignatures ()Ljava/util/List;
+	public synthetic fun getValid ()Z
+	public synthetic fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public synthetic fun isTrivial ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/TypeTraitsKt {
+	public static final fun getAsSignature (Lkotlinx/serialization/descriptors/SerialDescriptor;)Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun signatureOf (Lkotlin/reflect/KType;)Lcom/monkopedia/sdbus/SdbusSig;
+}
+
+public final class com/monkopedia/sdbus/TypeTraits_jvmKt {
+	public static final fun getBoolSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getDoubleSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getIntSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getLongSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getObjectPathSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getShortSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getSignatureSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getStringSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getUByteSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getUIntSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getULongSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getUShortSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getUnixFdSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getVariantSig ()Lcom/monkopedia/sdbus/SdbusSig;
+	public static final fun getVoidSig ()Lcom/monkopedia/sdbus/SdbusSig;
+}
+
+public final class com/monkopedia/sdbus/Typed {
+	public fun <init> (Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;Lcom/monkopedia/sdbus/SdbusSig;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;Lcom/monkopedia/sdbus/SdbusSig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun copy (Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;Lcom/monkopedia/sdbus/SdbusSig;)Lcom/monkopedia/sdbus/Typed;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/Typed;Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;Lcom/monkopedia/sdbus/SdbusSig;ILjava/lang/Object;)Lcom/monkopedia/sdbus/Typed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/TypedArguments {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun copy (Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/sdbus/TypedArguments;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/TypedArguments;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/sdbus/TypedArguments;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public class com/monkopedia/sdbus/TypedArgumentsBuilderContext {
+	public fun <init> ()V
+	public final fun call ()Lcom/monkopedia/sdbus/TypedArguments;
+	public fun createCall (Ljava/util/List;Ljava/util/List;)Lcom/monkopedia/sdbus/TypedArguments;
+}
+
+public final class com/monkopedia/sdbus/TypedMethod {
+	public fun <init> (Ljava/util/List;Lcom/monkopedia/sdbus/Typed;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/monkopedia/sdbus/Typed;
+	public final fun copy (Ljava/util/List;Lcom/monkopedia/sdbus/Typed;)Lcom/monkopedia/sdbus/TypedMethod;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/TypedMethod;Ljava/util/List;Lcom/monkopedia/sdbus/Typed;ILjava/lang/Object;)Lcom/monkopedia/sdbus/TypedMethod;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInputType ()Ljava/util/List;
+	public final fun getOutputType ()Lcom/monkopedia/sdbus/Typed;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public class com/monkopedia/sdbus/TypedMethodBuilderContext {
+	public fun <init> ()V
+	public final fun args ()Ljava/util/List;
+	public fun createACall (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public static synthetic fun createACall$default (Lcom/monkopedia/sdbus/TypedMethodBuilderContext;Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public fun createCall (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/TypedMethodCall;
+	public static synthetic fun createCall$default (Lcom/monkopedia/sdbus/TypedMethodBuilderContext;Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/sdbus/TypedMethodCall;
+}
+
+public abstract class com/monkopedia/sdbus/TypedMethodCall {
+	public final fun invoke (Lcom/monkopedia/sdbus/Message;Lkotlin/jvm/functions/Function3;)V
+	public abstract fun invoke (Lcom/monkopedia/sdbus/Message;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public abstract fun invoke (Ljava/lang/Throwable;)V
+	public static synthetic fun invoke$default (Lcom/monkopedia/sdbus/TypedMethodCall;Lcom/monkopedia/sdbus/Message;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+	public static synthetic fun invoke$default (Lcom/monkopedia/sdbus/TypedMethodCall;Lcom/monkopedia/sdbus/Message;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public fun withContext (Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall;
+}
+
+public final class com/monkopedia/sdbus/TypedMethodCall$AsyncMethodCall : com/monkopedia/sdbus/TypedMethodCall {
+	public fun <init> (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;)V
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component2 ()Lkotlin/jvm/functions/Function2;
+	public final fun component3 ()Lkotlin/jvm/functions/Function2;
+	public final fun component4 ()Lkotlin/coroutines/CoroutineContext;
+	public final fun copy (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall$AsyncMethodCall;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/TypedMethodCall$AsyncMethodCall;Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lcom/monkopedia/sdbus/TypedMethodCall$AsyncMethodCall;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
+	public final fun getErrorCall ()Lkotlin/jvm/functions/Function2;
+	public final fun getHandler ()Lkotlin/jvm/functions/Function2;
+	public fun hashCode ()I
+	public synthetic fun invoke (Lcom/monkopedia/sdbus/Message;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public fun invoke (Ljava/lang/Throwable;)V
+	public fun toString ()Ljava/lang/String;
+	public fun withContext (Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall$AsyncMethodCall;
+	public synthetic fun withContext (Lkotlin/coroutines/CoroutineContext;)Lcom/monkopedia/sdbus/TypedMethodCall;
+}
+
+public final class com/monkopedia/sdbus/TypedMethodCall$SyncMethodCall : com/monkopedia/sdbus/TypedMethodCall {
+	public fun <init> (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun component3 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/TypedMethodCall$SyncMethodCall;
+	public static synthetic fun copy$default (Lcom/monkopedia/sdbus/TypedMethodCall$SyncMethodCall;Lcom/monkopedia/sdbus/TypedMethod;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/sdbus/TypedMethodCall$SyncMethodCall;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrorCall ()Lkotlin/jvm/functions/Function1;
+	public final fun getHandler ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public synthetic fun invoke (Lcom/monkopedia/sdbus/Message;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public fun invoke (Ljava/lang/Throwable;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/TypedMethodKt {
+	public static final fun buildArgs (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/TypedArguments;
+}
+
+public final class com/monkopedia/sdbus/UnixFd : com/monkopedia/sdbus/Resource {
+	public static final field Companion Lcom/monkopedia/sdbus/UnixFd$Companion;
+	public static final field SERIAL_NAME Ljava/lang/String;
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILkotlin/Unit;)V
+	public fun <init> (Lcom/monkopedia/sdbus/UnixFd;)V
+	public final fun getFd ()I
+	public fun release ()V
+}
+
+public final class com/monkopedia/sdbus/UnixFd$Companion : kotlinx/serialization/KSerializer {
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/UnixFd;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/UnixFd;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/monkopedia/sdbus/VTableBuilder {
+	public static final synthetic fun box-impl (Ljava/util/List;)Lcom/monkopedia/sdbus/VTableBuilder;
+	public static fun constructor-impl (Ljava/util/List;)Ljava/util/List;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/util/List;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/util/List;Ljava/util/List;)Z
+	public final fun getItems ()Ljava/util/List;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/util/List;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/util/List;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/util/List;
+}
+
+public final class com/monkopedia/sdbus/VTableBuilderKt {
+	public static final fun addVTable-oeU1YUc (Lcom/monkopedia/sdbus/Object;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
+}
+
+public abstract interface class com/monkopedia/sdbus/VTableItem {
+}
+
+public final class com/monkopedia/sdbus/Variant {
+	public static final field Companion Lcom/monkopedia/sdbus/Variant$Companion;
+	public static final field SERIAL_NAME Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/serialization/SerializationStrategy;Lkotlinx/serialization/modules/SerializersModule;Ljava/lang/Object;)V
+	public final fun deserializeFrom (Lcom/monkopedia/sdbus/Message;)V
+	public final fun get (Lkotlinx/serialization/DeserializationStrategy;Lkotlinx/serialization/modules/SerializersModule;Lcom/monkopedia/sdbus/SdbusSig;)Ljava/lang/Object;
+	public final fun isEmpty ()Z
+	public final fun peekValueType ()Ljava/lang/String;
+	public final fun serializeTo (Lcom/monkopedia/sdbus/Message;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/sdbus/Variant$Companion : kotlinx/serialization/KSerializer {
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Variant;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Variant;)Ljava/lang/Void;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

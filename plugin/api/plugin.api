@@ -1,0 +1,35 @@
+public class com/monkopedia/sdbus/plugin/SdbusExtension {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;Ljava/util/List;)V
+	public synthetic fun <init> (Lorg/gradle/api/model/ObjectFactory;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getGenerateAdapters ()Z
+	public fun getGenerateProxies ()Z
+	public fun getObjectFactory ()Lorg/gradle/api/model/ObjectFactory;
+	public fun getOutputPackage ()Ljava/lang/String;
+	public fun getOutputs ()Ljava/util/List;
+	public fun getSources ()Lorg/gradle/api/file/SourceDirectorySet;
+	public fun setGenerateAdapters (Z)V
+	public fun setGenerateProxies (Z)V
+	public fun setOutputPackage (Ljava/lang/String;)V
+}
+
+public class com/monkopedia/sdbus/plugin/SdbusGenerationTask : org/gradle/api/DefaultTask {
+	public fun <init> ()V
+	public final fun execute ()V
+	public fun getGenerateAdapters ()Z
+	public fun getGenerateProxies ()Z
+	public fun getInputXmlFile ()Ljava/io/File;
+	public fun getOutputDir ()Ljava/io/File;
+	public fun getOutputPackage ()Ljava/lang/String;
+	public fun setGenerateAdapters (Z)V
+	public fun setGenerateProxies (Z)V
+	public fun setInputXmlFile (Ljava/io/File;)V
+	public fun setOutputDir (Ljava/io/File;)V
+	public fun setOutputPackage (Ljava/lang/String;)V
+}
+
+public final class com/monkopedia/sdbus/plugin/SdbusPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+

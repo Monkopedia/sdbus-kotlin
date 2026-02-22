@@ -33,7 +33,7 @@ val systemdVersion = "257.2-2"
 
 // == BCV setup ==
 apiValidation {
-    ignoredProjects.addAll(listOf("compile_test", "stress_test"))
+    ignoredProjects.addAll(listOf("compile_test", "cross_test", "stress_test"))
     @OptIn(ExperimentalBCVApi::class)
     klib {
         enabled = true

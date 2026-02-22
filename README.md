@@ -25,7 +25,7 @@ There is a gradle plugin which can generate sources as part of the the build whe
 ```
 plugins {
     ...
-    id("com.monkopedia.sdbus.plugin") version "<version>"
+    id("com.monkopedia.sdbus.plugin") version "0.4.0"
 }
 
 sdbus {
@@ -50,7 +50,7 @@ a common kotlin module, its implementations are currently only for linuxX64 and 
 ```
 val nativeMain by getting {
     dependencies {
-       implementation("com.monkopedia:sdbus-kotlin:0.3.5")
+       implementation("com.monkopedia:sdbus-kotlin:0.4.0")
     }
 }
 ```

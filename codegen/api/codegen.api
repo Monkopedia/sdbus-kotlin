@@ -14,6 +14,8 @@ public final class com/monkopedia/sdbus/Access$Companion {
 
 public final class com/monkopedia/sdbus/AdaptorGenerator : com/monkopedia/sdbus/BaseGenerator {
 	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class com/monkopedia/sdbus/Annotation {
@@ -33,7 +35,7 @@ public final class com/monkopedia/sdbus/Annotation {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Annotation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Annotation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Annotation$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Annotation;
@@ -41,6 +43,7 @@ public synthetic class com/monkopedia/sdbus/Annotation$$serializer : kotlinx/ser
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Annotation;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Annotation$Companion {
@@ -68,7 +71,7 @@ public final class com/monkopedia/sdbus/Arg {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Arg$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Arg$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Arg$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Arg;
@@ -76,6 +79,7 @@ public synthetic class com/monkopedia/sdbus/Arg$$serializer : kotlinx/serializat
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Arg;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Arg$Companion {
@@ -85,6 +89,8 @@ public final class com/monkopedia/sdbus/Arg$Companion {
 public abstract class com/monkopedia/sdbus/BaseGenerator {
 	protected field namingManager Lcom/monkopedia/sdbus/NamingManager;
 	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected abstract fun buildRegistration (Lcom/squareup/kotlinpoet/FunSpec$Builder;Lcom/monkopedia/sdbus/Interface;)V
 	protected abstract fun classBuilder (Lcom/monkopedia/sdbus/Interface;)Lcom/squareup/kotlinpoet/TypeSpec$Builder;
 	protected abstract fun constructorBuilder (Lcom/monkopedia/sdbus/Interface;)Lcom/squareup/kotlinpoet/FunSpec$Builder;
@@ -93,6 +99,7 @@ public abstract class com/monkopedia/sdbus/BaseGenerator {
 	protected final fun getNamingManager ()Lcom/monkopedia/sdbus/NamingManager;
 	protected final fun getSimpleName (Ljava/lang/String;)Ljava/lang/String;
 	protected final fun intfName (Lcom/monkopedia/sdbus/Interface;)Lcom/squareup/kotlinpoet/ClassName;
+	protected final fun kotlinPackage (Lcom/monkopedia/sdbus/Interface;)Ljava/lang/String;
 	protected abstract fun methodBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Method;)Lcom/squareup/kotlinpoet/FunSpec$Builder;
 	protected abstract fun propertyBuilder (Lcom/monkopedia/sdbus/Interface;Lcom/monkopedia/sdbus/Property;)Lcom/squareup/kotlinpoet/PropertySpec$Builder;
 	protected final fun setNamingManager (Lcom/monkopedia/sdbus/NamingManager;)V
@@ -120,7 +127,7 @@ public final class com/monkopedia/sdbus/Description {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Description$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Description$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Description$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Description;
@@ -128,6 +135,7 @@ public synthetic class com/monkopedia/sdbus/Description$$serializer : kotlinx/se
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Description;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Description$Companion {
@@ -163,7 +171,7 @@ public final class com/monkopedia/sdbus/Doc {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Doc$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Doc$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Doc$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Doc;
@@ -171,6 +179,7 @@ public synthetic class com/monkopedia/sdbus/Doc$$serializer : kotlinx/serializat
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Doc;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Doc$Companion {
@@ -197,7 +206,7 @@ public final class com/monkopedia/sdbus/Interface {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Interface$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Interface$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Interface$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Interface;
@@ -205,6 +214,7 @@ public synthetic class com/monkopedia/sdbus/Interface$$serializer : kotlinx/seri
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Interface;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Interface$Companion {
@@ -213,6 +223,8 @@ public final class com/monkopedia/sdbus/Interface$Companion {
 
 public final class com/monkopedia/sdbus/InterfaceGenerator : com/monkopedia/sdbus/BaseGenerator {
 	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun transformXmlToFile (Lcom/monkopedia/sdbus/XmlRootNode;)Ljava/util/List;
 }
 
@@ -242,7 +254,7 @@ public final class com/monkopedia/sdbus/Method {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Method$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Method$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Method$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Method;
@@ -250,6 +262,7 @@ public synthetic class com/monkopedia/sdbus/Method$$serializer : kotlinx/seriali
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Method;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Method$Companion {
@@ -257,7 +270,8 @@ public final class com/monkopedia/sdbus/Method$Companion {
 }
 
 public final class com/monkopedia/sdbus/NamingManager {
-	public fun <init> (Lcom/monkopedia/sdbus/XmlRootNode;)V
+	public fun <init> (Lcom/monkopedia/sdbus/XmlRootNode;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/monkopedia/sdbus/XmlRootNode;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun get (Lcom/monkopedia/sdbus/Arg;)Lcom/monkopedia/sdbus/NamingManager$NamingType;
 	public final fun get (Lcom/monkopedia/sdbus/Property;)Lcom/squareup/kotlinpoet/TypeName;
 	public final fun get (Ljava/util/List;)Lcom/monkopedia/sdbus/NamingManager$NamingType;
@@ -329,7 +343,7 @@ public final class com/monkopedia/sdbus/Para {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Para$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Para$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Para$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Para;
@@ -337,6 +351,7 @@ public synthetic class com/monkopedia/sdbus/Para$$serializer : kotlinx/serializa
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Para;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Para$Companion {
@@ -364,7 +379,7 @@ public final class com/monkopedia/sdbus/Property {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Property$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Property$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Property$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Property;
@@ -372,6 +387,7 @@ public synthetic class com/monkopedia/sdbus/Property$$serializer : kotlinx/seria
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Property;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Property$Companion {
@@ -380,6 +396,8 @@ public final class com/monkopedia/sdbus/Property$Companion {
 
 public final class com/monkopedia/sdbus/ProxyGenerator : com/monkopedia/sdbus/BaseGenerator {
 	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class com/monkopedia/sdbus/Signal {
@@ -401,7 +419,7 @@ public final class com/monkopedia/sdbus/Signal {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Signal$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Signal$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Signal$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Signal;
@@ -409,6 +427,7 @@ public synthetic class com/monkopedia/sdbus/Signal$$serializer : kotlinx/seriali
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Signal;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Signal$Companion {
@@ -429,7 +448,7 @@ public final class com/monkopedia/sdbus/Summary {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/Summary$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/Summary$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/Summary$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/Summary;
@@ -437,6 +456,7 @@ public synthetic class com/monkopedia/sdbus/Summary$$serializer : kotlinx/serial
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/Summary;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/Summary$Companion {
@@ -453,6 +473,7 @@ public final class com/monkopedia/sdbus/Xml2Kotlin : com/github/ajalt/clikt/core
 	public final fun getInput ()Ljava/io/File;
 	public final fun getKeep ()Z
 	public final fun getOutput ()Ljava/io/File;
+	public final fun getOutputPackage ()Ljava/lang/String;
 	public final fun getProxy ()Z
 	public fun run ()V
 }
@@ -480,7 +501,7 @@ public final class com/monkopedia/sdbus/XmlRootNode {
 	public fun toString ()Ljava/lang/String;
 }
 
-public synthetic class com/monkopedia/sdbus/XmlRootNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+public final synthetic class com/monkopedia/sdbus/XmlRootNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
 	public static final field INSTANCE Lcom/monkopedia/sdbus/XmlRootNode$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
 	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/XmlRootNode;
@@ -488,6 +509,7 @@ public synthetic class com/monkopedia/sdbus/XmlRootNode$$serializer : kotlinx/se
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/monkopedia/sdbus/XmlRootNode;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/monkopedia/sdbus/XmlRootNode$Companion {
