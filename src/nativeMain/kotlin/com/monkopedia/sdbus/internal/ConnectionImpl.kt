@@ -75,6 +75,7 @@ import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import platform.linux.EFD_CLOEXEC
@@ -182,7 +183,7 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 
 internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr) :
     InternalConnection {
-    private var asyncLoopThread: Job? = null
+    private val asyncLoopThread = atomic<Job?>(null)
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
@@ -194,7 +195,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
-        val loopJob = asyncLoopThread
+        val loopJob = asyncLoopThread.value
         if (loopJob != null) {
             eventThread.notifyEventLoopToExit()
             var waitedMs = 0
@@ -206,7 +207,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             // Fail-safe: if the loop never exits, avoid unref-ing resources
             // that may still be touched by the running event loop.
             if (!loopJob.isCompleted) return
-            asyncLoopThread = null
+            asyncLoopThread.compareAndSet(loopJob, null)
         }
         loopExitResource.release()
         floatingMatchRules.forEach { it.release() }
@@ -219,7 +220,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     suspend fun joinWithEventLoop() {
         checkNotReleased()
-        asyncLoopThread?.join()
+        asyncLoopThread.value?.join()
     }
 
     override fun requestName(name: ServiceName) {
@@ -261,14 +262,16 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun enterEventLoopAsync() {
         checkNotReleased()
-        if (asyncLoopThread == null) {
-            // TODO: Create local scope
-            val thiz = WeakReference(this)
-            asyncLoopThread = eventThread.launch(GlobalScope).also {
-                it.invokeOnCompletion {
-                    thiz.get()?.asyncLoopThread = null
-                }
-            }
+        if (asyncLoopThread.value != null) return
+
+        // TODO: Create local scope
+        val launchedJob = eventThread.launch(GlobalScope)
+        if (!asyncLoopThread.compareAndSet(null, launchedJob)) {
+            launchedJob.cancel()
+            return
+        }
+        launchedJob.invokeOnCompletion {
+            asyncLoopThread.compareAndSet(launchedJob, null)
         }
     }
 
