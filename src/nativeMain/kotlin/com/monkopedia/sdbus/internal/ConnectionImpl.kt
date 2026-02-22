@@ -75,7 +75,6 @@ import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import platform.linux.EFD_CLOEXEC
@@ -184,6 +183,7 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr) :
     InternalConnection {
     private val asyncLoopThread = atomic<Job?>(null)
+    private val eventLoopStarting = atomic(false)
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
@@ -195,10 +195,15 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
+        var waitedMs = 0
+        while (eventLoopStarting.value && waitedMs < 2_000) {
+            usleep(10_000u)
+            waitedMs += 10
+        }
         val loopJob = asyncLoopThread.value
         if (loopJob != null) {
             eventThread.notifyEventLoopToExit()
-            var waitedMs = 0
+            waitedMs = 0
             while (!loopJob.isCompleted && waitedMs < 2_000) {
                 eventThread.notifyEventLoopToExit()
                 usleep(10_000u)
@@ -263,15 +268,19 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
     override fun enterEventLoopAsync() {
         checkNotReleased()
         if (asyncLoopThread.value != null) return
-
-        // TODO: Create local scope
-        val launchedJob = eventThread.launch(GlobalScope)
-        if (!asyncLoopThread.compareAndSet(null, launchedJob)) {
-            launchedJob.cancel()
+        if (!eventLoopStarting.compareAndSet(false, true)) {
             return
         }
-        launchedJob.invokeOnCompletion {
-            asyncLoopThread.compareAndSet(launchedJob, null)
+        try {
+            if (released.value || asyncLoopThread.value != null) return
+            // TODO: Create local scope
+            val launchedJob = eventThread.launch(GlobalScope)
+            asyncLoopThread.value = launchedJob
+            launchedJob.invokeOnCompletion {
+                asyncLoopThread.compareAndSet(launchedJob, null)
+            }
+        } finally {
+            eventLoopStarting.value = false
         }
     }
 
