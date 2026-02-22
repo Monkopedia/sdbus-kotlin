@@ -182,8 +182,7 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 
 internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr) :
     InternalConnection {
-    private val asyncLoopThread = atomic<Job?>(null)
-    private val eventLoopStarting = atomic(false)
+    private var asyncLoopThread: Job? = null
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
@@ -195,15 +194,10 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
-        var waitedMs = 0
-        while (eventLoopStarting.value && waitedMs < 2_000) {
-            usleep(10_000u)
-            waitedMs += 10
-        }
-        val loopJob = asyncLoopThread.value
+        val loopJob = asyncLoopThread
         if (loopJob != null) {
             eventThread.notifyEventLoopToExit()
-            waitedMs = 0
+            var waitedMs = 0
             while (!loopJob.isCompleted && waitedMs < 2_000) {
                 eventThread.notifyEventLoopToExit()
                 usleep(10_000u)
@@ -212,7 +206,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             // Fail-safe: if the loop never exits, avoid unref-ing resources
             // that may still be touched by the running event loop.
             if (!loopJob.isCompleted) return
-            asyncLoopThread.compareAndSet(loopJob, null)
+            asyncLoopThread = null
         }
         loopExitResource.release()
         floatingMatchRules.forEach { it.release() }
@@ -225,7 +219,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     suspend fun joinWithEventLoop() {
         checkNotReleased()
-        asyncLoopThread.value?.join()
+        asyncLoopThread?.join()
     }
 
     override fun requestName(name: ServiceName) {
@@ -267,20 +261,14 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun enterEventLoopAsync() {
         checkNotReleased()
-        if (asyncLoopThread.value != null) return
-        if (!eventLoopStarting.compareAndSet(false, true)) {
-            return
-        }
-        try {
-            if (released.value || asyncLoopThread.value != null) return
+        if (asyncLoopThread == null) {
             // TODO: Create local scope
-            val launchedJob = eventThread.launch(GlobalScope)
-            asyncLoopThread.value = launchedJob
-            launchedJob.invokeOnCompletion {
-                asyncLoopThread.compareAndSet(launchedJob, null)
+            val thiz = WeakReference(this)
+            asyncLoopThread = eventThread.launch(GlobalScope).also {
+                it.invokeOnCompletion {
+                    thiz.get()?.asyncLoopThread = null
+                }
             }
-        } finally {
-            eventLoopStarting.value = false
         }
     }
 
