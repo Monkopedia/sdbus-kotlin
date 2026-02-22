@@ -315,7 +315,9 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
         val notifyExit = withAsyncLoopStateLock {
             eventLoopStarting = false
-            asyncLoopThread = launchedLoop
+            // A very short-lived loop can complete before we publish it.
+            // Avoid pinning a completed Job, which would block future starts.
+            asyncLoopThread = if (launchedLoop.isCompleted) null else launchedLoop
             released.value
         }
         if (notifyExit) {
