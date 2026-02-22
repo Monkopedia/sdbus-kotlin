@@ -34,7 +34,7 @@ kotlin {
     }
 }
 
-val rootNativeTestBinary = rootProject.layout.buildDirectory.file(
+val crossNativeTestBinary = rootProject.project(":cross_test").layout.buildDirectory.file(
     "bin/linuxX64/debugTest/test.kexe"
 )
 val reverseInteropEnabled = providers
@@ -64,12 +64,12 @@ tasks.named<Test>("jvmTest") {
 tasks.register<Test>("jvmInteropStressTest") {
     group = "verification"
     description = "Runs repeated JVM/native direct-bus interop stress tests."
-    dependsOn(":linkDebugTestLinuxX64", "jvmTestClasses")
+    dependsOn(":cross_test:linkDebugTestLinuxX64", "jvmTestClasses")
     shouldRunAfter(jvmTestTask)
     testClassesDirs = jvmTestTask.get().testClassesDirs
     classpath = jvmTestTask.get().classpath
     systemProperty("kdbus.crossRuntimeInterop.enabled", "true")
-    systemProperty("kdbus.nativeTestBinary", rootNativeTestBinary.get().asFile.absolutePath)
+    systemProperty("kdbus.nativeTestBinary", crossNativeTestBinary.get().asFile.absolutePath)
     systemProperty("kdbus.stress.repeat", stressRepeat.get())
     systemProperty("kdbus.stress.timeout.ms", stressTimeoutMs.get())
     reverseInteropEnabled.orNull?.let { value ->

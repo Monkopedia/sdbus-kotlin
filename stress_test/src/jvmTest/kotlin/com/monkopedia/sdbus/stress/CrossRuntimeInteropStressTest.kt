@@ -232,7 +232,9 @@ class CrossRuntimeInteropStressTest {
                 }
 
                 if (expectedFailureContains != null) {
-                    val failure = runCatching { invokeIncrement() }.exceptionOrNull()
+                    val failure = callSkippingUnknownObjectErrors(timeoutMillis()) {
+                        invokeIncrement()
+                    }.exceptionOrNull()
                     assertTrue(failure != null, "Expected call failure from native peer")
                     val message = failure.message ?: failure.toString()
                     assertTrue(
@@ -381,17 +383,19 @@ class CrossRuntimeInteropStressTest {
             )
             try {
                 val cancellationFailure = runCatching {
-                    runBlocking {
-                        withTimeout(cancelAfterMs) {
-                            proxy.callMethodAsync<Int>(
-                                InterfaceName(interfaceName),
-                                MethodName(methodName)
-                            ) {
-                                timeout = 5_000.milliseconds
-                                call(expectedArg)
+                    callSkippingUnknownObjectErrors(timeoutMillis()) {
+                        runBlocking {
+                            withTimeout(cancelAfterMs) {
+                                proxy.callMethodAsync<Int>(
+                                    InterfaceName(interfaceName),
+                                    MethodName(methodName)
+                                ) {
+                                    timeout = 5_000.milliseconds
+                                    call(expectedArg)
+                                }
                             }
                         }
-                    }
+                    }.getOrThrow()
                 }.exceptionOrNull()
                 assertTrue(
                     cancellationFailure is TimeoutCancellationException,
@@ -589,6 +593,34 @@ class CrossRuntimeInteropStressTest {
             Thread.sleep(25)
         }
         return false
+    }
+
+    private fun <T> callSkippingUnknownObjectErrors(
+        timeoutMillis: Long,
+        call: () -> T
+    ): Result<T> {
+        val start = System.currentTimeMillis()
+        var lastUnknownObject: Throwable? = null
+        while (System.currentTimeMillis() - start < timeoutMillis) {
+            val result = runCatching(call)
+            if (result.isSuccess) return result
+            val failure = result.exceptionOrNull()
+            if (!isUnknownObjectFailure(failure)) {
+                return Result.failure(
+                    failure ?: AssertionError("Call failed without throwable")
+                )
+            }
+            lastUnknownObject = failure
+            Thread.sleep(50)
+        }
+        return Result.failure(
+            AssertionError("Timed out waiting for native object registration", lastUnknownObject)
+        )
+    }
+
+    private fun isUnknownObjectFailure(failure: Throwable?): Boolean {
+        val message = failure?.message ?: return false
+        return message.contains("Unknown object", ignoreCase = true)
     }
 
     private fun <T> retryCall(timeoutMillis: Long, call: () -> T): T {
