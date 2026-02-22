@@ -183,6 +183,7 @@ private fun pollfd.initFd(fd: Int, events: Short, revents: Short) {
 internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr) :
     InternalConnection {
     private val asyncLoopThread = atomic<Job?>(null)
+    private val eventLoopStartingSentinel: Job = kotlinx.coroutines.Job()
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
@@ -194,6 +195,9 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
+        while (asyncLoopThread.value === eventLoopStartingSentinel) {
+            usleep(1_000u)
+        }
         val loopJob = asyncLoopThread.value
         if (loopJob != null) {
             eventThread.notifyEventLoopToExit()
@@ -219,6 +223,9 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     suspend fun joinWithEventLoop() {
         checkNotReleased()
+        while (asyncLoopThread.value === eventLoopStartingSentinel) {
+            usleep(1_000u)
+        }
         asyncLoopThread.value?.join()
     }
 
@@ -265,17 +272,25 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             val currentLoop = asyncLoopThread.value
             if (currentLoop != null) return
 
+            if (!asyncLoopThread.compareAndSet(null, eventLoopStartingSentinel)) continue
+            if (released.value) {
+                asyncLoopThread.compareAndSet(eventLoopStartingSentinel, null)
+                return
+            }
+
             // TODO: Create local scope
             val thiz = WeakReference(this)
-            val launchedLoop = eventThread.launch(GlobalScope)
-            if (asyncLoopThread.compareAndSet(null, launchedLoop)) {
-                launchedLoop.invokeOnCompletion {
-                    thiz.get()?.asyncLoopThread?.compareAndSet(launchedLoop, null)
-                }
-                return
-            } else {
-                launchedLoop.cancel()
+            val launchedLoop = try {
+                eventThread.launch(GlobalScope)
+            } catch (throwable: Throwable) {
+                asyncLoopThread.compareAndSet(eventLoopStartingSentinel, null)
+                throw throwable
             }
+            launchedLoop.invokeOnCompletion {
+                thiz.get()?.asyncLoopThread?.compareAndSet(launchedLoop, null)
+            }
+            asyncLoopThread.compareAndSet(eventLoopStartingSentinel, launchedLoop)
+            return
         }
     }
 
