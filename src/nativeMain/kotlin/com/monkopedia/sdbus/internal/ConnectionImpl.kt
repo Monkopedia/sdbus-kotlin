@@ -294,6 +294,10 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         }
         if (!shouldLaunch) return
 
+        // A stale exit notification (e.g., from leaveEventLoop called while no loop was active)
+        // would cause a newly started loop to terminate immediately.
+        eventThread.clearPendingExitNotifications()
+
         val launchedLoop = try {
             // TODO: Create local scope
             eventThread.launch(GlobalScope)
@@ -338,8 +342,19 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     override suspend fun leaveEventLoop() {
         checkNotReleased()
+        var loopJob: Job? = null
+        while (true) {
+            val isStarting = withAsyncLoopStateLock {
+                loopJob = asyncLoopThread
+                eventLoopStarting
+            }
+            if (!isStarting) break
+            usleep(1_000u)
+        }
+        if (loopJob == null) return
+
         eventThread.notifyEventLoopToExit()
-        joinWithEventLoop()
+        loopJob.join()
     }
 
     private fun getEventLoopPollData(): PollData {
@@ -723,6 +738,12 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
         fun notifyEventLoopToExit() {
             loopExitFd.notify()
+        }
+
+        fun clearPendingExitNotifications() {
+            while (loopExitFd.clear()) {
+                // drain pending exit signals
+            }
         }
 
         fun notifyEventLoopToWakeUpFromPoll() {
