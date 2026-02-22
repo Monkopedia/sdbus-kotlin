@@ -51,6 +51,7 @@ import kotlin.native.ref.WeakReference
 import kotlin.native.ref.createCleaner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
@@ -71,7 +72,6 @@ import kotlinx.cinterop.placeTo
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -90,8 +90,8 @@ import platform.posix.close
 import platform.posix.errno
 import platform.posix.poll
 import platform.posix.pollfd
-import platform.posix.usleep
 import platform.posix.uint64_tVar
+import platform.posix.usleep
 import sdbus._SD_BUS_MESSAGE_TYPE_INVALID
 import sdbus.sd_bus_error
 import sdbus.sd_bus_interface_name_is_valid

@@ -34,7 +34,9 @@ kotlin {
     }
 }
 
-val rootNativeTestBinary = rootProject.layout.buildDirectory.file("bin/linuxX64/debugTest/test.kexe")
+val rootNativeTestBinary = rootProject.layout.buildDirectory.file(
+    "bin/linuxX64/debugTest/test.kexe"
+)
 val reverseInteropEnabled = providers
     .systemProperty("kdbus.crossRuntimeInterop.reverse.enabled")
     .orElse(providers.gradleProperty("kdbus.crossRuntimeInterop.reverse.enabled"))

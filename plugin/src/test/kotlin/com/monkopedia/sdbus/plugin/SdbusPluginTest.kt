@@ -10,25 +10,27 @@ import org.gradle.testkit.runner.GradleRunner
 
 class SdbusPluginTest {
     @Test
-    fun generatesInterfaceByDefault() = withProject(generateProxies = false, generateAdapters = false) { dir ->
-        val result = runTask(dir, "generateSdbusWrappers")
-        assertTrue(result.output.contains("generateSdbusWrappersSample"))
+    fun generatesInterfaceByDefault() =
+        withProject(generateProxies = false, generateAdapters = false) { dir ->
+            val result = runTask(dir, "generateSdbusWrappers")
+            assertTrue(result.output.contains("generateSdbusWrappersSample"))
 
-        val generatedRoot = File(dir, "build/generated/sdbus/sample/sampleOut/org/foo")
-        assertTrue(File(generatedRoot, "Background.kt").exists())
-        assertFalse(File(generatedRoot, "BackgroundAdaptor.kt").exists())
-        assertFalse(File(generatedRoot, "BackgroundProxy.kt").exists())
-    }
+            val generatedRoot = File(dir, "build/generated/sdbus/sample/sampleOut/org/foo")
+            assertTrue(File(generatedRoot, "Background.kt").exists())
+            assertFalse(File(generatedRoot, "BackgroundAdaptor.kt").exists())
+            assertFalse(File(generatedRoot, "BackgroundProxy.kt").exists())
+        }
 
     @Test
-    fun generatesProxyAndAdaptorWhenEnabled() = withProject(generateProxies = true, generateAdapters = true) { dir ->
-        runTask(dir, "generateSdbusWrappers")
+    fun generatesProxyAndAdaptorWhenEnabled() =
+        withProject(generateProxies = true, generateAdapters = true) { dir ->
+            runTask(dir, "generateSdbusWrappers")
 
-        val generatedRoot = File(dir, "build/generated/sdbus/sample/sampleOut/org/foo")
-        assertTrue(File(generatedRoot, "Background.kt").exists())
-        assertTrue(File(generatedRoot, "BackgroundAdaptor.kt").exists())
-        assertTrue(File(generatedRoot, "BackgroundProxy.kt").exists())
-    }
+            val generatedRoot = File(dir, "build/generated/sdbus/sample/sampleOut/org/foo")
+            assertTrue(File(generatedRoot, "Background.kt").exists())
+            assertTrue(File(generatedRoot, "BackgroundAdaptor.kt").exists())
+            assertTrue(File(generatedRoot, "BackgroundProxy.kt").exists())
+        }
 
     @Test
     fun generatedProxyCompilesInConsumerSourceSet() = withProject(

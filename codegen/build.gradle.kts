@@ -1,6 +1,3 @@
-import org.jetbrains.dokka.base.DokkaBase
-import org.jetbrains.dokka.base.DokkaBaseConfiguration
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -65,27 +62,17 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-val dokkaJavadoc = tasks.create("dokkaJavadocCustom", DokkaTask::class) {
-    project.dependencies {
-        plugins("org.jetbrains.dokka:kotlin-as-java-plugin:2.0.0")
-    }
-    // outputFormat = "javadoc"
-    outputDirectory.set(File(project.buildDir, "javadoc"))
-    inputs.dir("src/main/kotlin")
-}
+val dokkaAssets = rootProject.file("dokka/assets").listFiles()?.toList().orEmpty()
+val dokkaLogoStyleSheet = rootProject.file("dokka/styles/logo-styles.css")
 
-val javadocJar = tasks.create("javadocJar", Jar::class) {
-    dependsOn(dokkaJavadoc)
-    archiveClassifier.set("javadoc")
-    from(File(project.buildDir, "javadoc"))
-}
-tasks.dokkaHtml.configure {
-    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
-        customAssets = file("dokka/assets").listFiles()?.toList().orEmpty()
-        customStyleSheets = file("dokka/styles").listFiles()?.toList().orEmpty()
+dokka {
+    dokkaPublications.named("html") {
+        outputDirectory.set(projectDir.resolve("build/dokka"))
     }
-
-    outputDirectory.set(buildDir.resolve("dokka"))
+    pluginsConfiguration.html {
+        customAssets.from(dokkaAssets)
+        customStyleSheets.from(dokkaLogoStyleSheet)
+    }
 }
 
 mavenPublishing {

@@ -1,9 +1,9 @@
 # sdbus-kotlin
 
-![GitHub License](https://img.shields.io/github/license/monkopedia/sdbus-kotlin)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.1.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/kotlin-sdbus/0.3.5)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin/0.3.5/pom)
-[![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/sdbus-kotlin/com.monkopedia.sdbus/index.html)
+[![GitHub license](https://img.shields.io/badge/license-LGPL%203-blue.svg?style=flat)](https://www.gnu.org/licenses/lgpl-3.0.txt)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.3.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/sdbus-kotlin)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin)
+[![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/)
 
 sdbus-kotlin is a direct port of sdbus-c++ to kotlin/native. Once the port completed, some
 kotlinization of the APIs has begun, but is definitely not complete or API stable. sdbus-kotlin
