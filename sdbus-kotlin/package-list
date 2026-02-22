@@ -210,7 +210,7 @@ $dokka.location:com.monkopedia.sdbus/MethodCall/createErrorReply/#com.monkopedia
 $dokka.location:com.monkopedia.sdbus/MethodCall/createReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/create-reply.html
 $dokka.location:com.monkopedia.sdbus/MethodCall/dontExpectReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/dont-expect-reply.html
 $dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
-$dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlinx.cinterop.CPointer[kotlinx.cinterop.CFunction[kotlin.Function3[kotlinx.cinterop.CPointer[cnames.structs.sd_bus_message]?,kotlinx.cinterop.CPointer[kotlinx.cinterop.CPointed]?,kotlinx.cinterop.CPointer[sdbus.sd_bus_error]?,kotlin.Int]]]#kotlin.Any?#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
+$dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlinx.cinterop.CPointer[kotlinx.cinterop.CFunction[kotlin.Function3[kotlinx.cinterop.CPointer[<ERROR CLASS> cnames/structs/sd_bus_message]?,kotlinx.cinterop.CPointer[kotlinx.cinterop.CPointed]?,kotlinx.cinterop.CPointer[sdbus.sd_bus_error]?,kotlin.Int]]]#kotlin.Any?#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
 $dokka.location:com.monkopedia.sdbus/MethodCallback///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-callback/index.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/index.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/args/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/args.html
@@ -436,14 +436,14 @@ $dokka.location:com.monkopedia.sdbus/TypedMethodCall/invoke/#kotlin.Throwable/Po
 $dokka.location:com.monkopedia.sdbus/TypedMethodCall/withContext/#kotlin.coroutines.CoroutineContext/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-typed-method-call/with-context.html
 $dokka.location:com.monkopedia.sdbus/UnixFd.Companion///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/index.html
 $dokka.location:com.monkopedia.sdbus/UnixFd.Companion/SERIAL_NAME/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/-s-e-r-i-a-l_-n-a-m-e.html
-$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/descriptor.html
-$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/deserialize.html
-$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.UnixFd/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/serialize.html
+$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/descriptor/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/[native]descriptor.html
+$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/[native]deserialize.html
+$dokka.location:com.monkopedia.sdbus/UnixFd.Companion/serialize/#kotlinx.serialization.encoding.Encoder#com.monkopedia.sdbus.UnixFd/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-companion/[native]serialize.html
 $dokka.location:com.monkopedia.sdbus/UnixFd///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/index.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/UnixFd/#com.monkopedia.sdbus.UnixFd/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-unix-fd.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/UnixFd/#kotlin.Int#kotlin.Unit/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-unix-fd.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/UnixFd/#kotlin.Int/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/-unix-fd.html
-$dokka.location:com.monkopedia.sdbus/UnixFd/fd/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/fd.html
+$dokka.location:com.monkopedia.sdbus/UnixFd/fd/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/[native]fd.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/isValid/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/is-valid.html
 $dokka.location:com.monkopedia.sdbus/UnixFd/release/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-unix-fd/release.html
 $dokka.location:com.monkopedia.sdbus/VTableBuilder///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-v-table-builder/index.html
