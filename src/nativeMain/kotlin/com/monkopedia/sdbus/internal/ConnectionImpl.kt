@@ -73,7 +73,6 @@ import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
@@ -299,8 +298,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         eventThread.clearPendingExitNotifications()
 
         val launchedLoop = try {
-            // TODO: Create local scope
-            eventThread.launch(GlobalScope)
+            eventThread.launch(CoroutineScope(eventPool))
         } catch (throwable: Throwable) {
             withAsyncLoopStateLock {
                 eventLoopStarting = false
