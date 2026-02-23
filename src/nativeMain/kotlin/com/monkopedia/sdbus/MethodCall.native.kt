@@ -47,7 +47,6 @@ import sdbus.sd_bus_error_set
 import sdbus.sd_bus_message_get_expect_reply
 import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_message_set_expect_reply
-import sdbus.sd_bus_slot_unref
 
 actual class MethodCall internal constructor(
     msg: CPointer<sd_bus_message>?,
@@ -79,7 +78,7 @@ actual class MethodCall internal constructor(
             sdbusRequire(r < 0, "Failed to call method asynchronously", -r)
 
             Reference(slot[0]) {
-                sd_bus_slot_unref(it)
+                sdbus.sd_bus_slot_unref(it)
                 userDataRef?.dispose()
             }
         }
