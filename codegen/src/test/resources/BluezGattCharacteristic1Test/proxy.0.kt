@@ -73,7 +73,7 @@ public class GattCharacteristic1Proxy(
   }
 
   override suspend fun writeValue(`value`: List<UByte>, options: Map<String, Variant>): Unit = proxy.callMethodAsync(GattCharacteristic1.Companion.INTERFACE_NAME, MethodName("WriteValue")) {
-    call(value, options)
+    call(`value`, options)
   }
 
   override suspend fun acquireWrite(options: Map<String, Variant>): AcquireType = proxy.callMethodAsync(GattCharacteristic1.Companion.INTERFACE_NAME, MethodName("AcquireWrite")) {
