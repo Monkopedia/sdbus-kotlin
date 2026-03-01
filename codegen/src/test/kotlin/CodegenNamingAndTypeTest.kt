@@ -93,4 +93,54 @@ class CodegenNamingAndTypeTest {
         assertTrue(generatedTupleType.contains("val `value`: String"), generatedTupleType)
         assertTrue(generatedTupleType.contains("val value1: UInt"), generatedTupleType)
     }
+
+    @Test
+    fun proxyGenerationEscapesKotlinKeywordsInCallBody() {
+        val xml = """
+            <node>
+              <interface name="Org.Example.KeywordTest">
+                <method name="DoSomething">
+                  <arg name="interface" type="s" direction="in"/>
+                  <arg name="result" type="b" direction="out"/>
+                </method>
+              </interface>
+            </node>
+        """
+
+        val root = TestXmlSupport.parse(xml)
+        val proxyFile = ProxyGenerator()
+            .transformXmlToFile(root)
+            .first { it.name == "KeywordTestProxy" }
+            .toString()
+
+        assertTrue(
+            proxyFile.contains("call(`interface`)"),
+            "Proxy call() should backtick-escape 'interface': $proxyFile"
+        )
+    }
+
+    @Test
+    fun adaptorGenerationEscapesKotlinKeywordsInSignalCallBody() {
+        val xml = """
+            <node>
+              <interface name="Org.Example.KeywordTest">
+                <signal name="StatusChanged">
+                  <arg name="interface" type="s"/>
+                  <arg name="object" type="s"/>
+                </signal>
+              </interface>
+            </node>
+        """
+
+        val root = TestXmlSupport.parse(xml)
+        val adaptorFile = AdaptorGenerator()
+            .transformXmlToFile(root)
+            .first { it.name == "KeywordTestAdaptor" }
+            .toString()
+
+        assertTrue(
+            adaptorFile.contains("call(`interface`, `object`)"),
+            "Adaptor signal call() should backtick-escape keywords: $adaptorFile"
+        )
+    }
 }

@@ -33,6 +33,7 @@ import com.squareup.kotlinpoet.KModifier.SUSPEND
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeSpec.Builder
+import com.squareup.kotlinpoet.joinToCode
 import com.squareup.kotlinpoet.withIndent
 
 class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
@@ -81,12 +82,14 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
                     signal.name
                 )
                 withIndent {
-                    add(
-                        "call(${
-                            params.joinToString(", ") {
-                                (it.value.name ?: "arg${it.index}").decapitalCamelCase
-                            }
-                        })\n"
+                    val paramCode = params.map {
+                        val name = it.value.name ?: "arg${it.index}"
+                        name.decapitalCamelCase
+                    }.map { CodeBlock.of("%N", it) }
+
+                    addStatement(
+                        "call(%L)",
+                        paramCode.joinToCode()
                     )
                 }
                 add("}\n")
