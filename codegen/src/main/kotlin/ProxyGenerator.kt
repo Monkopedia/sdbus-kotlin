@@ -36,6 +36,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.UNIT
+import com.squareup.kotlinpoet.joinToCode
 import com.squareup.kotlinpoet.withIndent
 
 class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
@@ -88,12 +89,15 @@ class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOve
                         if (outputs.size > 1) {
                             add("isGroupedReturn = true\n")
                         }
-                        add(
-                            "call(${
-                                params.joinToString(", ") {
-                                    (it.value.name ?: "arg${it.index}").decapitalCamelCase
-                                }
-                            })\n"
+
+                        val paramCode = params.map {
+                            val name = it.value.name ?: "arg${it.index}"
+                            name.decapitalCamelCase
+                        }.map { CodeBlock.of("%N", it) }
+
+                        addStatement(
+                            "call(%L)",
+                            paramCode.joinToCode()
                         )
                     }
                     add("}\n")
