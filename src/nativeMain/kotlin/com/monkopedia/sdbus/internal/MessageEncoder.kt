@@ -284,10 +284,27 @@ internal class ListEncoder<K, N : CVariable>(
 ) : AbstractEncoder() {
     private val list = mutableListOf<K>()
 
-    override fun encodeValue(value: Any) {
-        @Suppress("UNCHECKED_CAST")
-        list.add((value as? K) ?: return)
+    @Suppress("UNCHECKED_CAST")
+    private fun add(value: Any) {
+        list.add(value as K)
     }
+
+    // kotlinx.serialization unboxes unsigned inline classes (UByte→Byte, UShort→Short, etc.)
+    // before calling encodeByte/Short/Int/Long. K is erased on Native, so `value as K` is a no-op
+    // at runtime and the mis-typed primitive ends up in the native allocArray path. Re-box based
+    // on the D-Bus signature character here to match what the converter expects.
+    override fun encodeByte(value: Byte) =
+        add(if (signature.value == "y") value.toUByte() else value)
+
+    override fun encodeShort(value: Short) =
+        add(if (signature.value == "q") value.toUShort() else value)
+
+    override fun encodeInt(value: Int) = add(if (signature.value == "u") value.toUInt() else value)
+
+    override fun encodeLong(value: Long) =
+        add(if (signature.value == "t") value.toULong() else value)
+
+    override fun encodeValue(value: Any) = add(value)
 
     override fun endStructure(descriptor: SerialDescriptor) {
         memScoped {
