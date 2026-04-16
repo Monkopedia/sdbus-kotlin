@@ -19,7 +19,6 @@
         }
       }
     </script>
-<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
 <script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async="async"></script>
 <link href="../../styles/style.css" rel="Stylesheet">
 <link href="../../styles/main.css" rel="Stylesheet">
@@ -32,8 +31,8 @@
 <script type="text/javascript" src="../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../scripts/prism.js" async="async"></script>
 <script type="text/javascript" src="../../ui-kit/ui-kit.min.js" defer="defer"></script>
-<link href="../../images/logo-icon.svg">
 <link href="../../images/monkopedia_icon.png">
+<link href="../../images/logo-icon.svg">
 <link href="../../styles/logo-styles.css" rel="Stylesheet">
 </head>
 <body>
@@ -47,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.4.2        </div>
+0.4.3        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -112,7 +111,7 @@
   <div class="cover ">
     <h1 class="cover"><span>emit</span><wbr></wbr><span><span>Signal</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="-object/index.html">Object</a><span class="token punctuation">.</span><a href="emit-signal.html"><span class="token function">emitSignal</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="-interface-name/index.html">InterfaceName</a><span class="token operator"> = </span>InterfaceName(&quot;&quot;)<span class="token punctuation">, </span></span><span class="parameter ">signalName<span class="token operator">: </span><a href="-signal-name/index.html">SignalName</a><span class="token operator"> = </span>SignalName(&quot;&quot;)<span class="token punctuation">, </span></span><span class="parameter ">builder<span class="token operator">: </span><a href="-signal-emitter/index.html">SignalEmitter</a><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Emits signal on D-Bus</p><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph">A helper object for convenient emission of signals</p><p class="paragraph">This is a high-level, convenience way of emitting D-Bus signals that abstracts from the D-Bus message concept. Signal arguments are automatically serialized in a message and D-Bus signatures automatically deduced from the provided native arguments.</p></span><h4 class="tableheader">Parameters</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>signal</span><wbr></wbr><span><span>Name</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Name of the signal</p></div></div></div></div></div><h4 class="tableheader">Throws</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-error/index.html"><span><span>Error</span></span></a></div></span></div><div><div class="title"><p class="paragraph">in case of failure</p></div></div></div></div></div></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="-object/index.html">Object</a><span class="token punctuation">.</span><a href="emit-signal.html"><span class="token function">emitSignal</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">interfaceName<span class="token operator">: </span><a href="-interface-name/index.html">InterfaceName</a><span class="token operator"> = </span>InterfaceName(&quot;&quot;)<span class="token punctuation">, </span></span><span class="parameter ">signalName<span class="token operator">: </span><a href="-signal-name/index.html">SignalName</a><span class="token operator"> = </span>SignalName(&quot;&quot;)<span class="token punctuation">, </span></span><span class="parameter ">builder<span class="token operator">: </span><a href="-signal-emitter/index.html">SignalEmitter</a><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Emits signal on D-Bus</p><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph">A helper object for convenient emission of signals</p><p class="paragraph">This is a high-level, convenience way of emitting D-Bus signals that abstracts from the D-Bus message concept. Signal arguments are automatically serialized in a message and D-Bus signatures automatically deduced from the provided native arguments.</p></span><h4 class="tableheader">Parameters</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>signal</span><wbr></wbr><span><span>Name</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Name of the signal</p></div></div></div></div></div><h4 class="tableheader">Throws</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-error/index.html"><span>com.</span><wbr></wbr><span>monkopedia.</span><wbr></wbr><span>sdbus.</span><wbr></wbr><span>Error</span></a></div></span></div><div><div class="title"><p class="paragraph">in case of failure</p></div></div></div></div></div></div></div>
 </div>
     <div class="footer">
         <div class="footer--container">

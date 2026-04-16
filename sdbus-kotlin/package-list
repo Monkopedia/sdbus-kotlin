@@ -210,7 +210,7 @@ $dokka.location:com.monkopedia.sdbus/MethodCall/createErrorReply/#com.monkopedia
 $dokka.location:com.monkopedia.sdbus/MethodCall/createReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/create-reply.html
 $dokka.location:com.monkopedia.sdbus/MethodCall/dontExpectReply/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/dont-expect-reply.html
 $dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
-$dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlinx.cinterop.CPointer[kotlinx.cinterop.CFunction[kotlin.Function3[kotlinx.cinterop.CPointer[<ERROR CLASS> cnames/structs/sd_bus_message]?,kotlinx.cinterop.CPointer[kotlinx.cinterop.CPointed]?,kotlinx.cinterop.CPointer[sdbus.sd_bus_error]?,kotlin.Int]]]#kotlin.Any?#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
+$dokka.location:com.monkopedia.sdbus/MethodCall/send/#kotlinx.cinterop.CPointer[kotlinx.cinterop.CFunction[kotlin.Function3[kotlinx.cinterop.CPointer[cnames.structs.sd_bus_message]?,kotlinx.cinterop.CPointer[kotlinx.cinterop.CPointed]?,kotlinx.cinterop.CPointer[sdbus.sd_bus_error]?,kotlin.Int]]]#kotlin.Any?#kotlin.ULong/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-call/send.html
 $dokka.location:com.monkopedia.sdbus/MethodCallback///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-callback/index.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker///PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/index.html
 $dokka.location:com.monkopedia.sdbus/MethodInvoker/args/#/PointingToDeclaration/sdbus-kotlin/com.monkopedia.sdbus/-method-invoker/args.html
