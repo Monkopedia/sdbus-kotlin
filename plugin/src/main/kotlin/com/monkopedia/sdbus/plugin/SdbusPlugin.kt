@@ -4,7 +4,7 @@ import com.monkopedia.sdbus.capitalized
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 
 class SdbusPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -17,7 +17,7 @@ class SdbusPlugin : Plugin<Project> {
                     kotlin.srcDirs(outputDirectory)
                 }
             }
-            target.tasks.withType(KotlinCompile::class.java).configureEach { task ->
+            target.tasks.withType(AbstractKotlinCompileTool::class.java).configureEach { task ->
                 task.dependsOn(rootTask)
             }
             ext.sources.asFileTree.filter { it.isFile && it.extension == "xml" }.forEach { file ->

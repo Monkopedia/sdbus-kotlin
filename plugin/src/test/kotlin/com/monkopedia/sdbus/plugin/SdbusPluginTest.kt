@@ -48,6 +48,19 @@ class SdbusPluginTest {
     }
 
     @Test
+    fun wiresGeneratorAsDependencyOfNativeCompile() = withProject(
+        generateProxies = false,
+        generateAdapters = false
+    ) { dir ->
+        val result = runTask(dir, "compileKotlinLinuxX64", "--dry-run")
+        assertTrue(
+            result.output.contains("generateSdbusWrappers"),
+            "Expected compileKotlinLinuxX64 to depend on generateSdbusWrappers; output was:\n" +
+                result.output
+        )
+    }
+
+    @Test
     fun appliesOutputPackageOverride() = withProject(
         generateProxies = false,
         generateAdapters = false,
@@ -168,11 +181,11 @@ class SdbusPluginTest {
         }
     }
 
-    private fun runTask(projectDir: File, taskName: String): BuildResult = GradleRunner.create()
+    private fun runTask(projectDir: File, vararg args: String): BuildResult = GradleRunner.create()
         .withProjectDir(projectDir)
         .withPluginClasspath()
         .withArguments(
-            taskName,
+            *args,
             "--offline",
             "--stacktrace",
             "-g",
