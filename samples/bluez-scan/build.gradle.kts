@@ -1,6 +1,6 @@
 plugins {
-    kotlin("multiplatform") version "2.3.0"
-    kotlin("plugin.serialization") version "2.3.0"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlin.serialization)
     id("com.monkopedia.sdbus.plugin")
 }
 
@@ -32,16 +32,16 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.10.0-RC")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.datetime)
                 implementation(kotlin("stdlib"))
-                implementation("com.monkopedia:sdbus-kotlin:0.4.2")
+                implementation("com.monkopedia:sdbus-kotlin:0.4.3")
             }
         }
         val nativeTest by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }
@@ -59,6 +59,3 @@ tasks.register<JavaExec>("runJvm") {
     )
 }
 
-tasks.matching { it.name.startsWith("compileKotlin") }.configureEach {
-    dependsOn("generateSdbusWrappers")
-}
