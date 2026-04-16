@@ -10,7 +10,7 @@ plugins {
     signing
 }
 
-group = "com.monkopedia.sdbus"
+group = "com.monkopedia"
 
 repositories {
     mavenCentral()
@@ -77,6 +77,7 @@ dokka {
 }
 
 mavenPublishing {
+    coordinates("com.monkopedia", "sdbus-kotlin-codegen", project.version.toString())
     pom {
         name.set("sdbus-kotlin-codegen")
         description.set("A kotlin/native dbus client code generator")
