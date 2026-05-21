@@ -61,6 +61,20 @@ class SdbusPluginTest {
     }
 
     @Test
+    fun wiresGeneratorAsDependencyOfSourcesJar() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        applyMavenPublish = true
+    ) { dir ->
+        val result = runTask(dir, "sourcesJar", "--dry-run")
+        assertTrue(
+            result.output.contains("generateSdbusWrappers"),
+            "Expected sourcesJar to depend on generateSdbusWrappers; output was:\n" +
+                result.output
+        )
+    }
+
+    @Test
     fun appliesOutputPackageOverride() = withProject(
         generateProxies = false,
         generateAdapters = false,
@@ -84,6 +98,7 @@ class SdbusPluginTest {
         outputPackage: String? = null,
         compileTargetJvm: Boolean = false,
         includeCompileFixture: Boolean = false,
+        applyMavenPublish: Boolean = false,
         block: (File) -> Unit
     ) {
         val root = Files.createTempDirectory("kdbus-plugin-test").toFile()
@@ -106,6 +121,7 @@ class SdbusPluginTest {
                     plugins {
                       id("org.jetbrains.kotlin.multiplatform") version "2.2.10"
                       id("com.monkopedia.sdbus.plugin")
+                      ${if (applyMavenPublish) "id(\"maven-publish\")" else ""}
                     }
 
                     repositories {
