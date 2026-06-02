@@ -252,7 +252,12 @@ mavenPublishing {
     }
     publishToMavenCentral()
 
-    signAllPublications()
+    // SNAPSHOT builds (e.g. publishToMavenLocal for downstream testing) are not signed:
+    // Maven Central doesn't require signatures for snapshots, and it avoids needing a GPG
+    // key for local cross-project validation.
+    if (!version.toString().endsWith("SNAPSHOT")) {
+        signAllPublications()
+    }
 }
 
 tasks.register(
@@ -316,7 +321,9 @@ allprojects {
     }
 }
 
-signing {
-    useGpgCmd()
-    sign(publishing.publications)
+if (!version.toString().endsWith("SNAPSHOT")) {
+    signing {
+        useGpgCmd()
+        sign(publishing.publications)
+    }
 }
