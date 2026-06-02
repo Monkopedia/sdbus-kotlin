@@ -259,7 +259,7 @@ mavenPublishing {
             url.set("https://github.com/Monkopedia/sdbus-kotlin/")
         }
     }
-    publishToMavenCentral()
+    publishToMavenCentral(automaticRelease = true)
 
     // SNAPSHOT builds (e.g. publishToMavenLocal for downstream testing) are not signed:
     // Maven Central doesn't require signatures for snapshots, and it avoids needing a GPG
