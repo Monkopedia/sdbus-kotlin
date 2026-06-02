@@ -34,6 +34,13 @@ actual sealed class Message {
 
     internal var metadata: Metadata = Metadata()
     internal val payload: MutableList<Any?> = mutableListOf()
+
+    // Declared D-Bus signature of the outgoing body, accumulated from each arg's
+    // serializer descriptor as it is serialized. This is authoritative for the wire
+    // signature: value-based inference cannot recover the element types of an empty
+    // collection (an empty Map<String, Variant> has no entry to infer "a{sv}" from, so
+    // inference yields the malformed "a{}", which makes the bus drop the connection).
+    internal val declaredBodySignature: StringBuilder = StringBuilder()
     private var readIndex: Int = 0
     private var openVariantFrame: Pair<Int, String>? = null
     private val enteredVariantValues: ArrayDeque<Any?> = ArrayDeque()
@@ -464,6 +471,11 @@ internal actual fun <T> Message.serialize(
     arg: T
 ) {
     payload.add(arg)
+    // Record the declared signature from the descriptor so the send path uses the
+    // real type instead of inferring it from the (possibly empty) runtime value.
+    runCatching { serializer.descriptor.asSignature.value }
+        .getOrNull()
+        ?.let { declaredBodySignature.append(it) }
 }
 
 @PublishedApi

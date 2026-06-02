@@ -673,6 +673,43 @@ private fun toJavaVariantValue(
     signature
 )
 
+// Counts the number of top-level D-Bus types in a signature (e.g. "sa{sv}" -> 2),
+// used to check that a declared body signature lines up with the payload it describes.
+private fun countTopLevelTypes(signature: String?): Int {
+    if (signature.isNullOrEmpty()) return 0
+    fun parseOne(index: Int): Int {
+        if (index >= signature.length) return index
+        return when (signature[index]) {
+            'a' -> parseOne(index + 1)
+            '(' -> {
+                var i = index + 1
+                while (i < signature.length && signature[i] != ')') {
+                    i = parseOne(i)
+                }
+                (i + 1).coerceAtMost(signature.length)
+            }
+            '{' -> {
+                var i = index + 1
+                while (i < signature.length && signature[i] != '}') {
+                    i = parseOne(i)
+                }
+                (i + 1).coerceAtMost(signature.length)
+            }
+            else -> index + 1
+        }
+    }
+
+    var index = 0
+    var count = 0
+    while (index < signature.length) {
+        val next = parseOne(index)
+        if (next <= index) break
+        count++
+        index = next
+    }
+    return count
+}
+
 private fun inferSignalSignature(value: Any?): String? = when (value) {
     null -> null
     is Message.JvmVariantPayload -> "v"
@@ -876,6 +913,7 @@ private class PureJavaDbusProxy(
                 methodName = methodName,
                 path = path,
                 payload = message.payload.toList(),
+                declaredSignature = message.declaredBodySignature.toString(),
                 timeout = null
             )
         }
@@ -993,6 +1031,7 @@ private class PureJavaDbusProxy(
                 methodName = methodName,
                 path = path,
                 payload = message.payload.toList(),
+                declaredSignature = message.declaredBodySignature.toString(),
                 timeout = timeout.takeUnless { it == 0uL }
             )
         }
@@ -1066,25 +1105,42 @@ private class PureJavaDbusProxy(
         return localUniqueName.takeIf { it == localBusOwner }
     }
 
+    // Wire signature for an outgoing body. Prefer the declared signature accumulated from
+    // serializer descriptors (correct even for empty collections); only fall back to
+    // value-based inference when no usable declared signature is available — e.g. a body
+    // assembled through the raw append() API rather than serialize(). The top-level type
+    // count guards against a declared signature that doesn't line up with the payload.
+    private fun bodySignature(
+        payload: List<Any?>,
+        declaredSignature: String?,
+        errorFor: (Any?) -> String
+    ): String {
+        if (!declaredSignature.isNullOrEmpty() &&
+            countTopLevelTypes(declaredSignature) == payload.size
+        ) {
+            return declaredSignature
+        }
+        return payload.joinToString(separator = "") { value ->
+            inferSignalSignature(value) ?: throw createError(-1, errorFor(value))
+        }
+    }
+
     private fun callRemoteMethod(
         connection: AbstractConnection,
         interfaceName: String,
         methodName: String,
         path: String,
         payload: List<Any?>,
+        declaredSignature: String?,
         timeout: ULong?
     ): MethodReply {
         val signature = if (payload.isEmpty()) {
             null
         } else {
-            payload.joinToString(separator = "") { value ->
-                inferSignalSignature(value)
-                    ?: throw createError(
-                        -1,
-                        "callMethod failed: unsupported argument type ${
-                            value?.let { typed -> typed::class.simpleName } ?: "null"
-                        }"
-                    )
+            bodySignature(payload, declaredSignature) { value ->
+                "callMethod failed: unsupported argument type ${
+                    value?.let { typed -> typed::class.simpleName } ?: "null"
+                }"
             }
         }
         val args = payload.map(::toJavaSignalValue).toTypedArray()
@@ -1283,41 +1339,6 @@ private class PureJavaDbusObject(
         mutableMapOf<String, MutableMap<String, PropertyVTableItem>>()
     private var propertiesDispatchRegistered = false
     private val dispatchDestination = senderName ?: javaConnection?.uniqueNameOrNull().orEmpty()
-
-    private fun countTopLevelTypes(signature: String?): Int {
-        if (signature.isNullOrEmpty()) return 0
-        fun parseOne(index: Int): Int {
-            if (index >= signature.length) return index
-            return when (signature[index]) {
-                'a' -> parseOne(index + 1)
-                '(' -> {
-                    var i = index + 1
-                    while (i < signature.length && signature[i] != ')') {
-                        i = parseOne(i)
-                    }
-                    (i + 1).coerceAtMost(signature.length)
-                }
-                '{' -> {
-                    var i = index + 1
-                    while (i < signature.length && signature[i] != '}') {
-                        i = parseOne(i)
-                    }
-                    (i + 1).coerceAtMost(signature.length)
-                }
-                else -> index + 1
-            }
-        }
-
-        var index = 0
-        var count = 0
-        while (index < signature.length) {
-            val next = parseOne(index)
-            if (next <= index) break
-            count++
-            index = next
-        }
-        return count
-    }
 
     private fun parseInterfaceName(value: Any?): String = when (value) {
         is InterfaceName -> value.value

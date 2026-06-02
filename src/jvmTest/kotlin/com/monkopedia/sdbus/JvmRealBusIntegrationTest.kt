@@ -8,6 +8,42 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 class JvmRealBusIntegrationTest {
+
+    // Regression for the BlueZ-on-JVM failure, exercised over the real wire (same-process
+    // calls short-circuit through local dispatch and never serialize, so they can't catch
+    // this). An empty collection argument used to be serialized with an inferred signature,
+    // but an empty value has no element to infer from — so an empty array became the
+    // malformed "a" (and an empty dict "a{}"), which makes the daemon drop the connection
+    // with "Underlying transport returned -1". Here we call the bus daemon's BecomeMonitor,
+    // whose first argument is an `as` filter list, with an empty list: with the fix it
+    // serializes as "as" and succeeds; without it the connection is torn down.
+    @Test
+    fun methodCall_withEmptyArrayArg_overWire_doesNotDropConnection() = runBlocking {
+        val connection = createBusConnection()
+        if (connection.getUniqueName().value == ":jvm-stub") {
+            connection.release()
+            return@runBlocking
+        }
+        val proxy = createProxy(
+            connection,
+            ServiceName("org.freedesktop.DBus"),
+            ObjectPath("/org/freedesktop/DBus")
+        )
+        try {
+            // Empty `as` filters + flags 0. The call must not throw a transport error;
+            // a normal reply (or a benign D-Bus error) means the connection survived.
+            proxy.callMethod<Unit>(
+                InterfaceName("org.freedesktop.DBus.Monitoring"),
+                MethodName("BecomeMonitor")
+            ) {
+                call(emptyList<String>(), 0u)
+            }
+        } finally {
+            proxy.release()
+            connection.release()
+        }
+    }
+
     @Test
     fun createSystemBusConnection_usesDistinctConnectionsWhenRealBusIsAvailable() {
         val first = createSystemBusConnection()
