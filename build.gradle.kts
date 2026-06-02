@@ -3,6 +3,7 @@
 import java.util.*
 import kotlinx.validation.ExperimentalBCVApi
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
@@ -41,7 +42,15 @@ apiValidation {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        // Pin the JVM bytecode target so the published artifact is deterministic regardless
+        // of the JDK used to build it. Consumers (e.g. blue-falcon-sdbus on jvmToolchain(17))
+        // can't inline higher-target bytecode; without this, a build on JDK 21 would emit
+        // JVM-21 bytecode and break every JVM-17 consumer.
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
     linuxX64 {
         binaries {
             sharedLib { }
@@ -252,7 +261,12 @@ mavenPublishing {
     }
     publishToMavenCentral()
 
-    signAllPublications()
+    // SNAPSHOT builds (e.g. publishToMavenLocal for downstream testing) are not signed:
+    // Maven Central doesn't require signatures for snapshots, and it avoids needing a GPG
+    // key for local cross-project validation.
+    if (!version.toString().endsWith("SNAPSHOT")) {
+        signAllPublications()
+    }
 }
 
 tasks.register(
@@ -316,7 +330,9 @@ allprojects {
     }
 }
 
-signing {
-    useGpgCmd()
-    sign(publishing.publications)
+if (!version.toString().endsWith("SNAPSHOT")) {
+    signing {
+        useGpgCmd()
+        sign(publishing.publications)
+    }
 }

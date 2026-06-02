@@ -97,6 +97,89 @@ class CommonApiIntegrationTest {
         }
     }
 
+    // Regression for the BlueZ-on-JVM failure: a method taking an empty a{sv} (e.g. the
+    // GATT ReadValue `options` dict) must serialize with the declared signature "a{sv}".
+    // The JVM backend used to infer the signature from runtime values, and an empty map
+    // has no entries to infer from — it emitted the malformed "a{}", which made the bus
+    // daemon drop the connection ("Underlying transport returned -1"). Passes on native;
+    // reproduced the failure on JVM before the fix.
+    @Test
+    fun typedMethodCall_withEmptyDictArg_roundTrips() {
+        val ids = uniqueFixtureIds("emptyDict")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("CountOptions")) {
+                call { options: Map<String, Variant> -> options.size }
+            }
+        }
+        serverConnection.enterEventLoopAsync()
+        val proxy = createProxy(
+            proxyConnection,
+            ids.service,
+            ids.path,
+            dontRunEventLoopThread = true
+        )
+
+        try {
+            val result = proxy.callMethod<Int>(ids.iface, MethodName("CountOptions")) {
+                call(emptyMap<String, Variant>())
+            }
+            assertEquals(0, result)
+        } finally {
+            runBlocking {
+                proxyConnection.leaveEventLoop()
+                serverConnection.leaveEventLoop()
+            }
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
+    // Sibling of the empty-dict case: an empty array (`as`) has no element to infer from,
+    // so the JVM backend used to emit the malformed bare "a". Verifies the declared
+    // signature is used instead.
+    @Test
+    fun typedMethodCall_withEmptyArrayArg_roundTrips() {
+        val ids = uniqueFixtureIds("emptyArray")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("CountItems")) {
+                call { items: List<String> -> items.size }
+            }
+        }
+        serverConnection.enterEventLoopAsync()
+        val proxy = createProxy(
+            proxyConnection,
+            ids.service,
+            ids.path,
+            dontRunEventLoopThread = true
+        )
+
+        try {
+            val result = proxy.callMethod<Int>(ids.iface, MethodName("CountItems")) {
+                call(emptyList<String>())
+            }
+            assertEquals(0, result)
+        } finally {
+            runBlocking {
+                proxyConnection.leaveEventLoop()
+                serverConnection.leaveEventLoop()
+            }
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
     @Test
     fun createMethodCall_carriesInterfaceAndMethodMetadata() {
         val ids = uniqueFixtureIds("metadata")

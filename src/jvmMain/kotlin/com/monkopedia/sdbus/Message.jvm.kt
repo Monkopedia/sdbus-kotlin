@@ -34,6 +34,13 @@ actual sealed class Message {
 
     internal var metadata: Metadata = Metadata()
     internal val payload: MutableList<Any?> = mutableListOf()
+
+    // Declared D-Bus signature of the outgoing body, accumulated from each arg's
+    // serializer descriptor as it is serialized. This is authoritative for the wire
+    // signature: value-based inference cannot recover the element types of an empty
+    // collection (an empty Map<String, Variant> has no entry to infer "a{sv}" from, so
+    // inference yields the malformed "a{}", which makes the bus drop the connection).
+    internal val declaredBodySignature: StringBuilder = StringBuilder()
     private var readIndex: Int = 0
     private var openVariantFrame: Pair<Int, String>? = null
     private val enteredVariantValues: ArrayDeque<Any?> = ArrayDeque()
@@ -279,6 +286,34 @@ private fun coerceForDescriptor(value: Any?, descriptor: SerialDescriptor): Any?
             else -> value
         }
 
+        // D-Bus y/q/u/t map to Kotlin's unsigned inline classes. dbus-java hands back the
+        // signed primitive (e.g. a `ay` byte array arrives as java.lang.Byte values), so box
+        // it into the expected unsigned type — otherwise a List<UByte> ends up holding Byte
+        // and unboxing throws ClassCastException (e.g. reading a GATT characteristic value).
+        "kotlin.UByte" -> when (value) {
+            is UByte -> value
+            is Number -> value.toByte().toUByte()
+            else -> value
+        }
+
+        "kotlin.UShort" -> when (value) {
+            is UShort -> value
+            is Number -> value.toShort().toUShort()
+            else -> value
+        }
+
+        "kotlin.UInt" -> when (value) {
+            is UInt -> value
+            is Number -> value.toInt().toUInt()
+            else -> value
+        }
+
+        "kotlin.ULong" -> when (value) {
+            is ULong -> value
+            is Number -> value.toLong().toULong()
+            else -> value
+        }
+
         else -> value
     }
     if (wrapped !== value) return wrapped
@@ -464,6 +499,11 @@ internal actual fun <T> Message.serialize(
     arg: T
 ) {
     payload.add(arg)
+    // Record the declared signature from the descriptor so the send path uses the
+    // real type instead of inferring it from the (possibly empty) runtime value.
+    runCatching { serializer.descriptor.asSignature.value }
+        .getOrNull()
+        ?.let { declaredBodySignature.append(it) }
 }
 
 @PublishedApi
