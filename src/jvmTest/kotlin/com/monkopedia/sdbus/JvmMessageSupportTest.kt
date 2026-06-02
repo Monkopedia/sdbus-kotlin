@@ -167,4 +167,18 @@ class JvmMessageSupportTest {
         assertFailsWith<Error> { message.getCredsSupplementaryGids() }
         assertFailsWith<Error> { message.getSELinuxContext() }
     }
+
+    // Regression: D-Bus `ay` (e.g. a GATT characteristic value) arrives from dbus-java as
+    // signed java.lang.Byte values, but the declared type is List<UByte>. Deserialization
+    // must box each element into UByte; otherwise reading it throws
+    // "class java.lang.Byte cannot be cast to class kotlin.UByte".
+    @Test
+    fun deserialize_ayByteArray_coercesSignedBytesToUByteList() {
+        val message = PlainMessage.createPlainMessage()
+        message.payload.add(listOf<Byte>(0xBF.toByte(), 0x01, 0x02))
+
+        val result = message.deserialize<List<UByte>>()
+
+        assertEquals(listOf<UByte>(0xBFu, 0x01u, 0x02u), result)
+    }
 }

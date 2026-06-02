@@ -286,6 +286,34 @@ private fun coerceForDescriptor(value: Any?, descriptor: SerialDescriptor): Any?
             else -> value
         }
 
+        // D-Bus y/q/u/t map to Kotlin's unsigned inline classes. dbus-java hands back the
+        // signed primitive (e.g. a `ay` byte array arrives as java.lang.Byte values), so box
+        // it into the expected unsigned type — otherwise a List<UByte> ends up holding Byte
+        // and unboxing throws ClassCastException (e.g. reading a GATT characteristic value).
+        "kotlin.UByte" -> when (value) {
+            is UByte -> value
+            is Number -> value.toByte().toUByte()
+            else -> value
+        }
+
+        "kotlin.UShort" -> when (value) {
+            is UShort -> value
+            is Number -> value.toShort().toUShort()
+            else -> value
+        }
+
+        "kotlin.UInt" -> when (value) {
+            is UInt -> value
+            is Number -> value.toInt().toUInt()
+            else -> value
+        }
+
+        "kotlin.ULong" -> when (value) {
+            is ULong -> value
+            is Number -> value.toLong().toULong()
+            else -> value
+        }
+
         else -> value
     }
     if (wrapped !== value) return wrapped
