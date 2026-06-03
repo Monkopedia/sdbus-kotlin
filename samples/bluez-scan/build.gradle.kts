@@ -36,7 +36,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization)
                 implementation(libs.kotlinx.datetime)
                 implementation(kotlin("stdlib"))
-                implementation("com.monkopedia:sdbus-kotlin:0.4.4")
+                implementation("com.monkopedia:sdbus-kotlin:0.4.5")
             }
         }
         val nativeTest by getting {
