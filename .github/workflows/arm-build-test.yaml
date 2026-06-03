@@ -11,6 +11,28 @@ permissions:
   contents: read
 
 jobs:
+  static-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev
+
+      - name: ktlint + binary-compatibility check
+        run: ./gradlew ktlintCheck apiCheck --stacktrace
+
   full-tests-x64:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
