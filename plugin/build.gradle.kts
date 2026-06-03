@@ -79,7 +79,7 @@ mavenPublishing {
             url.set("https://github.com/Monkopedia/sdbus-kotlin/")
         }
     }
-    publishToMavenCentral()
+    publishToMavenCentral(automaticRelease = true)
 
     signAllPublications()
 }
