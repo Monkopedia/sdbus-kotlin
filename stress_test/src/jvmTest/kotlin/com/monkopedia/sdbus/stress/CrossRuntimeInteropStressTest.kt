@@ -595,10 +595,7 @@ class CrossRuntimeInteropStressTest {
         return false
     }
 
-    private fun <T> callSkippingUnknownObjectErrors(
-        timeoutMillis: Long,
-        call: () -> T
-    ): Result<T> {
+    private fun <T> callSkippingUnknownObjectErrors(timeoutMillis: Long, call: () -> T): Result<T> {
         val start = System.currentTimeMillis()
         var lastUnknownObject: Throwable? = null
         while (System.currentTimeMillis() - start < timeoutMillis) {
