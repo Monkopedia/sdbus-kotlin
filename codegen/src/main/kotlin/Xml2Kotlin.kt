@@ -80,6 +80,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import java.io.File
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
+import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
 import nl.adaptivity.xmlutil.serialization.DefaultXmlSerializationPolicy
@@ -107,6 +108,7 @@ class Xml2Kotlin : CliktCommand() {
         help = "Override Kotlin package for generated files"
     )
 
+    @OptIn(ExperimentalXmlUtilApi::class)
     override fun run() {
         val packageOverride = outputPackage?.trim()?.takeUnless { it.isEmpty() }
         val xml = XML {
