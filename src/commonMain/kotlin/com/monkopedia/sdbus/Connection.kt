@@ -189,7 +189,7 @@ interface Connection : Resource {
     fun releaseName(name: ServiceName)
 }
 
-internal expect inline fun now(): Duration
+internal expect fun now(): Duration
 
 /**
  * Creates/opens D-Bus session bus connection when in a user context, and a system bus connection, otherwise.

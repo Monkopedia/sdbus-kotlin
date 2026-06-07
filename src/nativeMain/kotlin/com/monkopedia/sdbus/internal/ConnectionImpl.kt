@@ -104,25 +104,25 @@ internal typealias Bus = CPointer<sd_bus>
 internal typealias BusFactory = (CPointer<CPointerVar<sd_bus>>) -> Int
 internal typealias BusPtr = Reference<Bus?>
 
-internal inline fun checkObjectPath(path: String) = sdbusRequire(
+internal fun checkObjectPath(path: String) = sdbusRequire(
     sd_bus_object_path_is_valid(path) == 0,
     "Invalid object path '$path' provided",
     EINVAL
 )
 
-internal inline fun checkInterfaceName(name: String) = sdbusRequire(
+internal fun checkInterfaceName(name: String) = sdbusRequire(
     sd_bus_interface_name_is_valid(name) == 0,
     "Invalid interface name '$name' provided",
     EINVAL
 )
 
-internal inline fun checkServiceName(name: String) = sdbusRequire(
+internal fun checkServiceName(name: String) = sdbusRequire(
     name.isNotEmpty() && sd_bus_service_name_is_valid(name) == 0,
     "Invalid service name '$name' provided",
     EINVAL
 )
 
-internal inline fun checkMemberName(name: String) = sdbusRequire(
+internal fun checkMemberName(name: String) = sdbusRequire(
     sd_bus_member_name_is_valid(name) == 0,
     "Invalid member name '$name' provided",
     EINVAL

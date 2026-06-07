@@ -297,12 +297,12 @@ expect class PendingAsyncCall : Resource {
 
 // Out-of-line member definitions
 
-inline fun Proxy.callMethod(message: MethodCall, timeout: Duration): MethodReply =
+fun Proxy.callMethod(message: MethodCall, timeout: Duration): MethodReply =
     callMethod(message, timeout.inWholeMicroseconds.toULong())
 
-inline fun Proxy.callMethodAsync(
+fun Proxy.callMethodAsync(
     message: MethodCall,
-    noinline asyncReplyCallback: AsyncReplyHandler,
+    asyncReplyCallback: AsyncReplyHandler,
     timeout: Duration
 ): PendingAsyncCall =
     callMethodAsync(message, asyncReplyCallback, timeout.inWholeMicroseconds.toULong())
@@ -328,7 +328,7 @@ suspend inline fun Proxy.callMethodAsync(message: MethodCall, timeout: Duration)
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-inline fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGetter =
+fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGetter =
     AsyncPropertyGetter(this, propertyName)
 
 /**
@@ -350,7 +350,7 @@ inline fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGett
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-inline fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySetter =
+fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySetter =
     AsyncPropertySetter(this, propertyName)
 
 /**
@@ -368,7 +368,7 @@ inline fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySett
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-inline fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
+fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
 
 /**
  * Gets values of all properties of the D-Bus object asynchronously
@@ -387,7 +387,7 @@ inline fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(t
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
 
-inline fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPropertiesGetter(this)
+fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPropertiesGetter(this)
 
 /**
  * Creates a proxy object for a specific remote D-Bus object

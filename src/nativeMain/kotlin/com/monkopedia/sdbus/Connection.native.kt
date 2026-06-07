@@ -69,4 +69,4 @@ actual fun createServerBus(fd: Int): Connection = serverConnection(SdBus(), fd)
 internal fun createBusConnection(bus: CPointer<sd_bus>): Connection =
     ConnectionImpl(SdBus(), Reference(bus) {})
 
-internal actual inline fun now(): Duration = com.monkopedia.sdbus.internal.now()
+internal actual fun now(): Duration = com.monkopedia.sdbus.internal.now()

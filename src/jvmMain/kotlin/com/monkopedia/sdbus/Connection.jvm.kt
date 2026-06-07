@@ -40,7 +40,7 @@ internal class JvmConnection(
     override fun release(): Unit = backend.release()
 }
 
-internal actual inline fun now(): Duration = Duration.ZERO
+internal actual fun now(): Duration = Duration.ZERO
 
 actual fun createBusConnection(): Connection = JvmConnection(
     JvmDbusBackendProvider.backend.createConnection(JvmBusType.DEFAULT, null, null, null)

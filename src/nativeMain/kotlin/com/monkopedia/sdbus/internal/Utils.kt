@@ -58,7 +58,7 @@ internal inline fun invokeHandlerAndCatchErrors(
     return true
 }
 
-internal inline fun now(): Duration = memScoped {
+internal fun now(): Duration = memScoped {
     val ts = cValue<timespec>().getPointer(this)
     val r = clock_gettime(CLOCK_MONOTONIC, ts)
     sdbusRequire(r < 0, "clock_gettime failed: ", -errno)

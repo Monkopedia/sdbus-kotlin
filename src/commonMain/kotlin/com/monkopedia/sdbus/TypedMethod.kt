@@ -222,7 +222,7 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
     ): TypedMethodCall<*> = AsyncMethodCall(method, handler, errorCall, coroutineContext)
 
     @PublishedApi
-    internal inline fun args() = listOf<Typed<*>>()
+    internal fun args() = listOf<Typed<*>>()
 
     @PublishedApi
     internal inline fun <reified A : Any> args1() = listOf(typed<A>())
@@ -717,7 +717,7 @@ open class TypedArgumentsBuilderContext {
     open fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
         TypedArguments(inputType, values)
 
-    inline fun call(): TypedArguments = createCall(TypedMethodBuilderContext().args(), emptyList())
+    fun call(): TypedArguments = createCall(TypedMethodBuilderContext().args(), emptyList())
 
     inline fun <reified A : Any> call(a: A) =
         createCall(TypedMethodBuilderContext().args1<A>(), listOf(a))
