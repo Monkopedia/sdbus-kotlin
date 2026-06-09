@@ -50,7 +50,9 @@ jobs:
       - name: Install Test Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus
+          # python3-dbusmock powers the independent-peer harness (DbusmockSmokeTest); if it is
+          # ever unavailable the smoke test skips cleanly rather than failing the build.
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus python3-dbusmock
 
       - name: Run Full Test Suite on x64
         run: |
