@@ -710,6 +710,26 @@ private fun countTopLevelTypes(signature: String?): Int {
     return count
 }
 
+// Wire signature for an outgoing body. Prefer the declared signature accumulated from
+// serializer descriptors (correct even for empty collections); only fall back to value-based
+// inference when no usable declared signature is available — e.g. a body assembled through the
+// raw append() API rather than serialize(). The top-level type count guards against a declared
+// signature that doesn't line up with the payload.
+private fun bodySignature(
+    payload: List<Any?>,
+    declaredSignature: String?,
+    errorFor: (Any?) -> String
+): String {
+    if (!declaredSignature.isNullOrEmpty() &&
+        countTopLevelTypes(declaredSignature) == payload.size
+    ) {
+        return declaredSignature
+    }
+    return payload.joinToString(separator = "") { value ->
+        inferSignalSignature(value) ?: throw createError(-1, errorFor(value))
+    }
+}
+
 private fun inferSignalSignature(value: Any?): String? = when (value) {
     null -> null
     is Message.JvmVariantPayload -> "v"
@@ -1103,26 +1123,6 @@ private class PureJavaDbusProxy(
             }.getOrNull()
         }
         return localUniqueName.takeIf { it == localBusOwner }
-    }
-
-    // Wire signature for an outgoing body. Prefer the declared signature accumulated from
-    // serializer descriptors (correct even for empty collections); only fall back to
-    // value-based inference when no usable declared signature is available — e.g. a body
-    // assembled through the raw append() API rather than serialize(). The top-level type
-    // count guards against a declared signature that doesn't line up with the payload.
-    private fun bodySignature(
-        payload: List<Any?>,
-        declaredSignature: String?,
-        errorFor: (Any?) -> String
-    ): String {
-        if (!declaredSignature.isNullOrEmpty() &&
-            countTopLevelTypes(declaredSignature) == payload.size
-        ) {
-            return declaredSignature
-        }
-        return payload.joinToString(separator = "") { value ->
-            inferSignalSignature(value) ?: throw createError(-1, errorFor(value))
-        }
     }
 
     private fun callRemoteMethod(
@@ -1718,10 +1718,13 @@ private class PureJavaDbusObject(
         val signalName = message.getMemberName()
             ?: throw createError(-1, "emitSignal failed: missing signal name")
         val path = message.getPath() ?: objectPath.value
-        val signature = message.payload.joinToString("") { value ->
-            inferSignalSignature(value)
-                ?: throw createError(-1, "emitSignal failed: unsupported signal payload type")
-        }
+        // Prefer the declared signature (correct even for empty collections, which carry no
+        // runtime element to infer from); fall back to value inference only when no usable
+        // declared signature is available. Mirrors the method-call body path.
+        val signature = bodySignature(
+            message.payload.toList(),
+            message.declaredBodySignature.toString()
+        ) { "emitSignal failed: unsupported signal payload type" }
         val args = message.payload.map(::toJavaSignalValue).toTypedArray()
         val sender = message.getSender() ?: senderName ?: javaConnection?.uniqueNameOrNull()
         val realConnection = javaConnection
