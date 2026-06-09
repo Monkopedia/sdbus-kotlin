@@ -1,5 +1,17 @@
-package com.monkopedia.sdbus
+package com.monkopedia.sdbus.integration
 
+import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.InterfaceName
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.ServiceName
+import com.monkopedia.sdbus.addVTable
+import com.monkopedia.sdbus.callMethod
+import com.monkopedia.sdbus.callMethodAsync
+import com.monkopedia.sdbus.createBusConnection
+import com.monkopedia.sdbus.createObject
+import com.monkopedia.sdbus.createProxy
+import com.monkopedia.sdbus.method
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
