@@ -49,7 +49,11 @@ import platform.posix.errno
  */
 @OptIn(ExperimentalNativeApi::class)
 @Serializable(UnixFd.Companion::class)
-actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
+actual class UnixFd actual constructor(
+    /** The underlying file descriptor owned by this instance, or a negative value if invalid. */
+    val fd: Int,
+    adoptFd: Unit
+) : Resource {
     private var wasReleased = false
     private val resource = fd to singleCall<Int> {
         if (it >= 0) {
@@ -63,6 +67,7 @@ actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
     actual constructor(fd: Int) : this(checkedDup(fd), Unit)
     actual constructor(other: UnixFd) : this(checkedDup(other.fd), Unit)
 
+    /** Whether this instance owns a valid, not-yet-released file descriptor. */
     val isValid: Boolean
         get() = fd >= 0 && !wasReleased
 

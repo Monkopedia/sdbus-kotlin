@@ -28,27 +28,54 @@ import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_CHANGE_SIGNA
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL
 
-// D-Bus interface, method, signal or property flags
+/**
+ * A mutable set of D-Bus interface, method, signal, and property flags.
+ *
+ * Flags describe behavioral attributes such as deprecation, privilege requirements, and property
+ * change-emission behavior. They are attached to vtable items when registering an [Object].
+ */
 class Flags {
+    /** General behavioral flags applicable to interfaces, methods and signals. */
     enum class GeneralFlags(val value: UByte) {
+        /** Marks the element as deprecated. */
         DEPRECATED(0u),
+
+        /** Indicates a method does not send a reply. */
         METHOD_NO_REPLY(1u),
+
+        /** Marks the element as privileged. */
         PRIVILEGED(2u)
     }
 
+    /** Flags controlling how a property signals changes to its value. */
     enum class PropertyUpdateBehaviorFlags(val value: UByte) {
+        /** Emit a PropertiesChanged signal carrying the new value when the property changes. */
         EMITS_CHANGE_SIGNAL(3u),
+
+        /** Emit a PropertiesChanged signal that only invalidates the property when it changes. */
         EMITS_INVALIDATION_SIGNAL(4u),
+
+        /** Do not emit any signal when the property changes. */
         EMITS_NO_SIGNAL(5u),
+
+        /** Marks the property value as constant; it never changes. */
         CONST_PROPERTY_VALUE(6u)
     }
 
+    /** Internal marker carrying the total number of defined flags. */
     enum class Count(val value: UByte) {
+        /** Sentinel value equal to the number of distinct flags. */
         FLAG_COUNT(7u)
     }
 
     private val flags = mutableSetOf(EMITS_CHANGE_SIGNAL.value)
 
+    /**
+     * Sets or clears a general flag.
+     *
+     * @param flag The flag to modify
+     * @param value `true` to set the flag, `false` to clear it
+     */
     fun set(flag: GeneralFlags, value: Boolean = true) {
         if (value) {
             flags.add(flag.value)
@@ -57,6 +84,12 @@ class Flags {
         }
     }
 
+    /**
+     * Selects the property update behavior, replacing any previously selected behavior.
+     *
+     * @param flag The property update behavior to apply
+     * @param value `true` to set the behavior, `false` to clear it
+     */
     fun set(flag: PropertyUpdateBehaviorFlags, value: Boolean = true) {
         flags.remove(EMITS_CHANGE_SIGNAL.value)
         flags.remove(EMITS_INVALIDATION_SIGNAL.value)
@@ -70,7 +103,9 @@ class Flags {
         }
     }
 
+    /** Returns whether the given general [flag] is currently set. */
     fun test(flag: GeneralFlags): Boolean = flag.value in flags
 
+    /** Returns whether the given property update behavior [flag] is currently selected. */
     fun test(flag: PropertyUpdateBehaviorFlags): Boolean = flag.value in flags
 }

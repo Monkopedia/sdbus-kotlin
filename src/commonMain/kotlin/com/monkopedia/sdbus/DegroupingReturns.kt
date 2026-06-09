@@ -31,6 +31,16 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
+/**
+ * Strips the enclosing struct parentheses from this signature when [groupedReturn] is `true`.
+ *
+ * Multiple method return values are internally combined into a single struct; this undoes that
+ * wrapping at the signature level. When [groupedReturn] is `false`, the signature is returned
+ * unchanged.
+ *
+ * @param groupedReturn Whether the signature wraps grouped return values in a struct
+ * @return The possibly-degrouped signature
+ */
 fun Signature.maybeDegrouped(groupedReturn: Boolean): Signature {
     if (groupedReturn) {
         require(value[0] == '(' && value.last() == ')') {

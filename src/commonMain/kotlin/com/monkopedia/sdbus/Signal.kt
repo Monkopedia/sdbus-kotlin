@@ -23,9 +23,25 @@
 
 package com.monkopedia.sdbus
 
+/**
+ * A [Message] representing a D-Bus signal.
+ *
+ * Created via [Object.createSignal]. Serialize the signal arguments into it, optionally restrict
+ * delivery with [setDestination], then emit it with [Object.emitSignal] or [send].
+ */
 expect class Signal : Message {
 
+    /**
+     * Restricts this signal to a single destination bus name instead of broadcasting it.
+     *
+     * @param destination Bus name of the intended recipient
+     */
     fun setDestination(destination: String)
 
+    /**
+     * Emits this signal on the bus.
+     *
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     */
     fun send()
 }

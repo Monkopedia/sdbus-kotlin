@@ -33,6 +33,16 @@ inline fun VTableBuilder.signal(signal: SignalName, builder: SignalVTableItem.()
     items.add(SignalVTableItem(signal).also(builder))
 }
 
+/**
+ * A vtable entry describing a signal exported by an [Object].
+ *
+ * Construct one inside an [addVTable] block via [signal], then declare each parameter with [with].
+ *
+ * @property name The signal name
+ * @property signature D-Bus signature of the signal arguments, built up by [with]
+ * @property paramNames Names of the signal parameters, used for introspection
+ * @property flags Behavioral flags for this signal
+ */
 data class SignalVTableItem(
     val name: SignalName,
     var signature: Signature = Signature(""),
@@ -50,6 +60,7 @@ data class SignalVTableItem(
         paramNames = paramNames + paramName
     }
 
+    /** Whether this signal is marked deprecated. */
     var isDeprecated: Boolean
         get() = flags.test(DEPRECATED)
         set(value) {

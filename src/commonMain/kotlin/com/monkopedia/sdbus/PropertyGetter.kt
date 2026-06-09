@@ -62,6 +62,17 @@ inline fun <reified T : Any> Proxy.getProperty(
     call(interfaceName, propertyName)
 }.get<T>()
 
+/**
+ * Sets a property on the D-Bus object.
+ *
+ * The value's signature is deduced from the reified type [T].
+ *
+ * @param interfaceName Interface that declares the property
+ * @param propertyName Name of the property to set
+ * @param value New value
+ * @param dontExpectReply When `true`, send the set without waiting for a reply
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
+ */
 inline fun <reified T : Any> Proxy.setProperty(
     interfaceName: InterfaceName,
     propertyName: PropertyName,
@@ -74,6 +85,13 @@ inline fun <reified T : Any> Proxy.setProperty(
     }
 }
 
+/**
+ * Creates a read-only Kotlin property delegate backed by a D-Bus property.
+ *
+ * @param interfaceName Interface that declares the property
+ * @param propertyName Name of the property
+ * @return A [PropertyDelegate] usable with the `by` keyword
+ */
 inline fun <R, reified T : Any> Proxy.propDelegate(
     interfaceName: InterfaceName,
     propertyName: PropertyName
@@ -83,6 +101,13 @@ inline fun <R, reified T : Any> Proxy.propDelegate(
     return PropertyDelegate(this, interfaceName, propertyName, type, module, signatureOf<T>())
 }
 
+/**
+ * Creates a read/write Kotlin property delegate backed by a D-Bus property.
+ *
+ * @param interfaceName Interface that declares the property
+ * @param propertyName Name of the property
+ * @return A [MutablePropertyDelegate] usable with the `by` keyword
+ */
 inline fun <R, reified T : Any> Proxy.mutableDelegate(
     interfaceName: InterfaceName,
     propertyName: PropertyName
@@ -99,6 +124,16 @@ inline fun <R, reified T : Any> Proxy.mutableDelegate(
     )
 }
 
+/**
+ * A read-only Kotlin property delegate backed by a D-Bus property.
+ *
+ * Reading the delegated property issues a D-Bus `Get`. The delegate also offers convenience
+ * accessors ([getOrNull], [await]) and reactive observation of changes ([changes], [flow],
+ * [changesOrNull], [flowOrNull]). Obtain one via [Proxy.propDelegate].
+ *
+ * @property interfaceName Interface that declares the property
+ * @property propertyName Name of the property
+ */
 open class PropertyDelegate<R, T : Any>(
     protected val proxy: Proxy,
     val interfaceName: InterfaceName,
@@ -107,6 +142,7 @@ open class PropertyDelegate<R, T : Any>(
     protected val module: SerializersModule,
     protected val signature: SdbusSig
 ) : ReadOnlyProperty<R, T> {
+    /** The property name as a plain string. */
     val name: String
         get() = propertyName.value
 
@@ -185,6 +221,12 @@ open class PropertyDelegate<R, T : Any>(
     )
 }
 
+/**
+ * A read/write Kotlin property delegate backed by a D-Bus property.
+ *
+ * Extends [PropertyDelegate] with write support: assigning to the delegated property issues a
+ * D-Bus `Set`. Obtain one via [Proxy.mutableDelegate].
+ */
 class MutablePropertyDelegate<R, T : Any>(
     proxy: Proxy,
     interfaceName: InterfaceName,
@@ -207,6 +249,16 @@ class MutablePropertyDelegate<R, T : Any>(
     }
 }
 
+/**
+ * Creates a simple read/write Kotlin property delegate backed by a D-Bus property.
+ *
+ * Each read issues a `Get` and each write issues a `Set`. Unlike [mutableDelegate], the returned
+ * delegate performs no caching and offers no reactive observation.
+ *
+ * @param interfaceName Interface that declares the property
+ * @param propertyName Name of the property
+ * @return A [ReadWriteProperty] delegate usable with the `by` keyword
+ */
 inline fun <R, reified T : Any> Proxy.prop(
     interfaceName: InterfaceName,
     propertyName: PropertyName
@@ -219,4 +271,5 @@ inline fun <R, reified T : Any> Proxy.prop(
     }
 }
 
+/** The standard `org.freedesktop.DBus.Properties` interface name. */
 val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")

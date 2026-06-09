@@ -28,6 +28,11 @@ package com.monkopedia.sdbus
 expect class PlainMessage : Message {
 
     companion object {
+        /**
+         * Creates a new, empty plain message usable as a standalone data container.
+         *
+         * @return A fresh [PlainMessage]
+         */
         fun createPlainMessage(): PlainMessage
     }
 }

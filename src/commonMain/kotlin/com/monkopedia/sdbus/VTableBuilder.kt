@@ -84,7 +84,19 @@ package com.monkopedia.sdbus
 inline fun Object.addVTable(interfaceName: InterfaceName, builder: VTableBuilder.() -> Unit) =
     addVTable(interfaceName, buildList { VTableBuilder(this).builder() })
 
+/**
+ * Receiver for the [addVTable] DSL that accumulates vtable items.
+ *
+ * Items are added through the [method], [signal], [prop], and [interfaceFlags] builder functions
+ * rather than by manipulating [items] directly.
+ *
+ * @property items The mutable list of vtable items being built
+ */
 @kotlin.jvm.JvmInline
 value class VTableBuilder(val items: MutableList<VTableItem>)
 
+/**
+ * Common supertype for entries in an [Object]'s vtable: methods, signals, properties, and
+ * interface-wide flags.
+ */
 sealed interface VTableItem

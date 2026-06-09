@@ -145,13 +145,29 @@ inline fun <reified R : Any> Proxy.callMethod(
     }
 }
 
+/**
+ * Builder context for a single high-level method call, exposed as the receiver of the lambda
+ * passed to [Proxy.callMethod] and [Proxy.callMethodAsync].
+ *
+ * Supply the call arguments via the inherited [call] overloads, and optionally tune [timeout],
+ * [dontExpectReply], and [isGroupedReturn].
+ */
 class MethodInvoker @PublishedApi internal constructor(private val method: MethodCall) :
     TypedArgumentsBuilderContext() {
 
+    /** The arguments selected for the call, or `null` if none were supplied. */
     var args: TypedArguments? = null
+
+    /**
+     * Whether the multiple return values should be treated as a single group/struct that is
+     * unpacked into the destination type. Set automatically by the generated bindings.
+     */
     var isGroupedReturn: Boolean = false
+
+    /** Whether to send the call without waiting for a reply. */
     var dontExpectReply by method::dontExpectReply
 
+    /** The per-call timeout. Defaults to [Duration.INFINITE], meaning the connection default. */
     var timeout: Duration = INFINITE
 
     override fun createCall(inputType: InputType, values: List<Any>): TypedArguments =

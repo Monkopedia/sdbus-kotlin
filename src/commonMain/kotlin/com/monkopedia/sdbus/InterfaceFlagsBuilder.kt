@@ -27,32 +27,51 @@ import com.monkopedia.sdbus.Flags.GeneralFlags.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
 import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags
 
+/**
+ * Adds interface-wide flags to the vtable in progress.
+ *
+ * @see addVTable
+ */
 inline fun VTableBuilder.interfaceFlags(builder: InterfaceFlagsVTableItem.() -> Unit) {
     items.add(InterfaceFlagsVTableItem().also(builder))
 }
 
+/**
+ * A vtable entry carrying flags that apply to the whole interface rather than a single member.
+ *
+ * Construct one inside an [addVTable] block via [interfaceFlags].
+ *
+ * @property flags The underlying flag set
+ */
 data class InterfaceFlagsVTableItem(val flags: Flags = Flags()) : VTableItem {
 
+    /** Whether the interface is marked deprecated. */
     var isDeprecated: Boolean
         get() = flags.test(DEPRECATED)
         set(value) {
             flags.set(DEPRECATED, value)
         }
+
+    /** Whether the interface is marked as requiring privileged access. */
     var isPrivileged: Boolean
         get() = flags.test(PRIVILEGED)
         set(value) {
             flags.set(PRIVILEGED, value)
         }
+
+    /** Whether methods on the interface default to not producing a reply. */
     var hasNoReply: Boolean
         get() = flags.test(METHOD_NO_REPLY)
         set(value) {
             flags.set(METHOD_NO_REPLY, value)
         }
 
+    /** Applies the given property update [behavior] to the interface flags. */
     operator fun plusAssign(behavior: PropertyUpdateBehaviorFlags) {
         flags.set(behavior)
     }
 
+    /** Applies this property update behavior to the interface flags via the `+` prefix operator. */
     operator fun PropertyUpdateBehaviorFlags.unaryPlus() {
         flags.set(this)
     }
