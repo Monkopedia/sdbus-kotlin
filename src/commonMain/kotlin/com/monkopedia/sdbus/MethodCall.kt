@@ -23,13 +23,34 @@
 
 package com.monkopedia.sdbus
 
+/**
+ * A [Message] representing a D-Bus method call.
+ *
+ * Created via [Proxy.createMethodCall]. Serialize the call arguments into it, then dispatch it with
+ * [Proxy.callMethod]/[Proxy.callMethodAsync] or [send]. On the receiving (server) side, use
+ * [createReply] or [createErrorReply] to build the response.
+ */
 expect class MethodCall : Message {
 
+    /**
+     * Sends this call and waits for the reply.
+     *
+     * @param timeout Call timeout in microseconds; `0` uses the connection default
+     * @return The reply message
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     */
     fun send(timeout: ULong): MethodReply
 
+    /** Creates an empty success reply for this call. */
     fun createReply(): MethodReply
 
+    /**
+     * Creates an error reply for this call carrying the given [error].
+     *
+     * @param error The error to report back to the caller
+     */
     fun createErrorReply(error: Error): MethodReply
 
+    /** Whether this call is flagged to not expect a reply. */
     var dontExpectReply: Boolean
 }

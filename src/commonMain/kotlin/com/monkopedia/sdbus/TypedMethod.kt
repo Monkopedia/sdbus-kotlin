@@ -82,6 +82,10 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
      */
     open infix fun withContext(coroutineContext: CoroutineContext) = this
 
+    /**
+     * Invokes the error path of this call, reporting the given [args] throwable to the registered
+     * error handler, if any.
+     */
     abstract fun invoke(args: Throwable)
 
     @PublishedApi
@@ -178,8 +182,15 @@ data class TypedArguments @PublishedApi internal constructor(
         TypedArguments(inputType + other.first, values + other.second)
 }
 
+/** A lambda with [TypedArgumentsBuilderContext] receiver that produces [TypedArguments]. */
 typealias TypedArgumentsBuilder = TypedArgumentsBuilderContext.() -> TypedArguments
 
+/**
+ * Builds a [TypedArguments] instance using the given [builder] block.
+ *
+ * @param builder Block that selects argument types and values via [TypedArgumentsBuilderContext.call]
+ * @return The constructed typed arguments
+ */
 inline fun buildArgs(builder: TypedArgumentsBuilder): TypedArguments =
     TypedArgumentsBuilderContext().builder()
 
@@ -348,6 +359,15 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
             typed<J>()
         )
 
+    /**
+     * Binds a synchronous handler as the implementation of a method or signal.
+     *
+     * The argument types (`A`, `B`, ...) and return type `R` are deduced from the handler's
+     * reified type parameters. Additional overloads accept handlers taking up to ten arguments.
+     *
+     * @param handler The function implementing the method body
+     * @return A [TypedMethodCall] describing the bound handler
+     */
     inline fun <reified R : Any> call(crossinline handler: () -> R): TypedMethodCall<*> =
         createCall(TypedMethod(args(), typed<R>()), handler = {
             handler()
@@ -522,6 +542,16 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         }
     )
 
+    /**
+     * Binds a suspending handler as the implementation of a method.
+     *
+     * Like [call] but for `suspend` handlers, allowing the method body to perform asynchronous
+     * work. The dispatch context can be customised with [TypedMethodCall.withContext]. Additional
+     * overloads accept handlers taking up to ten arguments.
+     *
+     * @param handler The suspending function implementing the method body
+     * @return A [TypedMethodCall] describing the bound handler
+     */
     inline fun <reified R : Any> acall(crossinline handler: suspend () -> R): TypedMethodCall<*> =
         createACall(TypedMethod(args(), typed<R>()), handler = {
             handler()
@@ -714,9 +744,23 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
  */
 open class TypedArgumentsBuilderContext {
 
+    /**
+     * Creates a [TypedArguments] from the given input types and values.
+     *
+     * Subclasses may override to capture the produced arguments. Most callers use the [call]
+     * overloads instead of calling this directly.
+     */
     open fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
         TypedArguments(inputType, values)
 
+    /**
+     * Supplies the argument values for a call or signal.
+     *
+     * The argument types are deduced from the reified type parameters of each value. This zero-arg
+     * overload denotes an empty argument list; additional overloads accept up to ten values.
+     *
+     * @return The constructed typed arguments
+     */
     fun call(): TypedArguments = createCall(TypedMethodBuilderContext().args(), emptyList())
 
     inline fun <reified A : Any> call(a: A) =

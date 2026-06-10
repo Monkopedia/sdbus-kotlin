@@ -52,6 +52,13 @@ actual sealed class SdbusSig actual constructor() {
     internal actual abstract val isTrivial: Boolean
 }
 
+/**
+ * The signature of a primitive (non-container) D-Bus type on the native target.
+ *
+ * Carries the signature string along with the native type converter used to (de)serialize values
+ * of the corresponding Kotlin type [K]. Instances are exposed through the predefined `*Sig`
+ * properties such as [IntSig] and [StringSig].
+ */
 data class PrimitiveSig<K, N : CVariable> internal constructor(
     override val value: String,
     override val valid: Boolean = false,

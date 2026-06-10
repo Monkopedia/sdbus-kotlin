@@ -129,39 +129,77 @@ expect sealed class Message {
     internal operator fun invoke(): Boolean
     internal fun clearFlags()
 
+    /** Returns the interface name this message targets, or `null` if not set. */
     fun getInterfaceName(): String?
 
+    /** Returns the member (method/signal) name this message targets, or `null` if not set. */
     fun getMemberName(): String?
 
+    /** Returns the bus name of the message sender, or `null` if not available. */
     fun getSender(): String?
 
+    /** Returns the object path this message targets, or `null` if not set. */
     fun getPath(): String?
 
+    /** Returns the destination bus name of the message, or `null` if not set. */
     fun getDestination(): String?
 
+    /**
+     * Peeks at the type of the value at the current read position without consuming it.
+     *
+     * @return A pair of the D-Bus type code and, for containers, the contained signature
+     */
     fun peekType(): Pair<Char?, String?>
 
+    /** Whether this message wraps a valid underlying D-Bus message. */
     val isValid: Boolean
+
+    /** Whether this message carries no body data. */
     val isEmpty: Boolean
+
+    /**
+     * Whether the read cursor has reached the end of the message body.
+     *
+     * @param complete When `true`, also requires that any open containers have been exited
+     */
     fun isAtEnd(complete: Boolean): Boolean
 
+    /**
+     * Copies the contents of this message into [destination].
+     *
+     * @param destination Message to copy into
+     * @param complete When `true`, copy the whole message; otherwise copy from the current cursor
+     */
     fun copyTo(destination: Message, complete: Boolean)
 
+    /** Seals the message, finalizing its body so it can be sent or read back. */
     fun seal()
 
+    /**
+     * Resets the read cursor to the start of the message.
+     *
+     * @param complete When `true`, rewind past all containers to the very beginning
+     */
     fun rewind(complete: Boolean)
 
+    /** Returns the PID of the sending process, if credentials are available. */
     fun getCredsPid(): Int
 
+    /** Returns the real UID of the sender, if credentials are available. */
     fun getCredsUid(): UInt
 
+    /** Returns the effective UID of the sender, if credentials are available. */
     fun getCredsEuid(): UInt
 
+    /** Returns the real GID of the sender, if credentials are available. */
     fun getCredsGid(): UInt
 
+    /** Returns the effective GID of the sender, if credentials are available. */
     fun getCredsEgid(): UInt
 
+    /** Returns the supplementary GIDs of the sender, if credentials are available. */
     fun getCredsSupplementaryGids(): List<UInt>
 
+    /** Returns the SELinux security context of the sender. */
     fun getSELinuxContext(): String
 }

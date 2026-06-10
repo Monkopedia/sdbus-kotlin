@@ -40,6 +40,12 @@ inline fun Object.emitSignal(
     builder: SignalEmitter.() -> Unit
 ) = emit(SignalEmitter(interfaceName, signalName).also(builder))
 
+/**
+ * Emits the signal described by the given [SignalEmitter] from this object.
+ *
+ * @param signal Emitter carrying the interface, signal name, and serialized arguments
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
+ */
 fun Object.emit(signal: SignalEmitter) {
     val m = createSignal(signal.interfaceName, signal.signalName)
     m.serialize(
@@ -50,6 +56,14 @@ fun Object.emit(signal: SignalEmitter) {
     emitSignal(m)
 }
 
+/**
+ * Builder context describing a signal to emit, exposed as the receiver of the lambda passed to
+ * [Object.emitSignal]. Supply the signal arguments via the inherited [call] overloads.
+ *
+ * @property interfaceName Interface the signal belongs to
+ * @property signalName Name of the signal
+ * @property typedMethodArguments The serialized signal arguments, or `null` for none
+ */
 data class SignalEmitter(
     var interfaceName: InterfaceName = InterfaceName(""),
     var signalName: SignalName = SignalName(""),

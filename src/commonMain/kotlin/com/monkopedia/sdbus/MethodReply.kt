@@ -22,6 +22,18 @@
  */
 package com.monkopedia.sdbus
 
+/**
+ * A [Message] representing the reply to a D-Bus method call.
+ *
+ * On the client side, a reply is returned by the call functions and its return values are read
+ * from it. On the server side, build a reply with [MethodCall.createReply], serialize the return
+ * values into it, and dispatch it with [send].
+ */
 expect class MethodReply : Message {
+    /**
+     * Sends this reply back to the original caller.
+     *
+     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     */
     fun send()
 }

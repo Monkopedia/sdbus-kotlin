@@ -67,6 +67,17 @@ inline fun Proxy.onSignal(
     }
 }
 
+/**
+ * Subscribes to a D-Bus signal and exposes its decoded payloads as a cold [Flow].
+ *
+ * The signal handler is registered when the flow is collected and unregistered when collection
+ * stops. The [builder] selects how the signal arguments are decoded into [T] via [SignalSubscriber.call].
+ *
+ * @param interfaceName Interface that declares the signal
+ * @param signalName Name of the signal to subscribe to
+ * @param builder Configures decoding of the signal payload
+ * @return A flow that emits one element per received signal
+ */
 inline fun <T> Proxy.signalFlow(
     interfaceName: InterfaceName,
     signalName: SignalName,
@@ -92,7 +103,13 @@ inline fun <T> Proxy.signalFlow(
     }
 }
 
+/**
+ * Builder context for subscribing to a signal, exposed as the receiver of the lambda passed to
+ * [Proxy.onSignal] and [Proxy.signalFlow]. Bind the handler that decodes the signal payload via the
+ * inherited [call]/[acall] overloads.
+ */
 class SignalSubscriber : TypedMethodBuilderContext() {
+    /** The handler bound via [call]/[acall], invoked for each received signal. */
     var methodCall: TypedMethodCall<*>? = null
 
     override fun createCall(

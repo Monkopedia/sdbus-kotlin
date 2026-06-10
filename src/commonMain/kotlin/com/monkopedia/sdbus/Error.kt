@@ -22,11 +22,31 @@
  */
 package com.monkopedia.sdbus
 
+/**
+ * Exception type representing a D-Bus or sdbus-kotlin error.
+ *
+ * Thrown by virtually all sdbus-kotlin operations on failure, including when a remote method
+ * returns a D-Bus error reply. The [name] carries the D-Bus error name (e.g.
+ * `org.freedesktop.DBus.Error.UnknownMethod`), which callers can match against to handle specific
+ * error conditions.
+ *
+ * @property name The D-Bus error name
+ * @property errorMessage Human-readable detail describing the error
+ */
 class Error(val name: String, val errorMessage: String = "") : Exception("$name: $errorMessage")
 
 internal fun Throwable.toError() =
     (this as? Error) ?: Error(message ?: toString(), stackTraceToString())
 
+/**
+ * Creates an [Error] from a numeric error code and a custom message.
+ *
+ * The error code is mapped to a corresponding D-Bus error name where possible.
+ *
+ * @param errNo Numeric (errno-style) error code
+ * @param customMsg Additional human-readable context for the error
+ * @return The constructed [Error]
+ */
 expect fun createError(errNo: Int, customMsg: String): Error
 
 internal inline fun sdbusRequire(condition: () -> Boolean, msg: String, errNo: Int) {
