@@ -64,7 +64,7 @@ fun Object.emit(signal: SignalEmitter) {
  * @property signalName Name of the signal
  * @property typedMethodArguments The serialized signal arguments, or `null` for none
  */
-data class SignalEmitter(
+class SignalEmitter @PublishedApi internal constructor(
     var interfaceName: InterfaceName = InterfaceName(""),
     var signalName: SignalName = SignalName(""),
     var typedMethodArguments: TypedArguments? = null

@@ -58,7 +58,7 @@ inline fun VTableBuilder.prop(propertyName: PropertyName, builder: PropertyVTabl
  * @property setter The callback that accepts a new property value, or `null` if read-only
  * @property flags Behavioral flags for this property
  */
-data class PropertyVTableItem(
+class PropertyVTableItem @PublishedApi internal constructor(
     val name: PropertyName,
     var signature: Signature? = null,
     var getter: PropertyGetCallback? = null,

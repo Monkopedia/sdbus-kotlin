@@ -26,6 +26,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.INFINITE
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.serializersModuleOf
 import kotlinx.serialization.serializer
 
@@ -60,10 +62,22 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
 ): R {
     val method = createMethodCall(interfaceName, methodName)
     val invoker = MethodInvoker(method).also(builder)
+    val serializer = serializer<R>()
+    return callMethodAsyncImpl(method, invoker, serializer, serializersModuleOf(serializer))
+}
+
+@PublishedApi
+internal suspend fun <R : Any> Proxy.callMethodAsyncImpl(
+    method: MethodCall,
+    invoker: MethodInvoker,
+    serializer: KSerializer<R>,
+    module: SerializersModule
+): R {
     invoker.args?.let { method.serialize(it) }
 
     if (invoker.dontExpectReply) {
         callMethod(method, invoker.timeout)
+        @Suppress("UNCHECKED_CAST")
         return (Unit as R)
     } else {
         val completable = CompletableDeferred<R>()
@@ -71,8 +85,6 @@ suspend inline fun <reified R : Any> Proxy.callMethodAsync(
             if (error != null) {
                 completable.completeExceptionally(error)
             } else {
-                val serializer = serializer<R>()
-                val module = serializersModuleOf(serializer)
                 try {
                     completable.complete(
                         reply.deserialize(

@@ -43,7 +43,7 @@ inline fun VTableBuilder.signal(signal: SignalName, builder: SignalVTableItem.()
  * @property paramNames Names of the signal parameters, used for introspection
  * @property flags Behavioral flags for this signal
  */
-data class SignalVTableItem(
+class SignalVTableItem @PublishedApi internal constructor(
     val name: SignalName,
     var signature: Signature = Signature(""),
     var paramNames: List<String> = emptyList(),

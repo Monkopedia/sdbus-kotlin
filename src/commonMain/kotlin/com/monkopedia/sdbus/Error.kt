@@ -30,6 +30,10 @@ package com.monkopedia.sdbus
  * `org.freedesktop.DBus.Error.UnknownMethod`), which callers can match against to handle specific
  * error conditions.
  *
+ * The inherited [message] is deterministically derived from the two properties as
+ * `"$name: $errorMessage"`; [errorMessage] alone carries the human-readable detail without the
+ * D-Bus error name prefix.
+ *
  * @property name The D-Bus error name
  * @property errorMessage Human-readable detail describing the error
  */
@@ -47,7 +51,7 @@ internal fun Throwable.toError() =
  * @param customMsg Additional human-readable context for the error
  * @return The constructed [Error]
  */
-expect fun createError(errNo: Int, customMsg: String): Error
+internal expect fun createError(errNo: Int, customMsg: String): Error
 
 internal inline fun sdbusRequire(condition: () -> Boolean, msg: String, errNo: Int) {
     if (condition()) throw createError((errNo), (msg))

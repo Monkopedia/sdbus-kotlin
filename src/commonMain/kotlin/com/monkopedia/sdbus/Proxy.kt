@@ -148,60 +148,6 @@ interface Proxy : Resource {
      * Calls method on the D-Bus object asynchronously
      *
      * @param message Message representing an async method call
-     * @param asyncReplyCallback Handler for the async reply
-     * @return Observing handle for the the pending asynchronous call
-     *
-     * This is a callback-based way of asynchronously calling a remote D-Bus method.
-     *
-     * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided async reply handler will get invoked from the context of the bus
-     * connection I/O event loop thread.
-     *
-     * An non-owning, observing async call handle is returned that can be used to query call status or cancel the call.
-     *
-     * The default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
-     *
-     * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
-     *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
-     */
-    fun callMethodAsync(
-        message: MethodCall,
-        asyncReplyCallback: AsyncReplyHandler
-    ): PendingAsyncCall
-
-    /**
-     * Calls method on the D-Bus object asynchronously, with custom timeout
-     *
-     * @param message Message representing an async method call
-     * @param asyncReplyCallback Handler for the async reply
-     * @param timeout Method call timeout (in microseconds)
-     * @return Observing handle for the the pending asynchronous call
-     *
-     * This is a callback-based way of asynchronously calling a remote D-Bus method.
-     *
-     * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided async reply handler will get invoked from the context of the bus
-     * connection I/O event loop thread.
-     *
-     * An non-owning, observing async call handle is returned that can be used to query call status or cancel the call.
-     *
-     * If timeout is zero, the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
-     *
-     * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
-     *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
-     */
-    fun callMethodAsync(
-        message: MethodCall,
-        asyncReplyCallback: AsyncReplyHandler,
-        timeout: ULong
-    ): PendingAsyncCall
-
-    /**
-     * Calls method on the D-Bus object asynchronously
-     *
-     * @param message Message representing an async method call
      * @param Tag denoting a std::future-based overload
      * @return Future object providing access to the future method reply message
      *
@@ -273,7 +219,7 @@ interface Proxy : Resource {
  * It's safe to call its methods even after the Proxy has gone.
  *
  ***********************************************/
-expect class PendingAsyncCall : Resource {
+internal expect class PendingAsyncCall : Resource {
 
     /**
      * Cancels the delivery of the pending asynchronous call result
@@ -295,12 +241,44 @@ expect class PendingAsyncCall : Resource {
     fun isPending(): Boolean
 }
 
+/**
+ * Internal callback-based async call surface backing the public suspend API.
+ *
+ * Implemented by the platform [Proxy] implementations. The callback style (and the
+ * [PendingAsyncCall] cancellation handle) is intentionally not public; coroutine cancellation is
+ * the public cancellation mechanism for the suspend [Proxy.callMethodAsync] overloads.
+ */
+internal interface CallbackAsyncProxy {
+    fun callMethodAsync(
+        message: MethodCall,
+        asyncReplyCallback: AsyncReplyHandler
+    ): PendingAsyncCall
+
+    fun callMethodAsync(
+        message: MethodCall,
+        asyncReplyCallback: AsyncReplyHandler,
+        timeout: ULong
+    ): PendingAsyncCall
+}
+
 // Out-of-line member definitions
 
 fun Proxy.callMethod(message: MethodCall, timeout: Duration): MethodReply =
     callMethod(message, timeout.inWholeMicroseconds.toULong())
 
-fun Proxy.callMethodAsync(
+internal fun Proxy.callMethodAsync(
+    message: MethodCall,
+    asyncReplyCallback: AsyncReplyHandler
+): PendingAsyncCall = (this as CallbackAsyncProxy).callMethodAsync(message, asyncReplyCallback)
+
+internal fun Proxy.callMethodAsync(
+    message: MethodCall,
+    asyncReplyCallback: AsyncReplyHandler,
+    timeout: ULong
+): PendingAsyncCall =
+    (this as CallbackAsyncProxy).callMethodAsync(message, asyncReplyCallback, timeout)
+
+internal fun Proxy.callMethodAsync(
     message: MethodCall,
     asyncReplyCallback: AsyncReplyHandler,
     timeout: Duration

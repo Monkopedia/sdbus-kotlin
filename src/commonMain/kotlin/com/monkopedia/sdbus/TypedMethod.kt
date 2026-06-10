@@ -48,7 +48,7 @@ internal typealias InputType = List<Typed<*>>
 internal typealias OutputType = Typed<*>
 
 @PublishedApi
-internal data class TypedMethod(val inputType: InputType, val outputType: OutputType)
+internal class TypedMethod(val inputType: InputType, val outputType: OutputType)
 
 /**
  * The definition of a reference to a callback/method invocation.
@@ -89,7 +89,7 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
     abstract fun invoke(args: Throwable)
 
     @PublishedApi
-    internal data class SyncMethodCall(
+    internal class SyncMethodCall(
         override val method: TypedMethod,
         val handler: (List<Any?>) -> Any?,
         val errorCall: ((Throwable?) -> Unit)? = null
@@ -124,7 +124,7 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
     }
 
     @PublishedApi
-    internal data class AsyncMethodCall(
+    internal class AsyncMethodCall(
         override val method: TypedMethod,
         val handler: suspend (List<Any?>) -> Any?,
         val errorCall: (suspend (Throwable?) -> Unit)? = null,
@@ -134,7 +134,7 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
             get() = true
 
         override infix fun withContext(coroutineContext: CoroutineContext) =
-            copy(coroutineContext = coroutineContext)
+            AsyncMethodCall(method, handler, errorCall, coroutineContext)
 
         override fun <R> invoke(
             args: Message,
@@ -171,7 +171,7 @@ sealed class TypedMethodCall<T : TypedMethodCall<T>> {
  * A reference to a method argument types and their values that can be serialized within a
  * d-bus message.
  */
-data class TypedArguments @PublishedApi internal constructor(
+class TypedArguments @PublishedApi internal constructor(
     internal val inputType: InputType,
     internal val values: List<Any>
 ) {

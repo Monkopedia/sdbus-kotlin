@@ -52,7 +52,7 @@ import kotlinx.serialization.serializer
 typealias MethodCallback = (msg: MethodCall) -> Unit
 
 /** Handler invoked with the [MethodReply] (or [Error]) of an asynchronous method call. */
-typealias AsyncReplyHandler = (reply: MethodReply, error: Error?) -> Unit
+internal typealias AsyncReplyHandler = (reply: MethodReply, error: Error?) -> Unit
 
 /** Handler invoked with an incoming [Signal]. */
 typealias SignalHandler = (signal: Signal) -> Unit
@@ -74,7 +74,7 @@ typealias PropertyGetCallback = (msg: PropertyGetReply) -> Unit
 inline fun <reified T> signatureOf(): SdbusSig = signatureOf(typeOf<T>())
 
 /** The D-Bus signature corresponding to this serial descriptor. */
-val SerialDescriptor.asSignature: SdbusSig
+internal val SerialDescriptor.asSignature: SdbusSig
     get() = signatureOf()
 
 private fun SerialDescriptor.signatureOf(): SdbusSig {
@@ -206,9 +206,8 @@ fun signatureOf(type: KType): SdbusSig {
 /**
  * Represents a D-Bus type signature in a structured form.
  *
- * Concrete subtypes describe primitive types as well as the container types [StructSig], [MapSig],
- * and [ListSig]. [InvalidSig] represents a type that has no valid D-Bus mapping. Obtain instances
- * via [signatureOf] or [SerialDescriptor.asSignature].
+ * This is an opaque handle from the public API's point of view; obtain instances via
+ * [signatureOf] and pass them to the APIs that accept them.
  */
 expect sealed class SdbusSig() {
     @PublishedApi
@@ -222,7 +221,7 @@ expect sealed class SdbusSig() {
 }
 
 /** The signature of a type that has no valid D-Bus representation. */
-data object InvalidSig : SdbusSig() {
+internal data object InvalidSig : SdbusSig() {
     override val value: String
         get() = ""
     override val valid: Boolean
@@ -236,7 +235,7 @@ data object InvalidSig : SdbusSig() {
  *
  * @property signatures Signatures of the struct's elements, in order
  */
-data class StructSig(val signatures: List<SdbusSig>) : SdbusSig() {
+internal data class StructSig(val signatures: List<SdbusSig>) : SdbusSig() {
 
     /** The concatenated element signatures without the enclosing parentheses. */
     val contents: String
@@ -253,7 +252,7 @@ data class StructSig(val signatures: List<SdbusSig>) : SdbusSig() {
  * @property t1 Signature of the key type
  * @property t2 Signature of the value type
  */
-data class MapSig(val t1: SdbusSig, val t2: SdbusSig) : SdbusSig() {
+internal data class MapSig(val t1: SdbusSig, val t2: SdbusSig) : SdbusSig() {
     /** The concatenated key and value signatures. */
     val contents: String
         get() = "${t1.value}${t2.value}"
@@ -274,7 +273,7 @@ data class MapSig(val t1: SdbusSig, val t2: SdbusSig) : SdbusSig() {
  *
  * @property element Signature of the array's element type
  */
-data class ListSig(val element: SdbusSig) : SdbusSig() {
+internal data class ListSig(val element: SdbusSig) : SdbusSig() {
     override val value: String
         get() = "a${element.value}"
     override val valid: Boolean
@@ -284,46 +283,46 @@ data class ListSig(val element: SdbusSig) : SdbusSig() {
 }
 
 /** Signature for the absence of a value (an empty body), mapping from Kotlin `Unit`. */
-expect val VoidSig: SdbusSig
+internal expect val VoidSig: SdbusSig
 
 /** Signature for the D-Bus `BOOLEAN` type (`b`). */
-expect val BoolSig: SdbusSig
+internal expect val BoolSig: SdbusSig
 
 /** Signature for the D-Bus `BYTE` type (`y`). */
-expect val UByteSig: SdbusSig
+internal expect val UByteSig: SdbusSig
 
 /** Signature for the D-Bus `INT16` type (`n`). */
-expect val ShortSig: SdbusSig
+internal expect val ShortSig: SdbusSig
 
 /** Signature for the D-Bus `UINT16` type (`q`). */
-expect val UShortSig: SdbusSig
+internal expect val UShortSig: SdbusSig
 
 /** Signature for the D-Bus `INT32` type (`i`). */
-expect val IntSig: SdbusSig
+internal expect val IntSig: SdbusSig
 
 /** Signature for the D-Bus `UINT32` type (`u`). */
-expect val UIntSig: SdbusSig
+internal expect val UIntSig: SdbusSig
 
 /** Signature for the D-Bus `INT64` type (`x`). */
-expect val LongSig: SdbusSig
+internal expect val LongSig: SdbusSig
 
 /** Signature for the D-Bus `UINT64` type (`t`). */
-expect val ULongSig: SdbusSig
+internal expect val ULongSig: SdbusSig
 
 /** Signature for the D-Bus `DOUBLE` type (`d`). */
-expect val DoubleSig: SdbusSig
+internal expect val DoubleSig: SdbusSig
 
 /** Signature for the D-Bus `STRING` type (`s`). */
-expect val StringSig: SdbusSig
+internal expect val StringSig: SdbusSig
 
 /** Signature for the D-Bus `OBJECT_PATH` type (`o`). */
-expect val ObjectPathSig: SdbusSig
+internal expect val ObjectPathSig: SdbusSig
 
 /** Signature for the D-Bus `SIGNATURE` type (`g`). */
-expect val SignatureSig: SdbusSig
+internal expect val SignatureSig: SdbusSig
 
 /** Signature for the D-Bus `UNIX_FD` type (`h`). */
-expect val UnixFdSig: SdbusSig
+internal expect val UnixFdSig: SdbusSig
 
 /** Signature for the D-Bus `VARIANT` type (`v`). */
-expect val VariantSig: SdbusSig
+internal expect val VariantSig: SdbusSig
