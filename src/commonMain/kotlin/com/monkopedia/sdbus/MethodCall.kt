@@ -23,6 +23,8 @@
 
 package com.monkopedia.sdbus
 
+import kotlin.time.Duration
+
 /**
  * A [Message] representing a D-Bus method call.
  *
@@ -35,11 +37,11 @@ expect class MethodCall : Message {
     /**
      * Sends this call and waits for the reply.
      *
-     * @param timeout Call timeout in microseconds; `0` uses the connection default
+     * @param timeout Call timeout; [Duration.ZERO] uses the connection default
      * @return The reply message
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
-    fun send(timeout: ULong): MethodReply
+    fun send(timeout: Duration): MethodReply
 
     /** Creates an empty success reply for this call. */
     fun createReply(): MethodReply

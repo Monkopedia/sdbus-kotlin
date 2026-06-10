@@ -11,6 +11,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.microseconds
 import kotlinx.coroutines.test.runTest
 
 class JvmProxyObjectMockkTest {
@@ -48,9 +49,9 @@ class JvmProxyObjectMockkTest {
         assertEquals(currentMessage, proxy.currentlyProcessedMessage)
         assertEquals(call, proxy.createMethodCall(InterfaceName("com.example"), MethodName("Ping")))
         assertEquals(reply, proxy.callMethod(call))
-        assertEquals(reply, proxy.callMethod(call, 42u))
+        assertEquals(reply, proxy.callMethod(call, 42.microseconds))
         assertEquals(reply, proxy.callMethodAsync(call))
-        assertEquals(reply, proxy.callMethodAsync(call, 42u))
+        assertEquals(reply, proxy.callMethodAsync(call, 42.microseconds))
         assertEquals(
             resource,
             proxy.registerSignalHandler(

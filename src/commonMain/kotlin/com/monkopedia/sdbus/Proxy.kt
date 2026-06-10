@@ -117,7 +117,7 @@ interface Proxy : Resource {
      * Calls method on the remote D-Bus object
      *
      * @param message Message representing a method call
-     * @param timeout Method call timeout (in microseconds)
+     * @param timeout Method call timeout
      * @return A method reply message
      *
      * The call does not block if the method call has dont-expect-reply flag set. In that case,
@@ -136,13 +136,13 @@ interface Proxy : Resource {
      * its own bus connection. So-called light-weight proxies (ones created with `dont_run_event_loop_thread`
      * tag are designed for exactly that purpose.
      *
-     * If timeout is zero, the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
+     * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
      *
      * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure (also in case the remote function returned an error)
      */
-    fun callMethod(message: MethodCall, timeout: ULong): MethodReply
+    fun callMethod(message: MethodCall, timeout: Duration): MethodReply
 
     /**
      * Calls method on the D-Bus object asynchronously
@@ -179,13 +179,13 @@ interface Proxy : Resource {
      * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.Error]
      * in case the remote method threw an exception, or the call timed out).
      *
-     * If timeout is zero, the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
+     * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
-    suspend fun callMethodAsync(message: MethodCall, timeout: ULong): MethodReply
+    suspend fun callMethodAsync(message: MethodCall, timeout: Duration): MethodReply
 
     /**
      * Registers a handler for the desired signal emitted by the D-Bus object
@@ -263,9 +263,6 @@ internal interface CallbackAsyncProxy {
 
 // Out-of-line member definitions
 
-fun Proxy.callMethod(message: MethodCall, timeout: Duration): MethodReply =
-    callMethod(message, timeout.inWholeMicroseconds.toULong())
-
 internal fun Proxy.callMethodAsync(
     message: MethodCall,
     asyncReplyCallback: AsyncReplyHandler
@@ -284,9 +281,6 @@ internal fun Proxy.callMethodAsync(
     timeout: Duration
 ): PendingAsyncCall =
     callMethodAsync(message, asyncReplyCallback, timeout.inWholeMicroseconds.toULong())
-
-suspend inline fun Proxy.callMethodAsync(message: MethodCall, timeout: Duration): MethodReply =
-    callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
 
 /**
  * Gets value of a property of the D-Bus object asynchronously

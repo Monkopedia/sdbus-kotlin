@@ -8,6 +8,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class JvmMessageSupportTest {
     @Test
@@ -33,7 +35,7 @@ class JvmMessageSupportTest {
             call.append(20)
             call.append(22)
 
-            val reply = call.send(0u)
+            val reply = call.send(Duration.ZERO)
 
             reply.rewind(false)
             assertEquals(42, reply.readInt())
@@ -72,7 +74,7 @@ class JvmMessageSupportTest {
             call.append(22)
 
             val thrown = assertFailsWith<Error> {
-                call.send(1_000u)
+                call.send(1.milliseconds)
             }
             assertTrue(thrown.errorMessage.contains("timed out"))
         } finally {

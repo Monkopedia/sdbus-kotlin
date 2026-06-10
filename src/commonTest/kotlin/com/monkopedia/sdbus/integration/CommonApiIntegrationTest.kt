@@ -30,6 +30,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -337,7 +338,7 @@ class CommonApiIntegrationTest {
             call.append(20)
             call.append(22)
 
-            val reply = call.send(2_000_000u)
+            val reply = call.send(2.seconds)
             assertEquals(42, reply.readIntReply())
         } finally {
             registration.release()
