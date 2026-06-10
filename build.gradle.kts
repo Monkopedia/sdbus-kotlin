@@ -94,7 +94,9 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
-                implementation(libs.kotlinx.serialization)
+                // kotlinx-serialization types (KSerializer, the serializer companions) are part
+                // of the public API surface (e.g. Variant, UnixFd.Companion), so expose as api.
+                api(libs.kotlinx.serialization)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.atomicfu)
             }

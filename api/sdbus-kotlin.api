@@ -84,13 +84,13 @@ public abstract interface class com/monkopedia/sdbus/Connection : com/monkopedia
 public final class com/monkopedia/sdbus/Connection_jvmKt {
 	public static final fun createBusConnection ()Lcom/monkopedia/sdbus/Connection;
 	public static final fun createBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
-	public static final fun createDirectBusConnection (I)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createDirectBusConnection (Lcom/monkopedia/sdbus/UnixFd;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createDirectBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createRemoteSystemBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
-	public static final fun createServerBus (I)Lcom/monkopedia/sdbus/Connection;
+	public static final fun createServerBusConnection (Lcom/monkopedia/sdbus/UnixFd;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection ()Lcom/monkopedia/sdbus/Connection;
+	public static final fun createSessionBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
-	public static final fun createSessionBusConnectionWithAddress (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSystemBusConnection ()Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSystemBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 }
@@ -688,13 +688,13 @@ public final class com/monkopedia/sdbus/UnixFd : com/monkopedia/sdbus/Resource {
 	public static final field SERIAL_NAME Ljava/lang/String;
 	public fun <init> (I)V
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (ILkotlin/Unit;)V
 	public fun <init> (Lcom/monkopedia/sdbus/UnixFd;)V
 	public final fun getFd ()I
 	public fun release ()V
 }
 
 public final class com/monkopedia/sdbus/UnixFd$Companion : kotlinx/serialization/KSerializer {
+	public final fun adopt (I)Lcom/monkopedia/sdbus/UnixFd;
 	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/monkopedia/sdbus/UnixFd;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;

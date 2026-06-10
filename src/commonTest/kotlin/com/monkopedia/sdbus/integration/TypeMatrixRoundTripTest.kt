@@ -95,7 +95,7 @@ class TypeMatrixRoundTripTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {

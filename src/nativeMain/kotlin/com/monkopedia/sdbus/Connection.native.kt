@@ -53,7 +53,7 @@ actual fun createSessionBusConnection(): Connection = sessionConnection(SdBus())
 actual fun createSessionBusConnection(name: ServiceName): Connection =
     sessionConnection(SdBus()).also { it.requestName(name) }
 
-actual fun createSessionBusConnectionWithAddress(address: String): Connection =
+actual fun createSessionBusConnection(address: String): Connection =
     sessionConnection(SdBus(), address)
 
 actual fun createRemoteSystemBusConnection(host: String): Connection =
@@ -62,9 +62,11 @@ actual fun createRemoteSystemBusConnection(host: String): Connection =
 actual fun createDirectBusConnection(address: String): Connection =
     privateConnection(SdBus(), address)
 
-actual fun createDirectBusConnection(fd: Int): Connection = privateConnection(SdBus(), fd)
+actual fun createDirectBusConnection(fd: UnixFd): Connection =
+    privateConnection(SdBus(), fd.fd).also { fd.detach() }
 
-actual fun createServerBus(fd: Int): Connection = serverConnection(SdBus(), fd)
+actual fun createServerBusConnection(fd: UnixFd): Connection =
+    serverConnection(SdBus(), fd.fd).also { fd.detach() }
 
 internal fun createBusConnection(bus: CPointer<sd_bus>): Connection =
     ConnectionImpl(SdBus(), Reference(bus) {})

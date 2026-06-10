@@ -68,7 +68,7 @@ actual fun createProxy(
     connection: Connection,
     destination: ServiceName,
     objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean
+    runEventLoopThread: Boolean
 ): Proxy = JvmProxy(
     connection,
     objectPath,
@@ -76,17 +76,17 @@ actual fun createProxy(
         connection,
         destination,
         objectPath,
-        dontRunEventLoopThread
+        runEventLoopThread
     )
 )
 
 actual fun createProxy(
     destination: ServiceName,
     objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean
+    runEventLoopThread: Boolean
 ): Proxy = createProxy(
     createBusConnection(),
     destination,
     objectPath,
-    dontRunEventLoopThread
+    runEventLoopThread
 )

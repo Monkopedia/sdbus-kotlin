@@ -102,8 +102,8 @@ interface Proxy : Resource {
      * callMethod() function overload, which does not block the bus connection, or do the synchronous
      * call from another Proxy instance created just before the call and then destroyed (which is
      * anyway quite a typical approach in D-Bus implementations). Such proxy instance must have
-     * its own bus connection. So-called light-weight proxies (ones created with `dont_run_event_loop_thread`
-     * tag are designed for exactly that purpose.
+     * its own bus connection. So-called light-weight proxies (ones created with
+     * `runEventLoopThread = false`) are designed for exactly that purpose.
      *
      * The default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
      *
@@ -133,8 +133,8 @@ interface Proxy : Resource {
      * callMethod() function overload, which does not block the bus connection, or do the synchronous
      * call from another Proxy instance created just before the call and then destroyed (which is
      * anyway quite a typical approach in D-Bus implementations). Such proxy instance must have
-     * its own bus connection. So-called light-weight proxies (ones created with `dont_run_event_loop_thread`
-     * tag are designed for exactly that purpose.
+     * its own bus connection. So-called light-weight proxies (ones created with
+     * `runEventLoopThread = false`) are designed for exactly that purpose.
      *
      * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
      *
@@ -367,6 +367,10 @@ fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllProperties
  * @param connection D-Bus connection to be used by the proxy object
  * @param destination Bus name that provides the remote D-Bus object
  * @param objectPath Path of the remote D-Bus object
+ * @param runEventLoopThread Whether the proxy starts the connection's I/O event loop in a
+ * separate, internally managed thread (the default). Pass false to create a light-weight
+ * proxy for synchronous-only use, in which case the caller is responsible for running an
+ * event loop on the connection if signals or async replies are to be received.
  * @return Pointer to the proxy object instance
  *
  * The provided connection will be used by the proxy to issue calls against the object,
@@ -387,7 +391,7 @@ expect fun createProxy(
     connection: Connection,
     destination: ServiceName,
     objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean = false
+    runEventLoopThread: Boolean = true
 ): Proxy
 
 /**
@@ -395,6 +399,9 @@ expect fun createProxy(
  *
  * @param destination Bus name that provides the remote D-Bus object
  * @param objectPath Path of the remote D-Bus object
+ * @param runEventLoopThread Whether the proxy starts its connection's I/O event loop in a
+ * separate, internally managed thread (the default). Pass false to create a light-weight
+ * proxy for synchronous-only use.
  * @return Pointer to the object proxy instance
  *
  * No D-Bus connection is provided here, so the object proxy will create and manage
@@ -410,5 +417,5 @@ expect fun createProxy(
 expect fun createProxy(
     destination: ServiceName,
     objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean = false
+    runEventLoopThread: Boolean = true
 ): Proxy

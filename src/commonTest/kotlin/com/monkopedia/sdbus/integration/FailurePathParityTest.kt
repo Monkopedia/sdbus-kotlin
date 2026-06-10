@@ -248,7 +248,7 @@ class FailurePathParityTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {

@@ -34,7 +34,7 @@ actual fun createProxy(
     connection: Connection,
     destination: ServiceName,
     objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean
+    runEventLoopThread: Boolean
 ): Proxy {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
     sdbusRequire(
@@ -47,14 +47,14 @@ actual fun createProxy(
         sdbusConnection!!,
         destination,
         objectPath,
-        dontRunEventLoopThread = dontRunEventLoopThread
+        runEventLoopThread = runEventLoopThread
     )
 }
 
 actual fun createProxy(
     destination: ServiceName,
     objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean
+    runEventLoopThread: Boolean
 ): Proxy = memScoped {
     val connection = createBusConnection()
 
@@ -65,6 +65,6 @@ actual fun createProxy(
         sdbusConnection!!,
         destination,
         objectPath,
-        dontRunEventLoopThread = dontRunEventLoopThread
+        runEventLoopThread = runEventLoopThread
     )
 }

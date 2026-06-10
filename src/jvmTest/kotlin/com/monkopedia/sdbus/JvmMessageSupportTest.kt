@@ -96,7 +96,7 @@ class JvmMessageSupportTest {
         val serverConnection = createBusConnection(service)
         val proxyConnection = createBusConnection()
         val obj = createObject(serverConnection, path)
-        val proxy = createProxy(proxyConnection, service, path, dontRunEventLoopThread = true)
+        val proxy = createProxy(proxyConnection, service, path, runEventLoopThread = false)
         val latch = CountDownLatch(1)
         val value = arrayOf<Int?>(null)
         val registration = proxy.registerSignalHandler(iface, signalName) { message ->

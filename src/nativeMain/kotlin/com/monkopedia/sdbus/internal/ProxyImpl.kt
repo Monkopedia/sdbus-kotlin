@@ -62,7 +62,7 @@ internal class ProxyImpl(
     override val connection: InternalConnection,
     private val destination: ServiceName,
     override val objectPath: ObjectPath,
-    dontRunEventLoopThread: Boolean = false
+    runEventLoopThread: Boolean = true
 ) : com.monkopedia.sdbus.Proxy,
     CallbackAsyncProxy {
     private class Allocs {
@@ -88,7 +88,7 @@ internal class ProxyImpl(
     init {
         checkServiceName(destination.value)
         checkObjectPath(objectPath.value)
-        if (!dontRunEventLoopThread) {
+        if (runEventLoopThread) {
             connection.enterEventLoopAsync()
         }
     }

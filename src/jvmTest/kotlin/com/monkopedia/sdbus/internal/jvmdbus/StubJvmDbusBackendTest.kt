@@ -25,7 +25,7 @@ class StubJvmDbusBackendTest {
         val connection = JvmConnection(
             backend.createConnection(JvmBusType.DEFAULT, null, service, null)
         )
-        val proxy = backend.createProxy(connection, service, path, dontRunEventLoopThread = true)
+        val proxy = backend.createProxy(connection, service, path, runEventLoopThread = false)
         val obj = backend.createObject(connection, path)
         val seen = CountDownLatch(1)
         var payload: String? = null
@@ -60,7 +60,7 @@ class StubJvmDbusBackendTest {
         val connection = JvmConnection(
             backend.createConnection(JvmBusType.DEFAULT, null, service, null)
         )
-        val proxy = backend.createProxy(connection, service, path, dontRunEventLoopThread = true)
+        val proxy = backend.createProxy(connection, service, path, runEventLoopThread = false)
         val seen = CountDownLatch(1)
         var value: Int? = null
         var callbackError: com.monkopedia.sdbus.Error? = null

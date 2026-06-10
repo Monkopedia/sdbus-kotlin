@@ -76,7 +76,7 @@ class CommonApiIntegrationTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {
@@ -120,7 +120,7 @@ class CommonApiIntegrationTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {
@@ -160,7 +160,7 @@ class CommonApiIntegrationTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {
@@ -189,7 +189,7 @@ class CommonApiIntegrationTest {
             connection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {
@@ -330,7 +330,7 @@ class CommonApiIntegrationTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {

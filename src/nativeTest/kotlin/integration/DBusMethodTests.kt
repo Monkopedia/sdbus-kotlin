@@ -305,7 +305,7 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canCallMethodSynchronouslyWithoutAnEventLoopThread() {
-        val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH, dontRunEventLoopThread = true)
+        val proxy = TestProxy(SERVICE_NAME, OBJECT_PATH, runEventLoopThread = false)
         try {
             val multiplyRes = proxy.multiply(INT64_VALUE, DOUBLE_VALUE)
             assertEquals(INT64_VALUE * DOUBLE_VALUE, multiplyRes)
@@ -335,7 +335,7 @@ class DBusMethodTests : BaseTest() {
         val proxy = com.monkopedia.sdbus.createProxy(
             SERVICE_NAME,
             OBJECT_PATH,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
         try {
             val result: Int =
@@ -370,7 +370,7 @@ class DBusMethodTests : BaseTest() {
         val proxy = com.monkopedia.sdbus.createProxy(
             SERVICE_NAME,
             OBJECT_PATH,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
         try {
             try {

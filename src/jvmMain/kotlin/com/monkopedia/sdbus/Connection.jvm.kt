@@ -81,7 +81,7 @@ actual fun createSessionBusConnection(name: ServiceName): Connection = JvmConnec
     )
 )
 
-actual fun createSessionBusConnectionWithAddress(address: String): Connection = JvmConnection(
+actual fun createSessionBusConnection(address: String): Connection = JvmConnection(
     JvmDbusBackendProvider.backend.createConnection(
         JvmBusType.SESSION_ADDRESS,
         address,
@@ -107,14 +107,14 @@ actual fun createDirectBusConnection(address: String): Connection = JvmConnectio
     message = "createDirectBusConnection(fd) is native-only and not supported on JVM.",
     level = DeprecationLevel.ERROR
 )
-actual fun createDirectBusConnection(fd: Int): Connection = JvmConnection(
-    JvmDbusBackendProvider.backend.createConnection(JvmBusType.DIRECT_FD, null, null, fd)
-)
+actual fun createDirectBusConnection(fd: UnixFd): Connection = JvmConnection(
+    JvmDbusBackendProvider.backend.createConnection(JvmBusType.DIRECT_FD, null, null, fd.fd)
+).also { fd.detach() }
 
 @Deprecated(
-    message = "createServerBus(fd) is native-only and not supported on JVM.",
+    message = "createServerBusConnection(fd) is native-only and not supported on JVM.",
     level = DeprecationLevel.ERROR
 )
-actual fun createServerBus(fd: Int): Connection = JvmConnection(
-    JvmDbusBackendProvider.backend.createConnection(JvmBusType.SERVER_FD, null, null, fd)
-)
+actual fun createServerBusConnection(fd: UnixFd): Connection = JvmConnection(
+    JvmDbusBackendProvider.backend.createConnection(JvmBusType.SERVER_FD, null, null, fd.fd)
+).also { fd.detach() }

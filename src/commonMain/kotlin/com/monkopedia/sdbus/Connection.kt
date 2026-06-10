@@ -258,7 +258,7 @@ expect fun createSessionBusConnection(name: ServiceName): Connection
  *
  * Consult manual pages for `sd_bus_set_address` of the underlying sd-bus library for more information.
  */
-expect fun createSessionBusConnectionWithAddress(address: String): Connection
+expect fun createSessionBusConnection(address: String): Connection
 
 /**
  * Creates/opens D-Bus system connection on a remote host using ssh
@@ -289,12 +289,18 @@ expect fun createDirectBusConnection(address: String): Connection
  * @param fd File descriptor used to communicate directly from/to a D-Bus server
  * @return [Connection] instance
  *
- * The underlying sdbus-kotlin connection instance takes over ownership of fd, so the caller can let it go.
- * If, however, the call throws an exception, the ownership of fd remains with the caller.
+ * The connection adopts (takes over ownership of) the file descriptor held by [fd] without
+ * duplicating it: on success, [fd] no longer owns the descriptor (it is detached, and neither
+ * releasing nor garbage-collecting [fd] will close it), and the connection closes the
+ * descriptor when it is destroyed. If, however, the call throws an exception, the ownership
+ * of the descriptor remains with [fd].
+ *
+ * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
+ * a duplicate while keeping your own descriptor.
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createDirectBusConnection(fd: Int): Connection
+expect fun createDirectBusConnection(fd: UnixFd): Connection
 
 /**
  * Opens direct D-Bus connection at fd as a server
@@ -308,9 +314,15 @@ expect fun createDirectBusConnection(fd: Int): Connection
  * This creates a new, custom bus object in server mode. One can then call createDirectBusConnection()
  * on client side to connect to this bus.
  *
- * The underlying sdbus-kotlin connection instance takes over ownership of fd, so the caller can let it go.
- * If, however, the call throws an exception, the ownership of fd remains with the caller.
+ * The connection adopts (takes over ownership of) the file descriptor held by [fd] without
+ * duplicating it: on success, [fd] no longer owns the descriptor (it is detached, and neither
+ * releasing nor garbage-collecting [fd] will close it), and the connection closes the
+ * descriptor when it is destroyed. If, however, the call throws an exception, the ownership
+ * of the descriptor remains with [fd].
+ *
+ * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
+ * a duplicate while keeping your own descriptor.
  *
  * @throws [com.monkopedia.sdbus.Error] in case of failure
  */
-expect fun createServerBus(fd: Int): Connection
+expect fun createServerBusConnection(fd: UnixFd): Connection
