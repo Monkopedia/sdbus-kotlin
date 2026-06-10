@@ -57,8 +57,8 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
     constructor(
         destination: ServiceName,
         objectPath: ObjectPath,
-        dontRunEventLoopThread: Boolean = false
-    ) : this(createProxy(destination, objectPath, dontRunEventLoopThread))
+        runEventLoopThread: Boolean = true
+    ) : this(createProxy(destination, objectPath, runEventLoopThread))
 
     constructor(
         connection: com.monkopedia.sdbus.Connection,

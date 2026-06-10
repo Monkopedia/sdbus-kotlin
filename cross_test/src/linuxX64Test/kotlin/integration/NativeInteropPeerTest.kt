@@ -38,7 +38,7 @@ import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.createDirectBusConnection
 import com.monkopedia.sdbus.createObject
 import com.monkopedia.sdbus.createProxy
-import com.monkopedia.sdbus.createServerBus
+import com.monkopedia.sdbus.createServerBusConnection
 import com.monkopedia.sdbus.emitSignal
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.onSignal
@@ -117,7 +117,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -180,7 +180,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -241,7 +241,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -315,7 +315,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -329,7 +329,7 @@ class NativeInteropPeerTest {
                         clearStoredPipe()
                         val (readFd, writeFd) = createPipePair()
                         storedWriteFd = writeFd
-                        UnixFd(readFd, adoptFd = Unit)
+                        UnixFd.adopt(readFd)
                     }
                 }
                 method(MethodName(STORE_PIPE_READ_FD_METHOD)) {
@@ -417,7 +417,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -481,7 +481,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -541,7 +541,7 @@ class NativeInteropPeerTest {
                 require(fd >= 0) { "accept() failed for socket $socketPath" }
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
-                val connection = createServerBus(fd)
+                val connection = createServerBusConnection(UnixFd.adopt(fd))
                 connection.enterEventLoopAsync()
                 connectionDeferred.complete(connection)
             }
@@ -596,7 +596,7 @@ class NativeInteropPeerTest {
         val expectedErrorContains = env("KDBUS_INTEROP_EXPECT_ERROR_CONTAINS")
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -604,7 +604,7 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         try {
             fun invoke(): Int = proxy.callMethod<Int>(
@@ -660,7 +660,7 @@ class NativeInteropPeerTest {
         val signalReceived = atomic(false)
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -669,7 +669,7 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         val signalRegistration = proxy.onSignal(
             InterfaceName(interfaceName),
@@ -717,7 +717,7 @@ class NativeInteropPeerTest {
         val signalMember = atomic<String?>(null)
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -726,7 +726,7 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         val signalRegistration = proxy.registerSignalHandler(
             InterfaceName("org.freedesktop.DBus.Properties"),
@@ -770,7 +770,7 @@ class NativeInteropPeerTest {
         val expectedByte = requireEnv("KDBUS_INTEROP_EXPECTED_ARG").toInt() and 0xFF
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -778,10 +778,10 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         val (readFd, writeFd) = createPipePair()
-        val outboundFd = UnixFd(readFd, adoptFd = Unit)
+        val outboundFd = UnixFd.adopt(readFd)
         try {
             val accepted = retryCall(timeoutMillis = 15_000) {
                 proxy.callMethod<Int>(
@@ -822,7 +822,7 @@ class NativeInteropPeerTest {
                     MethodName(STORE_PIPE_READ_FD_METHOD)
                 ) {
                     timeout = 5.seconds
-                    call(UnixFd(-1, adoptFd = Unit))
+                    call(UnixFd.adopt(-1))
                 }
             }.exceptionOrNull() as? com.monkopedia.sdbus.Error
             assertTrue(invalidError != null, "Expected invalid Unix FD call to fail")
@@ -850,7 +850,7 @@ class NativeInteropPeerTest {
         val payload = buildLargeMapPayload(expectedSize)
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -858,7 +858,7 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         try {
             val result = retryCall(timeoutMillis = 15_000) {
@@ -889,7 +889,7 @@ class NativeInteropPeerTest {
         val payload = buildNestedVariantPayload(expectedSize)
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -897,7 +897,7 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         try {
             val result = retryCall(timeoutMillis = 15_000) {
@@ -931,7 +931,7 @@ class NativeInteropPeerTest {
         val payload = buildMixedPayload(expectedSize)
         val connection = if (env("KDBUS_INTEROP_CONNECT_FD") == "true") {
             val fd = connectUnixSocket(socketPath)
-            createDirectBusConnection(fd)
+            createDirectBusConnection(UnixFd.adopt(fd))
         } else {
             createDirectBusConnection(connectionAddress)
         }
@@ -939,7 +939,7 @@ class NativeInteropPeerTest {
             connection,
             ServiceName(""),
             ObjectPath(objectPath),
-            true
+            runEventLoopThread = false
         )
         try {
             val result = retryCall(timeoutMillis = 15_000) {

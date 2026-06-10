@@ -72,7 +72,7 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
         if (busType == JvmBusType.SERVER_FD) {
             throw createError(
                 -1,
-                "JVM backend does not support createServerBus(fd)"
+                "JVM backend does not support createServerBusConnection(fd)"
             )
         }
         val connection = runCatching {
@@ -97,9 +97,9 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
         connection: Connection,
         destination: ServiceName,
         objectPath: ObjectPath,
-        dontRunEventLoopThread: Boolean
+        runEventLoopThread: Boolean
     ): JvmDbusProxy {
-        if (!dontRunEventLoopThread) {
+        if (runEventLoopThread) {
             connection.enterEventLoopAsync()
         }
         val javaConnection = (connection as? JvmConnection)?.backend as? PureJavaDbusConnection

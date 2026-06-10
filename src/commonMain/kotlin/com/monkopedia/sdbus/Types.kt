@@ -331,9 +331,10 @@ value class Signature(
  * the UnixFd goes out of scope.
  *
  * UnixFd can be default constructed (owning invalid fd), or constructed from
- * an explicitly provided fd by either duplicating or adopting that fd as-is.
+ * an explicitly provided fd by either duplicating ([UnixFd] primary constructor)
+ * or adopting that fd as-is ([UnixFd.adopt]).
  */
-expect class UnixFd(fd: Int, adoptFd: Unit) : Resource {
+expect class UnixFd internal constructor(fd: Int, adoptFd: Unit) : Resource {
 
     constructor(fd: Int = -1)
     constructor(other: UnixFd)
@@ -342,5 +343,16 @@ expect class UnixFd(fd: Int, adoptFd: Unit) : Resource {
 
     companion object {
         val SERIAL_NAME: String
+
+        /**
+         * Adopts [fd] as-is, taking over its ownership without duplicating it.
+         *
+         * The returned [UnixFd] owns [fd] and will close it upon [release]
+         * (or when the instance is garbage collected). The caller must not
+         * close [fd] afterwards. Contrast with the primary `UnixFd(fd)`
+         * constructor, which duplicates the descriptor and leaves the
+         * caller's fd untouched.
+         */
+        fun adopt(fd: Int): UnixFd
     }
 }

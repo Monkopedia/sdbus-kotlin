@@ -46,11 +46,11 @@ class JvmFactoryMockkTest {
             createSystemBusConnection(serviceName)
             createSessionBusConnection()
             createSessionBusConnection(serviceName)
-            createSessionBusConnectionWithAddress("unix:path=/tmp/session")
+            createSessionBusConnection("unix:path=/tmp/session")
             createRemoteSystemBusConnection("example-host")
             createDirectBusConnection("unix:path=/tmp/direct")
-            createDirectBusConnection(42)
-            createServerBus(99)
+            createDirectBusConnection(UnixFd.adopt(42))
+            createServerBusConnection(UnixFd.adopt(99))
 
             verify(exactly = 1) {
                 backend.createConnection(JvmBusType.DEFAULT, null, null, null)
@@ -113,20 +113,20 @@ class JvmFactoryMockkTest {
         try {
             every { JvmDbusBackendProvider.backend } returns backend
             every {
-                backend.createProxy(connection, destination, objectPath, true)
+                backend.createProxy(connection, destination, objectPath, false)
             } returns proxyBackend
 
             val proxy = createProxy(
                 connection,
                 destination,
                 objectPath,
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
 
             assertEquals(objectPath, proxy.objectPath)
             assertEquals(connection, proxy.connection)
             verify(exactly = 1) {
-                backend.createProxy(connection, destination, objectPath, true)
+                backend.createProxy(connection, destination, objectPath, false)
             }
         } finally {
             unmockkObject(JvmDbusBackendProvider)
@@ -149,7 +149,7 @@ class JvmFactoryMockkTest {
                 backend.createConnection(JvmBusType.DEFAULT, null, null, null)
             } returns connectionBackend
             every {
-                backend.createProxy(capture(createdConnection), destination, objectPath, false)
+                backend.createProxy(capture(createdConnection), destination, objectPath, true)
             } returns proxyBackend
 
             val proxy = createProxy(destination, objectPath)
@@ -161,7 +161,7 @@ class JvmFactoryMockkTest {
                 backend.createConnection(JvmBusType.DEFAULT, null, null, null)
             }
             verify(exactly = 1) {
-                backend.createProxy(any(), destination, objectPath, false)
+                backend.createProxy(any(), destination, objectPath, true)
             }
         } finally {
             unmockkObject(JvmDbusBackendProvider)
@@ -223,7 +223,7 @@ class JvmFactoryMockkTest {
         try {
             every { JvmDbusBackendProvider.backend } returns backend
             every {
-                backend.createProxy(connection, destination, path, false)
+                backend.createProxy(connection, destination, path, true)
             } throws IllegalArgumentException("proxy failed")
             every {
                 backend.createObject(connection, path)

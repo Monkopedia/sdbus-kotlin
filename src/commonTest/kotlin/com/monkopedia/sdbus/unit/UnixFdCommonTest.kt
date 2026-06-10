@@ -22,7 +22,7 @@ class UnixFdCommonTest {
     @Test
     fun aUnixFd_AdoptsFdAsIsWhenRequested() {
         val (readFd, writeFd) = FdTestSupport.createPipePair()
-        val unixFd = UnixFd(readFd, adoptFd = Unit)
+        val unixFd = UnixFd.adopt(readFd)
         assertEquals(readFd, unixFd.fd)
         unixFd.release()
         if (FdTestSupport.supportsFdDuplicationSemantics) {
@@ -36,7 +36,7 @@ class UnixFdCommonTest {
     @Test
     fun aUnixFd_CanBeCopyConstructed() {
         val (readFd, writeFd) = FdTestSupport.createPipePair()
-        val original = UnixFd(readFd, adoptFd = Unit)
+        val original = UnixFd.adopt(readFd)
         val copy = UnixFd(original)
         if (FdTestSupport.supportsFdDuplicationSemantics) {
             assertTrue(copy.fd != original.fd)
@@ -56,7 +56,7 @@ class UnixFdCommonTest {
     @Test
     fun aUnixFd_ClosesOwnedDescriptorsAfterRelease() {
         val (readFd, writeFd) = FdTestSupport.createPipePair()
-        val original = UnixFd(readFd, adoptFd = Unit)
+        val original = UnixFd.adopt(readFd)
         val copy = UnixFd(original)
         val originalFd = original.fd
         val copyFd = copy.fd
@@ -80,7 +80,7 @@ class UnixFdCommonTest {
     @Test
     fun aUnixFd_ReleaseKeepsDescriptorClosable() {
         val (readFd, writeFd) = FdTestSupport.createPipePair()
-        val unixFd = UnixFd(readFd, adoptFd = Unit)
+        val unixFd = UnixFd.adopt(readFd)
 
         unixFd.release()
 
@@ -100,7 +100,7 @@ class UnixFdCommonTest {
     @Test
     fun aUnixFd_ReleaseIsIdempotent() {
         val (readFd, writeFd) = FdTestSupport.createPipePair()
-        val unixFd = UnixFd(readFd, adoptFd = Unit)
+        val unixFd = UnixFd.adopt(readFd)
 
         unixFd.release()
         unixFd.release()

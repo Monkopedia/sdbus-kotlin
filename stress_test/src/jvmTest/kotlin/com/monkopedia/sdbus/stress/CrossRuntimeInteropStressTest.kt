@@ -220,7 +220,7 @@ class CrossRuntimeInteropStressTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 fun invokeIncrement(): Int = proxy.callMethod<Int>(
@@ -304,7 +304,7 @@ class CrossRuntimeInteropStressTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 val killer = thread(start = true, isDaemon = true, name = "stress-native-killer") {
@@ -379,7 +379,7 @@ class CrossRuntimeInteropStressTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 val cancellationFailure = runCatching {

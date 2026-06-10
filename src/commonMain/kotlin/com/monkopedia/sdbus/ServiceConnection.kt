@@ -46,8 +46,8 @@ class ServiceConnection(val connection: Connection, val serviceName: ServiceName
      * val proxy2 = service.createProxy(ObjectPath("/objs/second"))
      * ```
      */
-    fun createProxy(objectPath: ObjectPath, dontRunEventLoop: Boolean = false): Proxy =
-        createProxy(connection, serviceName, objectPath, dontRunEventLoopThread = dontRunEventLoop)
+    fun createProxy(objectPath: ObjectPath, runEventLoopThread: Boolean = true): Proxy =
+        createProxy(connection, serviceName, objectPath, runEventLoopThread = runEventLoopThread)
 
     /**
      * API available as parity to [createProxy] method.

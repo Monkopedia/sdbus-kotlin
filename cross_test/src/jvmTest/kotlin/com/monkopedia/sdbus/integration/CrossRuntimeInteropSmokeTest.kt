@@ -76,7 +76,7 @@ class CrossRuntimeInteropSmokeTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 val result = retryCall(timeoutMillis = 10_000) {
@@ -318,7 +318,7 @@ class CrossRuntimeInteropSmokeTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             val createdFd = retryCall(timeoutMillis = 10_000) {
                 proxy.callMethod<UnixFd>(
@@ -355,7 +355,7 @@ class CrossRuntimeInteropSmokeTest {
                         InterfaceName(interfaceName),
                         MethodName(STORE_PIPE_READ_FD_METHOD)
                     ) {
-                        call(UnixFd(-1, adoptFd = Unit))
+                        call(UnixFd.adopt(-1))
                     }
                 }.exceptionOrNull() as? com.monkopedia.sdbus.Error
                 assertTrue(invalidFailure != null, "Expected invalid Unix FD call to fail")
@@ -432,7 +432,7 @@ class CrossRuntimeInteropSmokeTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 val result = retryCall(timeoutMillis = 10_000) {
@@ -508,7 +508,7 @@ class CrossRuntimeInteropSmokeTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 val result = retryCall(timeoutMillis = 10_000) {
@@ -587,7 +587,7 @@ class CrossRuntimeInteropSmokeTest {
                 connection,
                 ServiceName(""),
                 ObjectPath(objectPath),
-                dontRunEventLoopThread = true
+                runEventLoopThread = false
             )
             try {
                 val result = retryCall(timeoutMillis = 10_000) {

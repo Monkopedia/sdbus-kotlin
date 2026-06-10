@@ -106,7 +106,7 @@ internal interface JvmDbusBackend {
         connection: Connection,
         destination: ServiceName,
         objectPath: ObjectPath,
-        dontRunEventLoopThread: Boolean
+        runEventLoopThread: Boolean
     ): JvmDbusProxy
 
     fun createObject(connection: Connection, objectPath: ObjectPath): JvmDbusObject
@@ -128,9 +128,9 @@ internal class StubJvmDbusBackend : JvmDbusBackend {
         connection: Connection,
         destination: ServiceName,
         objectPath: ObjectPath,
-        dontRunEventLoopThread: Boolean
+        runEventLoopThread: Boolean
     ): JvmDbusProxy {
-        if (!dontRunEventLoopThread) {
+        if (runEventLoopThread) {
             connection.enterEventLoopAsync()
         }
         return StubJvmDbusProxy(

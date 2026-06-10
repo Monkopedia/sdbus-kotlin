@@ -28,13 +28,13 @@ class PureJavaDbusBackendTest {
             connection = connection,
             destination = destination,
             objectPath = objectPath,
-            dontRunEventLoopThread = false
+            runEventLoopThread = true
         )
         backend.createProxy(
             connection = connection,
             destination = destination,
             objectPath = objectPath,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         verify(exactly = 1) { connection.enterEventLoopAsync() }
@@ -53,7 +53,7 @@ class PureJavaDbusBackendTest {
         }
 
         assertTrue(directError.message.orEmpty().contains("createDirectBusConnection(fd)"))
-        assertTrue(serverError.message.orEmpty().contains("createServerBus(fd)"))
+        assertTrue(serverError.message.orEmpty().contains("createServerBusConnection(fd)"))
         verify(exactly = 0) {
             fallback.createConnection(JvmBusType.DIRECT_FD, null, null, 11)
         }

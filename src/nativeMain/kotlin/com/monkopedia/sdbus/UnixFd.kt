@@ -44,12 +44,13 @@ import platform.posix.errno
  * the UnixFd goes out of scope.
  *
  * UnixFd can be default constructed (owning invalid fd), or constructed from
- * an explicitly provided fd by either duplicating or adopting that fd as-is.
+ * an explicitly provided fd by either duplicating ([UnixFd] primary constructor)
+ * or adopting that fd as-is ([UnixFd.adopt]).
  *
  */
 @OptIn(ExperimentalNativeApi::class)
 @Serializable(UnixFd.Companion::class)
-actual class UnixFd actual constructor(
+actual class UnixFd internal actual constructor(
     /** The underlying file descriptor owned by this instance, or a negative value if invalid. */
     val fd: Int,
     adoptFd: Unit
@@ -76,9 +77,27 @@ actual class UnixFd actual constructor(
         wasReleased = true
     }
 
+    /**
+     * Relinquishes ownership of the underlying fd without closing it.
+     *
+     * Used when the fd's ownership is transferred elsewhere (e.g. adopted by
+     * a connection); disarms both [release] and the GC cleaner.
+     */
+    internal fun detach() {
+        // Consume the single-shot closer with an invalid fd so neither
+        // release() nor the cleaner will close the real descriptor.
+        resource.second(-1)
+        wasReleased = true
+    }
+
     actual companion object : KSerializer<UnixFd> {
 
         actual const val SERIAL_NAME = "sdbus.UnixFD"
+
+        /**
+         * Adopts [fd] as-is, taking over its ownership without duplicating it.
+         */
+        actual fun adopt(fd: Int): UnixFd = UnixFd(fd, Unit)
 
         private fun checkedDup(fd: Int): Int {
             if (fd < 0) {

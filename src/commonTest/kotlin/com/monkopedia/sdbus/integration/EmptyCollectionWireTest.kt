@@ -95,7 +95,7 @@ class EmptyCollectionWireTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {
@@ -282,7 +282,7 @@ class EmptyCollectionWireTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {
@@ -321,7 +321,7 @@ class EmptyCollectionWireTest {
             proxyConnection,
             ids.service,
             ids.path,
-            dontRunEventLoopThread = true
+            runEventLoopThread = false
         )
 
         try {

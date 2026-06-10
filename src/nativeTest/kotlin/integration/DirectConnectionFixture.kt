@@ -24,8 +24,9 @@
 
 package com.monkopedia.sdbus.integration
 
+import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.createDirectBusConnection
-import com.monkopedia.sdbus.createServerBus
+import com.monkopedia.sdbus.createServerBusConnection
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -96,7 +97,7 @@ class DirectConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
                 // SOCK_NONBLOCK |
                 SOCK_CLOEXEC
             )
-            adaptorConnection = createServerBus(fd)
+            adaptorConnection = createServerBusConnection(UnixFd.adopt(fd))
             // This is necessary so that createDirectBusConnection() below does not block
             adaptorConnection?.enterEventLoopAsync()
         }

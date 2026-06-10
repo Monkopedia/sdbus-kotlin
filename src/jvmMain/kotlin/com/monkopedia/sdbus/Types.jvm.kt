@@ -17,7 +17,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Serializable(UnixFd.Companion::class)
-actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
+actual class UnixFd internal actual constructor(val fd: Int, adoptFd: Unit) : Resource {
     private val state = OwnedFdState(fd)
     private val cleanable = CleanerHolder.cleaner.register(this, state)
 
@@ -29,8 +29,24 @@ actual class UnixFd actual constructor(val fd: Int, adoptFd: Unit) : Resource {
         cleanable.clean()
     }
 
+    /**
+     * Relinquishes ownership of the underlying fd without closing it.
+     *
+     * Used when the fd's ownership is transferred elsewhere (e.g. adopted by
+     * a connection); disarms both [release] and the GC cleaner.
+     */
+    internal fun detach() {
+        state.disarm()
+        cleanable.clean()
+    }
+
     actual companion object : KSerializer<UnixFd> {
         actual const val SERIAL_NAME: String = "sdbus.UnixFD"
+
+        /**
+         * Adopts [fd] as-is, taking over its ownership without duplicating it.
+         */
+        actual fun adopt(fd: Int): UnixFd = UnixFd(fd, Unit)
 
         override val descriptor: SerialDescriptor =
             PrimitiveSerialDescriptor(SERIAL_NAME, PrimitiveKind.INT)
@@ -53,6 +69,11 @@ private class OwnedFdState(private val fd: Int) : Runnable {
     override fun run() {
         if (fd < 0 || !released.compareAndSet(false, true)) return
         JvmUnixFdSupport.closeFd(fd)
+    }
+
+    /** Marks the fd as released without closing it (ownership transferred elsewhere). */
+    fun disarm() {
+        released.set(true)
     }
 }
 
