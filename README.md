@@ -1,7 +1,8 @@
 # sdbus-kotlin
 
+[![Build](https://github.com/Monkopedia/sdbus-kotlin/actions/workflows/arm-build-test.yaml/badge.svg)](https://github.com/Monkopedia/sdbus-kotlin/actions/workflows/arm-build-test.yaml)
 [![GitHub license](https://img.shields.io/badge/license-LGPL%203-blue.svg?style=flat)](https://www.gnu.org/licenses/lgpl-3.0.txt)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.3.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.4.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/sdbus-kotlin)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin)
 [![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/)
 
