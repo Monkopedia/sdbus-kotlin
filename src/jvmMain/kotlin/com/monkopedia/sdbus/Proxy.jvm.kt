@@ -2,6 +2,7 @@ package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.internal.jvmdbus.JvmDbusBackendProvider
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 
 internal class JvmProxy(
     override val connection: Connection,
@@ -19,8 +20,8 @@ internal class JvmProxy(
 
     override fun callMethod(message: MethodCall): MethodReply = backend.callMethod(message)
 
-    override fun callMethod(message: MethodCall, timeout: ULong): MethodReply =
-        backend.callMethod(message, timeout)
+    override fun callMethod(message: MethodCall, timeout: Duration): MethodReply =
+        backend.callMethod(message, timeout.inWholeMicroseconds.toULong())
 
     override fun callMethodAsync(
         message: MethodCall,
@@ -36,8 +37,8 @@ internal class JvmProxy(
     override suspend fun callMethodAsync(message: MethodCall): MethodReply =
         backend.callMethodAsync(message)
 
-    override suspend fun callMethodAsync(message: MethodCall, timeout: ULong): MethodReply =
-        backend.callMethodAsync(message, timeout)
+    override suspend fun callMethodAsync(message: MethodCall, timeout: Duration): MethodReply =
+        backend.callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
 
     override fun registerSignalHandler(
         interfaceName: InterfaceName,

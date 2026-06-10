@@ -78,11 +78,11 @@ abstract interface com.monkopedia.sdbus/Proxy : com.monkopedia.sdbus/Resource { 
         abstract fun <get-objectPath>(): com.monkopedia.sdbus/ObjectPath // com.monkopedia.sdbus/Proxy.objectPath.<get-objectPath>|<get-objectPath>(){}[0]
 
     abstract fun callMethod(com.monkopedia.sdbus/MethodCall): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/Proxy.callMethod|callMethod(com.monkopedia.sdbus.MethodCall){}[0]
-    abstract fun callMethod(com.monkopedia.sdbus/MethodCall, kotlin/ULong): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/Proxy.callMethod|callMethod(com.monkopedia.sdbus.MethodCall;kotlin.ULong){}[0]
+    abstract fun callMethod(com.monkopedia.sdbus/MethodCall, kotlin.time/Duration): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/Proxy.callMethod|callMethod(com.monkopedia.sdbus.MethodCall;kotlin.time.Duration){}[0]
     abstract fun createMethodCall(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName): com.monkopedia.sdbus/MethodCall // com.monkopedia.sdbus/Proxy.createMethodCall|createMethodCall(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName){}[0]
     abstract fun registerSignalHandler(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName, kotlin/Function1<com.monkopedia.sdbus/Signal, kotlin/Unit>): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Proxy.registerSignalHandler|registerSignalHandler(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;kotlin.Function1<com.monkopedia.sdbus.Signal,kotlin.Unit>){}[0]
     abstract suspend fun callMethodAsync(com.monkopedia.sdbus/MethodCall): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/Proxy.callMethodAsync|callMethodAsync(com.monkopedia.sdbus.MethodCall){}[0]
-    abstract suspend fun callMethodAsync(com.monkopedia.sdbus/MethodCall, kotlin/ULong): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/Proxy.callMethodAsync|callMethodAsync(com.monkopedia.sdbus.MethodCall;kotlin.ULong){}[0]
+    abstract suspend fun callMethodAsync(com.monkopedia.sdbus/MethodCall, kotlin.time/Duration): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/Proxy.callMethodAsync|callMethodAsync(com.monkopedia.sdbus.MethodCall;kotlin.time.Duration){}[0]
 }
 
 abstract interface com.monkopedia.sdbus/ProxyHolder { // com.monkopedia.sdbus/ProxyHolder|null[0]
@@ -253,7 +253,7 @@ final class com.monkopedia.sdbus/MethodCall : com.monkopedia.sdbus/Message { // 
 
     final fun createErrorReply(com.monkopedia.sdbus/Error): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.createErrorReply|createErrorReply(com.monkopedia.sdbus.Error){}[0]
     final fun createReply(): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.createReply|createReply(){}[0]
-    final fun send(kotlin/ULong): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.send|send(kotlin.ULong){}[0]
+    final fun send(kotlin.time/Duration): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.send|send(kotlin.time.Duration){}[0]
 }
 
 final class com.monkopedia.sdbus/MethodInvoker : com.monkopedia.sdbus/TypedArgumentsBuilderContext { // com.monkopedia.sdbus/MethodInvoker|null[0]
@@ -785,7 +785,6 @@ final val com.monkopedia.sdbus/DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.
 final fun (com.monkopedia.sdbus/Connection).com.monkopedia.sdbus/withService(com.monkopedia.sdbus/BusName): com.monkopedia.sdbus/ServiceConnection // com.monkopedia.sdbus/withService|withService@com.monkopedia.sdbus.Connection(com.monkopedia.sdbus.BusName){}[0]
 final fun (com.monkopedia.sdbus/Message).com.monkopedia.sdbus/serialize(com.monkopedia.sdbus/TypedArguments) // com.monkopedia.sdbus/serialize|serialize@com.monkopedia.sdbus.Message(com.monkopedia.sdbus.TypedArguments){}[0]
 final fun (com.monkopedia.sdbus/Object).com.monkopedia.sdbus/emit(com.monkopedia.sdbus/SignalEmitter) // com.monkopedia.sdbus/emit|emit@com.monkopedia.sdbus.Object(com.monkopedia.sdbus.SignalEmitter){}[0]
-final fun (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/callMethod(com.monkopedia.sdbus/MethodCall, kotlin.time/Duration): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/callMethod|callMethod@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.MethodCall;kotlin.time.Duration){}[0]
 final fun (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/getAllProperties(): com.monkopedia.sdbus/AllPropertiesGetter // com.monkopedia.sdbus/getAllProperties|getAllProperties@com.monkopedia.sdbus.Proxy(){}[0]
 final fun (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/getAllPropertiesAsync(): com.monkopedia.sdbus/AsyncAllPropertiesGetter // com.monkopedia.sdbus/getAllPropertiesAsync|getAllPropertiesAsync@com.monkopedia.sdbus.Proxy(){}[0]
 final fun (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/getPropertyAsync(com.monkopedia.sdbus/MemberName): com.monkopedia.sdbus/AsyncPropertyGetter // com.monkopedia.sdbus/getPropertyAsync|getPropertyAsync@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.MemberName){}[0]
@@ -834,5 +833,4 @@ final inline fun <#A: reified kotlin/Any?> (com.monkopedia.sdbus/Variant).com.mo
 final inline fun <#A: reified kotlin/Any?> com.monkopedia.sdbus/signatureOf(): com.monkopedia.sdbus/SdbusSig // com.monkopedia.sdbus/signatureOf|signatureOf(){0§<kotlin.Any?>}[0]
 final inline fun com.monkopedia.sdbus/buildArgs(kotlin/Function1<com.monkopedia.sdbus/TypedArgumentsBuilderContext, com.monkopedia.sdbus/TypedArguments>): com.monkopedia.sdbus/TypedArguments // com.monkopedia.sdbus/buildArgs|buildArgs(kotlin.Function1<com.monkopedia.sdbus.TypedArgumentsBuilderContext,com.monkopedia.sdbus.TypedArguments>){}[0]
 final suspend fun <#A: kotlin/Any> (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/callMethodAsyncImpl(com.monkopedia.sdbus/MethodCall, com.monkopedia.sdbus/MethodInvoker, kotlinx.serialization/KSerializer<#A>, kotlinx.serialization.modules/SerializersModule): #A // com.monkopedia.sdbus/callMethodAsyncImpl|callMethodAsyncImpl@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.MethodCall;com.monkopedia.sdbus.MethodInvoker;kotlinx.serialization.KSerializer<0:0>;kotlinx.serialization.modules.SerializersModule){0§<kotlin.Any>}[0]
-final suspend inline fun (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/callMethodAsync(com.monkopedia.sdbus/MethodCall, kotlin.time/Duration): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/callMethodAsync|callMethodAsync@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.MethodCall;kotlin.time.Duration){}[0]
 final suspend inline fun <#A: reified kotlin/Any> (com.monkopedia.sdbus/Proxy).com.monkopedia.sdbus/callMethodAsync(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName, kotlin/Function1<com.monkopedia.sdbus/MethodInvoker, kotlin/Unit>): #A // com.monkopedia.sdbus/callMethodAsync|callMethodAsync@com.monkopedia.sdbus.Proxy(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;kotlin.Function1<com.monkopedia.sdbus.MethodInvoker,kotlin.Unit>){0§<kotlin.Any>}[0]

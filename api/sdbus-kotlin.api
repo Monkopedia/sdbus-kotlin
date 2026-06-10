@@ -252,7 +252,7 @@ public final class com/monkopedia/sdbus/MethodCall : com/monkopedia/sdbus/Messag
 	public final fun createErrorReply (Lcom/monkopedia/sdbus/Error;)Lcom/monkopedia/sdbus/MethodReply;
 	public final fun createReply ()Lcom/monkopedia/sdbus/MethodReply;
 	public final fun getDontExpectReply ()Z
-	public final fun send-VKZWuLQ (J)Lcom/monkopedia/sdbus/MethodReply;
+	public final fun send-LRDsOJo (J)Lcom/monkopedia/sdbus/MethodReply;
 	public final fun setDontExpectReply (Z)V
 }
 
@@ -468,9 +468,9 @@ public final class com/monkopedia/sdbus/PropertyVTableItemKt {
 
 public abstract interface class com/monkopedia/sdbus/Proxy : com/monkopedia/sdbus/Resource {
 	public abstract fun callMethod (Lcom/monkopedia/sdbus/MethodCall;)Lcom/monkopedia/sdbus/MethodReply;
-	public abstract fun callMethod-2TYgG_w (Lcom/monkopedia/sdbus/MethodCall;J)Lcom/monkopedia/sdbus/MethodReply;
+	public abstract fun callMethod-HG0u8IE (Lcom/monkopedia/sdbus/MethodCall;J)Lcom/monkopedia/sdbus/MethodReply;
 	public abstract fun callMethodAsync (Lcom/monkopedia/sdbus/MethodCall;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun callMethodAsync-z13BHRw (Lcom/monkopedia/sdbus/MethodCall;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun callMethodAsync-8Mi8wO0 (Lcom/monkopedia/sdbus/MethodCall;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun createMethodCall-QGofiho (Ljava/lang/String;Ljava/lang/String;)Lcom/monkopedia/sdbus/MethodCall;
 	public abstract fun getConnection ()Lcom/monkopedia/sdbus/Connection;
 	public abstract fun getCurrentlyProcessedMessage ()Lcom/monkopedia/sdbus/Message;
@@ -483,8 +483,6 @@ public abstract interface class com/monkopedia/sdbus/ProxyHolder {
 }
 
 public final class com/monkopedia/sdbus/ProxyKt {
-	public static final fun callMethod-SxA4cEA (Lcom/monkopedia/sdbus/Proxy;Lcom/monkopedia/sdbus/MethodCall;J)Lcom/monkopedia/sdbus/MethodReply;
-	public static final fun callMethodAsync-exY8QGI (Lcom/monkopedia/sdbus/Proxy;Lcom/monkopedia/sdbus/MethodCall;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun getAllProperties (Lcom/monkopedia/sdbus/Proxy;)Lcom/monkopedia/sdbus/AllPropertiesGetter;
 	public static final fun getAllPropertiesAsync (Lcom/monkopedia/sdbus/Proxy;)Lcom/monkopedia/sdbus/AsyncAllPropertiesGetter;
 	public static final fun getPropertyAsync-NRJcMk0 (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertyGetter;

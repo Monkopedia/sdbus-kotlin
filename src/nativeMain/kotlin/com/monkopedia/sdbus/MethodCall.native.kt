@@ -29,6 +29,7 @@ import cnames.structs.sd_bus_slot
 import com.monkopedia.sdbus.internal.ISdBus
 import com.monkopedia.sdbus.internal.Reference
 import kotlin.native.internal.NativePtr
+import kotlin.time.Duration
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -58,7 +59,9 @@ actual class MethodCall internal constructor(
 
     constructor (o: MethodCall) : this(o.msg, o.sdbus)
 
-    actual fun send(timeout: ULong): MethodReply =
+    actual fun send(timeout: Duration): MethodReply = send(timeout.inWholeMicroseconds.toULong())
+
+    internal fun send(timeout: ULong): MethodReply =
         if (dontExpectReply) sendWithNoReply() else sendWithReply(timeout)
 
     internal fun send(

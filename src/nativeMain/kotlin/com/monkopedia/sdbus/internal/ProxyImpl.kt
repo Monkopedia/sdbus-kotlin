@@ -43,6 +43,7 @@ import com.monkopedia.sdbus.sdbusRequire
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlin.native.ref.createCleaner
+import kotlin.time.Duration
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
@@ -99,7 +100,10 @@ internal class ProxyImpl(
 
     override fun callMethod(message: MethodCall): MethodReply = callMethod(message, 0u)
 
-    override fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
+    override fun callMethod(message: MethodCall, timeout: Duration): MethodReply =
+        callMethod(message, timeout.inWholeMicroseconds.toULong())
+
+    private fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
         sdbusRequire(!message.isValid, "Invalid method call message provided", EINVAL)
 
         return connection.callMethod(message, timeout)
@@ -144,7 +148,10 @@ internal class ProxyImpl(
     override suspend fun callMethodAsync(message: MethodCall): MethodReply =
         callMethodAsync(message, 0u)
 
-    override suspend fun callMethodAsync(message: MethodCall, timeout: ULong): MethodReply {
+    override suspend fun callMethodAsync(message: MethodCall, timeout: Duration): MethodReply =
+        callMethodAsync(message, timeout.inWholeMicroseconds.toULong())
+
+    private suspend fun callMethodAsync(message: MethodCall, timeout: ULong): MethodReply {
         val deferred = CompletableDeferred<MethodReply>()
 
         callMethodAsync(message, deferred.asAsyncReplyHandler, timeout)

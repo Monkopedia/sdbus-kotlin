@@ -4,6 +4,7 @@ import com.monkopedia.sdbus.internal.jvmdbus.JvmStaticDispatch
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -353,7 +354,9 @@ actual class MethodCall internal constructor() : Message() {
     internal var sentReply: MethodReply? = null
     private val replySent = CountDownLatch(1)
 
-    actual fun send(timeout: ULong): MethodReply {
+    actual fun send(timeout: Duration): MethodReply = send(timeout.inWholeMicroseconds.toULong())
+
+    internal fun send(timeout: ULong): MethodReply {
         val interfaceName = metadata.interfaceName
             ?: throw createError(-1, "MethodCall.send failed: missing interface name")
         val methodName = metadata.memberName
