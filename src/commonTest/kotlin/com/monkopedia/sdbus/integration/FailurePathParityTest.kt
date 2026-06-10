@@ -228,12 +228,14 @@ class FailurePathParityTest {
     // is time-bounded so a hang in the known native-teardown path surfaces as a deterministic
     // test failure rather than an indefinitely stuck suite.
     //
-    // NOTE: this intentionally does NOT assert that a *subsequent* call on the released proxy
-    // throws. The two backends diverge there (the native backend rejects the call; the pure-JVM
-    // backend currently still services it), so a "call-after-release fails" assertion is not a
-    // parity property today -- see the PR description.
+    // This also asserts the sub-case that was scoped down when this suite landed (PR #54) and
+    // restored by the #56 decision: a *subsequent* call on the released proxy connection must
+    // throw on BOTH backends, never be silently serviced. The native backend guards every
+    // post-release operation with require(!released) { "Connection has already been released" }
+    // (ConnectionImpl.checkNotReleased); the JVM backend now guards its in-process dispatch
+    // short circuit with the same exception type and message.
     @Test
-    fun proxyConnectionTeardown_completesCleanly() = runBlocking {
+    fun proxyConnectionTeardown_completesCleanly_andCallAfterReleaseFails() = runBlocking {
         val ids = uniqueFixtureIds("teardownClean")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
@@ -262,8 +264,19 @@ class FailurePathParityTest {
             withTimeout(5_000) {
                 proxyConnection.stopEventLoop()
             }
-            proxy.release()
             proxyConnection.release()
+
+            // A call after the proxy's connection has been released must throw on both
+            // backends, not be serviced. The per-call timeout bounds the failure mode where
+            // a regressed backend would instead try to perform the call.
+            val thrown = assertFailsWith<IllegalArgumentException> {
+                proxy.callMethod<Int>(ids.iface, MethodName("Echo")) {
+                    call(6)
+                    timeout = 2_000.milliseconds
+                }
+            }
+            assertEquals("Connection has already been released", thrown.message)
+            proxy.release()
         } finally {
             withTimeout(5_000) {
                 serverConnection.stopEventLoop()

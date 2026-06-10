@@ -1,5 +1,6 @@
 package com.monkopedia.sdbus.integration
 
+import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
@@ -15,6 +16,7 @@ import com.monkopedia.sdbus.method
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlinx.serialization.Serializable
 
@@ -362,5 +364,52 @@ class TypeMatrixRoundTripTest {
         val sent = Variant(mapOf("k" to "v"))
         val received = roundTrip("variantDict", sent)
         assertEquals(mapOf("k" to "v"), received.get<Map<String, String>>())
+    }
+
+    // --- Signature-mismatch strictness (issue #56) -----------------------------------------------
+
+    @Serializable
+    private data class IntPair(val first: Int, val second: Int)
+
+    // Restores the failure-path sub-case dropped in PR #54: deserializing a reply whose actual
+    // signature is a single Int (i) into an expected struct type (ii) must be REJECTED on both
+    // backends rather than silently returning a value. The native backend fails entering the
+    // struct container with -ENXIO (System.Error.ENXIO); the JVM deserializer enforces the same
+    // contract with the same error name.
+    @Test
+    fun mismatchedReply_intIntoStruct_throwsOnBothBackends() {
+        val ids = uniqueFixtureIds("mismatch")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        // The server's Echo is declared and replies with a single Int (signature "i") ...
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("Echo")) {
+                call { input: Int -> input }
+            }
+        }
+        serverConnection.startEventLoop()
+        val proxy = createProxy(
+            proxyConnection,
+            ids.service,
+            ids.path,
+            runEventLoopThread = false
+        )
+
+        try {
+            // ... while the client deserializes the reply as a struct (signature "(ii)").
+            val thrown = assertFailsWith<Error> {
+                proxy.callMethod<IntPair>(ids.iface, MethodName("Echo")) {
+                    call(7)
+                }
+            }
+            assertEquals("System.Error.ENXIO", thrown.name)
+        } finally {
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
     }
 }
