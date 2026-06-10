@@ -81,9 +81,23 @@ interface PropertiesProxy : ProxyHolder {
 
     /**
      * Subscribes to the PropertiesChanged signal so that [onPropertiesChanged] is invoked on
-     * updates. Call this once after constructing the proxy if you override [onPropertiesChanged].
+     * updates. Call this once after constructing the proxy.
+     *
+     * The subscription stays active for the lifetime of [proxy]. Library convention:
+     * `register*` functions return a [Resource] when the registration must be explicitly
+     * released, and `Unit` (or the registered item) otherwise.
+     *
+     * @param onPropertiesChanged Called when a PropertiesChanged signal is received, with the
+     * interface whose properties changed, the map of changed property names to their new
+     * values, and the names of properties that were invalidated without a new value
      */
-    fun registerPropertiesProxy() {
+    fun registerPropertiesProxy(
+        onPropertiesChanged: (
+            interfaceName: InterfaceName,
+            changedProperties: Map<PropertyName, Variant>,
+            invalidatedProperties: List<PropertyName>
+        ) -> Unit
+    ) {
         proxy.onSignal(INTERFACE_NAME, SignalName("PropertiesChanged")) {
             call {
                     interfaceName: InterfaceName,
@@ -99,20 +113,6 @@ interface PropertiesProxy : ProxyHolder {
             }
         }
     }
-
-    /**
-     * Called when a PropertiesChanged signal is received. Override to react to property updates;
-     * the default implementation does nothing.
-     *
-     * @param interfaceName Interface whose properties changed
-     * @param changedProperties Map of changed property names to their new values
-     * @param invalidatedProperties Names of properties that were invalidated without a new value
-     */
-    fun onPropertiesChanged(
-        interfaceName: InterfaceName,
-        changedProperties: Map<PropertyName, Variant>,
-        invalidatedProperties: List<PropertyName>
-    ) = Unit
 
     /**
      * Asynchronously sets a property to a pre-wrapped [Variant] value.

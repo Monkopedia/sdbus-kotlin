@@ -117,7 +117,7 @@ class CppEventLoop : BaseTest() {
         val con = createSessionBusConnection()
         var connectionReleased = false
         try {
-            con.enterEventLoopAsync()
+            con.startEventLoop()
             val callback = { msg: Message ->
                 if (msg.path == OBJECT_PATH) {
                     matchingMessageReceived.value = true

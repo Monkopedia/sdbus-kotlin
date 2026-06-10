@@ -31,6 +31,9 @@ import kotlin.reflect.KProperty0
 /**
  * Creates a standalone [PropertyVTableItem] for the given property name.
  *
+ * Library convention: `register*` functions return a [Resource] when the registration
+ * must be explicitly released, and `Unit` (or the registered item, as here) otherwise.
+ *
  * @param propertyName The property name
  * @return A new property vtable item
  */

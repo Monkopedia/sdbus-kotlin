@@ -266,7 +266,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         eventThread.wakeUpEventLoopIfMessagesInQueue()
     }
 
-    override fun getUniqueName(): BusName {
+    override val uniqueName: BusName get() {
         checkNotReleased()
         memScoped {
             val name = cValue<CPointerVar<ByteVar>>().getPointer(this)
@@ -281,7 +281,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         }
     }
 
-    override fun enterEventLoopAsync() {
+    override fun startEventLoop() {
         checkNotReleased()
         val shouldLaunch = withAsyncLoopStateLock {
             if (asyncLoopThread != null || eventLoopStarting || released.value) {
@@ -293,7 +293,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         }
         if (!shouldLaunch) return
 
-        // A stale exit notification (e.g., from leaveEventLoop called while no loop was active)
+        // A stale exit notification (e.g., from stopEventLoop called while no loop was active)
         // would cause a newly started loop to terminate immediately.
         eventThread.clearPendingExitNotifications()
 
@@ -338,7 +338,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         }
     }
 
-    override suspend fun leaveEventLoop() {
+    override suspend fun stopEventLoop() {
         checkNotReleased()
         var loopJob: Job? = null
         while (true) {
@@ -373,27 +373,27 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         }
     }
 
-    override fun setMethodCallTimeout(timeout: Duration) {
-        checkNotReleased()
-        setMethodCallTimeout(timeout.inWholeMicroseconds.toULong())
-    }
+    override var methodCallTimeout: Duration
+        get() = memScoped {
+            checkNotReleased()
+            val timeout = cValue<uint64_tVar>().getPointer(this)
+
+            val r = sdbus.sd_bus_get_method_call_timeout(bus.value, timeout)
+
+            sdbusRequire(r < 0, "Failed to get method call timeout", -r)
+
+            timeout[0].toLong().microseconds
+        }
+        set(value) {
+            checkNotReleased()
+            setMethodCallTimeout(value.inWholeMicroseconds.toULong())
+        }
 
     private fun setMethodCallTimeout(timeout: ULong) {
         checkNotReleased()
         val r = sdbus.sd_bus_set_method_call_timeout(bus.value, timeout)
 
         sdbusRequire(r < 0, "Failed to set method call timeout", -r)
-    }
-
-    override fun getMethodCallTimeout(): Duration = memScoped {
-        checkNotReleased()
-        val timeout = cValue<uint64_tVar>().getPointer(this)
-
-        val r = sdbus.sd_bus_get_method_call_timeout(bus.value, timeout)
-
-        sdbusRequire(r < 0, "Failed to get method call timeout", -r)
-
-        return timeout[0].toLong().microseconds
     }
 
     override fun addMatch(match: String, callback: MessageHandler): Resource = memScoped {

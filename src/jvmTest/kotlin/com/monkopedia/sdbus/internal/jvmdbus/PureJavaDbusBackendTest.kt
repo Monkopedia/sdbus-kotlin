@@ -22,7 +22,7 @@ class PureJavaDbusBackendTest {
         val destination = ServiceName("org.example.Proxy")
         val objectPath = ObjectPath("/org/example/proxy")
 
-        every { connection.getUniqueName() } returns BusName(":1.123")
+        every { connection.uniqueName } returns BusName(":1.123")
 
         backend.createProxy(
             connection = connection,
@@ -37,7 +37,7 @@ class PureJavaDbusBackendTest {
             runEventLoopThread = false
         )
 
-        verify(exactly = 1) { connection.enterEventLoopAsync() }
+        verify(exactly = 1) { connection.startEventLoop() }
     }
 
     @Test

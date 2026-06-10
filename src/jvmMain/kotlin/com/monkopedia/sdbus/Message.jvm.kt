@@ -471,8 +471,8 @@ actual class MethodReply internal constructor(private val parentCall: MethodCall
 actual class Signal internal constructor() : Message() {
     internal var sendAction: ((Signal) -> Unit)? = null
 
-    actual fun setDestination(destination: String): Unit = run {
-        metadata = metadata.copy(destination = destination)
+    actual fun setDestination(destination: BusName): Unit = run {
+        metadata = metadata.copy(destination = destination.value)
     }
 
     actual fun send(): Unit = requireJvmCredential(

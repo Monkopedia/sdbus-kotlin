@@ -299,8 +299,8 @@ class DBusMethodTests : BaseTest() {
 
     @Test
     fun canSetGeneralMethodTimeoutWithLibsystemdVersionGreaterThan239() {
-        globalAdaptorConnection.setMethodCallTimeout(5.seconds)
-        assertEquals(5000.milliseconds, globalAdaptorConnection.getMethodCallTimeout())
+        globalAdaptorConnection.methodCallTimeout = 5.seconds
+        assertEquals(5000.milliseconds, globalAdaptorConnection.methodCallTimeout)
     }
 
     @Test

@@ -37,21 +37,23 @@ import kotlin.time.Duration
 interface Connection : Resource {
 
     /**
-     * Enters I/O event loop on this bus connection in a separate thread
+     * Starts the I/O event loop on this bus connection
      *
-     * The same as enterEventLoop, except that it doesn't block
-     * because it runs the loop in a separate, internally managed thread.
+     * The loop runs in a separate, internally managed thread, processing incoming
+     * and outgoing D-Bus messages, so this call does not block. The loop runs until
+     * [stopEventLoop] is called or the connection is released.
      */
-    fun enterEventLoopAsync()
+    fun startEventLoop()
 
     /**
-     * Leaves the I/O event loop running on this bus connection
+     * Stops the I/O event loop running on this bus connection
      *
-     * This causes the loop to exit and frees the thread serving the loop
+     * This causes the loop started by [startEventLoop] to exit, and frees the
+     * thread serving the loop
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
-    suspend fun leaveEventLoop()
+    suspend fun stopEventLoop()
 
     /**
      * Provides access to the currently processed D-Bus message
@@ -69,25 +71,14 @@ interface Connection : Resource {
     val currentlyProcessedMessage: Message
 
     /**
-     * Sets general method call timeout
-     *
-     * @param timeout Timeout value in microseconds
+     * General method call timeout
      *
      * General method call timeout is used for all method calls upon this connection.
      * Method call-specific timeout overrides this general setting.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
-    fun setMethodCallTimeout(timeout: Duration)
-
-    /**
-     * Gets general method call timeout
-     *
-     * @return Timeout value in microseconds
-     *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
-     */
-    fun getMethodCallTimeout(): Duration
+    var methodCallTimeout: Duration
 
     /**
      * Adds an ObjectManager at the specified D-Bus object path
@@ -101,7 +92,10 @@ interface Connection : Resource {
      * This call returns an owning resource. The lifetime of the ObjectManager
      * interface is bound to the lifetime of the returned resource instance.
      *
-     * Another, recommended way to add object managers is directly through [Object] API.
+     * Another, recommended way to add object managers is directly through the [Object] API:
+     * [Object.addObjectManager] installs the ObjectManager at that object's own path.
+     *
+     * @see Object.addObjectManager
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
@@ -164,11 +158,11 @@ interface Connection : Resource {
     ): Resource
 
     /**
-     * Retrieves the unique name of a connection. E.g. ":1.xx"
+     * The unique name of the connection. E.g. ":1.xx"
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
-    fun getUniqueName(): BusName
+    val uniqueName: BusName
 
     /**
      * Requests a well-known D-Bus service name on a bus

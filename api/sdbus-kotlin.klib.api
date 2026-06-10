@@ -9,17 +9,20 @@
 abstract interface com.monkopedia.sdbus/Connection : com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/Connection|null[0]
     abstract val currentlyProcessedMessage // com.monkopedia.sdbus/Connection.currentlyProcessedMessage|{}currentlyProcessedMessage[0]
         abstract fun <get-currentlyProcessedMessage>(): com.monkopedia.sdbus/Message // com.monkopedia.sdbus/Connection.currentlyProcessedMessage.<get-currentlyProcessedMessage>|<get-currentlyProcessedMessage>(){}[0]
+    abstract val uniqueName // com.monkopedia.sdbus/Connection.uniqueName|{}uniqueName[0]
+        abstract fun <get-uniqueName>(): com.monkopedia.sdbus/BusName // com.monkopedia.sdbus/Connection.uniqueName.<get-uniqueName>|<get-uniqueName>(){}[0]
+
+    abstract var methodCallTimeout // com.monkopedia.sdbus/Connection.methodCallTimeout|{}methodCallTimeout[0]
+        abstract fun <get-methodCallTimeout>(): kotlin.time/Duration // com.monkopedia.sdbus/Connection.methodCallTimeout.<get-methodCallTimeout>|<get-methodCallTimeout>(){}[0]
+        abstract fun <set-methodCallTimeout>(kotlin.time/Duration) // com.monkopedia.sdbus/Connection.methodCallTimeout.<set-methodCallTimeout>|<set-methodCallTimeout>(kotlin.time.Duration){}[0]
 
     abstract fun addMatch(kotlin/String, kotlin/Function1<com.monkopedia.sdbus/Message, kotlin/Unit>): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addMatch|addMatch(kotlin.String;kotlin.Function1<com.monkopedia.sdbus.Message,kotlin.Unit>){}[0]
     abstract fun addMatchAsync(kotlin/String, kotlin/Function1<com.monkopedia.sdbus/Message, kotlin/Unit>, kotlin/Function1<com.monkopedia.sdbus/Message, kotlin/Unit>): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addMatchAsync|addMatchAsync(kotlin.String;kotlin.Function1<com.monkopedia.sdbus.Message,kotlin.Unit>;kotlin.Function1<com.monkopedia.sdbus.Message,kotlin.Unit>){}[0]
     abstract fun addObjectManager(com.monkopedia.sdbus/ObjectPath): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addObjectManager|addObjectManager(com.monkopedia.sdbus.ObjectPath){}[0]
-    abstract fun enterEventLoopAsync() // com.monkopedia.sdbus/Connection.enterEventLoopAsync|enterEventLoopAsync(){}[0]
-    abstract fun getMethodCallTimeout(): kotlin.time/Duration // com.monkopedia.sdbus/Connection.getMethodCallTimeout|getMethodCallTimeout(){}[0]
-    abstract fun getUniqueName(): com.monkopedia.sdbus/BusName // com.monkopedia.sdbus/Connection.getUniqueName|getUniqueName(){}[0]
     abstract fun releaseName(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Connection.releaseName|releaseName(com.monkopedia.sdbus.BusName){}[0]
     abstract fun requestName(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Connection.requestName|requestName(com.monkopedia.sdbus.BusName){}[0]
-    abstract fun setMethodCallTimeout(kotlin.time/Duration) // com.monkopedia.sdbus/Connection.setMethodCallTimeout|setMethodCallTimeout(kotlin.time.Duration){}[0]
-    abstract suspend fun leaveEventLoop() // com.monkopedia.sdbus/Connection.leaveEventLoop|leaveEventLoop(){}[0]
+    abstract fun startEventLoop() // com.monkopedia.sdbus/Connection.startEventLoop|startEventLoop(){}[0]
+    abstract suspend fun stopEventLoop() // com.monkopedia.sdbus/Connection.stopEventLoop|stopEventLoop(){}[0]
 }
 
 abstract interface com.monkopedia.sdbus/Object : com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/Object|null[0]
@@ -54,8 +57,7 @@ abstract interface com.monkopedia.sdbus/PeerProxy : com.monkopedia.sdbus/ProxyHo
 
 abstract interface com.monkopedia.sdbus/PropertiesProxy : com.monkopedia.sdbus/ProxyHolder { // com.monkopedia.sdbus/PropertiesProxy|null[0]
     open fun getAll(com.monkopedia.sdbus/InterfaceName): kotlin.collections/Map<com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant> // com.monkopedia.sdbus/PropertiesProxy.getAll|getAll(com.monkopedia.sdbus.InterfaceName){}[0]
-    open fun onPropertiesChanged(com.monkopedia.sdbus/InterfaceName, kotlin.collections/Map<com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant>, kotlin.collections/List<com.monkopedia.sdbus/MemberName>) // com.monkopedia.sdbus/PropertiesProxy.onPropertiesChanged|onPropertiesChanged(com.monkopedia.sdbus.InterfaceName;kotlin.collections.Map<com.monkopedia.sdbus.MemberName,com.monkopedia.sdbus.Variant>;kotlin.collections.List<com.monkopedia.sdbus.MemberName>){}[0]
-    open fun registerPropertiesProxy() // com.monkopedia.sdbus/PropertiesProxy.registerPropertiesProxy|registerPropertiesProxy(){}[0]
+    open fun registerPropertiesProxy(kotlin/Function3<com.monkopedia.sdbus/InterfaceName, kotlin.collections/Map<com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant>, kotlin.collections/List<com.monkopedia.sdbus/MemberName>, kotlin/Unit>) // com.monkopedia.sdbus/PropertiesProxy.registerPropertiesProxy|registerPropertiesProxy(kotlin.Function3<com.monkopedia.sdbus.InterfaceName,kotlin.collections.Map<com.monkopedia.sdbus.MemberName,com.monkopedia.sdbus.Variant>,kotlin.collections.List<com.monkopedia.sdbus.MemberName>,kotlin.Unit>){}[0]
     open suspend fun getAllAsync(com.monkopedia.sdbus/InterfaceName): kotlin.collections/Map<com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant> // com.monkopedia.sdbus/PropertiesProxy.getAllAsync|getAllAsync(com.monkopedia.sdbus.InterfaceName){}[0]
     open suspend fun setAsync(com.monkopedia.sdbus/InterfaceName, com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant) // com.monkopedia.sdbus/PropertiesProxy.setAsync|setAsync(com.monkopedia.sdbus.InterfaceName;com.monkopedia.sdbus.MemberName;com.monkopedia.sdbus.Variant){}[0]
 
@@ -119,11 +121,6 @@ final class com.monkopedia.sdbus/AllPropertiesGetter { // com.monkopedia.sdbus/A
         final fun <get-proxy>(): com.monkopedia.sdbus/Proxy // com.monkopedia.sdbus/AllPropertiesGetter.proxy.<get-proxy>|<get-proxy>(){}[0]
 
     final fun onInterface(com.monkopedia.sdbus/InterfaceName): kotlin.collections/Map<com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant> // com.monkopedia.sdbus/AllPropertiesGetter.onInterface|onInterface(com.monkopedia.sdbus.InterfaceName){}[0]
-
-    final object Companion { // com.monkopedia.sdbus/AllPropertiesGetter.Companion|null[0]
-        final val DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.sdbus/AllPropertiesGetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME|{}DBUS_PROPERTIES_INTERFACE_NAME[0]
-            final fun <get-DBUS_PROPERTIES_INTERFACE_NAME>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/AllPropertiesGetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME.<get-DBUS_PROPERTIES_INTERFACE_NAME>|<get-DBUS_PROPERTIES_INTERFACE_NAME>(){}[0]
-    }
 }
 
 final class com.monkopedia.sdbus/AsyncAllPropertiesGetter { // com.monkopedia.sdbus/AsyncAllPropertiesGetter|null[0]
@@ -131,11 +128,6 @@ final class com.monkopedia.sdbus/AsyncAllPropertiesGetter { // com.monkopedia.sd
 
     final fun onInterface(com.monkopedia.sdbus/InterfaceName): com.monkopedia.sdbus/AsyncAllPropertiesGetter // com.monkopedia.sdbus/AsyncAllPropertiesGetter.onInterface|onInterface(com.monkopedia.sdbus.InterfaceName){}[0]
     final suspend fun getResult(): kotlin.collections/Map<com.monkopedia.sdbus/MemberName, com.monkopedia.sdbus/Variant> // com.monkopedia.sdbus/AsyncAllPropertiesGetter.getResult|getResult(){}[0]
-
-    final object Companion { // com.monkopedia.sdbus/AsyncAllPropertiesGetter.Companion|null[0]
-        final val DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.sdbus/AsyncAllPropertiesGetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME|{}DBUS_PROPERTIES_INTERFACE_NAME[0]
-            final fun <get-DBUS_PROPERTIES_INTERFACE_NAME>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/AsyncAllPropertiesGetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME.<get-DBUS_PROPERTIES_INTERFACE_NAME>|<get-DBUS_PROPERTIES_INTERFACE_NAME>(){}[0]
-    }
 }
 
 final class com.monkopedia.sdbus/AsyncPropertyGetter { // com.monkopedia.sdbus/AsyncPropertyGetter|null[0]
@@ -144,11 +136,6 @@ final class com.monkopedia.sdbus/AsyncPropertyGetter { // com.monkopedia.sdbus/A
     final fun onInterface(com.monkopedia.sdbus/InterfaceName): com.monkopedia.sdbus/AsyncPropertyGetter // com.monkopedia.sdbus/AsyncPropertyGetter.onInterface|onInterface(com.monkopedia.sdbus.InterfaceName){}[0]
     final suspend fun <#A1: kotlin/Any> get(kotlinx.serialization/DeserializationStrategy<#A1>, kotlinx.serialization.modules/SerializersModule, com.monkopedia.sdbus/SdbusSig): #A1 // com.monkopedia.sdbus/AsyncPropertyGetter.get|get(kotlinx.serialization.DeserializationStrategy<0:0>;kotlinx.serialization.modules.SerializersModule;com.monkopedia.sdbus.SdbusSig){0§<kotlin.Any>}[0]
     final suspend inline fun <#A1: reified kotlin/Any> get(): #A1 // com.monkopedia.sdbus/AsyncPropertyGetter.get|get(){0§<kotlin.Any>}[0]
-
-    final object Companion { // com.monkopedia.sdbus/AsyncPropertyGetter.Companion|null[0]
-        final val DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.sdbus/AsyncPropertyGetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME|{}DBUS_PROPERTIES_INTERFACE_NAME[0]
-            final fun <get-DBUS_PROPERTIES_INTERFACE_NAME>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/AsyncPropertyGetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME.<get-DBUS_PROPERTIES_INTERFACE_NAME>|<get-DBUS_PROPERTIES_INTERFACE_NAME>(){}[0]
-    }
 }
 
 final class com.monkopedia.sdbus/AsyncPropertySetter { // com.monkopedia.sdbus/AsyncPropertySetter|null[0]
@@ -158,11 +145,6 @@ final class com.monkopedia.sdbus/AsyncPropertySetter { // com.monkopedia.sdbus/A
     final fun onInterface(com.monkopedia.sdbus/InterfaceName): com.monkopedia.sdbus/AsyncPropertySetter // com.monkopedia.sdbus/AsyncPropertySetter.onInterface|onInterface(com.monkopedia.sdbus.InterfaceName){}[0]
     final inline fun <#A1: reified kotlin/Any> toValue(#A1): com.monkopedia.sdbus/AsyncPropertySetter // com.monkopedia.sdbus/AsyncPropertySetter.toValue|toValue(0:0){0§<kotlin.Any>}[0]
     final suspend fun getResult() // com.monkopedia.sdbus/AsyncPropertySetter.getResult|getResult(){}[0]
-
-    final object Companion { // com.monkopedia.sdbus/AsyncPropertySetter.Companion|null[0]
-        final val DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.sdbus/AsyncPropertySetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME|{}DBUS_PROPERTIES_INTERFACE_NAME[0]
-            final fun <get-DBUS_PROPERTIES_INTERFACE_NAME>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/AsyncPropertySetter.Companion.DBUS_PROPERTIES_INTERFACE_NAME.<get-DBUS_PROPERTIES_INTERFACE_NAME>|<get-DBUS_PROPERTIES_INTERFACE_NAME>(){}[0]
-    }
 }
 
 final class com.monkopedia.sdbus/Error : kotlin/Exception { // com.monkopedia.sdbus/Error|null[0]
@@ -408,7 +390,7 @@ final class com.monkopedia.sdbus/Signal : com.monkopedia.sdbus/Message { // com.
     constructor <init>(com.monkopedia.sdbus/Signal) // com.monkopedia.sdbus/Signal.<init>|<init>(com.monkopedia.sdbus.Signal){}[0]
 
     final fun send() // com.monkopedia.sdbus/Signal.send|send(){}[0]
-    final fun setDestination(kotlin/String) // com.monkopedia.sdbus/Signal.setDestination|setDestination(kotlin.String){}[0]
+    final fun setDestination(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Signal.setDestination|setDestination(com.monkopedia.sdbus.BusName){}[0]
 }
 
 final class com.monkopedia.sdbus/SignalEmitter : com.monkopedia.sdbus/TypedArgumentsBuilderContext { // com.monkopedia.sdbus/SignalEmitter|null[0]
@@ -801,9 +783,6 @@ sealed class com.monkopedia.sdbus/SdbusSig { // com.monkopedia.sdbus/SdbusSig|nu
     abstract val value // com.monkopedia.sdbus/SdbusSig.value|{}value[0]
         abstract fun <get-value>(): kotlin/String // com.monkopedia.sdbus/SdbusSig.value.<get-value>|<get-value>(){}[0]
 }
-
-final val com.monkopedia.sdbus/DBUS_PROPERTIES_INTERFACE_NAME // com.monkopedia.sdbus/DBUS_PROPERTIES_INTERFACE_NAME|{}DBUS_PROPERTIES_INTERFACE_NAME[0]
-    final fun <get-DBUS_PROPERTIES_INTERFACE_NAME>(): com.monkopedia.sdbus/InterfaceName // com.monkopedia.sdbus/DBUS_PROPERTIES_INTERFACE_NAME.<get-DBUS_PROPERTIES_INTERFACE_NAME>|<get-DBUS_PROPERTIES_INTERFACE_NAME>(){}[0]
 
 final fun (com.monkopedia.sdbus/Connection).com.monkopedia.sdbus/withService(com.monkopedia.sdbus/BusName): com.monkopedia.sdbus/ServiceConnection // com.monkopedia.sdbus/withService|withService@com.monkopedia.sdbus.Connection(com.monkopedia.sdbus.BusName){}[0]
 final fun (com.monkopedia.sdbus/Message).com.monkopedia.sdbus/serialize(com.monkopedia.sdbus/TypedArguments) // com.monkopedia.sdbus/serialize|serialize@com.monkopedia.sdbus.Message(com.monkopedia.sdbus.TypedArguments){}[0]

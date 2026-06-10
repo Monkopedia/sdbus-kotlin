@@ -68,14 +68,9 @@ class AsyncPropertyGetter(private val proxy: Proxy, private val propertyName: Pr
         signature: SdbusSig
     ): T {
         require(interfaceName?.value?.isNotEmpty() == true)
-        return proxy.callMethodAsync<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Get")) {
+        return proxy.callMethodAsync<Variant>(PropertiesProxy.INTERFACE_NAME, MethodName("Get")) {
             call(interfaceName!!, propertyName)
         }.get(serializer, module, signature)
-    }
-
-    companion object {
-        /** The standard `org.freedesktop.DBus.Properties` interface name. */
-        val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")
     }
 }
 
@@ -107,14 +102,9 @@ class AsyncPropertySetter(private val proxy: Proxy, private val propertyName: Pr
     suspend fun getResult() {
         require(interfaceName?.value?.isNotEmpty() == true)
 
-        return proxy.callMethodAsync<Unit>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Set")) {
+        return proxy.callMethodAsync<Unit>(PropertiesProxy.INTERFACE_NAME, MethodName("Set")) {
             args = call(interfaceName!!, propertyName) + (value!!)
         }
-    }
-
-    companion object {
-        /** The standard `org.freedesktop.DBus.Properties` interface name. */
-        val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")
     }
 }
 
@@ -130,14 +120,9 @@ class AllPropertiesGetter(val proxy: Proxy) {
      * @return A map of property name to its current value
      */
     fun onInterface(interfaceName: InterfaceName): Map<PropertyName, Variant> =
-        proxy.callMethod(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("GetAll")) {
+        proxy.callMethod(PropertiesProxy.INTERFACE_NAME, MethodName("GetAll")) {
             call(interfaceName)
         }
-
-    companion object {
-        /** The standard `org.freedesktop.DBus.Properties` interface name. */
-        val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")
-    }
 }
 
 /**
@@ -161,13 +146,8 @@ class AsyncAllPropertiesGetter(private val proxy: Proxy) {
      */
     suspend fun getResult(): Map<PropertyName, Variant> {
         require(interfaceName?.value?.isNotEmpty() == true)
-        return proxy.callMethodAsync(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("GetAll")) {
+        return proxy.callMethodAsync(PropertiesProxy.INTERFACE_NAME, MethodName("GetAll")) {
             call(interfaceName!!)
         }
-    }
-
-    companion object {
-        /** The standard `org.freedesktop.DBus.Properties` interface name. */
-        val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")
     }
 }

@@ -37,8 +37,8 @@ internal enum class JvmBusType {
 }
 
 internal interface JvmDbusConnection : Resource {
-    fun enterEventLoopAsync()
-    suspend fun leaveEventLoop()
+    fun startEventLoop()
+    suspend fun stopEventLoop()
     fun currentlyProcessedMessage(): Message
     fun setMethodCallTimeout(timeout: Duration)
     fun getMethodCallTimeout(): Duration
@@ -131,7 +131,7 @@ internal class StubJvmDbusBackend : JvmDbusBackend {
         runEventLoopThread: Boolean
     ): JvmDbusProxy {
         if (runEventLoopThread) {
-            connection.enterEventLoopAsync()
+            connection.startEventLoop()
         }
         return StubJvmDbusProxy(
             destination = destination,
@@ -142,14 +142,14 @@ internal class StubJvmDbusBackend : JvmDbusBackend {
     override fun createObject(connection: Connection, objectPath: ObjectPath): JvmDbusObject =
         StubJvmDbusObject(
             objectPath = objectPath,
-            senderName = runCatching { connection.getUniqueName().value }.getOrNull()
+            senderName = runCatching { connection.uniqueName.value }.getOrNull()
         )
 }
 
 private class StubJvmDbusConnection(private val configuredName: ServiceName?) : JvmDbusConnection {
-    override fun enterEventLoopAsync(): Unit = Unit
+    override fun startEventLoop(): Unit = Unit
 
-    override suspend fun leaveEventLoop(): Unit = Unit
+    override suspend fun stopEventLoop(): Unit = Unit
 
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: com.monkopedia.sdbus.PlainMessage.createPlainMessage()

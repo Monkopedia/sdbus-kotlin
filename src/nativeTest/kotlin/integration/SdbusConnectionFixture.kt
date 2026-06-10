@@ -39,8 +39,8 @@ class SdbusConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onBeforeTest() {
         globalAdaptorConnection.requestName(SERVICE_NAME)
-        globalAdaptorConnection.enterEventLoopAsync()
-        globalProxyConnection.enterEventLoopAsync()
+        globalAdaptorConnection.startEventLoop()
+        globalProxyConnection.startEventLoop()
         runBlocking {
             delay(50.milliseconds)
         }
@@ -74,8 +74,8 @@ class SdbusConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
         usleep(1000u)
         globalAdaptorConnection.releaseName(SERVICE_NAME)
         runBlocking {
-            globalAdaptorConnection.leaveEventLoop()
-            globalProxyConnection.leaveEventLoop()
+            globalAdaptorConnection.stopEventLoop()
+            globalProxyConnection.stopEventLoop()
         }
     }
 }

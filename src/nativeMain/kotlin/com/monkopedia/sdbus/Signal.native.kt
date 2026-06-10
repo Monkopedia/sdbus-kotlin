@@ -39,8 +39,8 @@ actual class Signal internal constructor(
 
     constructor (o: Signal) : this(o.msg, o.sdbus)
 
-    actual fun setDestination(destination: String) {
-        val r = sdbus.sd_bus_message_set_destination(msg, destination)
+    actual fun setDestination(destination: BusName) {
+        val r = sdbus.sd_bus_message_set_destination(msg, destination.value)
         sdbusRequire(r < 0, "Failed to set signal destination", -r)
     }
 

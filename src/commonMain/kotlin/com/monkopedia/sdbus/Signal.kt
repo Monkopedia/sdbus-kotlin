@@ -34,9 +34,11 @@ expect class Signal : Message {
     /**
      * Restricts this signal to a single destination bus name instead of broadcasting it.
      *
+     * The destination set here is observable via [Message.destination].
+     *
      * @param destination Bus name of the intended recipient
      */
-    fun setDestination(destination: String)
+    fun setDestination(destination: BusName)
 
     /**
      * Emits this signal on the bus.

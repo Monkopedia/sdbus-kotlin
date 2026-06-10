@@ -58,7 +58,7 @@ import kotlinx.serialization.serializer
 inline fun <reified T : Any> Proxy.getProperty(
     interfaceName: InterfaceName,
     propertyName: PropertyName
-): T = callMethod<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Get")) {
+): T = callMethod<Variant>(PropertiesProxy.INTERFACE_NAME, MethodName("Get")) {
     call(interfaceName, propertyName)
 }.get<T>()
 
@@ -79,7 +79,7 @@ inline fun <reified T : Any> Proxy.setProperty(
     value: T,
     dontExpectReply: Boolean = false
 ) {
-    callMethod<Unit>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Set")) {
+    callMethod<Unit>(PropertiesProxy.INTERFACE_NAME, MethodName("Set")) {
         this.dontExpectReply = dontExpectReply
         call(interfaceName, propertyName, Variant(value))
     }
@@ -163,7 +163,7 @@ open class PropertyDelegate<R, T : Any>(
      * @throws [com.monkopedia.sdbus.Error] in case of failure, including when the property
      * doesn't currently exist (use [getOrNull] for a null-returning variant)
      */
-    fun get(): T = proxy.callMethod<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Get")) {
+    fun get(): T = proxy.callMethod<Variant>(PropertiesProxy.INTERFACE_NAME, MethodName("Get")) {
         call(interfaceName, propertyName)
     }.get(type, module, signature)
 
@@ -197,7 +197,7 @@ open class PropertyDelegate<R, T : Any>(
      * [changesOrNull] to observe invalidations as `null`).
      */
     fun changes(): Flow<T> = proxy.signalFlow<PropertiesChange>(
-        DBUS_PROPERTIES_INTERFACE_NAME,
+        PropertiesProxy.INTERFACE_NAME,
         SignalName("PropertiesChanged")
     ) {
         call(::PropertiesChange)
@@ -215,7 +215,7 @@ open class PropertyDelegate<R, T : Any>(
      * current value first.
      */
     fun changesOrNull(): Flow<T?> = proxy.signalFlow<PropertiesChange>(
-        DBUS_PROPERTIES_INTERFACE_NAME,
+        PropertiesProxy.INTERFACE_NAME,
         SignalName("PropertiesChanged")
     ) {
         call(::PropertiesChange)
@@ -274,7 +274,7 @@ class MutablePropertyDelegate<R, T : Any>(
      * Sets a new value for a mutable property.
      */
     fun set(value: T) {
-        proxy.callMethod<Unit>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Set")) {
+        proxy.callMethod<Unit>(PropertiesProxy.INTERFACE_NAME, MethodName("Set")) {
             call(interfaceName, propertyName, Variant(serializer, module, value))
         }
     }
@@ -301,6 +301,3 @@ inline fun <R, reified T : Any> Proxy.prop(
         setProperty(interfaceName, propertyName, value)
     }
 }
-
-/** The standard `org.freedesktop.DBus.Properties` interface name. */
-val DBUS_PROPERTIES_INTERFACE_NAME = InterfaceName("org.freedesktop.DBus.Properties")

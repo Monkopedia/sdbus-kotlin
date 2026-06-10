@@ -100,14 +100,14 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
         runEventLoopThread: Boolean
     ): JvmDbusProxy {
         if (runEventLoopThread) {
-            connection.enterEventLoopAsync()
+            connection.startEventLoop()
         }
         val javaConnection = (connection as? JvmConnection)?.backend as? PureJavaDbusConnection
         return PureJavaDbusProxy(
             javaConnection?.javaConnection,
             destination,
             objectPath,
-            runCatching { connection.getUniqueName().value }.getOrNull()
+            runCatching { connection.uniqueName.value }.getOrNull()
         )
     }
 
@@ -117,7 +117,7 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
             (connection as? JvmConnection)?.backend
                 .let { it as? PureJavaDbusConnection }
                 ?.javaConnection,
-            runCatching { connection.getUniqueName().value }.getOrNull()
+            runCatching { connection.uniqueName.value }.getOrNull()
         )
 
     private fun tryCreateConnection(
@@ -781,9 +781,9 @@ private class PureJavaDbusConnection(internal val javaConnection: AbstractConnec
         LocalJvmServiceRegistry.registerLocalUniqueName(localUniqueName)
     }
 
-    override fun enterEventLoopAsync(): Unit = Unit
+    override fun startEventLoop(): Unit = Unit
 
-    override suspend fun leaveEventLoop(): Unit = Unit
+    override suspend fun stopEventLoop(): Unit = Unit
 
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: com.monkopedia.sdbus.PlainMessage.createPlainMessage()

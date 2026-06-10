@@ -118,7 +118,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -149,7 +149,7 @@ class NativeInteropPeerTest {
             } finally {
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -181,7 +181,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -209,7 +209,7 @@ class NativeInteropPeerTest {
             } finally {
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -242,7 +242,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -273,7 +273,7 @@ class NativeInteropPeerTest {
             } finally {
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -316,7 +316,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -387,7 +387,7 @@ class NativeInteropPeerTest {
                 clearStoredPipe()
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -418,7 +418,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -451,7 +451,7 @@ class NativeInteropPeerTest {
             } finally {
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -482,7 +482,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -511,7 +511,7 @@ class NativeInteropPeerTest {
             } finally {
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -542,7 +542,7 @@ class NativeInteropPeerTest {
                 val set = fcntl(fd, F_SETFD, SOCK_CLOEXEC)
                 require(set >= 0) { "fcntl(F_SETFD) failed for accepted fd=$fd" }
                 val connection = createServerBusConnection(UnixFd.adopt(fd))
-                connection.enterEventLoopAsync()
+                connection.startEventLoop()
                 connectionDeferred.complete(connection)
             }
 
@@ -570,7 +570,7 @@ class NativeInteropPeerTest {
             } finally {
                 registration.release()
                 obj.release()
-                connection.leaveEventLoop()
+                connection.stopEventLoop()
                 connection.release()
                 acceptJob.cancel()
             }
@@ -664,7 +664,7 @@ class NativeInteropPeerTest {
         } else {
             createDirectBusConnection(connectionAddress)
         }
-        connection.enterEventLoopAsync()
+        connection.startEventLoop()
         val proxy = createProxy(
             connection,
             ServiceName(""),
@@ -699,7 +699,7 @@ class NativeInteropPeerTest {
         } finally {
             signalRegistration.release()
             proxy.release()
-            connection.leaveEventLoop()
+            connection.stopEventLoop()
             connection.release()
         }
     }
@@ -721,7 +721,7 @@ class NativeInteropPeerTest {
         } else {
             createDirectBusConnection(connectionAddress)
         }
-        connection.enterEventLoopAsync()
+        connection.startEventLoop()
         val proxy = createProxy(
             connection,
             ServiceName(""),
@@ -754,7 +754,7 @@ class NativeInteropPeerTest {
         } finally {
             signalRegistration.release()
             proxy.release()
-            connection.leaveEventLoop()
+            connection.stopEventLoop()
             connection.release()
         }
     }

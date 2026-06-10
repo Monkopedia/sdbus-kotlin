@@ -68,8 +68,20 @@ abstract class IntegrationTestsProxy(override val proxy: Proxy) :
                 thiz.get()?.onSignalWithVariant(aVariant) ?: Unit
             }
         }
-        registerPropertiesProxy()
+        registerPropertiesProxy { interfaceName, changedProperties, invalidatedProperties ->
+            thiz.get()?.onPropertiesChanged(
+                interfaceName,
+                changedProperties,
+                invalidatedProperties
+            ) ?: Unit
+        }
     }
+
+    open fun onPropertiesChanged(
+        interfaceName: InterfaceName,
+        changedProperties: Map<PropertyName, Variant>,
+        invalidatedProperties: List<PropertyName>
+    ): Unit = Unit
 
     abstract fun onSimpleSignal()
     abstract fun onSignalWithMap(aMap: Map<Int, String>)

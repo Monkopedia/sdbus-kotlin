@@ -7,17 +7,16 @@ import kotlin.time.Duration
 internal class JvmConnection(
     internal val backend: com.monkopedia.sdbus.internal.jvmdbus.JvmDbusConnection
 ) : Connection {
-    override fun enterEventLoopAsync(): Unit = backend.enterEventLoopAsync()
+    override fun startEventLoop(): Unit = backend.startEventLoop()
 
-    override suspend fun leaveEventLoop(): Unit = backend.leaveEventLoop()
+    override suspend fun stopEventLoop(): Unit = backend.stopEventLoop()
 
     override val currentlyProcessedMessage: Message
         get() = backend.currentlyProcessedMessage()
 
-    override fun setMethodCallTimeout(timeout: Duration): Unit =
-        backend.setMethodCallTimeout(timeout)
-
-    override fun getMethodCallTimeout(): Duration = backend.getMethodCallTimeout()
+    override var methodCallTimeout: Duration
+        get() = backend.getMethodCallTimeout()
+        set(value) = backend.setMethodCallTimeout(value)
 
     override fun addObjectManager(objectPath: ObjectPath): Resource =
         backend.addObjectManager(objectPath)
@@ -31,7 +30,7 @@ internal class JvmConnection(
         installCallback: MessageHandler
     ): Resource = backend.addMatchAsync(match, callback, installCallback)
 
-    override fun getUniqueName(): BusName = backend.uniqueName()
+    override val uniqueName: BusName get() = backend.uniqueName()
 
     override fun requestName(name: ServiceName): Unit = backend.requestName(name)
 

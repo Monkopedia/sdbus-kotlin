@@ -80,8 +80,8 @@ class DirectConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
 
     override fun onAfterTest() {
         runBlocking {
-            proxyConnection?.leaveEventLoop()
-            adaptorConnection?.leaveEventLoop()
+            proxyConnection?.stopEventLoop()
+            adaptorConnection?.stopEventLoop()
             context.close()
             proxyConnection = null
             adaptorConnection = null
@@ -99,10 +99,10 @@ class DirectConnectionFixture(test: BaseTest) : BaseTestFixture(test) {
             )
             adaptorConnection = createServerBusConnection(UnixFd.adopt(fd))
             // This is necessary so that createDirectBusConnection() below does not block
-            adaptorConnection?.enterEventLoopAsync()
+            adaptorConnection?.startEventLoop()
         }
         proxyConnection = createDirectBusConnection("unix:path=$DIRECT_CONNECTION_SOCKET_PATH")
-        proxyConnection?.enterEventLoopAsync()
+        proxyConnection?.startEventLoop()
 
         job.join()
     }
