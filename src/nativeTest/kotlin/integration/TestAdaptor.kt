@@ -24,7 +24,6 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.MemberName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.Object
@@ -98,14 +97,14 @@ class TestAdaptor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath)
         usleep(param * 1000u)
 
         methodCallMsg = obj.currentlyProcessedMessage
-        methodName = methodCallMsg!!.getMemberName()?.let(::MemberName)
+        methodName = methodCallMsg!!.memberName
 
         return param
     }
 
     override suspend fun doOperationAsync(param: UInt): UInt {
         methodCallMsg = obj.currentlyProcessedMessage
-        methodName = methodCallMsg!!.getMemberName()?.let(::MemberName)
+        methodName = methodCallMsg!!.memberName
 
         if (param == 0u) {
             // Don't sleep and return the result from this thread
@@ -170,7 +169,7 @@ class TestAdaptor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath)
 
     override fun blocking(value: Boolean) {
         propertySetMessage = obj.currentlyProcessedMessage
-        propertySetSender = propertySetMessage!!.getSender()
+        propertySetSender = propertySetMessage!!.sender?.value
 
         blocking = value
     }

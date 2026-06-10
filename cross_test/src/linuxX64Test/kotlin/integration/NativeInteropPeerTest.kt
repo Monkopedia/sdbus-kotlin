@@ -732,7 +732,7 @@ class NativeInteropPeerTest {
             InterfaceName("org.freedesktop.DBus.Properties"),
             SignalName("PropertiesChanged")
         ) { message ->
-            signalMember.value = message.getMemberName()
+            signalMember.value = message.memberName?.value
             signalReceived.value = true
         }
         try {

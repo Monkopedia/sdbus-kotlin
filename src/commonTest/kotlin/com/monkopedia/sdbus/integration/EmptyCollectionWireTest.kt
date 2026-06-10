@@ -376,8 +376,8 @@ class EmptyCollectionWireTest {
                 // failure rather than a 2s timeout.
                 try {
                     message.rewind(false)
-                    val (type, contents) = message.peekType()
-                    observedSignature.complete("${type ?: ""}${contents ?: ""}")
+                    val peeked = message.peekType()
+                    observedSignature.complete("${peeked.type ?: ""}${peeked.contents ?: ""}")
                     message.rewind(false)
                     decoded.complete(message.deserialize<T>())
                 } catch (t: Throwable) {

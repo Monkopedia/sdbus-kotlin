@@ -422,7 +422,7 @@ internal class ObjectImpl(
                     vtable!!.obj!!.connection.getSdBusInterface()
                 )
 
-                val methodItem = findMethod(vtable, message.getMemberName()!!)
+                val methodItem = findMethod(vtable, message.memberName!!.value)
                 assert(methodItem != null)
 
                 methodItem!!.callback(message)

@@ -228,10 +228,10 @@ class MessageCommonTest {
         msg.serialize(123)
         msg.seal()
 
-        val (type, contents) = msg.peekType()
+        val peeked = msg.peekType()
 
-        assertEquals('i', type)
-        assertNull(contents)
+        assertEquals('i', peeked.type)
+        assertNull(peeked.contents)
     }
 
     @Test
@@ -240,10 +240,10 @@ class MessageCommonTest {
         msg.serialize(mapOf(1 to "one", 2 to "two"))
         msg.seal()
 
-        val (type, contents) = msg.peekType()
+        val peeked = msg.peekType()
 
-        assertEquals('a', type)
-        assertEquals("{is}", contents)
+        assertEquals('a', peeked.type)
+        assertEquals("{is}", peeked.contents)
     }
 
     @Test

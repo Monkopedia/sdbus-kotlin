@@ -112,7 +112,7 @@ class JvmRealBusIntegrationTest {
         try {
             obj.emitInterfacesAddedSignal(listOf(childInterface))
             val message = withTimeout(2_000) { seen.await() }
-            assertEquals(managerPath.value, message.getPath())
+            assertEquals(managerPath, message.path)
         } finally {
             signalRegistration.release()
             proxy.release()
@@ -259,8 +259,8 @@ class JvmRealBusIntegrationTest {
         val proxy = createProxy(proxyConnection, service, objectPath)
         val signalRegistration = proxy.registerSignalHandler(interfaceName, signalName) { message ->
             if (!senderSeen.isCompleted) {
-                senderSeen.complete(message.getSender().orEmpty())
-                pidSeen.complete(message.getCredsPid())
+                senderSeen.complete(message.sender?.value.orEmpty())
+                pidSeen.complete(message.credsPid)
             }
         }
 

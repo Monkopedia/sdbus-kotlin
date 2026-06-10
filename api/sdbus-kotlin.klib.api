@@ -334,6 +334,17 @@ final class com.monkopedia.sdbus/ObjectManagerProxy { // com.monkopedia.sdbus/Ob
     }
 }
 
+final class com.monkopedia.sdbus/PeekedType { // com.monkopedia.sdbus/PeekedType|null[0]
+    constructor <init>(kotlin/Char?, kotlin/String?) // com.monkopedia.sdbus/PeekedType.<init>|<init>(kotlin.Char?;kotlin.String?){}[0]
+
+    final val contents // com.monkopedia.sdbus/PeekedType.contents|{}contents[0]
+        final fun <get-contents>(): kotlin/String? // com.monkopedia.sdbus/PeekedType.contents.<get-contents>|<get-contents>(){}[0]
+    final val type // com.monkopedia.sdbus/PeekedType.type|{}type[0]
+        final fun <get-type>(): kotlin/Char? // com.monkopedia.sdbus/PeekedType.type.<get-type>|<get-type>(){}[0]
+
+    final fun toString(): kotlin/String // com.monkopedia.sdbus/PeekedType.toString|toString(){}[0]
+}
+
 final class com.monkopedia.sdbus/PlainMessage : com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/PlainMessage|null[0]
     constructor <init>(com.monkopedia.sdbus/PlainMessage) // com.monkopedia.sdbus/PlainMessage.<init>|<init>(com.monkopedia.sdbus.PlainMessage){}[0]
 
@@ -746,26 +757,38 @@ sealed class <#A: com.monkopedia.sdbus/TypedMethodCall<#A>> com.monkopedia.sdbus
 }
 
 sealed class com.monkopedia.sdbus/Message { // com.monkopedia.sdbus/Message|null[0]
+    final val credsEgid // com.monkopedia.sdbus/Message.credsEgid|{}credsEgid[0]
+        final fun <get-credsEgid>(): kotlin/UInt // com.monkopedia.sdbus/Message.credsEgid.<get-credsEgid>|<get-credsEgid>(){}[0]
+    final val credsEuid // com.monkopedia.sdbus/Message.credsEuid|{}credsEuid[0]
+        final fun <get-credsEuid>(): kotlin/UInt // com.monkopedia.sdbus/Message.credsEuid.<get-credsEuid>|<get-credsEuid>(){}[0]
+    final val credsGid // com.monkopedia.sdbus/Message.credsGid|{}credsGid[0]
+        final fun <get-credsGid>(): kotlin/UInt // com.monkopedia.sdbus/Message.credsGid.<get-credsGid>|<get-credsGid>(){}[0]
+    final val credsPid // com.monkopedia.sdbus/Message.credsPid|{}credsPid[0]
+        final fun <get-credsPid>(): kotlin/Int // com.monkopedia.sdbus/Message.credsPid.<get-credsPid>|<get-credsPid>(){}[0]
+    final val credsSupplementaryGids // com.monkopedia.sdbus/Message.credsSupplementaryGids|{}credsSupplementaryGids[0]
+        final fun <get-credsSupplementaryGids>(): kotlin.collections/List<kotlin/UInt> // com.monkopedia.sdbus/Message.credsSupplementaryGids.<get-credsSupplementaryGids>|<get-credsSupplementaryGids>(){}[0]
+    final val credsUid // com.monkopedia.sdbus/Message.credsUid|{}credsUid[0]
+        final fun <get-credsUid>(): kotlin/UInt // com.monkopedia.sdbus/Message.credsUid.<get-credsUid>|<get-credsUid>(){}[0]
+    final val destination // com.monkopedia.sdbus/Message.destination|{}destination[0]
+        final fun <get-destination>(): com.monkopedia.sdbus/BusName? // com.monkopedia.sdbus/Message.destination.<get-destination>|<get-destination>(){}[0]
+    final val interfaceName // com.monkopedia.sdbus/Message.interfaceName|{}interfaceName[0]
+        final fun <get-interfaceName>(): com.monkopedia.sdbus/InterfaceName? // com.monkopedia.sdbus/Message.interfaceName.<get-interfaceName>|<get-interfaceName>(){}[0]
     final val isEmpty // com.monkopedia.sdbus/Message.isEmpty|{}isEmpty[0]
         final fun <get-isEmpty>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
     final val isValid // com.monkopedia.sdbus/Message.isValid|{}isValid[0]
         final fun <get-isValid>(): kotlin/Boolean // com.monkopedia.sdbus/Message.isValid.<get-isValid>|<get-isValid>(){}[0]
+    final val memberName // com.monkopedia.sdbus/Message.memberName|{}memberName[0]
+        final fun <get-memberName>(): com.monkopedia.sdbus/MemberName? // com.monkopedia.sdbus/Message.memberName.<get-memberName>|<get-memberName>(){}[0]
+    final val path // com.monkopedia.sdbus/Message.path|{}path[0]
+        final fun <get-path>(): com.monkopedia.sdbus/ObjectPath? // com.monkopedia.sdbus/Message.path.<get-path>|<get-path>(){}[0]
+    final val seLinuxContext // com.monkopedia.sdbus/Message.seLinuxContext|{}seLinuxContext[0]
+        final fun <get-seLinuxContext>(): kotlin/String // com.monkopedia.sdbus/Message.seLinuxContext.<get-seLinuxContext>|<get-seLinuxContext>(){}[0]
+    final val sender // com.monkopedia.sdbus/Message.sender|{}sender[0]
+        final fun <get-sender>(): com.monkopedia.sdbus/BusName? // com.monkopedia.sdbus/Message.sender.<get-sender>|<get-sender>(){}[0]
 
     final fun copyTo(com.monkopedia.sdbus/Message, kotlin/Boolean) // com.monkopedia.sdbus/Message.copyTo|copyTo(com.monkopedia.sdbus.Message;kotlin.Boolean){}[0]
-    final fun getCredsEgid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsEgid|getCredsEgid(){}[0]
-    final fun getCredsEuid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsEuid|getCredsEuid(){}[0]
-    final fun getCredsGid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsGid|getCredsGid(){}[0]
-    final fun getCredsPid(): kotlin/Int // com.monkopedia.sdbus/Message.getCredsPid|getCredsPid(){}[0]
-    final fun getCredsSupplementaryGids(): kotlin.collections/List<kotlin/UInt> // com.monkopedia.sdbus/Message.getCredsSupplementaryGids|getCredsSupplementaryGids(){}[0]
-    final fun getCredsUid(): kotlin/UInt // com.monkopedia.sdbus/Message.getCredsUid|getCredsUid(){}[0]
-    final fun getDestination(): kotlin/String? // com.monkopedia.sdbus/Message.getDestination|getDestination(){}[0]
-    final fun getInterfaceName(): kotlin/String? // com.monkopedia.sdbus/Message.getInterfaceName|getInterfaceName(){}[0]
-    final fun getMemberName(): kotlin/String? // com.monkopedia.sdbus/Message.getMemberName|getMemberName(){}[0]
-    final fun getPath(): kotlin/String? // com.monkopedia.sdbus/Message.getPath|getPath(){}[0]
-    final fun getSELinuxContext(): kotlin/String // com.monkopedia.sdbus/Message.getSELinuxContext|getSELinuxContext(){}[0]
-    final fun getSender(): kotlin/String? // com.monkopedia.sdbus/Message.getSender|getSender(){}[0]
     final fun isAtEnd(kotlin/Boolean): kotlin/Boolean // com.monkopedia.sdbus/Message.isAtEnd|isAtEnd(kotlin.Boolean){}[0]
-    final fun peekType(): kotlin/Pair<kotlin/Char?, kotlin/String?> // com.monkopedia.sdbus/Message.peekType|peekType(){}[0]
+    final fun peekType(): com.monkopedia.sdbus/PeekedType // com.monkopedia.sdbus/Message.peekType|peekType(){}[0]
     final fun rewind(kotlin/Boolean) // com.monkopedia.sdbus/Message.rewind|rewind(kotlin.Boolean){}[0]
     final fun seal() // com.monkopedia.sdbus/Message.seal|seal(){}[0]
 }

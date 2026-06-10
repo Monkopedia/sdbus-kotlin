@@ -162,8 +162,7 @@ class Variant constructor() {
      */
     fun peekValueType(): String? {
         msg.rewind(false)
-        val (_, contents) = msg.peekType()
-        return contents
+        return msg.peekType().contents
     }
 
     override fun toString(): String = "Variant(${peekValueType()})"
