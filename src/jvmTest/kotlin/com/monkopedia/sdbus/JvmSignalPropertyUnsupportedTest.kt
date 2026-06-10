@@ -43,7 +43,7 @@ class JvmSignalPropertyUnsupportedTest {
                 InterfaceName("org.freedesktop.DBus.Properties"),
                 SignalName("PropertiesChanged")
             ) { message ->
-                seenMember[0] = message.getMemberName()
+                seenMember[0] = message.memberName?.value
                 latch.countDown()
             }
             obj.emitPropertiesChangedSignal(iface)

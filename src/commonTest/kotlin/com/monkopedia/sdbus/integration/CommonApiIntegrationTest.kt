@@ -194,9 +194,9 @@ class CommonApiIntegrationTest {
 
         try {
             val call = proxy.createMethodCall(ids.iface, MethodName("Ping"))
-            assertEquals(ids.iface.value, call.getInterfaceName())
-            assertEquals("Ping", call.getMemberName())
-            assertEquals(ids.path.value, call.getPath())
+            assertEquals(ids.iface, call.interfaceName)
+            assertEquals("Ping", call.memberName?.value)
+            assertEquals(ids.path, call.path)
         } finally {
             proxy.release()
             connection.release()
@@ -849,8 +849,8 @@ class CommonApiIntegrationTest {
         val pathSeen = CompletableDeferred<String>()
         val signalRegistration = proxy.registerSignalHandler(ids.iface, SignalName("Changed")) {
             val current = proxy.currentlyProcessedMessage
-            memberSeen.complete(current.getMemberName().orEmpty())
-            pathSeen.complete(current.getPath().orEmpty())
+            memberSeen.complete(current.memberName?.value.orEmpty())
+            pathSeen.complete(current.path?.value.orEmpty())
         }
 
         try {
@@ -1138,7 +1138,7 @@ class CommonApiIntegrationTest {
         val match = proxyConnection.addMatch(
             "path='${ids.path.value}',interface='${ids.iface.value}',member='Changed'"
         ) { message ->
-            if (message.getPath() == ids.path.value && message.getMemberName() == "Changed") {
+            if (message.path == ids.path && message.memberName?.value == "Changed") {
                 callbackCount += 1
                 seen.complete(Unit)
             }
@@ -1299,8 +1299,8 @@ class CommonApiIntegrationTest {
                 withSetter<Boolean> { value ->
                     state = value
                     val current = obj.currentlyProcessedMessage
-                    memberSeen.complete(current.getMemberName().orEmpty())
-                    senderSeen.complete(current.getSender().orEmpty())
+                    memberSeen.complete(current.memberName?.value.orEmpty())
+                    senderSeen.complete(current.sender?.value.orEmpty())
                 }
             }
         }
@@ -1348,14 +1348,14 @@ class CommonApiIntegrationTest {
             InterfaceName("org.freedesktop.DBus.ObjectManager"),
             SignalName("InterfacesAdded")
         ) {
-            seenMembers += it.getMemberName().orEmpty()
+            seenMembers += it.memberName?.value.orEmpty()
             added.complete(Unit)
         }
         val removedRegistration = proxy.registerSignalHandler(
             InterfaceName("org.freedesktop.DBus.ObjectManager"),
             SignalName("InterfacesRemoved")
         ) {
-            seenMembers += it.getMemberName().orEmpty()
+            seenMembers += it.memberName?.value.orEmpty()
             removed.complete(Unit)
         }
 

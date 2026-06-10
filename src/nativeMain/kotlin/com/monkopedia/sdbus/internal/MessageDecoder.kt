@@ -247,7 +247,7 @@ internal class NonSequentialListDecoder(private val baseDecoder: MessageDecoder)
     private var index = 0
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        if (baseDecoder.target.peekType().first == null) {
+        if (baseDecoder.target.peekType().type == null) {
             return CompositeDecoder.DECODE_DONE
         }
         return index++

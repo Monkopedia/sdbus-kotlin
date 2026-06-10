@@ -221,16 +221,16 @@ public abstract class com/monkopedia/sdbus/Message {
 	public final fun getCredsPid ()I
 	public final fun getCredsSupplementaryGids ()Ljava/util/List;
 	public final fun getCredsUid-pVg5ArA ()I
-	public final fun getDestination ()Ljava/lang/String;
-	public final fun getInterfaceName ()Ljava/lang/String;
-	public final fun getMemberName ()Ljava/lang/String;
-	public final fun getPath ()Ljava/lang/String;
-	public final fun getSELinuxContext ()Ljava/lang/String;
-	public final fun getSender ()Ljava/lang/String;
+	public final fun getDestination-wEJio8Y ()Ljava/lang/String;
+	public final fun getInterfaceName-BGuB-K0 ()Ljava/lang/String;
+	public final fun getMemberName-Y7feF3Q ()Ljava/lang/String;
+	public final fun getPath-IynOJ1Q ()Ljava/lang/String;
+	public final fun getSeLinuxContext ()Ljava/lang/String;
+	public final fun getSender-wEJio8Y ()Ljava/lang/String;
 	public final fun isAtEnd (Z)Z
 	public final fun isEmpty ()Z
 	public final fun isValid ()Z
-	public final fun peekType ()Lkotlin/Pair;
+	public final fun peekType ()Lcom/monkopedia/sdbus/PeekedType;
 	public final fun rewind (Z)V
 	public final fun seal ()V
 }
@@ -367,6 +367,13 @@ public final class com/monkopedia/sdbus/ObjectPath$Companion : kotlinx/serializa
 
 public final class com/monkopedia/sdbus/Object_jvmKt {
 	public static final fun createObject-NvYYnfA (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;)Lcom/monkopedia/sdbus/Object;
+}
+
+public final class com/monkopedia/sdbus/PeekedType {
+	public fun <init> (Ljava/lang/Character;Ljava/lang/String;)V
+	public final fun getContents ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/Character;
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/monkopedia/sdbus/PeerProxy : com/monkopedia/sdbus/ProxyHolder {

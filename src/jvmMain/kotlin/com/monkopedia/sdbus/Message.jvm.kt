@@ -148,15 +148,20 @@ actual sealed class Message {
     internal actual operator fun invoke(): Boolean = false
     internal actual fun clearFlags(): Unit = Unit
 
-    actual fun getInterfaceName(): String? = metadata.interfaceName
-    actual fun getMemberName(): String? = metadata.memberName
-    actual fun getSender(): String? = metadata.sender
-    actual fun getPath(): String? = metadata.path
-    actual fun getDestination(): String? = metadata.destination
-    actual fun peekType(): Pair<Char?, String?> {
-        val next = payload.getOrNull(readIndex) ?: return null to null
-        val signature = inferSignature(next) ?: return null to null
-        return signature.first() to signature.drop(1).ifEmpty { null }
+    actual val interfaceName: InterfaceName?
+        get() = metadata.interfaceName?.let(::InterfaceName)
+    actual val memberName: MemberName?
+        get() = metadata.memberName?.let(::MemberName)
+    actual val sender: BusName?
+        get() = metadata.sender?.let(::BusName)
+    actual val path: ObjectPath?
+        get() = metadata.path?.let(::ObjectPath)
+    actual val destination: BusName?
+        get() = metadata.destination?.let(::BusName)
+    actual fun peekType(): PeekedType {
+        val next = payload.getOrNull(readIndex) ?: return PeekedType(null, null)
+        val signature = inferSignature(next) ?: return PeekedType(null, null)
+        return PeekedType(signature.first(), signature.drop(1).ifEmpty { null })
     }
     actual val isValid: Boolean
         get() = metadata.valid
@@ -172,21 +177,26 @@ actual sealed class Message {
         readIndex = 0
         enteredVariantValues.clear()
     }
-    actual fun getCredsPid(): Int = requireJvmCredential(metadata.credsPid, "Message.getCredsPid")
-    actual fun getCredsUid(): UInt = requireJvmCredential(metadata.credsUid, "Message.getCredsUid")
-    actual fun getCredsEuid(): UInt =
-        requireJvmCredential(metadata.credsEuid, "Message.getCredsEuid")
-    actual fun getCredsGid(): UInt = requireJvmCredential(metadata.credsGid, "Message.getCredsGid")
-    actual fun getCredsEgid(): UInt =
-        requireJvmCredential(metadata.credsEgid, "Message.getCredsEgid")
-    actual fun getCredsSupplementaryGids(): List<UInt> = requireJvmCredential(
-        metadata.credsSupplementaryGids,
-        "Message.getCredsSupplementaryGids"
-    )
-    actual fun getSELinuxContext(): String = requireJvmCredential(
-        metadata.selinuxContext,
-        "Message.getSELinuxContext"
-    )
+    actual val credsPid: Int
+        get() = requireJvmCredential(metadata.credsPid, "Message.credsPid")
+    actual val credsUid: UInt
+        get() = requireJvmCredential(metadata.credsUid, "Message.credsUid")
+    actual val credsEuid: UInt
+        get() = requireJvmCredential(metadata.credsEuid, "Message.credsEuid")
+    actual val credsGid: UInt
+        get() = requireJvmCredential(metadata.credsGid, "Message.credsGid")
+    actual val credsEgid: UInt
+        get() = requireJvmCredential(metadata.credsEgid, "Message.credsEgid")
+    actual val credsSupplementaryGids: List<UInt>
+        get() = requireJvmCredential(
+            metadata.credsSupplementaryGids,
+            "Message.credsSupplementaryGids"
+        )
+    actual val seLinuxContext: String
+        get() = requireJvmCredential(
+            metadata.selinuxContext,
+            "Message.seLinuxContext"
+        )
 }
 
 private fun inferSignature(value: Any?): String? = when (value) {

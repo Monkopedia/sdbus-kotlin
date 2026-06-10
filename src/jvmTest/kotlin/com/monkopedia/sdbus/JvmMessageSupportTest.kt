@@ -143,13 +143,13 @@ class JvmMessageSupportTest {
         val message = PlainMessage.createPlainMessage()
 
         val failures = listOf(
-            runCatching { message.getCredsPid() }.exceptionOrNull(),
-            runCatching { message.getCredsUid() }.exceptionOrNull(),
-            runCatching { message.getCredsEuid() }.exceptionOrNull(),
-            runCatching { message.getCredsGid() }.exceptionOrNull(),
-            runCatching { message.getCredsEgid() }.exceptionOrNull(),
-            runCatching { message.getCredsSupplementaryGids() }.exceptionOrNull(),
-            runCatching { message.getSELinuxContext() }.exceptionOrNull()
+            runCatching { message.credsPid }.exceptionOrNull(),
+            runCatching { message.credsUid }.exceptionOrNull(),
+            runCatching { message.credsEuid }.exceptionOrNull(),
+            runCatching { message.credsGid }.exceptionOrNull(),
+            runCatching { message.credsEgid }.exceptionOrNull(),
+            runCatching { message.credsSupplementaryGids }.exceptionOrNull(),
+            runCatching { message.seLinuxContext }.exceptionOrNull()
         )
 
         failures.forEach { failure ->
@@ -161,13 +161,13 @@ class JvmMessageSupportTest {
     fun credentialAccessors_withoutSenderCredentialsFailWithSdbusError() {
         val message = PlainMessage.createPlainMessage()
 
-        assertFailsWith<Error> { message.getCredsPid() }
-        assertFailsWith<Error> { message.getCredsUid() }
-        assertFailsWith<Error> { message.getCredsEuid() }
-        assertFailsWith<Error> { message.getCredsGid() }
-        assertFailsWith<Error> { message.getCredsEgid() }
-        assertFailsWith<Error> { message.getCredsSupplementaryGids() }
-        assertFailsWith<Error> { message.getSELinuxContext() }
+        assertFailsWith<Error> { message.credsPid }
+        assertFailsWith<Error> { message.credsUid }
+        assertFailsWith<Error> { message.credsEuid }
+        assertFailsWith<Error> { message.credsGid }
+        assertFailsWith<Error> { message.credsEgid }
+        assertFailsWith<Error> { message.credsSupplementaryGids }
+        assertFailsWith<Error> { message.seLinuxContext }
     }
 
     // Regression: D-Bus `ay` (e.g. a GATT characteristic value) arrives from dbus-java as

@@ -230,9 +230,9 @@ private class StubJvmDbusProxy(
     ): PendingAsyncCall {
         val cancelled = AtomicBoolean(false)
         val pending = AtomicBoolean(true)
-        val interfaceName = message.getInterfaceName().orEmpty()
-        val methodName = message.getMemberName().orEmpty()
-        val path = message.getPath() ?: objectPath.value
+        val interfaceName = message.interfaceName?.value.orEmpty()
+        val methodName = message.memberName?.value.orEmpty()
+        val path = message.path?.value ?: objectPath.value
         thread(
             start = true,
             isDaemon = true,
@@ -320,13 +320,13 @@ private class StubJvmDbusObject(
         ) { emitSignal(it) }
 
     override fun emitSignal(message: Signal) {
-        val interfaceName = message.getInterfaceName()
+        val interfaceName = message.interfaceName?.value
             ?: throw createError(-1, "emitSignal failed: missing interface name")
-        val signalName = message.getMemberName()
+        val signalName = message.memberName?.value
             ?: throw createError(-1, "emitSignal failed: missing signal name")
-        val path = message.getPath() ?: objectPath.value
+        val path = message.path?.value ?: objectPath.value
         LocalJvmMatchBus.emit(
-            sender = message.getSender() ?: senderName,
+            sender = message.sender?.value ?: senderName,
             path = path,
             interfaceName = interfaceName,
             member = signalName,

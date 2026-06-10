@@ -83,7 +83,7 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
 
     override fun onSimpleSignal() {
         signalMsg = proxy.currentlyProcessedMessage
-        signalName = signalMsg!!.getMemberName()?.let(::SignalName)
+        signalName = signalMsg!!.memberName
 
         gotSimpleSignal.value = true
     }

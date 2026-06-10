@@ -562,24 +562,29 @@ actual sealed class Message(
         isOk = true
     }
 
-    actual fun getInterfaceName(): String? = sd_bus_message_get_interface(msg)?.toKString()
+    actual val interfaceName: InterfaceName?
+        get() = sd_bus_message_get_interface(msg)?.toKString()?.let(::InterfaceName)
 
-    actual fun getMemberName(): String? = sd_bus_message_get_member(msg)?.toKString()
+    actual val memberName: MemberName?
+        get() = sd_bus_message_get_member(msg)?.toKString()?.let(::MemberName)
 
-    actual fun getSender(): String? = sd_bus_message_get_sender(msg)?.toKString()
+    actual val sender: BusName?
+        get() = sd_bus_message_get_sender(msg)?.toKString()?.let(::BusName)
 
-    actual fun getPath(): String? = sd_bus_message_get_path(msg)?.toKString()
+    actual val path: ObjectPath?
+        get() = sd_bus_message_get_path(msg)?.toKString()?.let(::ObjectPath)
 
-    actual fun getDestination(): String? = sd_bus_message_get_destination(msg)?.toKString()
+    actual val destination: BusName?
+        get() = sd_bus_message_get_destination(msg)?.toKString()?.let(::BusName)
 
-    actual fun peekType(): Pair<Char?, String?> = memScoped {
+    actual fun peekType(): PeekedType = memScoped {
         val typeSignature = cValuesOf(0.toByte()).getPointer(this)
         val contentsSignature = cValuesOf(interpretCPointer<ByteVar>(NULL)).getPointer(this)
         val r: Int = sd_bus_message_peek_type(msg, typeSignature, contentsSignature)
         sdbusRequire(r < 0, "Failed to peek message type", -r)
         val type = typeSignature[0].toInt().toChar().takeIf { r > 0 }
 
-        return type to contentsSignature[0]?.toKString()
+        return PeekedType(type, contentsSignature[0]?.toKString())
     }
 
     actual val isValid: Boolean
@@ -607,78 +612,85 @@ actual sealed class Message(
         sdbusRequire(r < 0, "Failed to rewind the message", -r)
     }
 
-    actual fun getCredsPid(): pid_t = memScoped {
-        val mask = SD_BUS_CREDS_PID or SD_BUS_CREDS_AUGMENT
-        val creds = getCreds(mask)
+    actual val credsPid: pid_t
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_PID or SD_BUS_CREDS_AUGMENT
+            val creds = getCreds(mask)
 
-        val pid = cValuesOf(0.convert<pid_t>()).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_pid(creds[0], pid)
-        sdbusRequire(r < 0, "Failed to get bus cred pid", -r)
-        return pid[0]
-    }
-
-    actual fun getCredsUid(): uid_t = memScoped {
-        val mask = SD_BUS_CREDS_UID or SD_BUS_CREDS_AUGMENT
-        val creds = getCreds(mask)
-
-        val uid = cValuesOf((-1).convert<uid_t>()).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_uid(creds[0], uid)
-        sdbusRequire(r < 0, "Failed to get bus cred uid", -r)
-        return uid[0]
-    }
-
-    actual fun getCredsEuid(): uid_t = memScoped {
-        val mask = SD_BUS_CREDS_EUID or SD_BUS_CREDS_AUGMENT
-        val creds = getCreds(mask)
-
-        val euid = cValuesOf((-1).convert<uid_t>()).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_euid(creds[0], euid)
-        sdbusRequire(r < 0, "Failed to get bus cred euid", -r)
-        return euid[0]
-    }
-
-    actual fun getCredsGid(): gid_t = memScoped {
-        val mask = SD_BUS_CREDS_GID or SD_BUS_CREDS_AUGMENT
-        val creds = getCreds(mask)
-
-        val gid = cValuesOf((-1).convert<gid_t>()).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_gid(creds[0], gid)
-        sdbusRequire(r < 0, "Failed to get bus cred gid", -r)
-        return gid[0]
-    }
-
-    actual fun getCredsEgid(): gid_t = memScoped {
-        val mask = SD_BUS_CREDS_EGID or SD_BUS_CREDS_AUGMENT
-        val creds = getCreds(mask)
-
-        val egid = cValuesOf((-1).convert<gid_t>()).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_egid(creds[0], egid)
-        sdbusRequire(r < 0, "Failed to get bus cred egid", -r)
-        return egid[0]
-    }
-
-    actual fun getCredsSupplementaryGids(): List<gid_t> = memScoped {
-        val mask = SD_BUS_CREDS_SUPPLEMENTARY_GIDS or SD_BUS_CREDS_AUGMENT
-        val creds = getCreds(mask)
-
-        val cGids = cValuesOf(interpretCPointer<gid_tVar>(NULL)).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_supplementary_gids(creds[0], cGids)
-        sdbusRequire(r < 0, "Failed to get bus cred supplementary gids", -r)
-
-        return List(r) {
-            cGids[0]!![it]
+            val pid = cValuesOf(0.convert<pid_t>()).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_pid(creds[0], pid)
+            sdbusRequire(r < 0, "Failed to get bus cred pid", -r)
+            return pid[0]
         }
-    }
 
-    actual fun getSELinuxContext(): String = memScoped {
-        val mask = SD_BUS_CREDS_AUGMENT or SD_BUS_CREDS_SELINUX_CONTEXT
-        val creds = getCreds(mask)
+    actual val credsUid: uid_t
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_UID or SD_BUS_CREDS_AUGMENT
+            val creds = getCreds(mask)
 
-        val cLabel = cValuesOf(interpretCPointer<ByteVar>(NULL)).getPointer(this)
-        val r = sdbus.sd_bus_creds_get_selinux_context(creds[0], cLabel)
-        sdbusRequire(r < 0, "Failed to get bus cred selinux context", -r)
-        return cLabel[0]?.toKString()!!
-    }
+            val uid = cValuesOf((-1).convert<uid_t>()).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_uid(creds[0], uid)
+            sdbusRequire(r < 0, "Failed to get bus cred uid", -r)
+            return uid[0]
+        }
+
+    actual val credsEuid: uid_t
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_EUID or SD_BUS_CREDS_AUGMENT
+            val creds = getCreds(mask)
+
+            val euid = cValuesOf((-1).convert<uid_t>()).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_euid(creds[0], euid)
+            sdbusRequire(r < 0, "Failed to get bus cred euid", -r)
+            return euid[0]
+        }
+
+    actual val credsGid: gid_t
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_GID or SD_BUS_CREDS_AUGMENT
+            val creds = getCreds(mask)
+
+            val gid = cValuesOf((-1).convert<gid_t>()).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_gid(creds[0], gid)
+            sdbusRequire(r < 0, "Failed to get bus cred gid", -r)
+            return gid[0]
+        }
+
+    actual val credsEgid: gid_t
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_EGID or SD_BUS_CREDS_AUGMENT
+            val creds = getCreds(mask)
+
+            val egid = cValuesOf((-1).convert<gid_t>()).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_egid(creds[0], egid)
+            sdbusRequire(r < 0, "Failed to get bus cred egid", -r)
+            return egid[0]
+        }
+
+    actual val credsSupplementaryGids: List<gid_t>
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_SUPPLEMENTARY_GIDS or SD_BUS_CREDS_AUGMENT
+            val creds = getCreds(mask)
+
+            val cGids = cValuesOf(interpretCPointer<gid_tVar>(NULL)).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_supplementary_gids(creds[0], cGids)
+            sdbusRequire(r < 0, "Failed to get bus cred supplementary gids", -r)
+
+            return List(r) {
+                cGids[0]!![it]
+            }
+        }
+
+    actual val seLinuxContext: String
+        get() = memScoped {
+            val mask = SD_BUS_CREDS_AUGMENT or SD_BUS_CREDS_SELINUX_CONTEXT
+            val creds = getCreds(mask)
+
+            val cLabel = cValuesOf(interpretCPointer<ByteVar>(NULL)).getPointer(this)
+            val r = sdbus.sd_bus_creds_get_selinux_context(creds[0], cLabel)
+            sdbusRequire(r < 0, "Failed to get bus cred selinux context", -r)
+            return cLabel[0]?.toKString()!!
+        }
 
     private fun MemScope.getCreds(mask: ULong): CPointer<CPointerVar<sd_bus_creds>> {
         val creds = cValuesOf(interpretCPointer<sd_bus_creds>(NULL)).getPointer(this)

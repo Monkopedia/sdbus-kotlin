@@ -129,27 +129,27 @@ expect sealed class Message {
     internal operator fun invoke(): Boolean
     internal fun clearFlags()
 
-    /** Returns the interface name this message targets, or `null` if not set. */
-    fun getInterfaceName(): String?
+    /** The interface name this message targets, or `null` if not set. */
+    val interfaceName: InterfaceName?
 
-    /** Returns the member (method/signal) name this message targets, or `null` if not set. */
-    fun getMemberName(): String?
+    /** The member (method/signal) name this message targets, or `null` if not set. */
+    val memberName: MemberName?
 
-    /** Returns the bus name of the message sender, or `null` if not available. */
-    fun getSender(): String?
+    /** The bus name of the message sender, or `null` if not available. */
+    val sender: BusName?
 
-    /** Returns the object path this message targets, or `null` if not set. */
-    fun getPath(): String?
+    /** The object path this message targets, or `null` if not set. */
+    val path: ObjectPath?
 
-    /** Returns the destination bus name of the message, or `null` if not set. */
-    fun getDestination(): String?
+    /** The destination bus name of the message, or `null` if not set. */
+    val destination: BusName?
 
     /**
      * Peeks at the type of the value at the current read position without consuming it.
      *
-     * @return A pair of the D-Bus type code and, for containers, the contained signature
+     * @return The D-Bus type code and, for containers, the contained signature
      */
-    fun peekType(): Pair<Char?, String?>
+    fun peekType(): PeekedType
 
     /** Whether this message wraps a valid underlying D-Bus message. */
     val isValid: Boolean
@@ -182,24 +182,37 @@ expect sealed class Message {
      */
     fun rewind(complete: Boolean)
 
-    /** Returns the PID of the sending process, if credentials are available. */
-    fun getCredsPid(): Int
+    /** The PID of the sending process, if credentials are available. */
+    val credsPid: Int
 
-    /** Returns the real UID of the sender, if credentials are available. */
-    fun getCredsUid(): UInt
+    /** The real UID of the sender, if credentials are available. */
+    val credsUid: UInt
 
-    /** Returns the effective UID of the sender, if credentials are available. */
-    fun getCredsEuid(): UInt
+    /** The effective UID of the sender, if credentials are available. */
+    val credsEuid: UInt
 
-    /** Returns the real GID of the sender, if credentials are available. */
-    fun getCredsGid(): UInt
+    /** The real GID of the sender, if credentials are available. */
+    val credsGid: UInt
 
-    /** Returns the effective GID of the sender, if credentials are available. */
-    fun getCredsEgid(): UInt
+    /** The effective GID of the sender, if credentials are available. */
+    val credsEgid: UInt
 
-    /** Returns the supplementary GIDs of the sender, if credentials are available. */
-    fun getCredsSupplementaryGids(): List<UInt>
+    /** The supplementary GIDs of the sender, if credentials are available. */
+    val credsSupplementaryGids: List<UInt>
 
-    /** Returns the SELinux security context of the sender. */
-    fun getSELinuxContext(): String
+    /** The SELinux security context of the sender. */
+    val seLinuxContext: String
+}
+
+/**
+ * Result of [Message.peekType]: the D-Bus type code at the current read position and,
+ * for container types, the signature of the contained elements.
+ */
+class PeekedType(
+    /** The D-Bus type code of the value at the read position, or `null` if at the end. */
+    val type: Char?,
+    /** For container types, the signature of the contained elements, otherwise `null`. */
+    val contents: String?
+) {
+    override fun toString(): String = "PeekedType(type=$type, contents=$contents)"
 }

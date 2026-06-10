@@ -64,7 +64,7 @@ class CppEventLoop : BaseTest() {
         val matchRule = "sender='$SERVICE_NAME',path='$OBJECT_PATH'"
         var matchingMessageReceived = atomic(false)
         val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
-            if (msg.getPath() == OBJECT_PATH.value) {
+            if (msg.path == OBJECT_PATH) {
                 matchingMessageReceived.value = true
             }
         }
@@ -81,7 +81,7 @@ class CppEventLoop : BaseTest() {
         val matchingMessageReceived = atomic(false)
         val matchRuleInstalled = atomic(false)
         val slot = globalProxyConnection.addMatchAsync(matchRule, { msg: Message ->
-            if (msg.getPath() == OBJECT_PATH.value) {
+            if (msg.path == OBJECT_PATH) {
                 matchingMessageReceived.value = true
             }
         }, {
@@ -101,7 +101,7 @@ class CppEventLoop : BaseTest() {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
         val matchingMessageReceived = atomic(false)
         val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
-            if (msg.getPath() == OBJECT_PATH.value) matchingMessageReceived.value = true
+            if (msg.path == OBJECT_PATH) matchingMessageReceived.value = true
         }
         slot.release()
 
@@ -119,7 +119,7 @@ class CppEventLoop : BaseTest() {
         try {
             con.enterEventLoopAsync()
             val callback = { msg: Message ->
-                if (msg.getPath() == OBJECT_PATH.value) {
+                if (msg.path == OBJECT_PATH) {
                     matchingMessageReceived.value = true
                 }
             }
@@ -148,7 +148,7 @@ class CppEventLoop : BaseTest() {
         val slot = globalProxyConnection.addMatchAsync(
             match = matchRule,
             callback = { msg: Message ->
-                if (msg.getMemberName() == "simpleSignal") {
+                if (msg.memberName?.value == "simpleSignal") {
                     numberOfMatchingMessages.value++
                 }
             },
