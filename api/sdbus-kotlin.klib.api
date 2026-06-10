@@ -659,10 +659,10 @@ open class <#A: kotlin/Any?, #B: kotlin/Any> com.monkopedia.sdbus/PropertyDelega
 
     final fun changes(): kotlinx.coroutines.flow/Flow<#B> // com.monkopedia.sdbus/PropertyDelegate.changes|changes(){}[0]
     final fun changesOrNull(): kotlinx.coroutines.flow/Flow<#B?> // com.monkopedia.sdbus/PropertyDelegate.changesOrNull|changesOrNull(){}[0]
-    final fun flow(): kotlinx.coroutines.flow/Flow<#B> // com.monkopedia.sdbus/PropertyDelegate.flow|flow(){}[0]
-    final fun flowOrNull(): kotlinx.coroutines.flow/Flow<#B?> // com.monkopedia.sdbus/PropertyDelegate.flowOrNull|flowOrNull(){}[0]
     final fun get(): #B // com.monkopedia.sdbus/PropertyDelegate.get|get(){}[0]
     final fun getOrNull(): #B? // com.monkopedia.sdbus/PropertyDelegate.getOrNull|getOrNull(){}[0]
+    final fun values(): kotlinx.coroutines.flow/Flow<#B> // com.monkopedia.sdbus/PropertyDelegate.values|values(){}[0]
+    final fun valuesOrNull(): kotlinx.coroutines.flow/Flow<#B?> // com.monkopedia.sdbus/PropertyDelegate.valuesOrNull|valuesOrNull(){}[0]
     final suspend fun await(): #B // com.monkopedia.sdbus/PropertyDelegate.await|await(){}[0]
     open fun getValue(#A, kotlin.reflect/KProperty<*>): #B // com.monkopedia.sdbus/PropertyDelegate.getValue|getValue(1:0;kotlin.reflect.KProperty<*>){}[0]
 }

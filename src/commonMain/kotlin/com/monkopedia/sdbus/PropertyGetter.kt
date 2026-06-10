@@ -128,8 +128,17 @@ inline fun <R, reified T : Any> Proxy.mutableDelegate(
  * A read-only Kotlin property delegate backed by a D-Bus property.
  *
  * Reading the delegated property issues a D-Bus `Get`. The delegate also offers convenience
- * accessors ([getOrNull], [await]) and reactive observation of changes ([changes], [flow],
- * [changesOrNull], [flowOrNull]). Obtain one via [Proxy.propDelegate].
+ * accessors ([getOrNull], [await]) and reactive observation of the property ([changes], [values],
+ * [changesOrNull], [valuesOrNull]). Obtain one via [Proxy.propDelegate].
+ *
+ * The observation methods come in two families:
+ * - [changes]/[changesOrNull] emit change events only — nothing is emitted until the property
+ *   changes after collection starts.
+ * - [values]/[valuesOrNull] emit the current value first, then all subsequent changes.
+ *
+ * Each family has a throwing and a nullable variant: [get], [changes] and [values] surface a
+ * missing/invalidated property as an exception or by dropping the event, while [getOrNull],
+ * [changesOrNull] and [valuesOrNull] represent it as `null`.
  *
  * @property interfaceName Interface that declares the property
  * @property propertyName Name of the property
@@ -149,15 +158,19 @@ open class PropertyDelegate<R, T : Any>(
     override fun getValue(thisRef: R, property: KProperty<*>): T = get()
 
     /**
-     * Get the current value of the property.
+     * Gets the current value of the property.
+     *
+     * @throws [com.monkopedia.sdbus.Error] in case of failure, including when the property
+     * doesn't currently exist (use [getOrNull] for a null-returning variant)
      */
     fun get(): T = proxy.callMethod<Variant>(DBUS_PROPERTIES_INTERFACE_NAME, MethodName("Get")) {
         call(interfaceName, propertyName)
     }.get(type, module, signature)
 
     /**
-     * Gets the current value of the property, however if the property doesn't currently exist,
-     * returns null rather than throwing.
+     * Gets the current value of the property, however if the property doesn't currently exist
+     * (`org.freedesktop.DBus.Error.InvalidArgs`), returns null rather than throwing. Any other
+     * [com.monkopedia.sdbus.Error] is still thrown.
      */
     fun getOrNull(): T? = try {
         get()
@@ -175,8 +188,13 @@ open class PropertyDelegate<R, T : Any>(
     suspend fun await(): T = getOrNull() ?: changesOrNull().filterNotNull().first()
 
     /**
-     * Produces a flow that observes the properties changed signal of a [PropertiesProxy]
-     * and will emit the new values for this property when it has changed.
+     * Produces a flow that observes the `PropertiesChanged` signal and emits the new value of
+     * this property each time it changes.
+     *
+     * This is a change-event stream only: nothing is emitted until the property changes after
+     * collection starts (use [values] to also receive the current value first), and signals
+     * that merely invalidate the property (without carrying a new value) are dropped (use
+     * [changesOrNull] to observe invalidations as `null`).
      */
     fun changes(): Flow<T> = proxy.signalFlow<PropertiesChange>(
         DBUS_PROPERTIES_INTERFACE_NAME,
@@ -189,7 +207,12 @@ open class PropertyDelegate<R, T : Any>(
     }
 
     /**
-     * Like [changes] but also will emit null whenever the property has been invalidated.
+     * Like [changes] but also emits `null` whenever the property has been invalidated (i.e. it
+     * appears in the `invalidatedProperties` of a `PropertiesChanged` signal), instead of
+     * dropping the event.
+     *
+     * Like [changes], this emits change events only; use [valuesOrNull] to also receive the
+     * current value first.
      */
     fun changesOrNull(): Flow<T?> = proxy.signalFlow<PropertiesChange>(
         DBUS_PROPERTIES_INTERFACE_NAME,
@@ -204,14 +227,22 @@ open class PropertyDelegate<R, T : Any>(
     }
 
     /**
-     * Emits all the values from [changes] but also emits value from [get] at start.
+     * Produces a flow of all values of the property: the current value (from [get]) is emitted
+     * first when collection starts, followed by every subsequent change (from [changes]).
+     *
+     * Because the initial emission uses [get], collecting this flow throws
+     * [com.monkopedia.sdbus.Error] if the property doesn't currently exist; use [valuesOrNull]
+     * for a null-emitting variant. Use [changes] to observe change events only, without the
+     * initial value.
      */
-    fun flow(): Flow<T> = changes().onStart { emit(get()) }
+    fun values(): Flow<T> = changes().onStart { emit(get()) }
 
     /**
-     * Emits all the values from [changesOrNull] but also emits value from [getOrNull] at start.
+     * Like [values] but null-safe: the current value (from [getOrNull], `null` if the property
+     * doesn't currently exist) is emitted first when collection starts, followed by every
+     * subsequent change (from [changesOrNull], which emits `null` on invalidation).
      */
-    fun flowOrNull(): Flow<T?> = changesOrNull().onStart { emit(getOrNull()) }
+    fun valuesOrNull(): Flow<T?> = changesOrNull().onStart { emit(getOrNull()) }
 
     @Serializable
     private data class PropertiesChange(

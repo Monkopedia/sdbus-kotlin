@@ -425,8 +425,6 @@ public class com/monkopedia/sdbus/PropertyDelegate : kotlin/properties/ReadOnlyP
 	public final fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun changes ()Lkotlinx/coroutines/flow/Flow;
 	public final fun changesOrNull ()Lkotlinx/coroutines/flow/Flow;
-	public final fun flow ()Lkotlinx/coroutines/flow/Flow;
-	public final fun flowOrNull ()Lkotlinx/coroutines/flow/Flow;
 	public final fun get ()Ljava/lang/Object;
 	public final fun getInterfaceName-DgtVVXE ()Ljava/lang/String;
 	protected final fun getModule ()Lkotlinx/serialization/modules/SerializersModule;
@@ -437,6 +435,8 @@ public class com/monkopedia/sdbus/PropertyDelegate : kotlin/properties/ReadOnlyP
 	protected final fun getSignature ()Lcom/monkopedia/sdbus/SdbusSig;
 	protected final fun getType ()Lkotlinx/serialization/KSerializer;
 	public fun getValue (Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
+	public final fun values ()Lkotlinx/coroutines/flow/Flow;
+	public final fun valuesOrNull ()Lkotlinx/coroutines/flow/Flow;
 }
 
 public final class com/monkopedia/sdbus/PropertyGetReply : com/monkopedia/sdbus/Message {
