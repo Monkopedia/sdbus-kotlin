@@ -710,6 +710,26 @@ private fun countTopLevelTypes(signature: String?): Int {
     return count
 }
 
+// Wire signature for an outgoing body. Prefer the declared signature accumulated from
+// serializer descriptors (correct even for empty collections); only fall back to value-based
+// inference when no usable declared signature is available — e.g. a body assembled through the
+// raw append() API rather than serialize(). The top-level type count guards against a declared
+// signature that doesn't line up with the payload.
+private fun bodySignature(
+    payload: List<Any?>,
+    declaredSignature: String?,
+    errorFor: (Any?) -> String
+): String {
+    if (!declaredSignature.isNullOrEmpty() &&
+        countTopLevelTypes(declaredSignature) == payload.size
+    ) {
+        return declaredSignature
+    }
+    return payload.joinToString(separator = "") { value ->
+        inferSignalSignature(value) ?: throw createError(-1, errorFor(value))
+    }
+}
+
 private fun inferSignalSignature(value: Any?): String? = when (value) {
     null -> null
     is Message.JvmVariantPayload -> "v"
@@ -1105,26 +1125,6 @@ private class PureJavaDbusProxy(
         return localUniqueName.takeIf { it == localBusOwner }
     }
 
-    // Wire signature for an outgoing body. Prefer the declared signature accumulated from
-    // serializer descriptors (correct even for empty collections); only fall back to
-    // value-based inference when no usable declared signature is available — e.g. a body
-    // assembled through the raw append() API rather than serialize(). The top-level type
-    // count guards against a declared signature that doesn't line up with the payload.
-    private fun bodySignature(
-        payload: List<Any?>,
-        declaredSignature: String?,
-        errorFor: (Any?) -> String
-    ): String {
-        if (!declaredSignature.isNullOrEmpty() &&
-            countTopLevelTypes(declaredSignature) == payload.size
-        ) {
-            return declaredSignature
-        }
-        return payload.joinToString(separator = "") { value ->
-            inferSignalSignature(value) ?: throw createError(-1, errorFor(value))
-        }
-    }
-
     private fun callRemoteMethod(
         connection: AbstractConnection,
         interfaceName: String,
@@ -1483,13 +1483,47 @@ private class PureJavaDbusObject(
         }.toMap()
     }
 
+    private fun readPropertyValue(property: PropertyVTableItem): Variant {
+        val getter = property.getter ?: error("no getter")
+        val reply = PropertyGetReply()
+        val value = JvmCurrentMessageContext.withMessage(reply) {
+            getter(reply)
+            reply.payload.firstOrNull()
+        }
+        return propertyToVariant(value)
+    }
+
+    // Mirrors native's sd_bus_emit_properties_changed_strv: each named property whose vtable
+    // getter can be read goes into changed_properties with its current value; names without a
+    // readable getter (write-only / value unavailable) fall back to invalidated_properties.
+    private fun resolveChangedProperties(
+        interfaceName: String,
+        propNames: List<PropertyName>
+    ): Pair<Map<PropertyName, Variant>, List<PropertyName>> {
+        val properties = propertiesByInterface[interfaceName].orEmpty()
+        val changed = mutableMapOf<PropertyName, Variant>()
+        val invalidated = mutableListOf<PropertyName>()
+        propNames.forEach { propName ->
+            val property = properties[propName.value]
+            val value = property
+                ?.takeIf { it.getter != null }
+                ?.let { runCatching { readPropertyValue(it) }.getOrNull() }
+            if (value != null) {
+                changed[propName] = value
+            } else {
+                invalidated += propName
+            }
+        }
+        return changed to invalidated
+    }
+
     override fun emitPropertiesChangedSignal(
         interfaceName: InterfaceName,
         propNames: List<PropertyName>
     ) {
         val sender = senderName ?: javaConnection?.uniqueNameOrNull()
-        val changedProperties = emptyMap<PropertyName, Variant>()
-        val invalidatedProperties = propNames
+        val (changedProperties, invalidatedProperties) =
+            resolveChangedProperties(interfaceName.value, propNames)
         val payload = listOf(interfaceName, changedProperties, invalidatedProperties)
         val realConnection = javaConnection
         if (realConnection == null) {
@@ -1502,6 +1536,11 @@ private class PureJavaDbusObject(
             )
             return
         }
+        val javaChangedProperties: Map<String, org.freedesktop.dbus.types.Variant<Any?>> =
+            changedProperties.entries.associate { (name, variant) ->
+                val javaPayload = extractVariantPayload(variant)
+                name.value to toJavaVariantValue(javaPayload.signature, javaPayload.value)
+            }
         val rawSignal = runCatching {
             realConnection.messageFactory.createSignal(
                 sender ?: realConnection.uniqueNameOrNull(),
@@ -1510,7 +1549,7 @@ private class PureJavaDbusObject(
                 propertiesChangedMemberName,
                 propertiesChangedSignature,
                 interfaceName.value,
-                emptyMap<String, org.freedesktop.dbus.types.Variant<Any?>>(),
+                javaChangedProperties,
                 invalidatedProperties.map { it.value }
             )
         }.getOrElse {
@@ -1718,10 +1757,13 @@ private class PureJavaDbusObject(
         val signalName = message.getMemberName()
             ?: throw createError(-1, "emitSignal failed: missing signal name")
         val path = message.getPath() ?: objectPath.value
-        val signature = message.payload.joinToString("") { value ->
-            inferSignalSignature(value)
-                ?: throw createError(-1, "emitSignal failed: unsupported signal payload type")
-        }
+        // Prefer the declared signature (correct even for empty collections, which carry no
+        // runtime element to infer from); fall back to value inference only when no usable
+        // declared signature is available. Mirrors the method-call body path.
+        val signature = bodySignature(
+            message.payload.toList(),
+            message.declaredBodySignature.toString()
+        ) { "emitSignal failed: unsupported signal payload type" }
         val args = message.payload.map(::toJavaSignalValue).toTypedArray()
         val sender = message.getSender() ?: senderName ?: javaConnection?.uniqueNameOrNull()
         val realConnection = javaConnection

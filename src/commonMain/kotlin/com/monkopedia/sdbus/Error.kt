@@ -53,6 +53,6 @@ internal inline fun sdbusRequire(condition: () -> Boolean, msg: String, errNo: I
     if (condition()) throw createError((errNo), (msg))
 }
 
-internal inline fun sdbusRequire(condition: Boolean, msg: String, errNo: Int) {
+internal fun sdbusRequire(condition: Boolean, msg: String, errNo: Int) {
     if (condition) throw createError((errNo), (msg))
 }

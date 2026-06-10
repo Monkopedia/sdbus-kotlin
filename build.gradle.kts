@@ -49,6 +49,7 @@ kotlin {
         // JVM-21 bytecode and break every JVM-17 consumer.
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
+            freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
     linuxX64 {

@@ -14,7 +14,6 @@ group = "com.monkopedia"
 
 repositories {
     mavenCentral()
-    maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
 dependencies {
@@ -22,7 +21,7 @@ dependencies {
     api(libs.clikt)
     api(libs.kotlinpoet)
     testImplementation(project(":"))
-    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.0")
+    testImplementation(libs.kotlin.compiler.embeddable)
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
@@ -55,7 +54,7 @@ tasks.test {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_1_8)
-        freeCompilerArgs.add("-Xjvm-default=all-compatibility")
+        freeCompilerArgs.add("-jvm-default=enable")
     }
 }
 java {
@@ -101,15 +100,6 @@ mavenPublishing {
                 "scm:git:ssh://github.com/Monkopedia/sdbus-kotlin.git"
             )
             url.set("https://github.com/Monkopedia/sdbus-kotlin/")
-        }
-    }
-    repositories {
-        maven(url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            name = "OSSRH"
-            credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_PASSWORD")
-            }
         }
     }
     publishToMavenCentral(automaticRelease = true)

@@ -705,7 +705,7 @@ actual fun <T : Any> Message.deserialize(
     module: SerializersModule
 ): T = MessageDecoder(this, module).decodeSerializableValue(serializer)
 
-internal actual inline fun <T> Message.deserializeArrayFast(
+internal actual fun <T> Message.deserializeArrayFast(
     signature: SdbusSig,
     items: MutableList<T>
 ): Unit = memScoped {

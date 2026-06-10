@@ -538,10 +538,7 @@ internal actual fun <T : Any> Message.deserialize(
         )
 }
 
-internal actual inline fun <T> Message.deserializeArrayFast(
-    signature: SdbusSig,
-    items: MutableList<T>
-) {
+internal actual fun <T> Message.deserializeArrayFast(signature: SdbusSig, items: MutableList<T>) {
     @Suppress("UNCHECKED_CAST")
     val values = when (val value = nextRawValue("Message.deserializeArrayFast")) {
         is List<*> -> value

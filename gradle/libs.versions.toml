@@ -29,6 +29,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlin-atomicfu" }
 xmlutil = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "pdvrieze-xmlutil" }
 kotlinpoet = { module = "com.squareup:kotlinpoet-jvm", version.ref = "kotlinpoet" }
+kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt"}
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbus-java" }
 dbus-java-transport-junixsocket = { module = "com.github.hypfvieh:dbus-java-transport-junixsocket", version.ref = "dbus-java" }
