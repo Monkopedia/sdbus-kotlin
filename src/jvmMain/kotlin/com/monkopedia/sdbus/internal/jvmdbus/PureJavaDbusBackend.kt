@@ -107,7 +107,8 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
             javaConnection?.javaConnection,
             destination,
             objectPath,
-            runCatching { connection.uniqueName.value }.getOrNull()
+            runCatching { connection.uniqueName.value }.getOrNull(),
+            isConnectionReleased = { javaConnection?.isReleased() == true }
         )
     }
 
@@ -776,6 +777,9 @@ private class PureJavaDbusConnection(internal val javaConnection: AbstractConnec
     JvmDbusConnection {
     private var timeout: Duration = Duration.ZERO
     private val localUniqueName: String = javaConnection.uniqueNameOrNull().orEmpty()
+    private val released = AtomicBoolean(false)
+
+    fun isReleased(): Boolean = released.get()
 
     init {
         LocalJvmServiceRegistry.registerLocalUniqueName(localUniqueName)
@@ -858,6 +862,7 @@ private class PureJavaDbusConnection(internal val javaConnection: AbstractConnec
     }
 
     override fun release(): Unit = run {
+        if (!released.compareAndSet(false, true)) return@run
         LocalJvmServiceRegistry.unregisterLocalUniqueName(localUniqueName)
         javaConnection.disconnect()
     }
@@ -867,7 +872,8 @@ private class PureJavaDbusProxy(
     private val connection: AbstractConnection?,
     private val destination: ServiceName,
     private val objectPath: ObjectPath,
-    private val callerName: String?
+    private val callerName: String?,
+    private val isConnectionReleased: () -> Boolean = { false }
 ) : JvmDbusProxy {
     private fun invalidReply(path: String, interfaceName: String, methodName: String): MethodReply =
         methodReplyFrom(
@@ -886,6 +892,21 @@ private class PureJavaDbusProxy(
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
 
+    // A call made after the proxy's connection has been released must fail like it does on
+    // the native backend instead of being silently serviced via the in-process
+    // static-dispatch short circuit. Native parity: ConnectionImpl guards every
+    // post-release operation with require(!released) { "Connection has already been
+    // released" }, and a connection that dropped without an explicit release surfaces
+    // -ENOTCONN from sd_bus_call (Error("System.Error.ENOTCONN", ...)).
+    private fun requireConnectionUsable() {
+        require(!isConnectionReleased()) { "Connection has already been released" }
+        val realConnection = connection ?: return
+        if (!realConnection.isConnected) {
+            // ENOTCONN, mirroring the native error name System.Error.ENOTCONN.
+            throw createError(107, "callMethod failed: connection is not connected")
+        }
+    }
+
     override fun createMethodCall(
         interfaceName: InterfaceName,
         methodName: MethodName
@@ -901,6 +922,7 @@ private class PureJavaDbusProxy(
     }
 
     override fun callMethod(message: MethodCall): MethodReply {
+        requireConnectionUsable()
         val interfaceName = message.interfaceName?.value
             ?: throw createError(-1, "callMethod failed: missing interface name")
         val methodName = message.memberName?.value
@@ -1008,6 +1030,7 @@ private class PureJavaDbusProxy(
     }
 
     override fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
+        requireConnectionUsable()
         val interfaceName = message.interfaceName?.value
             ?: throw createError(-1, "callMethod failed: missing interface name")
         val methodName = message.memberName?.value

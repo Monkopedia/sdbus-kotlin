@@ -237,24 +237,35 @@ private fun inferSignature(value: Any?): String? = when (value) {
 
 private fun isSignatureCompatible(expected: String, actual: String): Boolean {
     if (expected == actual) return true
-    if (expected == "v" && actual.startsWith("v")) return true
-    return false
+    // Containers are compared by their top-level type class only: value-based inference
+    // cannot reliably reconstruct nested signatures (an empty list infers as just "a", an
+    // empty dict as "a{}", and dict/variant element types come from the first runtime
+    // value), so element types are deliberately not enforced here.
+    return when (expected.firstOrNull()) {
+        'v' -> actual.startsWith("v")
+        'a' -> actual.startsWith("a")
+        '(' -> actual.startsWith("(")
+        else -> false
+    }
 }
 
-private fun shouldEnforceSignature(expected: String): Boolean = when (expected) {
-    "b",
-    "y",
-    "n",
-    "q",
-    "i",
-    "u",
-    "x",
-    "t",
-    "d",
-    "s",
-    "o",
-    "g",
-    "h" -> true
+private fun shouldEnforceSignature(expected: String): Boolean = when (expected.firstOrNull()) {
+    'b',
+    'y',
+    'n',
+    'q',
+    'i',
+    'u',
+    'x',
+    't',
+    'd',
+    's',
+    'o',
+    'g',
+    'h',
+    'a',
+    '(',
+    'v' -> true
 
     else -> false
 }
@@ -537,8 +548,10 @@ internal actual fun <T : Any> Message.deserialize(
         shouldEnforceSignature(expectedSig) &&
         !isSignatureCompatible(expectedSig, actualSig)
     ) {
+        // ENXIO: the native backend surfaces a signature mismatch as -ENXIO from
+        // sd_bus_message_enter_container / read_basic, i.e. Error("System.Error.ENXIO", ...).
         throw createError(
-            -1,
+            6,
             "Message.deserialize failed: signature mismatch expected=$expectedSig actual=$actualSig"
         )
     }
