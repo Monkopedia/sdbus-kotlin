@@ -1483,13 +1483,47 @@ private class PureJavaDbusObject(
         }.toMap()
     }
 
+    private fun readPropertyValue(property: PropertyVTableItem): Variant {
+        val getter = property.getter ?: error("no getter")
+        val reply = PropertyGetReply()
+        val value = JvmCurrentMessageContext.withMessage(reply) {
+            getter(reply)
+            reply.payload.firstOrNull()
+        }
+        return propertyToVariant(value)
+    }
+
+    // Mirrors native's sd_bus_emit_properties_changed_strv: each named property whose vtable
+    // getter can be read goes into changed_properties with its current value; names without a
+    // readable getter (write-only / value unavailable) fall back to invalidated_properties.
+    private fun resolveChangedProperties(
+        interfaceName: String,
+        propNames: List<PropertyName>
+    ): Pair<Map<PropertyName, Variant>, List<PropertyName>> {
+        val properties = propertiesByInterface[interfaceName].orEmpty()
+        val changed = mutableMapOf<PropertyName, Variant>()
+        val invalidated = mutableListOf<PropertyName>()
+        propNames.forEach { propName ->
+            val property = properties[propName.value]
+            val value = property
+                ?.takeIf { it.getter != null }
+                ?.let { runCatching { readPropertyValue(it) }.getOrNull() }
+            if (value != null) {
+                changed[propName] = value
+            } else {
+                invalidated += propName
+            }
+        }
+        return changed to invalidated
+    }
+
     override fun emitPropertiesChangedSignal(
         interfaceName: InterfaceName,
         propNames: List<PropertyName>
     ) {
         val sender = senderName ?: javaConnection?.uniqueNameOrNull()
-        val changedProperties = emptyMap<PropertyName, Variant>()
-        val invalidatedProperties = propNames
+        val (changedProperties, invalidatedProperties) =
+            resolveChangedProperties(interfaceName.value, propNames)
         val payload = listOf(interfaceName, changedProperties, invalidatedProperties)
         val realConnection = javaConnection
         if (realConnection == null) {
@@ -1502,6 +1536,11 @@ private class PureJavaDbusObject(
             )
             return
         }
+        val javaChangedProperties: Map<String, org.freedesktop.dbus.types.Variant<Any?>> =
+            changedProperties.entries.associate { (name, variant) ->
+                val javaPayload = extractVariantPayload(variant)
+                name.value to toJavaVariantValue(javaPayload.signature, javaPayload.value)
+            }
         val rawSignal = runCatching {
             realConnection.messageFactory.createSignal(
                 sender ?: realConnection.uniqueNameOrNull(),
@@ -1510,7 +1549,7 @@ private class PureJavaDbusObject(
                 propertiesChangedMemberName,
                 propertiesChangedSignature,
                 interfaceName.value,
-                emptyMap<String, org.freedesktop.dbus.types.Variant<Any?>>(),
+                javaChangedProperties,
                 invalidatedProperties.map { it.value }
             )
         }.getOrElse {

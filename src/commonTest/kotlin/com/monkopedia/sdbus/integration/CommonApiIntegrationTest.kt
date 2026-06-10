@@ -1068,12 +1068,17 @@ class CommonApiIntegrationTest {
         }
 
         try {
+            state = true
             obj.emitPropertiesChangedSignal(ids.iface, listOf(stateProperty))
 
             val (changedProperties, invalidatedProperties) = withTimeout(2_000) { seen.await() }
-            val propertySeen = changedProperties.containsKey(stateProperty) ||
-                invalidatedProperties.contains(stateProperty)
-            assertTrue(propertySeen)
+            // Matching native, the emitted signal carries the current value in
+            // changed_properties (read from the registered getter), not invalidated_properties.
+            // This is what makes a consumer's PropertyGetter.changes() fire, not just
+            // changesOrNull().
+            assertTrue(changedProperties.containsKey(stateProperty))
+            assertFalse(invalidatedProperties.contains(stateProperty))
+            assertTrue(changedProperties.getValue(stateProperty).get<Boolean>())
         } finally {
             signalRegistration.release()
             registration.release()
