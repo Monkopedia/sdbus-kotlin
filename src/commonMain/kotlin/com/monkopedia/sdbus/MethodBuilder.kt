@@ -51,7 +51,7 @@ fun VTableBuilder.method(methodName: MethodName, builder: MethodVTableItem.() ->
  * @property callbackHandler The handler invoked when the method is called, or `null` until bound
  * @property flags Behavioral flags for this method
  */
-data class MethodVTableItem(
+class MethodVTableItem internal constructor(
     val name: MethodName,
     var inputSignature: Signature? = null,
     var inputParamNames: List<String> = emptyList(),

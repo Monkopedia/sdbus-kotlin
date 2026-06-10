@@ -7,7 +7,8 @@ internal class JvmProxy(
     override val connection: Connection,
     override val objectPath: ObjectPath,
     private val backend: com.monkopedia.sdbus.internal.jvmdbus.JvmDbusProxy
-) : Proxy {
+) : Proxy,
+    CallbackAsyncProxy {
     override val currentlyProcessedMessage: Message
         get() = backend.currentlyProcessedMessage()
 
@@ -47,7 +48,7 @@ internal class JvmProxy(
     override fun release(): Unit = backend.release()
 }
 
-actual class PendingAsyncCall internal constructor(
+internal actual class PendingAsyncCall internal constructor(
     private val cancelAction: () -> Unit = {},
     private val isPendingAction: () -> Boolean = { false }
 ) : Resource {

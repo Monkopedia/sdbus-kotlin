@@ -40,7 +40,7 @@ import kotlin.native.ref.WeakReference
  * It's safe to call its methods even after the Proxy has gone.
  *
  ***********************************************/
-actual class PendingAsyncCall internal constructor(
+internal actual class PendingAsyncCall internal constructor(
     private val target: WeakReference<AsyncCallInfo>
 ) : Resource {
 

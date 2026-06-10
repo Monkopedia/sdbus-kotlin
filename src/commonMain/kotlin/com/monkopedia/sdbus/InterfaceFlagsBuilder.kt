@@ -43,7 +43,8 @@ inline fun VTableBuilder.interfaceFlags(builder: InterfaceFlagsVTableItem.() -> 
  *
  * @property flags The underlying flag set
  */
-data class InterfaceFlagsVTableItem(val flags: Flags = Flags()) : VTableItem {
+class InterfaceFlagsVTableItem @PublishedApi internal constructor(val flags: Flags = Flags()) :
+    VTableItem {
 
     /** Whether the interface is marked deprecated. */
     var isDeprecated: Boolean

@@ -36,7 +36,6 @@ import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.createDirectBusConnection
-import com.monkopedia.sdbus.createError
 import com.monkopedia.sdbus.createObject
 import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.createServerBus
@@ -133,7 +132,7 @@ class NativeInteropPeerTest {
                         observedArg.value = value
                         callCount.incrementAndGet()
                         if (delayMs > 0) usleep((delayMs * 1_000L).convert())
-                        failMessage?.let { message -> throw createError(1, message) }
+                        failMessage?.let { message -> throw peerError(message) }
                         value + 1
                     }
                 }
@@ -339,7 +338,7 @@ class NativeInteropPeerTest {
                     call { fd: UnixFd ->
                         if (fd.fd < 0) {
                             invalidRejected.value = true
-                            throw createError(1, "Invalid Unix FD")
+                            throw peerError("Invalid Unix FD")
                         }
                         storedReadFd?.release()
                         storedReadFd = fd
@@ -350,11 +349,11 @@ class NativeInteropPeerTest {
                     inputParamNames = listOf("expectedByte")
                     outputParamNames = listOf("observedByte")
                     call { expected: Int ->
-                        val readFd = storedReadFd ?: throw createError(1, "No stored Unix FD")
+                        val readFd = storedReadFd ?: throw peerError("No stored Unix FD")
                         val writeFd = storedWriteFd
-                        if (writeFd < 0) throw createError(1, "No stored writer FD")
+                        if (writeFd < 0) throw peerError("No stored writer FD")
                         if ((expected and 0xFF) != expectedByte) {
-                            throw createError(1, "Unexpected verify byte value $expected")
+                            throw peerError("Unexpected verify byte value $expected")
                         }
                         val observed = pipeByteRoundTrip(writeFd, readFd.fd, expected)
                         val senderFd = readFd.fd
@@ -363,10 +362,10 @@ class NativeInteropPeerTest {
                         close(writeFd)
                         storedWriteFd = -1
                         if (close(senderFd) == 0) {
-                            throw createError(1, "Receiver release did not close FD exactly once")
+                            throw peerError("Receiver release did not close FD exactly once")
                         }
                         if (observed != (expected and 0xFF)) {
-                            throw createError(1, "Pipe payload mismatch")
+                            throw peerError("Pipe payload mismatch")
                         }
                         verificationComplete.value = true
                         observed
@@ -431,13 +430,12 @@ class NativeInteropPeerTest {
                     outputParamNames = listOf("payload")
                     call { payload: Map<Int, String> ->
                         if (payload.size != expectedSize) {
-                            throw createError(
-                                1,
+                            throw peerError(
                                 "Expected map size=$expectedSize but was ${payload.size}"
                             )
                         }
                         if (!payload.all { (key, value) -> value == "value-$key" }) {
-                            throw createError(1, "Large map payload content mismatch")
+                            throw peerError("Large map payload content mismatch")
                         }
                         receivedValidPayload.value = true
                         payload
@@ -497,7 +495,7 @@ class NativeInteropPeerTest {
                     call { payload: Variant ->
                         val decoded = payload.get<Map<String, List<Int>>>()
                         if (!isValidNestedPayload(decoded, expectedSize)) {
-                            throw createError(1, "Nested variant payload content mismatch")
+                            throw peerError("Nested variant payload content mismatch")
                         }
                         receivedValidPayload.value = true
                         payload
@@ -556,7 +554,7 @@ class NativeInteropPeerTest {
                     outputParamNames = listOf("payload")
                     call { payload: Map<String, Variant> ->
                         if (!isValidMixedPayload(payload, expectedSize)) {
-                            throw createError(1, "Mixed payload content mismatch")
+                            throw peerError("Mixed payload content mismatch")
                         }
                         receivedValidPayload.value = true
                         payload
@@ -1105,3 +1103,12 @@ class NativeInteropPeerTest {
         private const val ROUND_TRIP_MIXED_PAYLOAD_METHOD = "RoundTripMixedPayload"
     }
 }
+
+/**
+ * Builds the D-Bus error this peer reports for a failed precondition.
+ *
+ * Replaces the previously-used internal `createError(errNo, msg)` helper; the asserting side only
+ * matches on the error message, so a stable generic error name is used.
+ */
+private fun peerError(message: String): com.monkopedia.sdbus.Error =
+    com.monkopedia.sdbus.Error("org.freedesktop.DBus.Error.Failed", message)

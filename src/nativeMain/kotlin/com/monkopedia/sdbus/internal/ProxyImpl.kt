@@ -26,6 +26,7 @@ package com.monkopedia.sdbus.internal
 
 import cnames.structs.sd_bus_message
 import com.monkopedia.sdbus.AsyncReplyHandler
+import com.monkopedia.sdbus.CallbackAsyncProxy
 import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
@@ -61,7 +62,8 @@ internal class ProxyImpl(
     private val destination: ServiceName,
     override val objectPath: ObjectPath,
     dontRunEventLoopThread: Boolean = false
-) : com.monkopedia.sdbus.Proxy {
+) : com.monkopedia.sdbus.Proxy,
+    CallbackAsyncProxy {
     private class Allocs {
         val floatingAsyncCallSlots = FloatingAsyncCallSlots()
         val floatingSignalSlots = mutableListOf<Resource>()
