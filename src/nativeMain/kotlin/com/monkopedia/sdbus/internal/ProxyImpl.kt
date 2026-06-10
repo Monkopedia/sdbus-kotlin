@@ -89,7 +89,7 @@ internal class ProxyImpl(
         checkServiceName(destination.value)
         checkObjectPath(objectPath.value)
         if (runEventLoopThread) {
-            connection.enterEventLoopAsync()
+            connection.startEventLoop()
         }
     }
 

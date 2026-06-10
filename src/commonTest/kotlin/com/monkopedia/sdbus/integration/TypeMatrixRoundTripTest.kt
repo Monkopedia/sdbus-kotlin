@@ -90,7 +90,7 @@ class TypeMatrixRoundTripTest {
                 call { input: T -> input }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,

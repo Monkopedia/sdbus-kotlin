@@ -22,24 +22,24 @@ class JvmConnectionMockkTest {
         val message = PlainMessage.createPlainMessage()
         val unique = BusName(":jvm-mock")
 
-        every { backend.enterEventLoopAsync() } just Runs
-        coEvery { backend.leaveEventLoop() } just Runs
+        every { backend.startEventLoop() } just Runs
+        coEvery { backend.stopEventLoop() } just Runs
         every { backend.currentlyProcessedMessage() } returns message
         every { backend.setMethodCallTimeout(timeout) } just Runs
         every { backend.getMethodCallTimeout() } returns timeout
         every { backend.uniqueName() } returns unique
         every { backend.release() } just Runs
 
-        connection.enterEventLoopAsync()
-        connection.leaveEventLoop()
+        connection.startEventLoop()
+        connection.stopEventLoop()
         assertEquals(message, connection.currentlyProcessedMessage)
-        connection.setMethodCallTimeout(timeout)
-        assertEquals(timeout, connection.getMethodCallTimeout())
-        assertEquals(unique, connection.getUniqueName())
+        connection.methodCallTimeout = timeout
+        assertEquals(timeout, connection.methodCallTimeout)
+        assertEquals(unique, connection.uniqueName)
         connection.release()
 
-        verify(exactly = 1) { backend.enterEventLoopAsync() }
-        coVerify(exactly = 1) { backend.leaveEventLoop() }
+        verify(exactly = 1) { backend.startEventLoop() }
+        coVerify(exactly = 1) { backend.stopEventLoop() }
         verify(exactly = 1) { backend.currentlyProcessedMessage() }
         verify(exactly = 1) { backend.setMethodCallTimeout(timeout) }
         verify(exactly = 1) { backend.getMethodCallTimeout() }

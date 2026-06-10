@@ -47,8 +47,8 @@ class CrossModuleSignalIntegrationTest {
                 with<Map<Int, String>>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<Map<Int, String>>()
         val handler = proxy.onSignal(ids.iface, SignalName("MapChanged")) {
@@ -68,8 +68,8 @@ class CrossModuleSignalIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -86,8 +86,8 @@ class CrossModuleSignalIntegrationTest {
                 with<Map<Int, String>>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<Map<Int, String>>()
         val handler = proxy.onSignal(ids.iface, SignalName("MapChanged")) {
@@ -113,8 +113,8 @@ class CrossModuleSignalIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -131,8 +131,8 @@ class CrossModuleSignalIntegrationTest {
                 with<Variant>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<Variant>()
         val handler = proxy.onSignal(ids.iface, SignalName("VariantChanged")) {
@@ -152,8 +152,8 @@ class CrossModuleSignalIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }

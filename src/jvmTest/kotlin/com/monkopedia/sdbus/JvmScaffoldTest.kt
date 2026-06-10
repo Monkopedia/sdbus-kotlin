@@ -14,7 +14,7 @@ class JvmScaffoldTest {
     @Test
     fun createBusConnection_hasStubUniqueName() {
         val connection = createBusConnection()
-        assertTrue(connection.getUniqueName().value.isNotBlank())
+        assertTrue(connection.uniqueName.value.isNotBlank())
     }
 
     @Test

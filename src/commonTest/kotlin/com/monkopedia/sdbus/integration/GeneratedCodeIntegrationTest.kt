@@ -31,8 +31,8 @@ class GeneratedCodeIntegrationTest {
             }
         }
         adaptor.register()
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val rawProxy = createProxy(proxyConnection, service, path)
         val proxy = InterestingInterfaceProxy(rawProxy)
 
@@ -42,8 +42,8 @@ class GeneratedCodeIntegrationTest {
         } finally {
             rawProxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }

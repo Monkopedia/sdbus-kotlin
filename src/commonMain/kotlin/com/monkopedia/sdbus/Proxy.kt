@@ -105,7 +105,7 @@ interface Proxy : Resource {
      * its own bus connection. So-called light-weight proxies (ones created with
      * `runEventLoopThread = false`) are designed for exactly that purpose.
      *
-     * The default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
+     * The default D-Bus method call timeout is used. See [Connection.methodCallTimeout].
      *
      * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
      *
@@ -136,7 +136,8 @@ interface Proxy : Resource {
      * its own bus connection. So-called light-weight proxies (ones created with
      * `runEventLoopThread = false`) are designed for exactly that purpose.
      *
-     * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
+     * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used.
+     * See [Connection.methodCallTimeout].
      *
      * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
      *
@@ -157,7 +158,7 @@ interface Proxy : Resource {
      * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.Error]
      * in case the remote method threw an exception).
      *
-     * The default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
+     * The default D-Bus method call timeout is used. See [Connection.methodCallTimeout].
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
@@ -179,7 +180,8 @@ interface Proxy : Resource {
      * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.Error]
      * in case the remote method threw an exception, or the call timed out).
      *
-     * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used. See IConnection::getMethodCallTimeout().
+     * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used.
+     * See [Connection.methodCallTimeout].
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
@@ -200,6 +202,9 @@ interface Proxy : Resource {
      * lifetime. The subscription is active immediately after the call. The lifetime
      * of the subscription is bound to the lifetime of the resource object. The subscription
      * is unregistered by releasing the resource object.
+     *
+     * Library convention: `register*` functions return a [Resource] when the registration
+     * must be explicitly released, and `Unit` (or the registered item) otherwise.
      *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */

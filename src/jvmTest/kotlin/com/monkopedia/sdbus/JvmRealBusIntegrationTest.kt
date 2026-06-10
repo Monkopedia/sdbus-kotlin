@@ -20,7 +20,7 @@ class JvmRealBusIntegrationTest {
     @Test
     fun methodCall_withEmptyArrayArg_overWire_doesNotDropConnection() = runBlocking {
         val connection = createBusConnection()
-        if (connection.getUniqueName().value == ":jvm-stub") {
+        if (connection.uniqueName.value == ":jvm-stub") {
             connection.release()
             return@runBlocking
         }
@@ -49,8 +49,8 @@ class JvmRealBusIntegrationTest {
         val first = createSystemBusConnection()
         val second = createSystemBusConnection()
         try {
-            val firstUnique = first.getUniqueName().value
-            val secondUnique = second.getUniqueName().value
+            val firstUnique = first.uniqueName.value
+            val secondUnique = second.uniqueName.value
             if (firstUnique == ":jvm-stub" || secondUnique == ":jvm-stub") return
             assertNotEquals(firstUnique, secondUnique)
         } finally {
@@ -64,8 +64,8 @@ class JvmRealBusIntegrationTest {
         val first = createSessionBusConnection()
         val second = createSessionBusConnection()
         try {
-            val firstUnique = first.getUniqueName().value
-            val secondUnique = second.getUniqueName().value
+            val firstUnique = first.uniqueName.value
+            val secondUnique = second.uniqueName.value
             if (firstUnique == ":jvm-stub" || secondUnique == ":jvm-stub") return
             assertNotEquals(firstUnique, secondUnique)
         } finally {
@@ -86,16 +86,16 @@ class JvmRealBusIntegrationTest {
 
         val serverConnection = createSessionBusConnection(service)
         val proxyConnection = createSessionBusConnection()
-        val serverUnique = serverConnection.getUniqueName().value
-        val proxyUnique = proxyConnection.getUniqueName().value
+        val serverUnique = serverConnection.uniqueName.value
+        val proxyUnique = proxyConnection.uniqueName.value
         if (serverUnique == ":jvm-stub" || proxyUnique == ":jvm-stub") {
             proxyConnection.release()
             serverConnection.release()
             return@runBlocking
         }
 
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val managerRegistration = serverConnection.addObjectManager(managerPath)
         val obj = createObject(serverConnection, childPath)
         val proxy = createProxy(proxyConnection, service, managerPath)
@@ -118,8 +118,8 @@ class JvmRealBusIntegrationTest {
             proxy.release()
             obj.release()
             managerRegistration.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -137,16 +137,16 @@ class JvmRealBusIntegrationTest {
 
         val serverConnection = createSessionBusConnection(service)
         val proxyConnection = createSessionBusConnection()
-        val serverUnique = serverConnection.getUniqueName().value
-        val proxyUnique = proxyConnection.getUniqueName().value
+        val serverUnique = serverConnection.uniqueName.value
+        val proxyUnique = proxyConnection.uniqueName.value
         if (serverUnique == ":jvm-stub" || proxyUnique == ":jvm-stub") {
             proxyConnection.release()
             serverConnection.release()
             return@runBlocking
         }
 
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val managerRegistration = serverConnection.addObjectManager(managerPath)
         val obj = createObject(serverConnection, childPath)
         val registration = obj.addVTable(childInterface) {
@@ -172,8 +172,8 @@ class JvmRealBusIntegrationTest {
             proxy.release()
             obj.release()
             managerRegistration.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -190,16 +190,16 @@ class JvmRealBusIntegrationTest {
 
         val serverConnection = createSystemBusConnection()
         val proxyConnection = createSystemBusConnection()
-        val serverUnique = serverConnection.getUniqueName().value
-        val proxyUnique = proxyConnection.getUniqueName().value
+        val serverUnique = serverConnection.uniqueName.value
+        val proxyUnique = proxyConnection.uniqueName.value
         if (serverUnique == ":jvm-stub" || proxyUnique == ":jvm-stub") {
             proxyConnection.release()
             serverConnection.release()
             return@runBlocking
         }
 
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val managerRegistration = serverConnection.addObjectManager(managerPath)
         val obj = createObject(serverConnection, childPath)
         val registration = obj.addVTable(childInterface) {
@@ -225,8 +225,8 @@ class JvmRealBusIntegrationTest {
             proxy.release()
             obj.release()
             managerRegistration.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -243,8 +243,8 @@ class JvmRealBusIntegrationTest {
 
         val serverConnection = createSessionBusConnection(service)
         val proxyConnection = createSessionBusConnection()
-        val serverUnique = serverConnection.getUniqueName().value
-        val proxyUnique = proxyConnection.getUniqueName().value
+        val serverUnique = serverConnection.uniqueName.value
+        val proxyUnique = proxyConnection.uniqueName.value
         if (serverUnique == ":jvm-stub" || proxyUnique == ":jvm-stub") {
             proxyConnection.release()
             serverConnection.release()
@@ -254,8 +254,8 @@ class JvmRealBusIntegrationTest {
         val senderSeen = CompletableDeferred<String>()
         val pidSeen = CompletableDeferred<Int>()
         val obj = createObject(serverConnection, objectPath)
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, service, objectPath)
         val signalRegistration = proxy.registerSignalHandler(interfaceName, signalName) { message ->
             if (!senderSeen.isCompleted) {
@@ -275,8 +275,8 @@ class JvmRealBusIntegrationTest {
             signalRegistration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }

@@ -69,7 +69,7 @@ class DbusmockSmokeTest {
         }
 
         val connection = createBusConnection()
-        connection.enterEventLoopAsync()
+        connection.startEventLoop()
         val mockControl = createProxy(connection, ServiceName(busName), ObjectPath(objectPath))
         val proxy = createProxy(connection, ServiceName(busName), ObjectPath(objectPath))
 
@@ -111,7 +111,7 @@ class DbusmockSmokeTest {
         } finally {
             proxy.release()
             mockControl.release()
-            connection.leaveEventLoop()
+            connection.stopEventLoop()
             connection.release()
             handle.stop()
         }

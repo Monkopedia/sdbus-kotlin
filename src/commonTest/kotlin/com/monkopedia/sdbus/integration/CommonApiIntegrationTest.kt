@@ -71,7 +71,7 @@ class CommonApiIntegrationTest {
                 call { a: Int, b: Int -> a + b }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -87,8 +87,8 @@ class CommonApiIntegrationTest {
             assertEquals(15, result)
         } finally {
             runBlocking {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -115,7 +115,7 @@ class CommonApiIntegrationTest {
                 call { options: Map<String, Variant> -> options.size }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -130,8 +130,8 @@ class CommonApiIntegrationTest {
             assertEquals(0, result)
         } finally {
             runBlocking {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -155,7 +155,7 @@ class CommonApiIntegrationTest {
                 call { items: List<String> -> items.size }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -170,8 +170,8 @@ class CommonApiIntegrationTest {
             assertEquals(0, result)
         } finally {
             runBlocking {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -214,7 +214,7 @@ class CommonApiIntegrationTest {
                 call { value: Int -> value }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -251,7 +251,7 @@ class CommonApiIntegrationTest {
                 call { a: Int, b: Int -> a * b }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackValue = CompletableDeferred<Int>()
         val callbackError = CompletableDeferred<Error?>()
@@ -273,8 +273,8 @@ class CommonApiIntegrationTest {
             awaitPendingCompletion(pending)
             assertFalse(pending.isPending())
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -294,7 +294,7 @@ class CommonApiIntegrationTest {
                 call { a: Int, b: Int -> a + b }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -304,8 +304,8 @@ class CommonApiIntegrationTest {
 
             assertEquals(15, result)
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -325,7 +325,7 @@ class CommonApiIntegrationTest {
                 call { a: Int, b: Int -> a + b }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -362,7 +362,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -399,7 +399,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -434,7 +434,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackError = CompletableDeferred<Error?>()
 
@@ -451,8 +451,8 @@ class CommonApiIntegrationTest {
             awaitPendingCompletion(pending)
             assertFalse(pending.isPending())
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -475,7 +475,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackError = CompletableDeferred<Error?>()
 
@@ -496,8 +496,8 @@ class CommonApiIntegrationTest {
             pending.release()
             delay(600)
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -520,7 +520,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackError = CompletableDeferred<Error?>()
 
@@ -544,8 +544,8 @@ class CommonApiIntegrationTest {
             pending.release()
             delay(1_100)
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -568,7 +568,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackValue = CompletableDeferred<Int>()
 
@@ -586,8 +586,8 @@ class CommonApiIntegrationTest {
             awaitPendingCompletion(pending)
             assertFalse(pending.isPending())
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -610,7 +610,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackSeen = CompletableDeferred<Unit>()
 
@@ -630,8 +630,8 @@ class CommonApiIntegrationTest {
             awaitPendingCompletion(pending)
             assertFalse(pending.isPending())
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -653,7 +653,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -664,8 +664,8 @@ class CommonApiIntegrationTest {
             }
             Unit
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -688,7 +688,7 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -702,8 +702,8 @@ class CommonApiIntegrationTest {
             val results = jobs.map { withTimeout(2_000) { it.await() } }.toSet()
             assertEquals(setOf(50, 100, 150), results)
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -723,7 +723,7 @@ class CommonApiIntegrationTest {
                 acall { value: Int -> value }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -745,8 +745,8 @@ class CommonApiIntegrationTest {
             val total = workers.sumOf { withTimeout(5_000) { it.await() } }
             assertEquals(300, total)
         } finally {
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             registration.release()
             proxy.release()
             obj.release()
@@ -766,8 +766,8 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<String>()
         val signalRegistration = proxy.registerSignalHandler(ids.iface, SignalName("Changed")) {
@@ -786,8 +786,8 @@ class CommonApiIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -804,8 +804,8 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<String>()
         val signalRegistration = proxy.registerSignalHandler(ids.iface, SignalName("Changed")) {
@@ -824,8 +824,8 @@ class CommonApiIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -842,8 +842,8 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val memberSeen = CompletableDeferred<String>()
         val pathSeen = CompletableDeferred<String>()
@@ -864,8 +864,8 @@ class CommonApiIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -883,9 +883,9 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnectionA.enterEventLoopAsync()
-        proxyConnectionB.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnectionA.startEventLoop()
+        proxyConnectionB.startEventLoop()
         val proxyA = createProxy(proxyConnectionA, ids.service, ids.path)
         val proxyB = createProxy(proxyConnectionB, ids.service, ids.path)
         val seenA = CompletableDeferred<Unit>()
@@ -924,9 +924,9 @@ class CommonApiIntegrationTest {
             proxyA.release()
             proxyB.release()
             obj.release()
-            proxyConnectionA.leaveEventLoop()
-            proxyConnectionB.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnectionA.stopEventLoop()
+            proxyConnectionB.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnectionA.release()
             proxyConnectionB.release()
             serverConnection.release()
@@ -944,8 +944,8 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         var firstCount = 0
         val firstHandler = proxy.registerSignalHandler(ids.iface, SignalName("Changed")) {
@@ -979,8 +979,8 @@ class CommonApiIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -1005,9 +1005,9 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        otherConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        otherConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<Unit>()
         val handler = proxy.registerSignalHandler(ids.iface, SignalName("Changed")) {
@@ -1026,9 +1026,9 @@ class CommonApiIntegrationTest {
             proxy.release()
             otherObj.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            otherConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            otherConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             otherConnection.release()
             serverConnection.release()
@@ -1049,8 +1049,8 @@ class CommonApiIntegrationTest {
                 withSetter<Boolean> { value -> state = value }
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val seen = CompletableDeferred<Pair<Map<PropertyName, Variant>, List<PropertyName>>>()
         val signalRegistration = proxy.onSignal(
@@ -1085,8 +1085,8 @@ class CommonApiIntegrationTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -1103,9 +1103,9 @@ class CommonApiIntegrationTest {
         ) { }
 
         try {
-            assertTrue(connection.getUniqueName().value.isNotBlank())
-            connection.setMethodCallTimeout(1500.milliseconds)
-            assertTrue(connection.getMethodCallTimeout() >= kotlin.time.Duration.ZERO)
+            assertTrue(connection.uniqueName.value.isNotBlank())
+            connection.methodCallTimeout = 1500.milliseconds
+            assertTrue(connection.methodCallTimeout >= kotlin.time.Duration.ZERO)
             connection.requestName(ownName)
             connection.releaseName(ownName)
             connection.addMatchAsync(
@@ -1131,8 +1131,8 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val seen = CompletableDeferred<Unit>()
         var callbackCount = 0
         val match = proxyConnection.addMatch(
@@ -1160,8 +1160,8 @@ class CommonApiIntegrationTest {
         } finally {
             registration.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -1178,8 +1178,8 @@ class CommonApiIntegrationTest {
                 with<String>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val installSeen = CompletableDeferred<Unit>()
         val signalSeen = CompletableDeferred<Unit>()
         val match = proxyConnection.addMatchAsync(
@@ -1198,8 +1198,8 @@ class CommonApiIntegrationTest {
             match.release()
             registration.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
@@ -1219,8 +1219,8 @@ class CommonApiIntegrationTest {
                 withSetter<Boolean> { value -> state = value }
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val propertiesProxy = PropertiesProxy(proxy)
 
@@ -1262,8 +1262,8 @@ class CommonApiIntegrationTest {
                 withGetter { true }
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val propertiesProxy = PropertiesProxy(proxy)
 
@@ -1304,8 +1304,8 @@ class CommonApiIntegrationTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val propertiesProxy = PropertiesProxy(proxy)
 
@@ -1338,8 +1338,8 @@ class CommonApiIntegrationTest {
                 call<Unit> { Unit }
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, managerPath)
         val seenMembers = mutableListOf<String>()
         val added = CompletableDeferred<Unit>()
@@ -1374,8 +1374,8 @@ class CommonApiIntegrationTest {
             managerObj.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }

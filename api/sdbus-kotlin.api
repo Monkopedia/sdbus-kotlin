@@ -1,46 +1,26 @@
 public final class com/monkopedia/sdbus/AllPropertiesGetter {
-	public static final field Companion Lcom/monkopedia/sdbus/AllPropertiesGetter$Companion;
 	public fun <init> (Lcom/monkopedia/sdbus/Proxy;)V
 	public final fun getProxy ()Lcom/monkopedia/sdbus/Proxy;
 	public final fun onInterface-95cHxEc (Ljava/lang/String;)Ljava/util/Map;
 }
 
-public final class com/monkopedia/sdbus/AllPropertiesGetter$Companion {
-	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
-}
-
 public final class com/monkopedia/sdbus/AsyncAllPropertiesGetter {
-	public static final field Companion Lcom/monkopedia/sdbus/AsyncAllPropertiesGetter$Companion;
 	public fun <init> (Lcom/monkopedia/sdbus/Proxy;)V
 	public final fun getResult (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun onInterface-95cHxEc (Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncAllPropertiesGetter;
 }
 
-public final class com/monkopedia/sdbus/AsyncAllPropertiesGetter$Companion {
-	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
-}
-
 public final class com/monkopedia/sdbus/AsyncPropertyGetter {
-	public static final field Companion Lcom/monkopedia/sdbus/AsyncPropertyGetter$Companion;
 	public synthetic fun <init> (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun get (Lkotlinx/serialization/DeserializationStrategy;Lkotlinx/serialization/modules/SerializersModule;Lcom/monkopedia/sdbus/SdbusSig;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun onInterface-95cHxEc (Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertyGetter;
 }
 
-public final class com/monkopedia/sdbus/AsyncPropertyGetter$Companion {
-	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
-}
-
 public final class com/monkopedia/sdbus/AsyncPropertySetter {
-	public static final field Companion Lcom/monkopedia/sdbus/AsyncPropertySetter$Companion;
 	public synthetic fun <init> (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getResult (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun onInterface-95cHxEc (Ljava/lang/String;)Lcom/monkopedia/sdbus/AsyncPropertySetter;
 	public final fun toValue (Lcom/monkopedia/sdbus/Typed;Ljava/lang/Object;)Lcom/monkopedia/sdbus/AsyncPropertySetter;
-}
-
-public final class com/monkopedia/sdbus/AsyncPropertySetter$Companion {
-	public final fun getDBUS_PROPERTIES_INTERFACE_NAME-DgtVVXE ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/sdbus/BusName {
@@ -71,14 +51,14 @@ public abstract interface class com/monkopedia/sdbus/Connection : com/monkopedia
 	public abstract fun addMatch (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
 	public abstract fun addMatchAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/sdbus/Resource;
 	public abstract fun addObjectManager-PVsJK3s (Ljava/lang/String;)Lcom/monkopedia/sdbus/Resource;
-	public abstract fun enterEventLoopAsync ()V
 	public abstract fun getCurrentlyProcessedMessage ()Lcom/monkopedia/sdbus/Message;
 	public abstract fun getMethodCallTimeout-UwyO8pc ()J
 	public abstract fun getUniqueName-AwvMx1g ()Ljava/lang/String;
-	public abstract fun leaveEventLoop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun releaseName-em-jQOc (Ljava/lang/String;)V
 	public abstract fun requestName-em-jQOc (Ljava/lang/String;)V
 	public abstract fun setMethodCallTimeout-LRDsOJo (J)V
+	public abstract fun startEventLoop ()V
+	public abstract fun stopEventLoop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/monkopedia/sdbus/Connection_jvmKt {
@@ -403,8 +383,7 @@ public abstract interface class com/monkopedia/sdbus/PropertiesProxy : com/monko
 	public static final field Companion Lcom/monkopedia/sdbus/PropertiesProxy$Companion;
 	public fun getAll-95cHxEc (Ljava/lang/String;)Ljava/util/Map;
 	public fun getAllAsync-0XWHKp4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun onPropertiesChanged-arTsWcw (Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)V
-	public fun registerPropertiesProxy ()V
+	public fun registerPropertiesProxy (Lkotlin/jvm/functions/Function3;)V
 	public fun setAsync-UeWJu_8 (Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Variant;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -415,8 +394,7 @@ public final class com/monkopedia/sdbus/PropertiesProxy$Companion {
 public final class com/monkopedia/sdbus/PropertiesProxy$DefaultImpls {
 	public static fun getAll-95cHxEc (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;)Ljava/util/Map;
 	public static fun getAllAsync-0XWHKp4 (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun onPropertiesChanged-arTsWcw (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)V
-	public static fun registerPropertiesProxy (Lcom/monkopedia/sdbus/PropertiesProxy;)V
+	public static fun registerPropertiesProxy (Lcom/monkopedia/sdbus/PropertiesProxy;Lkotlin/jvm/functions/Function3;)V
 	public static fun setAsync-UeWJu_8 (Lcom/monkopedia/sdbus/PropertiesProxy;Ljava/lang/String;Ljava/lang/String;Lcom/monkopedia/sdbus/Variant;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -440,10 +418,6 @@ public class com/monkopedia/sdbus/PropertyDelegate : kotlin/properties/ReadOnlyP
 }
 
 public final class com/monkopedia/sdbus/PropertyGetReply : com/monkopedia/sdbus/Message {
-}
-
-public final class com/monkopedia/sdbus/PropertyGetterKt {
-	public static final fun getDBUS_PROPERTIES_INTERFACE_NAME ()Ljava/lang/String;
 }
 
 public final class com/monkopedia/sdbus/PropertySetCall : com/monkopedia/sdbus/Message {
@@ -528,7 +502,7 @@ public final class com/monkopedia/sdbus/ServiceConnectionKt {
 
 public final class com/monkopedia/sdbus/Signal : com/monkopedia/sdbus/Message {
 	public final fun send ()V
-	public final fun setDestination (Ljava/lang/String;)V
+	public final fun setDestination-em-jQOc (Ljava/lang/String;)V
 }
 
 public final class com/monkopedia/sdbus/SignalBuilderKt {

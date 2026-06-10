@@ -112,6 +112,11 @@ interface Object : Resource {
      * The lifetime of the ObjectManager interface is bound to the lifetime
      * of the returned resource instance.
      *
+     * To install an ObjectManager at an arbitrary path on a connection (not tied
+     * to a specific object), use [Connection.addObjectManager] instead.
+     *
+     * @see Connection.addObjectManager
+     *
      * @throws [com.monkopedia.sdbus.Error] in case of failure
      */
     fun addObjectManager(): Resource

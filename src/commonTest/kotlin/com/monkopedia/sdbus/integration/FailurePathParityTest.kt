@@ -78,7 +78,7 @@ class FailurePathParityTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -104,8 +104,8 @@ class FailurePathParityTest {
             delay(serverDelayMs + 400)
         } finally {
             withTimeout(5_000) {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -135,7 +135,7 @@ class FailurePathParityTest {
                 }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -168,7 +168,7 @@ class FailurePathParityTest {
                 call { value: Int -> value }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -202,7 +202,7 @@ class FailurePathParityTest {
                 call { value: Int -> value }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -223,7 +223,7 @@ class FailurePathParityTest {
 
     // --- connection teardown behavior ------------------------------------------------------
 
-    // Tearing down a live proxy connection (leaveEventLoop + release) after a successful call
+    // Tearing down a live proxy connection (stopEventLoop + release) after a successful call
     // must complete cleanly and consistently on both backends -- no crash, no hang. The teardown
     // is time-bounded so a hang in the known native-teardown path surfaces as a deterministic
     // test failure rather than an indefinitely stuck suite.
@@ -243,7 +243,7 @@ class FailurePathParityTest {
                 call { value: Int -> value }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -260,13 +260,13 @@ class FailurePathParityTest {
 
             // Teardown itself must be clean and bounded on both backends.
             withTimeout(5_000) {
-                proxyConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
             }
             proxy.release()
             proxyConnection.release()
         } finally {
             withTimeout(5_000) {
-                serverConnection.leaveEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             obj.release()
@@ -288,7 +288,7 @@ class FailurePathParityTest {
                 call { value: Int -> value }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
@@ -299,7 +299,7 @@ class FailurePathParityTest {
 
             // Tear the server down.
             withTimeout(5_000) {
-                serverConnection.leaveEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             obj.release()
@@ -317,7 +317,7 @@ class FailurePathParityTest {
             Unit
         } finally {
             withTimeout(5_000) {
-                proxyConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
             }
             proxy.release()
             proxyConnection.release()

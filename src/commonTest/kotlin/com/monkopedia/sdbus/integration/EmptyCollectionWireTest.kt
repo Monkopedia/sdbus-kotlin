@@ -90,7 +90,7 @@ class EmptyCollectionWireTest {
                 call { value: T -> handler(value) }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -105,8 +105,8 @@ class EmptyCollectionWireTest {
             assertEquals(expected, result)
         } finally {
             runBlocking {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -277,7 +277,7 @@ class EmptyCollectionWireTest {
                 call { value: StructWithList -> "${value.label}:${value.items.size}" }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -292,8 +292,8 @@ class EmptyCollectionWireTest {
             assertEquals("tag:0", result)
         } finally {
             runBlocking {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -316,7 +316,7 @@ class EmptyCollectionWireTest {
                 call { value: Variant -> value.get<Map<String, Variant>>().size }
             }
         }
-        serverConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
         val proxy = createProxy(
             proxyConnection,
             ids.service,
@@ -331,8 +331,8 @@ class EmptyCollectionWireTest {
             assertEquals(0, result)
         } finally {
             runBlocking {
-                proxyConnection.leaveEventLoop()
-                serverConnection.leaveEventLoop()
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
             }
             registration.release()
             proxy.release()
@@ -365,8 +365,8 @@ class EmptyCollectionWireTest {
                 with<T>("value")
             }
         }
-        serverConnection.enterEventLoopAsync()
-        proxyConnection.enterEventLoopAsync()
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val observedSignature = CompletableDeferred<String>()
         val decoded = CompletableDeferred<T>()
@@ -406,8 +406,8 @@ class EmptyCollectionWireTest {
             registration.release()
             proxy.release()
             obj.release()
-            proxyConnection.leaveEventLoop()
-            serverConnection.leaveEventLoop()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
             proxyConnection.release()
             serverConnection.release()
         }
