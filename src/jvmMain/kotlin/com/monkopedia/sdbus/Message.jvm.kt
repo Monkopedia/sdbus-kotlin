@@ -9,6 +9,7 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.descriptors.elementDescriptors
 import kotlinx.serialization.modules.SerializersModule
 
 private fun <T> requireJvmCredential(value: T?, name: String): T = value
@@ -16,6 +17,13 @@ private fun <T> requireJvmCredential(value: T?, name: String): T = value
 
 actual sealed class Message {
     internal data class JvmVariantPayload(val signature: String, val value: Any?)
+
+    // Wire-shaped representation of a D-Bus struct value in the JVM payload model: the
+    // declared struct signature (e.g. "(is)") plus its decomposed field values in order.
+    // Produced by JvmValueEncoder (serializing @Serializable struct types) and by the
+    // signature-aware dbus-java conversion in PureJavaDbusBackend (receiving structs from a
+    // remote peer); consumed by JvmValueDecoder. See JvmValueCodec.jvm.kt (issue #71).
+    internal data class JvmStructPayload(val signature: String, val fields: List<Any?>)
     internal data class Metadata(
         val interfaceName: String? = null,
         val memberName: String? = null,
@@ -59,6 +67,14 @@ actual sealed class Message {
         } else {
             nextRawValue(operation)
         }
+
+    // Non-consuming view of the values nextDeserializedValue would produce, used to decide
+    // between the structured (struct/grouped) and legacy value paths before reading anything.
+    internal fun peekDeserializableValues(): List<Any?> = if (enteredVariantValues.isNotEmpty()) {
+        listOf(enteredVariantValues.first())
+    } else {
+        payload.subList(readIndex, payload.size).toList()
+    }
 
     internal actual fun append(item: Boolean): Unit = run { payload.add(item) }
     internal actual fun append(item: Short): Unit = run { payload.add(item) }
@@ -199,9 +215,12 @@ actual sealed class Message {
         )
 }
 
+internal fun inferJvmPayloadSignature(value: Any?): String? = inferSignature(value)
+
 private fun inferSignature(value: Any?): String? = when (value) {
     null -> null
     is Message.JvmVariantPayload -> "v${value.signature}"
+    is Message.JvmStructPayload -> value.signature
     is Variant -> value.peekValueType()?.let { "v$it" }
     is Boolean -> "b"
     is Byte, is UByte -> "y"
@@ -522,12 +541,24 @@ internal actual fun <T> Message.serialize(
     module: SerializersModule,
     arg: T
 ) {
+    val signature = runCatching { serializer.descriptor.asSignature.value }.getOrNull()
+    if (signature != null && signature.contains('(')) {
+        // Struct-containing types are decomposed into the wire-shaped value tree (structs
+        // become JvmStructPayload) so the dbus-java layer can marshal them (issue #71). A
+        // degrouped serializer (multi-out reply, see DegroupingReturns.kt) produces one
+        // top-level value per out-arg here, matching the wire shape of a grouped reply
+        // (issue #74).
+        val values = encodeToJvmValues(serializer, module, arg)
+        payload.addAll(values)
+        declaredBodySignature.append(
+            if (values.size > 1) signature.removeSurrounding("(", ")") else signature
+        )
+        return
+    }
     payload.add(arg)
     // Record the declared signature from the descriptor so the send path uses the
     // real type instead of inferring it from the (possibly empty) runtime value.
-    runCatching { serializer.descriptor.asSignature.value }
-        .getOrNull()
-        ?.let { declaredBodySignature.append(it) }
+    signature?.let { declaredBodySignature.append(it) }
 }
 
 @PublishedApi
@@ -538,6 +569,10 @@ internal actual fun <T : Any> Message.deserialize(
     if (serializer.descriptor.serialName == "kotlin.Unit") {
         @Suppress("UNCHECKED_CAST")
         return Unit as T
+    }
+    val declaredSig = runCatching { serializer.descriptor.asSignature.value }.getOrDefault("")
+    if (declaredSig.contains('(')) {
+        deserializeStructured(serializer, module, declaredSig)?.let { return it }
     }
     val value = nextDeserializedValue("Message.deserialize")
     val coerced = coerceForDescriptor(value, serializer.descriptor)
@@ -562,6 +597,81 @@ internal actual fun <T : Any> Message.deserialize(
                 it::class.simpleName
             }}"
         )
+}
+
+/**
+ * Structured deserialization for types whose D-Bus signature contains a struct: rebuilds the
+ * Kotlin value through its serializer from wire-shaped payload values (issue #71), including
+ * grouped multi-out replies, which consume one payload value per out-arg through the common
+ * degrouping machinery (issue #74). Returns `null` to fall through to the legacy value path
+ * (raw in-process objects that were never decomposed, or containers without wire-shaped
+ * struct values, which plain coercion already handles).
+ */
+private fun <T : Any> Message.deserializeStructured(
+    serializer: DeserializationStrategy<T>,
+    module: SerializersModule,
+    expectedSig: String
+): T? {
+    val remaining = peekDeserializableValues()
+    val first = remaining.firstOrNull()
+        ?: return null // The legacy path produces the canonical "no remaining payload" error.
+    if (expectedSig.first() == '(') {
+        val firstSig = inferJvmPayloadSignature(first)
+        if (first !is Message.JvmStructPayload && firstSig == null) {
+            // A raw in-process Kotlin object passed through without decomposition; the
+            // legacy cast path handles it.
+            return null
+        }
+        val elementSigs = runCatching {
+            serializer.descriptor.elementDescriptors.map { it.asSignature.value }
+        }.getOrNull()
+        // The payload is acceptable either as a single struct value or as the degrouped
+        // tuple of a multi-out reply (one top-level value per out-arg). Which one applies
+        // is decided by the serializer itself during decoding (a degrouped serializer
+        // never enters the struct container); this check only enforces the same
+        // strictness as the legacy path before any value is consumed.
+        val singleOk = first is Message.JvmStructPayload &&
+            isSignatureCompatible(expectedSig, firstSig!!)
+        val groupedOk = elementSigs != null &&
+            remaining.size >= elementSigs.size &&
+            elementSigs.withIndex().all { (index, expected) ->
+                val actual = inferJvmPayloadSignature(remaining[index])
+                actual == null ||
+                    !shouldEnforceSignature(expected) ||
+                    isSignatureCompatible(expected, actual)
+            }
+        if (!singleOk && !groupedOk) {
+            val actualSig = if (first is Message.JvmStructPayload) {
+                firstSig
+            } else {
+                remaining.take(elementSigs?.size ?: 1)
+                    .joinToString("") { inferJvmPayloadSignature(it) ?: "?" }
+            }
+            // ENXIO mirrors the native backend's sd_bus_message_enter_container failure.
+            throw createError(
+                6,
+                "Message.deserialize failed: signature mismatch expected=$expectedSig actual=$actualSig"
+            )
+        }
+    } else {
+        // Container type holding struct values somewhere inside. Only the wire-shaped
+        // representation needs structured decoding; raw pass-through values (and empty
+        // containers) keep using the legacy coercion path.
+        if (!containsJvmStructPayload(first)) return null
+        val actualSig = inferJvmPayloadSignature(first)
+        if (actualSig != null &&
+            shouldEnforceSignature(expectedSig) &&
+            !isSignatureCompatible(expectedSig, actualSig)
+        ) {
+            throw createError(
+                6,
+                "Message.deserialize failed: signature mismatch expected=$expectedSig actual=$actualSig"
+            )
+        }
+    }
+    return decodeFromJvmValues(serializer, module) { operation ->
+        nextDeserializedValue(operation)
+    }
 }
 
 internal actual fun <T> Message.deserializeArrayFast(signature: SdbusSig, items: MutableList<T>) {

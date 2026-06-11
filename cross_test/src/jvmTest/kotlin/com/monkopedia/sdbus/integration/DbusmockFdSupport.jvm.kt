@@ -21,10 +21,10 @@
 package com.monkopedia.sdbus.integration
 
 /**
- * See the expect declaration: the JVM backend cannot yet marshal custom @Serializable struct
- * values to or from remote peers, so the remote-struct sub-cases are skipped on this backend.
+ * Struct marshalling to/from remote peers is supported since the issue #71 fix (structs are
+ * decomposed into wire-shaped values via JvmValueCodec on the way to/from dbus-java).
  */
-internal actual val peerStructMarshallingSupported: Boolean = false
+internal actual val peerStructMarshallingSupported: Boolean = true
 
 /**
  * The JVM has no portable way to surface a freshly created pipe as a raw integer file
@@ -44,14 +44,14 @@ internal actual fun closeTestFd(fd: Int) {
 }
 
 /**
- * See the expect declaration (DbusmockForeignErrorTest.kt): the JVM backend discards foreign
- * error names (issue #72). Flip to `true` when that bug is fixed.
+ * Foreign error names/messages are preserved verbatim since the issue #72 fix (remote error
+ * replies construct Error(wireName, wireMessage) instead of going through the errno mapping).
  */
-internal actual val peerErrorNameMappingSupported: Boolean = false
+internal actual val peerErrorNameMappingSupported: Boolean = true
 
 /**
- * See the expect declaration (DbusmockSecretServiceTest.kt): the JVM backend cannot
- * deserialize multi-out (grouped) method replies from a real remote peer (issue #74). Flip
- * to `true` when that bug is fixed.
+ * Multi-out (grouped) replies from remote peers are supported since the issue #74 fix
+ * (structured deserialization consumes one reply value per out-arg via the common
+ * degrouping machinery).
  */
-internal actual val peerGroupedReturnSupported: Boolean = false
+internal actual val peerGroupedReturnSupported: Boolean = true
