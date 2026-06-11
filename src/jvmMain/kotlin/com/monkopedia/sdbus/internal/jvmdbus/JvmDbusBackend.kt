@@ -113,9 +113,19 @@ internal interface JvmDbusBackend {
 }
 
 internal object JvmDbusBackendProvider {
-    val backend: JvmDbusBackend = PureJavaDbusBackend(StubJvmDbusBackend())
+    val backend: JvmDbusBackend = PureJavaDbusBackend()
 }
 
+/**
+ * In-process stub backend for unit tests that need connection/proxy/object plumbing without a
+ * real bus (signals via [LocalJvmMatchBus], method dispatch via [JvmStaticDispatch]).
+ *
+ * This backend is never selected implicitly: the real connection factories throw when the bus
+ * is unreachable, matching the native backend (issue #81). Tests opt in explicitly by
+ * constructing [StubJvmDbusBackend] and wrapping its connections in
+ * [com.monkopedia.sdbus.JvmConnection] (see StubJvmDbusBackendTest), or by mocking
+ * [JvmDbusBackendProvider].
+ */
 internal class StubJvmDbusBackend : JvmDbusBackend {
     override fun createConnection(
         busType: JvmBusType,

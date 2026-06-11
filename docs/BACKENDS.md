@@ -24,7 +24,7 @@ Every row below is pinned by tests on current `main`, not by intention:
 | Struct (`@Serializable`) marshalling to/from remote peers | ✅ | ✅ | JVM fixed in #71 |
 | Multi-out (grouped) replies (`isGroupedReturn`) | ✅ | ✅ | JVM fixed in #74 |
 | Per-call timeout (`timeout = …` in the invoker block) | ✅ | ✅ | Timeout *error name* may differ, see below |
-| Connection-level `Connection.methodCallTimeout` | ⚠️ stored but not applied | ✅ applied | Known divergence, see below |
+| Connection-level `Connection.methodCallTimeout` | ✅ | ✅ | Applied as the default for calls without an explicit timeout; JVM fixed in #80 |
 | Error propagation: named D-Bus errors round-trip name + message verbatim | ✅ | ✅ | Incl. foreign (non-sdbus) peers; JVM fixed in #72 |
 | errno → D-Bus error-name mapping for locally created errors | ✅ | ✅ | JVM pinned to native output |
 | Call-after-release fails with `IllegalArgumentException("Connection has already been released")` | ✅ | ✅ | |
@@ -35,7 +35,7 @@ Every row below is pinned by tests on current `main`, not by intention:
 | `UnixFd` type semantics (dup constructor vs `adopt`, `release` closes) | ✅* | ✅ | *JVM dup needs junixsocket native support |
 | Unix FD passing over the wire | ⚠️ untested | ✅ | JVM has the conversion path but no independent-peer test |
 | Connection factories (11 total) | 9 of 11 | 11 of 11 | fd-based factories are native-only |
-| Behavior when the bus is unreachable | ⚠️ silent in-process stub | throws `Error` | Known divergence, see below |
+| Behavior when the bus is unreachable | ✅ throws `Error` | ✅ throws `Error` | JVM fixed in #81; the in-process stub backend is an explicit internal test opt-in only |
 | Event loop (`startEventLoop`/`stopEventLoop`) | no-op (always running) | required for dispatch | Same calling pattern works on both |
 | Strict deserialization (signature mismatch rejected) | ✅ | ✅ | Same `System.Error.ENXIO` error |
 
@@ -81,17 +81,23 @@ timeout-shaped `com.monkopedia.sdbus.Error` — never a hang.
   (`methodCallTimeout_surfacesTimeoutError`) and the `callbackAsyncMethodCall_timeout*` tests
   in `CommonApiIntegrationTest.kt`.
 
-Two honest caveats, both visible in the tests:
+The **connection-level default** (`Connection.methodCallTimeout`) applies on both backends to
+calls made *without* an explicit per-call timeout: on native it maps to
+`sd_bus_set/get_method_call_timeout` (sd_bus resolves a 0 per-call timeout through the
+connection default inside `sd_bus_call`); the JVM call paths consult the stored value the same
+way (issue #80). An explicit per-call timeout always wins over the connection default; if
+neither is set, each backend's own default reply timeout applies (sd-bus's 25 s default /
+dbus-java's default reply timeout).
+
+- Proven by: `FailurePathParityTest.connectionMethodCallTimeout_appliesToCallsWithoutExplicitTimeout`
+  (both backends: connection default expires a slow call made with no per-call timeout, and an
+  explicit per-call timeout overrides the connection default).
+
+One honest caveat, visible in the tests:
 
 - The exact timeout **error name** is not pinned across backends/daemons: it is
   `org.freedesktop.DBus.Error.Timeout`, `…NoReply`, or a message containing "timed out".
   `FailurePathParityTest` deliberately asserts membership in that set, not an exact name.
-- **Known divergence — `Connection.methodCallTimeout`:** on native this property maps to
-  `sd_bus_set/get_method_call_timeout` and applies as the default for calls without an
-  explicit timeout (`ConnectionImpl.kt`). On JVM the setter stores the value and the getter
-  returns it, but no call path consults it (`PureJavaDbusConnection` in
-  `PureJavaDbusBackend.kt`) — calls without a per-call timeout use dbus-java's own default
-  reply timeout instead. Use per-call timeouts for portable behavior.
 
 ## Error propagation and name mapping
 
@@ -210,14 +216,19 @@ There are 11 `create*Connection` entry points (`src/commonMain/.../Connection.kt
   hostname), while the JVM backend passes the string as a dbus-java bus *address* (e.g.
   `tcp:host=…,port=…`). Neither path is covered by CI tests; do not assume portability.
 
-**Known divergence — bus-unreachable behavior:** when opening the bus fails (e.g. no
-`DBUS_SESSION_BUS_ADDRESS`), the native backend throws `com.monkopedia.sdbus.Error`. The JVM
-backend instead **silently falls back to an in-process stub backend**
-(`StubJvmDbusBackend` in `src/jvmMain/.../JvmDbusBackend.kt`): the returned connection only
-reaches objects/proxies created inside the same process (in-process match bus), and
-bus-level operations are no-ops. Only `createDirectBusConnection(address)` propagates the
-connect failure as an `Error` on JVM. If your JVM application must talk to a real bus,
-verify reachability explicitly (e.g. check `connection.uniqueName` is not `:jvm-stub`).
+**Bus-unreachable behavior:** when opening the bus fails (e.g. no
+`DBUS_SESSION_BUS_ADDRESS`, or an address that points nowhere), **both backends throw
+`com.monkopedia.sdbus.Error`** (issue #81; previously the JVM backend silently fell back to
+an in-process stub that faked success). The exact error *name* is not pinned across backends
+— native carries the errno from `sd_bus_open_*`, while dbus-java does not expose an errno —
+but the type and the throw are the contract. The in-process stub backend
+(`StubJvmDbusBackend` in `src/jvmMain/.../JvmDbusBackend.kt`) still exists for unit tests
+that need connection plumbing without a real bus, but it is an **explicit internal opt-in**
+(tests construct it directly or mock `JvmDbusBackendProvider`); it is never selected
+implicitly by any factory.
+
+- Proven by: `src/jvmTest/.../JvmUnreachableBusTest.kt` (unreachable session/direct addresses
+  throw `Error`) and `PureJavaDbusBackendTest.createConnection_throwsWhenEndpointMissing`.
 
 ## Event loop semantics
 
@@ -262,14 +273,15 @@ on native. `currentlyProcessedMessage` is valid inside handlers on both backends
 2. **Raw-fd semantics depend on junixsocket native support**: without it, `UnixFd`
    duplication/closing degrade (no dup, no close). Wire fd passing is implemented but not
    CI-verified against an independent peer.
-3. **`Connection.methodCallTimeout` is not applied** to calls — use per-call timeouts.
-4. **Silent stub fallback when the bus is unreachable** instead of throwing.
-5. **`createRemoteSystemBusConnection(host)` interprets its argument differently** (bus
+3. **`createRemoteSystemBusConnection(host)` interprets its argument differently** (bus
    address, not ssh host).
-6. Historical gaps — object-side signal emission and `PropertiesChanged` emission — are
+4. Historical gaps — object-side signal emission and `PropertiesChanged` emission — are
    closed and pinned by `JvmSignalPropertyUnsupportedTest`; struct marshalling, foreign error
    names, and grouped replies are closed (#71/#72/#74) and pinned by the un-gated
-   `cross_test` dbusmock suites.
+   `cross_test` dbusmock suites; `Connection.methodCallTimeout` application and
+   throw-on-unreachable-bus are closed (#80/#81) and pinned by
+   `FailurePathParityTest.connectionMethodCallTimeout_appliesToCallsWithoutExplicitTimeout`
+   and `JvmUnreachableBusTest`.
 
 Everything not listed above is contract-level parity, enforced by the commonTest and
 cross_test suites on every CI run.

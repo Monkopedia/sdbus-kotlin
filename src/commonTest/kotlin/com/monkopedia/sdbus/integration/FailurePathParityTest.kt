@@ -115,6 +115,74 @@ class FailurePathParityTest {
         }
     }
 
+    // The connection-level default timeout (Connection.methodCallTimeout) must apply to calls
+    // made WITHOUT an explicit per-call timeout on both backends (issue #80): native wires it
+    // to sd_bus_set_method_call_timeout (a 0 per-call timeout resolves to the connection
+    // default inside sd_bus_call); the JVM backend now consults the stored value the same way.
+    // An explicit per-call timeout must still win over the connection default.
+    @Test
+    fun connectionMethodCallTimeout_appliesToCallsWithoutExplicitTimeout() = runBlocking {
+        val ids = uniqueFixtureIds("connTimeout")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        proxyConnection.methodCallTimeout = 100.milliseconds
+        val obj = createObject(serverConnection, ids.path)
+        // Same slow-method fixture as methodCallTimeout_surfacesTimeoutError: the handler
+        // sleeps past the (connection-default) timeout, then completes while both loops are
+        // still up so its late reply doesn't hit a torn-down native connection.
+        val serverDelayMs = 600L
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("Slow")) {
+                acall { value: Int ->
+                    delay(serverDelayMs)
+                    value
+                }
+            }
+        }
+        serverConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path)
+
+        try {
+            // No per-call timeout anywhere in this call: the raw message API's
+            // callMethod(message) overload carries the unset sentinel, so the connection's
+            // methodCallTimeout default must apply and expire the call.
+            val thrown = assertFailsWith<Error> {
+                val call = proxy.createMethodCall(ids.iface, MethodName("Slow"))
+                call.append(1)
+                proxy.callMethod(call)
+            }
+            assertTrue(
+                thrown.name.contains("Timeout") ||
+                    thrown.name.contains("NoReply") ||
+                    thrown.errorMessage.contains("timed out", ignoreCase = true),
+                "expected a timeout-shaped error, got name='${thrown.name}' " +
+                    "message='${thrown.errorMessage}'"
+            )
+
+            // An explicit per-call timeout always wins over the connection default: with a
+            // generous per-call timeout the same slow method completes successfully.
+            val result = proxy.callMethod<Int>(ids.iface, MethodName("Slow")) {
+                call(2)
+                timeout = 5_000.milliseconds
+            }
+            assertEquals(2, result)
+
+            // Let the first (timed-out) handler invocation flush its late reply while the
+            // loops are still alive.
+            delay(serverDelayMs + 400)
+        } finally {
+            withTimeout(5_000) {
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
+            }
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
     // --- remote D-Bus error propagation ----------------------------------------------------
 
     // A handler that throws a named D-Bus Error must reach the client with the same name AND
