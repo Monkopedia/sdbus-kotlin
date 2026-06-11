@@ -56,7 +56,7 @@ import org.freedesktop.dbus.types.UInt64
 private const val OBJECT_MANAGER_INTERFACE_NAME = "org.freedesktop.DBus.ObjectManager"
 private const val OBJECT_MANAGER_GET_MANAGED_OBJECTS = "GetManagedObjects"
 
-internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) : JvmDbusBackend {
+internal class PureJavaDbusBackend : JvmDbusBackend {
     override fun createConnection(
         busType: JvmBusType,
         endpoint: String?,
@@ -75,17 +75,22 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
                 "JVM backend does not support createServerBusConnection(fd)"
             )
         }
+        // Native parity (issue #81): an unreachable bus must surface as a thrown Error, like
+        // the native backend's openBus ("Failed to open bus", errno from sd_bus_open_*) --
+        // never a silent fallback to an in-process stub that fakes success. dbus-java does
+        // not expose an errno, so the exact error *name* is not pinned across backends, but
+        // the Error type and the throw are.
         val connection = runCatching {
             tryCreateConnection(busType, endpoint, fd)
         }.getOrElse {
-            if (busType == JvmBusType.DIRECT_ADDRESS && endpoint != null) {
-                throw createError(
-                    -1,
-                    "Failed to create direct JVM D-Bus connection for '$endpoint': ${it.message}"
-                )
-            }
-            null
-        } ?: return fallbackBackend.createConnection(busType, endpoint, name, fd)
+            throw createError(
+                -1,
+                "Failed to open bus${endpoint?.let { e -> " '$e'" }.orEmpty()}: ${it.message}"
+            )
+        } ?: throw createError(
+            -1,
+            "Failed to open bus: unsupported connection request for $busType"
+        )
         return PureJavaDbusConnection(connection).also { conn ->
             if (name != null) {
                 conn.requestName(name)
@@ -102,13 +107,21 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
         if (runEventLoopThread) {
             connection.startEventLoop()
         }
-        val javaConnection = (connection as? JvmConnection)?.backend as? PureJavaDbusConnection
+        val connectionBackend = (connection as? JvmConnection)?.backend
+        val javaConnection = connectionBackend as? PureJavaDbusConnection
         return PureJavaDbusProxy(
             javaConnection?.javaConnection,
             destination,
             objectPath,
             runCatching { connection.uniqueName.value }.getOrNull(),
-            isConnectionReleased = { javaConnection?.isReleased() == true }
+            isConnectionReleased = { javaConnection?.isReleased() == true },
+            defaultTimeoutMicros = {
+                connectionBackend?.getMethodCallTimeout()
+                    ?.inWholeMicroseconds
+                    ?.coerceAtLeast(0L)
+                    ?.toULong()
+                    ?: 0uL
+            }
         )
     }
 
@@ -952,7 +965,8 @@ private class PureJavaDbusProxy(
     private val destination: ServiceName,
     private val objectPath: ObjectPath,
     private val callerName: String?,
-    private val isConnectionReleased: () -> Boolean = { false }
+    private val isConnectionReleased: () -> Boolean = { false },
+    private val defaultTimeoutMicros: () -> ULong = { 0uL }
 ) : JvmDbusProxy {
     private fun invalidReply(path: String, interfaceName: String, methodName: String): MethodReply =
         methodReplyFrom(
@@ -1000,52 +1014,10 @@ private class PureJavaDbusProxy(
         )
     }
 
-    override fun callMethod(message: MethodCall): MethodReply {
-        requireConnectionUsable()
-        val interfaceName = message.interfaceName?.value
-            ?: throw createError(-1, "callMethod failed: missing interface name")
-        val methodName = message.memberName?.value
-            ?: throw createError(-1, "callMethod failed: missing method name")
-        val path = message.path?.value ?: objectPath.value
-        val realConnection = connection
-        if (realConnection != null) {
-            val localDestination = resolveLocalDispatchDestination(realConnection)
-            val dispatchDestination = localDestination ?: destination.value
-            if (
-                JvmStaticDispatch.hasHandler(
-                    objectPath = path,
-                    interfaceName = interfaceName,
-                    methodName = methodName,
-                    args = message.payload,
-                    destination = dispatchDestination
-                )
-            ) {
-                return callStaticDispatch(
-                    message = message,
-                    interfaceName = interfaceName,
-                    methodName = methodName,
-                    path = path,
-                    dispatchDestination = dispatchDestination
-                )
-            }
-            return callRemoteMethod(
-                connection = realConnection,
-                interfaceName = interfaceName,
-                methodName = methodName,
-                path = path,
-                payload = message.payload.toList(),
-                declaredSignature = message.declaredBodySignature.toString(),
-                timeout = null
-            )
-        }
-        return callStaticDispatch(
-            message = message,
-            interfaceName = interfaceName,
-            methodName = methodName,
-            path = path,
-            dispatchDestination = destination.value
-        )
-    }
+    // A call without a timeout argument carries the same "no explicit timeout" meaning as the
+    // 0 sentinel (Duration.ZERO at the API surface), so it funnels through the same resolution
+    // and picks up the connection-level methodCallTimeout default when one is set (issue #80).
+    override fun callMethod(message: MethodCall): MethodReply = callMethod(message, 0uL)
 
     private fun callStaticDispatch(
         message: MethodCall,
@@ -1110,6 +1082,11 @@ private class PureJavaDbusProxy(
 
     override fun callMethod(message: MethodCall, timeout: ULong): MethodReply {
         requireConnectionUsable()
+        // Native parity (issue #80): an explicit per-call timeout always wins; the
+        // connection-level methodCallTimeout only fills the unset (0) case -- exactly how
+        // sd_bus_call resolves a 0 timeout via sd_bus_get_method_call_timeout. If neither is
+        // set, the effective timeout stays 0 and the pre-existing default behavior applies.
+        val effectiveTimeout = if (timeout == 0uL) defaultTimeoutMicros() else timeout
         val interfaceName = message.interfaceName?.value
             ?: throw createError(-1, "callMethod failed: missing interface name")
         val methodName = message.memberName?.value
@@ -1128,7 +1105,7 @@ private class PureJavaDbusProxy(
                     destination = dispatchDestination
                 )
             ) {
-                return if (timeout == 0uL) {
+                return if (effectiveTimeout == 0uL) {
                     callStaticDispatch(
                         message = message,
                         interfaceName = interfaceName,
@@ -1142,7 +1119,7 @@ private class PureJavaDbusProxy(
                         interfaceName = interfaceName,
                         methodName = methodName,
                         path = path,
-                        timeout = timeout,
+                        timeout = effectiveTimeout,
                         dispatchDestination = dispatchDestination
                     )
                 }
@@ -1154,10 +1131,10 @@ private class PureJavaDbusProxy(
                 path = path,
                 payload = message.payload.toList(),
                 declaredSignature = message.declaredBodySignature.toString(),
-                timeout = timeout.takeUnless { it == 0uL }
+                timeout = effectiveTimeout.takeUnless { it == 0uL }
             )
         }
-        if (timeout == 0uL) {
+        if (effectiveTimeout == 0uL) {
             return callStaticDispatch(
                 message = message,
                 interfaceName = interfaceName,
@@ -1171,7 +1148,7 @@ private class PureJavaDbusProxy(
             interfaceName = interfaceName,
             methodName = methodName,
             path = path,
-            timeout = timeout,
+            timeout = effectiveTimeout,
             dispatchDestination = destination.value
         )
     }
