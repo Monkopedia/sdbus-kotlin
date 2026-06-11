@@ -143,17 +143,25 @@ internal suspend fun <T> pumpUntilSubscribed(received: ReceiveChannel<T>, poke: 
  * @param suffix Distinguishes the peer's bus name / object path between tests.
  * @param objectManager When `true`, the peer also implements
  *   `org.freedesktop.DBus.ObjectManager` at [DbusmockPeer.objectPath] (dbusmock `-m`).
+ * @param mockPath Overrides the mock's root object path (defaults to a unique per-test path).
+ *   Object paths are scoped to the peer's connection, so a fixed well-known path (e.g.
+ *   `/org/freedesktop/secrets`) cannot collide between tests — the bus name stays unique.
+ * @param mockInterface Overrides the mock's main interface name (defaults to the unique bus
+ *   name), for mocking well-known interfaces like `org.freedesktop.Secret.Service`.
  */
 internal fun withDbusmockPeer(
     suffix: String,
     objectManager: Boolean = false,
+    mockPath: String? = null,
+    mockInterface: String? = null,
     block: suspend DbusmockPeer.() -> Unit
 ) = runBlocking {
     val id = Random.nextInt(100_000, 999_999)
     val busName = "com.monkopedia.sdbus.dbusmock.$suffix$id"
-    val objectPath = "/com/monkopedia/sdbus/dbusmock/$suffix$id"
+    val objectPath = mockPath ?: "/com/monkopedia/sdbus/dbusmock/$suffix$id"
+    val interfaceName = mockInterface ?: busName
 
-    val handle = launchDbusmock(busName, objectPath, busName, objectManager)
+    val handle = launchDbusmock(busName, objectPath, interfaceName, objectManager)
     if (handle == null) {
         println(
             "[withDbusmockPeer] SKIP: python-dbusmock unavailable. " +
@@ -173,7 +181,7 @@ internal fun withDbusmockPeer(
         proxy,
         ServiceName(busName),
         ObjectPath(objectPath),
-        InterfaceName(busName)
+        InterfaceName(interfaceName)
     )
 
     try {

@@ -48,3 +48,10 @@ internal actual fun closeTestFd(fd: Int) {
  * error names (issue #72). Flip to `true` when that bug is fixed.
  */
 internal actual val peerErrorNameMappingSupported: Boolean = false
+
+/**
+ * See the expect declaration (DbusmockSecretServiceTest.kt): the JVM backend cannot
+ * deserialize multi-out (grouped) method replies from a real remote peer (issue #74). Flip
+ * to `true` when that bug is fixed.
+ */
+internal actual val peerGroupedReturnSupported: Boolean = false
