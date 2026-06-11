@@ -65,11 +65,15 @@ internal expect class DbusmockHandle {
  * Launches `python3 -m dbusmock` on the current (session) bus, claiming [busName] and exposing
  * a generic mock object at [objectPath] with main interface [interfaceName].
  *
+ * @param objectManager When `true`, dbusmock is started with `-m` so that the mock object also
+ *   implements `org.freedesktop.DBus.ObjectManager` (its `GetManagedObjects` reports the
+ *   objects added below [objectPath] via the mock `AddObject` control call).
  * @return a [DbusmockHandle] if the process started, or `null` if dbusmock / python is not
  *   available (the caller should then SKIP).
  */
 internal expect fun launchDbusmock(
     busName: String,
     objectPath: String,
-    interfaceName: String
+    interfaceName: String,
+    objectManager: Boolean = false
 ): DbusmockHandle?

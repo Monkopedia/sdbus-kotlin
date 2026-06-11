@@ -36,22 +36,25 @@ internal actual class DbusmockHandle(private val process: Process) {
 internal actual fun launchDbusmock(
     busName: String,
     objectPath: String,
-    interfaceName: String
+    interfaceName: String,
+    objectManager: Boolean
 ): DbusmockHandle? {
     // No session bus -> nothing to launch dbusmock on; skip.
     if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) return null
 
     val python = dbusmockGetenv("DBUSMOCK_PYTHON") ?: "python3"
+    val command = buildList {
+        add(python)
+        add("-m")
+        add("dbusmock")
+        add("--session")
+        if (objectManager) add("-m")
+        add(busName)
+        add(objectPath)
+        add(interfaceName)
+    }
     return try {
-        val process = ProcessBuilder(
-            python,
-            "-m",
-            "dbusmock",
-            "--session",
-            busName,
-            objectPath,
-            interfaceName
-        ).redirectErrorStream(true)
+        val process = ProcessBuilder(command).redirectErrorStream(true)
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .start()
 

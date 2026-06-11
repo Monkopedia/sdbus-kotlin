@@ -59,21 +59,23 @@ internal actual class DbusmockHandle(private val pid: Int) {
 internal actual fun launchDbusmock(
     busName: String,
     objectPath: String,
-    interfaceName: String
+    interfaceName: String,
+    objectManager: Boolean
 ): DbusmockHandle? {
     // No session bus -> nothing to launch dbusmock on; skip.
     if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) return null
 
     val python = dbusmockGetenv("DBUSMOCK_PYTHON") ?: "python3"
-    val args = listOf(
-        python,
-        "-m",
-        "dbusmock",
-        "--session",
-        busName,
-        objectPath,
-        interfaceName
-    )
+    val args = buildList {
+        add(python)
+        add("-m")
+        add("dbusmock")
+        add("--session")
+        if (objectManager) add("-m")
+        add(busName)
+        add(objectPath)
+        add(interfaceName)
+    }
 
     val pid = fork()
     if (pid < 0) return null

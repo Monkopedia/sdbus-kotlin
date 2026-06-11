@@ -42,3 +42,9 @@ internal actual fun readFromFd(fd: Int, maxBytes: Int): ByteArray? =
 internal actual fun closeTestFd(fd: Int) {
     // No raw fds are ever created on the JVM backend; nothing to close.
 }
+
+/**
+ * See the expect declaration (DbusmockForeignErrorTest.kt): the JVM backend discards foreign
+ * error names (issue #72). Flip to `true` when that bug is fixed.
+ */
+internal actual val peerErrorNameMappingSupported: Boolean = false
