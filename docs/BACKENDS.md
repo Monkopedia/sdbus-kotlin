@@ -188,14 +188,16 @@ Backend differences:
 
 ## Connection factories
 
-There are 11 `create*Connection` entry points (`src/commonMain/.../Connection.kt`):
+There are 11 `create*Connection` entry points — 10 declared in the common API
+(`src/commonMain/.../Connection.kt`) plus one declared only in the native source set
+(`src/nativeMain/.../Connection.native.kt`):
 
 | Factory | JVM | Native |
 | --- | --- | --- |
 | `createBusConnection()` / `(name)` | ✅ | ✅ |
 | `createSystemBusConnection()` / `(name)` | ✅ | ✅ |
 | `createSessionBusConnection()` / `(name)` / `(address)` | ✅ | ✅ |
-| `createRemoteSystemBusConnection(host)` | ⚠️ | ✅ |
+| `createRemoteSystemBusConnection(host)` | ❌ native-only (not declared) | ✅ |
 | `createDirectBusConnection(address)` | ✅ | ✅ |
 | `createDirectBusConnection(fd: UnixFd)` | ❌ native-only | ✅ |
 | `createServerBusConnection(fd: UnixFd)` | ❌ native-only | ✅ |
@@ -205,10 +207,12 @@ There are 11 `create*Connection` entry points (`src/commonMain/.../Connection.kt
   JVM-compiled code is a **compile-time error**; if invoked anyway (e.g. reflectively), the
   JVM backend throws (`PureJavaDbusBackend.createConnection` rejects `DIRECT_FD`/`SERVER_FD`).
   On native they adopt the descriptor as documented in their KDoc.
-- `createRemoteSystemBusConnection(host)` exists on both, but the argument is interpreted
-  differently: native uses sd-bus's ssh transport (`sd_bus_open_system_remote`, takes a
-  hostname), while the JVM backend passes the string as a dbus-java bus *address* (e.g.
-  `tcp:host=…,port=…`). Neither path is covered by CI tests; do not assume portability.
+- `createRemoteSystemBusConnection(host)` is **native-only and not declared in the common
+  or JVM API** (it lives in `src/nativeMain/.../Connection.native.kt`). It opens the system
+  bus of a remote host over ssh via sd-bus (`sd_bus_open_system_remote`, which spawns
+  `ssh … systemd-stdio-bridge`); dbus-java has no equivalent transport, and the former JVM
+  declaration wrongly treated the host as a dbus-java bus *address*, so it was removed
+  (#82). To connect to a TCP-exposed bus on JVM, use the address-based factories instead.
 
 **Known divergence — bus-unreachable behavior:** when opening the bus fails (e.g. no
 `DBUS_SESSION_BUS_ADDRESS`), the native backend throws `com.monkopedia.sdbus.Error`. The JVM
@@ -264,8 +268,8 @@ on native. `currentlyProcessedMessage` is valid inside handlers on both backends
    CI-verified against an independent peer.
 3. **`Connection.methodCallTimeout` is not applied** to calls — use per-call timeouts.
 4. **Silent stub fallback when the bus is unreachable** instead of throwing.
-5. **`createRemoteSystemBusConnection(host)` interprets its argument differently** (bus
-   address, not ssh host).
+5. **No remote-system-bus-over-ssh**: `createRemoteSystemBusConnection(host)` is
+   native-only and not declared in the JVM API (#82).
 6. Historical gaps — object-side signal emission and `PropertiesChanged` emission — are
    closed and pinned by `JvmSignalPropertyUnsupportedTest`; struct marshalling, foreign error
    names, and grouped replies are closed (#71/#72/#74) and pinned by the un-gated

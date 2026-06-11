@@ -56,8 +56,19 @@ actual fun createSessionBusConnection(name: ServiceName): Connection =
 actual fun createSessionBusConnection(address: String): Connection =
     sessionConnection(SdBus(), address)
 
-actual fun createRemoteSystemBusConnection(host: String): Connection =
-    remoteConnection(SdBus(), host)
+/**
+ * Creates/opens D-Bus system connection on a remote host using ssh
+ *
+ * Native-only API. The underlying sd-bus library tunnels the connection over ssh
+ * (`sd_bus_open_system_remote`); there is no JVM equivalent, so this function is
+ * not declared in the common API.
+ *
+ * @param host Name of the host to connect
+ * @return [Connection] instance
+ *
+ * @throws [com.monkopedia.sdbus.Error] in case of failure
+ */
+fun createRemoteSystemBusConnection(host: String): Connection = remoteConnection(SdBus(), host)
 
 actual fun createDirectBusConnection(address: String): Connection =
     privateConnection(SdBus(), address)

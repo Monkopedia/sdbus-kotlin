@@ -89,10 +89,6 @@ actual fun createSessionBusConnection(address: String): Connection = JvmConnecti
     )
 )
 
-actual fun createRemoteSystemBusConnection(host: String): Connection = JvmConnection(
-    JvmDbusBackendProvider.backend.createConnection(JvmBusType.REMOTE_SYSTEM, host, null, null)
-)
-
 actual fun createDirectBusConnection(address: String): Connection = JvmConnection(
     JvmDbusBackendProvider.backend.createConnection(
         JvmBusType.DIRECT_ADDRESS,

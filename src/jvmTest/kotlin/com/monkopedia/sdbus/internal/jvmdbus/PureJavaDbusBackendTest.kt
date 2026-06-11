@@ -67,28 +67,28 @@ class PureJavaDbusBackendTest {
         val fallback = mockk<JvmDbusBackend>()
         val backend = PureJavaDbusBackend(fallback)
         val sessionAddressConnection = mockk<JvmDbusConnection>()
-        val remoteSystemConnection = mockk<JvmDbusConnection>()
+        val directAddressConnection = mockk<JvmDbusConnection>()
         val named = ServiceName("org.example.Named")
 
         every {
             fallback.createConnection(JvmBusType.SESSION_ADDRESS, null, named, null)
         } returns sessionAddressConnection
         every {
-            fallback.createConnection(JvmBusType.REMOTE_SYSTEM, null, null, null)
-        } returns remoteSystemConnection
+            fallback.createConnection(JvmBusType.DIRECT_ADDRESS, null, null, null)
+        } returns directAddressConnection
 
         val sessionAddressResult =
             backend.createConnection(JvmBusType.SESSION_ADDRESS, null, named, null)
-        val remoteSystemResult =
-            backend.createConnection(JvmBusType.REMOTE_SYSTEM, null, null, null)
+        val directAddressResult =
+            backend.createConnection(JvmBusType.DIRECT_ADDRESS, null, null, null)
 
         assertEquals(sessionAddressConnection, sessionAddressResult)
-        assertEquals(remoteSystemConnection, remoteSystemResult)
+        assertEquals(directAddressConnection, directAddressResult)
         verify(exactly = 1) {
             fallback.createConnection(JvmBusType.SESSION_ADDRESS, null, named, null)
         }
         verify(exactly = 1) {
-            fallback.createConnection(JvmBusType.REMOTE_SYSTEM, null, null, null)
+            fallback.createConnection(JvmBusType.DIRECT_ADDRESS, null, null, null)
         }
     }
 }

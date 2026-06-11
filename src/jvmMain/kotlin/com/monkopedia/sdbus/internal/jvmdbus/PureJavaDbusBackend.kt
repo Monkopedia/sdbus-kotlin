@@ -134,11 +134,6 @@ internal class PureJavaDbusBackend(private val fallbackBackend: JvmDbusBackend) 
             JvmBusType.SESSION_ADDRESS ->
                 endpoint?.let(DBusConnectionBuilder::forAddress)?.withShared(false)?.build()
             JvmBusType.DIRECT_ADDRESS -> endpoint?.let(DirectConnectionBuilder::forAddress)?.build()
-            JvmBusType.REMOTE_SYSTEM -> endpoint?.let { value ->
-                DBusConnectionBuilder.forType(DBusConnection.DBusBusType.SYSTEM, value)
-                    .withShared(false)
-                    .build()
-            }
             JvmBusType.DIRECT_FD,
             JvmBusType.SERVER_FD -> null
         }
