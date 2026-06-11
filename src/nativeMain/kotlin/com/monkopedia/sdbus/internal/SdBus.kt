@@ -57,6 +57,47 @@ import sdbus.sd_bus_message_handler_t
 import sdbus.sd_bus_vtable
 import sdbus.sd_id128_t
 
+/**
+ * Thin wrapper around libsystemd's sd-bus that serializes all bus access through a
+ * per-instance [ReentrantLock].
+ *
+ * ## Locking invariant (#69, #84)
+ *
+ * sd-bus is single-threaded by design: its reference counts (e.g. `bus->n_ref`,
+ * bumped by `sd_bus_ref` from nearly every message/slot operation) are plain
+ * non-atomic increments. sdbus-kotlin runs the connection's event loop on one
+ * thread while user code (proxies, async server handlers on worker dispatchers)
+ * calls into the same bus concurrently, so EVERY libsystemd entry point that can
+ * touch live bus state MUST hold [lock] (`lock.withLock { }`).
+ *
+ * A single unlocked entry point is enough to corrupt the heap: a lost refcount
+ * update undercounts `n_ref`, the bus is freed prematurely at teardown while live
+ * messages still hold logical references, and later unrefs write to freed memory
+ * ("malloc(): unsorted double linked list corrupted" under server-side async load
+ * — the #69 flake, root-caused in #84 to exactly one wrapper missing the lock).
+ *
+ * The lock is reentrant on purpose: message handlers are dispatched by libsystemd
+ * from inside locked `sd_bus_process`, and synchronous handlers create/send their
+ * replies on that same thread, re-entering wrappers like
+ * [sd_bus_message_new_method_return] while the event-loop thread already holds
+ * the lock.
+ *
+ * The only functions allowed to skip the lock are those that provably cannot race
+ * a live event loop:
+ * - bus constructors ([sd_bus_new], the `sd_bus_open*` family): the bus pointer
+ *   is thread-local until the connection is published and the loop starts;
+ * - [sd_bus_flush] standalone: only used during the connection handshake, before
+ *   the bus is shared (the post-send flushes in [sd_bus_send]/[sd_bus_call_async]
+ *   already run under the lock);
+ * - [sd_bus_flush_close_unref]/[sd_bus_close_unref]: teardown destructors that run
+ *   after the event loop has exited;
+ * - [sd_bus_get_current_message]: read-only, only valid on the event-loop thread
+ *   inside a handler callback (which already holds the lock).
+ *
+ * If you add a new wrapper, take the lock unless it falls into one of the
+ * categories above — when in doubt, lock (it is reentrant and cheap compared to a
+ * Feb-2026-style heap-corruption hunt).
+ */
 internal class SdBus : ISdBus {
     private val lock = ReentrantLock()
     private val useAnonymousDirectAuth by lazy {
@@ -142,7 +183,9 @@ internal class SdBus : ISdBus {
     override fun sd_bus_message_new_method_return(
         call: CValuesRef<sd_bus_message>?,
         m: CValuesRef<CPointerVar<sd_bus_message>>?
-    ): Int = sdbus.sd_bus_message_new_method_return(call, m)
+    ): Int = lock.withLock {
+        return sdbus.sd_bus_message_new_method_return(call, m)
+    }
 
     override fun sd_bus_message_new_method_error(
         call: CValuesRef<sd_bus_message>?,
