@@ -20,28 +20,19 @@
  */
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Connection
-import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertiesProxy
 import com.monkopedia.sdbus.PropertyName
-import com.monkopedia.sdbus.Proxy
-import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.callMethodAsync
-import com.monkopedia.sdbus.createBusConnection
-import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.getProperty
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.time.TimeSource
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 /**
@@ -90,7 +81,7 @@ class DbusmockTypeMatrixTest {
     // --- Basic types -----------------------------------------------------------------------
 
     @Test
-    fun integralTypes_roundTripThroughForeignPeer() = withDbusmockPeer("Integral") {
+    fun integralTypes_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixIntegral") {
         addEcho("EchoY", "y")
         assertEchoes("EchoY", UByte.MIN_VALUE)
         assertEchoes("EchoY", 42.toUByte())
@@ -134,35 +125,36 @@ class DbusmockTypeMatrixTest {
     }
 
     @Test
-    fun floatingPointAndStringLikeTypes_roundTripThroughForeignPeer() = withDbusmockPeer("Fp") {
-        addEcho("EchoD", "d")
-        assertEchoes("EchoD", 3.141592653589793)
-        assertEchoes("EchoD", -2.718281828459045)
-        assertEchoes("EchoD", 1.0E-300)
-        assertEchoes("EchoD", 1.0E300)
-        assertEchoes("EchoD", Double.POSITIVE_INFINITY)
-        assertEchoes("EchoD", Double.NEGATIVE_INFINITY)
-        // NaN and -0.0 must survive bit-exact; kotlin boxed equality distinguishes both.
-        assertEchoes("EchoD", Double.NaN)
-        assertEchoes("EchoD", -0.0)
+    fun floatingPointAndStringLikeTypes_roundTripThroughForeignPeer() =
+        withDbusmockPeer("MatrixFp") {
+            addEcho("EchoD", "d")
+            assertEchoes("EchoD", 3.141592653589793)
+            assertEchoes("EchoD", -2.718281828459045)
+            assertEchoes("EchoD", 1.0E-300)
+            assertEchoes("EchoD", 1.0E300)
+            assertEchoes("EchoD", Double.POSITIVE_INFINITY)
+            assertEchoes("EchoD", Double.NEGATIVE_INFINITY)
+            // NaN and -0.0 must survive bit-exact; kotlin boxed equality distinguishes both.
+            assertEchoes("EchoD", Double.NaN)
+            assertEchoes("EchoD", -0.0)
 
-        addEcho("EchoS", "s")
-        assertEchoes("EchoS", "")
-        assertEchoes("EchoS", "Hello, D-Bus éàü 你好 🚀")
-        assertEchoes("EchoS", "line1\nline2\ttab \"quoted\" back\\slash")
+            addEcho("EchoS", "s")
+            assertEchoes("EchoS", "")
+            assertEchoes("EchoS", "Hello, D-Bus éàü 你好 🚀")
+            assertEchoes("EchoS", "line1\nline2\ttab \"quoted\" back\\slash")
 
-        addEcho("EchoO", "o")
-        assertEchoes("EchoO", ObjectPath("/com/monkopedia/sdbus/some/object"))
-        assertEchoes("EchoO", ObjectPath("/"))
+            addEcho("EchoO", "o")
+            assertEchoes("EchoO", ObjectPath("/com/monkopedia/sdbus/some/object"))
+            assertEchoes("EchoO", ObjectPath("/"))
 
-        addEcho("EchoG", "g")
-        assertEchoes("EchoG", Signature("a{sv}"))
-        assertEchoes("EchoG", Signature("(ybnqiuxtdsogv)"))
-        assertEchoes("EchoG", Signature(""))
-    }
+            addEcho("EchoG", "g")
+            assertEchoes("EchoG", Signature("a{sv}"))
+            assertEchoes("EchoG", Signature("(ybnqiuxtdsogv)"))
+            assertEchoes("EchoG", Signature(""))
+        }
 
     @Test
-    fun variants_roundTripThroughForeignPeer() = withDbusmockPeer("Variant") {
+    fun variants_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixVariant") {
         addEcho("EchoV", "v")
         assertEquals(7, echo("EchoV", Variant(7)).get<Int>())
         assertEquals("inside-variant", echo("EchoV", Variant("inside-variant")).get<String>())
@@ -209,7 +201,7 @@ class DbusmockTypeMatrixTest {
     // --- Arrays ----------------------------------------------------------------------------
 
     @Test
-    fun arrays_roundTripThroughForeignPeer() = withDbusmockPeer("Array") {
+    fun arrays_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixArray") {
         addEcho("EchoAi", "ai")
         assertEchoes("EchoAi", listOf(1, 2, 3, -4, Int.MAX_VALUE, Int.MIN_VALUE))
         assertEchoes("EchoAi", emptyList<Int>())
@@ -249,7 +241,7 @@ class DbusmockTypeMatrixTest {
     // --- Dictionaries ----------------------------------------------------------------------
 
     @Test
-    fun dictionaries_roundTripThroughForeignPeer() = withDbusmockPeer("Dict") {
+    fun dictionaries_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixDict") {
         addEcho("EchoDss", "a{ss}")
         assertEchoes("EchoDss", mapOf("one" to "1", "two" to "2", "" to "empty-key"))
         assertEchoes("EchoDss", emptyMap<String, String>())
@@ -298,46 +290,47 @@ class DbusmockTypeMatrixTest {
     // --- Structs ---------------------------------------------------------------------------
 
     @Test
-    fun structs_receivedFromForeignPeer_deserializeCorrectly() = withDbusmockPeer("StructIn") {
-        if (!peerStructMarshallingSupported) {
-            // KNOWN JVM BACKEND BUG (see peerStructMarshallingSupported KDoc): struct replies
-            // from a real remote peer fail signature validation ("expected=(is) actual=ai").
-            println(
-                "[DbusmockTypeMatrixTest] SKIP struct receive sub-cases: known JVM backend " +
-                    "struct marshalling gap against remote peers."
+    fun structs_receivedFromForeignPeer_deserializeCorrectly() =
+        withDbusmockPeer("MatrixStructIn") {
+            if (!peerStructMarshallingSupported) {
+                // KNOWN JVM BACKEND BUG (see peerStructMarshallingSupported KDoc): struct replies
+                // from a real remote peer fail signature validation ("expected=(is) actual=ai").
+                println(
+                    "[DbusmockTypeMatrixTest] SKIP struct receive sub-cases: known JVM backend " +
+                        "struct marshalling gap against remote peers."
+                )
+                return@withDbusmockPeer
+            }
+
+            // Receive-direction struct coverage: the foreign peer constructs the struct values,
+            // our client only deserializes them.
+            addMethod("MakeStruct", "", "(is)", "ret = (99, 'ninety-nine')")
+            assertEquals(
+                SimpleStruct(99, "ninety-nine"),
+                proxy.callMethod(iface, MethodName("MakeStruct")) {}
             )
-            return@withDbusmockPeer
+
+            addMethod("MakeArrStruct", "", "a(is)", "ret = [(1, 'one'), (2, 'two')]")
+            assertEquals(
+                listOf(SimpleStruct(1, "one"), SimpleStruct(2, "two")),
+                proxy.callMethod(iface, MethodName("MakeArrStruct")) {}
+            )
+
+            addMethod("MakeEmptyArrStruct", "", "a(is)", "ret = []")
+            assertEquals(
+                emptyList(),
+                proxy.callMethod<List<SimpleStruct>>(iface, MethodName("MakeEmptyArrStruct")) {}
+            )
+
+            addMethod("MakeNested", "", "((is)ai)", "ret = ((1, 'a'), [7, 8, 9])")
+            assertEquals(
+                NestedStruct(SimpleStruct(1, "a"), listOf(7, 8, 9)),
+                proxy.callMethod(iface, MethodName("MakeNested")) {}
+            )
         }
 
-        // Receive-direction struct coverage: the foreign peer constructs the struct values,
-        // our client only deserializes them.
-        addMethod("MakeStruct", "", "(is)", "ret = (99, 'ninety-nine')")
-        assertEquals(
-            SimpleStruct(99, "ninety-nine"),
-            proxy.callMethod(iface, MethodName("MakeStruct")) {}
-        )
-
-        addMethod("MakeArrStruct", "", "a(is)", "ret = [(1, 'one'), (2, 'two')]")
-        assertEquals(
-            listOf(SimpleStruct(1, "one"), SimpleStruct(2, "two")),
-            proxy.callMethod(iface, MethodName("MakeArrStruct")) {}
-        )
-
-        addMethod("MakeEmptyArrStruct", "", "a(is)", "ret = []")
-        assertEquals(
-            emptyList(),
-            proxy.callMethod<List<SimpleStruct>>(iface, MethodName("MakeEmptyArrStruct")) {}
-        )
-
-        addMethod("MakeNested", "", "((is)ai)", "ret = ((1, 'a'), [7, 8, 9])")
-        assertEquals(
-            NestedStruct(SimpleStruct(1, "a"), listOf(7, 8, 9)),
-            proxy.callMethod(iface, MethodName("MakeNested")) {}
-        )
-    }
-
     @Test
-    fun structs_roundTripThroughForeignPeer() = withDbusmockPeer("Struct") {
+    fun structs_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixStruct") {
         if (!peerStructMarshallingSupported) {
             // KNOWN JVM BACKEND BUG (see peerStructMarshallingSupported KDoc).
             println(
@@ -394,7 +387,7 @@ class DbusmockTypeMatrixTest {
     // --- Large payloads --------------------------------------------------------------------
 
     @Test
-    fun largePayloads_roundTripThroughForeignPeer() = withDbusmockPeer("Large") {
+    fun largePayloads_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixLarge") {
         addEcho("EchoAy", "ay")
         val bigBytes = List(128 * 1024) { (it % 256).toUByte() }
         assertEquals(bigBytes, echo("EchoAy", bigBytes), "128KiB byte array corrupted")
@@ -411,7 +404,7 @@ class DbusmockTypeMatrixTest {
     // --- Multi-arg / no-arg / no-return methods ---------------------------------------------
 
     @Test
-    fun argumentShapes_roundTripThroughForeignPeer() = withDbusmockPeer("Args") {
+    fun argumentShapes_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixArgs") {
         // Multiple heterogeneous in-args, single out.
         addMethod("Concat", "iis", "s", "ret = '%d|%d|%s' % (args[0], args[1], args[2])")
         val concat = proxy.callMethod<String>(iface, MethodName("Concat")) {
@@ -448,27 +441,25 @@ class DbusmockTypeMatrixTest {
     // --- Suspend/async call path ------------------------------------------------------------
 
     @Test
-    fun asyncCalls_roundTripThroughForeignPeer() = withDbusmockPeer("Async") {
+    fun asyncCalls_roundTripThroughForeignPeer() = withDbusmockPeer("MatrixAsync") {
         addEcho("EchoAi", "ai")
         addEcho("EchoDsv", "a{sv}")
-        runBlocking {
-            val ints = proxy.callMethodAsync<List<Int>>(iface, MethodName("EchoAi")) {
-                call(listOf(5, 6, 7))
-            }
-            assertEquals(listOf(5, 6, 7), ints)
-
-            val dict = proxy.callMethodAsync<Map<String, Variant>>(iface, MethodName("EchoDsv")) {
-                call(mapOf("answer" to Variant(42)))
-            }
-            assertEquals(setOf("answer"), dict.keys)
-            assertEquals(42, dict.getValue("answer").get<Int>())
+        val ints = proxy.callMethodAsync<List<Int>>(iface, MethodName("EchoAi")) {
+            call(listOf(5, 6, 7))
         }
+        assertEquals(listOf(5, 6, 7), ints)
+
+        val dict = proxy.callMethodAsync<Map<String, Variant>>(iface, MethodName("EchoDsv")) {
+            call(mapOf("answer" to Variant(42)))
+        }
+        assertEquals(setOf("answer"), dict.keys)
+        assertEquals(42, dict.getValue("answer").get<Int>())
     }
 
     // --- Properties with complex types -------------------------------------------------------
 
     @Test
-    fun complexProperties_readThroughForeignPeer() = withDbusmockPeer("Props") {
+    fun complexProperties_readThroughForeignPeer() = withDbusmockPeer("MatrixProps") {
         addProperty("Dict", Variant(mapOf("k1" to "v1", "k2" to "v2")))
         addProperty("Ints", Variant(listOf(3, 1, 4, 1, 5)))
         addProperty("Big", Variant(ULong.MAX_VALUE))
@@ -500,7 +491,7 @@ class DbusmockTypeMatrixTest {
     // --- Unix fd passing ----------------------------------------------------------------------
 
     @Test
-    fun unixFd_passesThroughForeignPeer_whereSupported() = withDbusmockPeer("Fd") {
+    fun unixFd_passesThroughForeignPeer_whereSupported() = withDbusmockPeer("MatrixFd") {
         val pipe = createTestPipe()
         if (pipe == null) {
             println(
@@ -534,23 +525,8 @@ class DbusmockTypeMatrixTest {
     }
 
     // --- Fixture ------------------------------------------------------------------------------
-
-    private class DbusmockPeer(val control: Proxy, val proxy: Proxy, val iface: InterfaceName) {
-        fun addMethod(name: String, inSig: String, outSig: String, code: String) {
-            control.callMethod<Unit>(MOCK_INTERFACE, MethodName("AddMethod")) {
-                call(iface.value, name, inSig, outSig, code)
-            }
-        }
-
-        fun addEcho(name: String, signature: String) =
-            addMethod(name, signature, signature, "ret = args[0]")
-
-        fun addProperty(name: String, value: Variant) {
-            control.callMethod<Unit>(MOCK_INTERFACE, MethodName("AddProperty")) {
-                call(iface.value, name, value)
-            }
-        }
-    }
+    // The peer lifecycle ([withDbusmockPeer] / [DbusmockPeer]) is shared with the other
+    // dbusmock suites; see DbusmockPeerFixture.kt.
 
     /** Calls the identity method [name] on the peer with [value] and returns the reply. */
     private inline fun <reified T : Any> DbusmockPeer.echo(name: String, value: T): T =
@@ -564,64 +540,6 @@ class DbusmockTypeMatrixTest {
             echo(name, value),
             "$name: value did not round-trip through the dbusmock peer"
         )
-    }
-
-    /**
-     * Launches a fresh dbusmock peer (unique bus name / path / interface), waits for it to claim
-     * its name, runs [block] against it, and tears everything down. If python-dbusmock is not
-     * available the test SKIPs cleanly (runs no assertions).
-     */
-    private fun withDbusmockPeer(suffix: String, block: DbusmockPeer.() -> Unit) = runBlocking {
-        val id = Random.nextInt(100_000, 999_999)
-        val busName = "com.monkopedia.sdbus.dbusmock.Matrix$suffix$id"
-        val objectPath = "/com/monkopedia/sdbus/dbusmock/Matrix$suffix$id"
-
-        val handle = launchDbusmock(busName, objectPath, busName)
-        if (handle == null) {
-            println(
-                "[DbusmockTypeMatrixTest] SKIP: python-dbusmock unavailable. " +
-                    "Install via 'apt install python3-dbusmock' / 'pip install python-dbusmock' " +
-                    "(see DbusmockHarness KDoc)."
-            )
-            return@runBlocking
-        }
-
-        val connection: Connection = createBusConnection()
-        connection.startEventLoop()
-        val control = createProxy(connection, ServiceName(busName), ObjectPath(objectPath))
-        val proxy = createProxy(connection, ServiceName(busName), ObjectPath(objectPath))
-        val peer = DbusmockPeer(control, proxy, InterfaceName(busName))
-
-        try {
-            // dbusmock takes a moment to claim its bus name; retry a no-op control call until
-            // the name is owned (or we time out).
-            retry(timeoutMillis = 15_000) {
-                peer.addMethod("Ready", "", "i", "ret = 0")
-            }
-            peer.block()
-        } finally {
-            proxy.release()
-            control.release()
-            connection.stopEventLoop()
-            connection.release()
-            handle.stop()
-        }
-    }
-
-    private inline fun retry(timeoutMillis: Long, block: () -> Unit) {
-        val start = TimeSource.Monotonic.markNow()
-        var last: Throwable? = null
-        while (start.elapsedNow().inWholeMilliseconds < timeoutMillis) {
-            val result = runCatching(block)
-            if (result.isSuccess) return
-            last = result.exceptionOrNull()
-            busyWait(100)
-        }
-        throw AssertionError("Timed out waiting for dbusmock to become ready", last)
-    }
-
-    private companion object {
-        private val MOCK_INTERFACE = InterfaceName("org.freedesktop.DBus.Mock")
     }
 }
 

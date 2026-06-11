@@ -60,3 +60,6 @@ internal actual fun readFromFd(fd: Int, maxBytes: Int): ByteArray? {
 internal actual fun closeTestFd(fd: Int) {
     close(fd)
 }
+
+/** See the expect declaration (DbusmockForeignErrorTest.kt): sd-bus preserves foreign error names. */
+internal actual val peerErrorNameMappingSupported: Boolean = true
