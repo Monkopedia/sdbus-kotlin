@@ -6,13 +6,40 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia/sdbus-kotlin)](https://search.maven.org/artifact/com.monkopedia/sdbus-kotlin)
 [![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://monkopedia.github.io/sdbus-kotlin/)
 
-sdbus-kotlin is a direct port of sdbus-c++ to kotlin/native. Once the port completed, some
-kotlinization of the APIs has begun, but is definitely not complete or API stable. sdbus-kotlin
-also contains a code generator, which will generate kotlin adaptors or proxies for dbus xml
-interfaces provided.
+sdbus-kotlin is a high-level D-Bus library for Kotlin Multiplatform, born as a port of
+[sdbus-c++](https://github.com/Kistler-Group/sdbus-cpp). It provides typed client proxies and
+service adaptors over D-Bus, and ships a Gradle plugin that generates the Kotlin bindings from
+D-Bus introspection XML.
 
-Currently sdbus-kotlin is only built for linuxX64, but the goal is to bring it to arm64 next, and
-any other possible platforms after.
+It is published for three targets, all sharing the same common API:
+
+| Target | Backend |
+| --- | --- |
+| `jvm` | [dbus-java](https://github.com/hypfvieh/dbus-java) — pure-Java transport, no native code |
+| `linuxX64` | sd-bus via libsystemd (cinterop) |
+| `linuxArm64` | sd-bus via libsystemd (cinterop) |
+
+## API stability
+
+The public API is frozen as of 0.5.0 and is the API that 1.0 will ship. Compatibility is
+enforced in CI with [binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
+(JVM and klib API dumps are checked in under `api/`), so any change to the public surface is an
+explicit, reviewed event.
+
+## Choosing a backend
+
+Application code is the same on every target — the choice is about deployment:
+
+- **JVM**: backed by dbus-java; `dbus-java-core` and `dbus-java-transport-junixsocket` come in
+  transitively with the `jvm` artifact. No native toolchain and no linker flags — it works
+  anywhere a JVM and a D-Bus socket are available. Choose this when you are already on the JVM
+  (server-side services, desktop apps, existing JVM codebases).
+- **Native** (`linuxX64`, `linuxArm64`): wraps sd-bus directly and links against libsystemd,
+  producing self-contained binaries with no JVM requirement. Choose this for small CLI tools and
+  daemons, or when you want sd-bus itself doing the I/O.
+
+A small number of fd-based entry points (`createDirectBusConnection(fd: UnixFd)`,
+`createServerBusConnection(fd: UnixFd)`) are native-only; their KDoc says so explicitly.
 
 # Getting Started
 
@@ -21,7 +48,8 @@ the types and wrappers. Its recommended to use the codegenerator whenever possib
 
 ## Code Generation
 
-There is a gradle plugin which can generate sources as part of the the build when given xml files.
+There is a gradle plugin which can generate sources as part of the the build when given D-Bus
+introspection XML files, conventionally placed in `src/dbusMain`.
 
 ```
 plugins {
@@ -31,7 +59,7 @@ plugins {
 
 sdbus {
     sources.srcDirs("src/dbusMain")
-    outputs.add("linuxX64Main")
+    outputs.add("commonMain")
     generateProxies = true
     generateAdapters = true
     // optional: force generated Kotlin package
@@ -40,13 +68,22 @@ sdbus {
 ...
 ```
 
-This will generate the proxies and adapters for any interfaces declared in src/dbusMain and make
-them available from the `linuxX64Main` sources.
+| Option | Meaning |
+| --- | --- |
+| `sources` | Directories scanned (recursively) for D-Bus introspection `*.xml` files. |
+| `outputs` | Names of the Kotlin source sets that receive the generated code (defaults to `linuxMain`). Use `commonMain` to share the generated bindings across JVM and native targets. |
+| `generateProxies` | Generate client-side `<Interface>Proxy` classes. |
+| `generateAdapters` | Generate service-side abstract `<Interface>Adaptor` classes for you to implement. |
+| `outputPackage` | Override the package of the generated code. By default it is derived from the D-Bus interface name (e.g. `org.bluez.Adapter1` generates into package `org.bluez`). |
+
+For each `<interface>` in the XML the generator emits a Kotlin interface (e.g. `Adapter1`) plus,
+depending on the flags above, an `Adapter1Proxy` and/or an abstract `Adapter1Adaptor`.
 
 ## Build Setup
 
-To access the APIs, make sure the module depends on sdbus-kotlin. While the API is available as
-a common kotlin module, its implementations are currently only for linuxX64 and linuxArm64.
+To access the APIs, make sure the module depends on sdbus-kotlin. The API is a common Kotlin
+module with implementations for `jvm`, `linuxX64`, and `linuxArm64`. Add the dependency to
+`commonMain` to share code across targets, or to a platform source set:
 
 ```
 val nativeMain by getting {
@@ -55,6 +92,30 @@ val nativeMain by getting {
     }
 }
 ```
+
+If using any complex types, their serialization is managed using kotlinx-serialization, so
+that plugin must be applied as well.
+
+```
+plugins {
+    kotlin("multiplatform") version "2.4.0"
+    kotlin("plugin.serialization") version "2.4.0"
+}
+```
+
+For a full example build file, see the [bluez-scan sample](samples/bluez-scan).
+
+### Kotlin/JVM
+
+No further setup is needed on JVM. The `jvm` artifact pulls in the pure-Java dbus-java
+transport transitively and connects through the standard D-Bus unix sockets — no linker flags
+and no native libraries involved. The [bluez-scan sample](samples/bluez-scan) runs on JVM with:
+
+```
+$ gradle runJvm
+```
+
+### Kotlin/Native (Linux)
 
 Since sdbus-kotlin compiles against libsystemd, your target must provide libsystemd at link and
 runtime. Published artifacts do not embed a libsystemd path, so configure linker options in your
@@ -72,17 +133,11 @@ linuxX64 {
 }
 ```
 
-Lastly, if using any complex types, their serialization in managed using kotlinx-serialization, so
-that must be applied as well.
+The bluez-scan sample runs natively with:
 
 ```
-plugins {
-    kotlin("multiplatform") version "2.1.0"
-    kotlin("plugin.serialization") version "2.1.0"
-}
+$ gradle runReleaseExecutableNative
 ```
-
-For a full example build file, see the [bluez-scan sample](samples/bluez-scan).
 
 ## API
 
@@ -95,11 +150,50 @@ val connection = createSystemBusConnection().withService(ServiceName("org.bluez"
 ```
 
 Then the connection can be used to create proxies or adaptors as needed. Some core dbus interfaces
-are provided with nicer implementations (e.g. ObjectManagerProxy).
+are provided with nicer implementations (e.g. ObjectManagerProxy). Generated proxy methods are
+`suspend` functions, so call them from a coroutine:
 
 ```
-val adapter = Adapter1Proxy(connection.createProxy(ObjectPath("/org/bluez/hci0")))
-adapter.startDiscovery()
+runBlocking {
+    val adapter = Adapter1Proxy(connection.createProxy(ObjectPath("/org/bluez/hci0")))
+    adapter.startDiscovery()
+}
+```
+
+Generated properties are plain Kotlin properties, each backed by a delegate that also offers
+`Flow`-based observation:
+
+```
+println(adapter.name) // one-shot read
+
+adapter.poweredProperty.values() // current value + PropertiesChanged updates
+    .collect { powered -> println("Powered: $powered") }
+```
+
+(`changes()` is the same flow without the initial read.)
+
+Without generated bindings, methods can be invoked directly; per-call timeouts are
+`kotlin.time.Duration`:
+
+```
+val sum: Int = proxy.callMethodAsync(InterfaceName("org.example.Adder"), MethodName("Sum")) {
+    call(listOf(1, 2, 3))
+    timeout = 5.seconds
+}
+```
+
+On the service side, register an object and serve an interface — either by implementing a
+generated `*Adaptor` and calling its `register()`, or with the vtable DSL directly:
+
+```
+val connection = createBusConnection(ServiceName("org.example"))
+val obj = createObject(connection, ObjectPath("/org/example/adder"))
+obj.addVTable(InterfaceName("org.example.Adder")) {
+    method(MethodName("Sum")) {
+        call { numbers: List<Int> -> numbers.sum() }
+    }
+}
+connection.startEventLoop() // serve until stopEventLoop()/release()
 ```
 
 See the full [API docs](https://monkopedia.github.io/sdbus-kotlin/sdbus-kotlin/com.monkopedia.sdbus/index.html) for more information.
@@ -117,3 +211,9 @@ public data class AcquireType(
   public val mtu: UShort,
 )
 ```
+
+# Credits & License
+
+sdbus-kotlin is a port of [sdbus-c++](https://github.com/Kistler-Group/sdbus-cpp) by
+Stanislav Angelovič and Kistler Group, and keeps its high-level API design. Like the original,
+it is licensed under the [LGPL v3](LICENSE.txt).
