@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 plugins {
     kotlin("multiplatform")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 repositories {
