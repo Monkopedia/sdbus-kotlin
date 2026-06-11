@@ -68,6 +68,13 @@ internal expect class DbusmockHandle {
  * @param objectManager When `true`, dbusmock is started with `-m` so that the mock object also
  *   implements `org.freedesktop.DBus.ObjectManager` (its `GetManagedObjects` reports the
  *   objects added below [objectPath] via the mock `AddObject` control call).
+ * @param template When non-null, dbusmock is started with `-t [template]` instead of the
+ *   NAME/PATH/INTERFACE positionals (the template dictates them — e.g. `bluez5` claims
+ *   `org.bluez` at `/`). Templates may declare `SYSTEM_BUS = True` (bluez5 does); the explicit
+ *   `--session` flag the harness always passes overrides that, keeping the mock on the private
+ *   `dbus-run-session` bus that [com.monkopedia.sdbus.createBusConnection] connects to — no
+ *   private system bus is needed. [busName]/[objectPath]/[interfaceName] are ignored in this
+ *   mode (callers should pass the template's well-known values for readability).
  * @return a [DbusmockHandle] if the process started, or `null` if dbusmock / python is not
  *   available (the caller should then SKIP).
  */
@@ -75,5 +82,6 @@ internal expect fun launchDbusmock(
     busName: String,
     objectPath: String,
     interfaceName: String,
-    objectManager: Boolean = false
+    objectManager: Boolean = false,
+    template: String? = null
 ): DbusmockHandle?
