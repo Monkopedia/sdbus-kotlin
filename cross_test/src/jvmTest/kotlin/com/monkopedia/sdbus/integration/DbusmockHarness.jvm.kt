@@ -37,7 +37,8 @@ internal actual fun launchDbusmock(
     busName: String,
     objectPath: String,
     interfaceName: String,
-    objectManager: Boolean
+    objectManager: Boolean,
+    template: String?
 ): DbusmockHandle? {
     // No session bus -> nothing to launch dbusmock on; skip.
     if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) return null
@@ -47,11 +48,17 @@ internal actual fun launchDbusmock(
         add(python)
         add("-m")
         add("dbusmock")
+        // Explicit --session overrides any SYSTEM_BUS flag a template declares (e.g. bluez5).
         add("--session")
-        if (objectManager) add("-m")
-        add(busName)
-        add(objectPath)
-        add(interfaceName)
+        if (template != null) {
+            add("-t")
+            add(template)
+        } else {
+            if (objectManager) add("-m")
+            add(busName)
+            add(objectPath)
+            add(interfaceName)
+        }
     }
     return try {
         val process = ProcessBuilder(command).redirectErrorStream(true)
