@@ -81,7 +81,16 @@ import kotlinx.coroutines.withTimeout
  * overrides that flag and keeps the mock on the private `dbus-run-session` bus the tests
  * already use — no private system bus needed (see [launchDbusmock]).
  *
+ * ## dbusmock version skew
+ *
+ * CI installs python3-dbusmock **0.31.1** (Ubuntu noble apt) while this suite was written
+ * against **0.38.1**, so assertions only target template behaviour common to both; features
+ * added after 0.31.1 (the adapter `Roles` property, the `LEAdvertisingManager1` adapter
+ * interface) are asserted conditionally, only when the template exposes them.
+ *
  * ## Template quirks (0.38.1) worked around here
+ *
+ * The quirks below were diagnosed on 0.38.1 but hold on 0.31.1 as well.
  *
  * - `StartDiscovery` raises a KeyError unless `SetDiscoveryFilter` was called first (the
  *   `DiscoveryFilter` property is read but never initialised). Real BlueZ clients set a
@@ -133,13 +142,21 @@ class DbusmockBluezTest {
         assertEquals(true, adapter[PropertyName("Powered")]?.get<Boolean>())
         assertEquals(false, adapter[PropertyName("Discovering")]?.get<Boolean>())
         assertEquals(268u, adapter[PropertyName("Class")]?.get<UInt>())
-        assertEquals(
-            listOf("central", "peripheral"),
-            adapter[PropertyName("Roles")]?.get<List<String>>()
-        )
         assertEquals(5, adapter[PropertyName("UUIDs")]?.get<List<String>>()?.size)
-        // The template also exposes the advertising-related adapter interfaces.
-        assertTrue(LE_ADVERTISING_MANAGER1 in adapterIfaces, "LEAdvertisingManager1 missing")
+        // DBUSMOCK-VERSION DEPENDENT (see class KDoc): the `Roles` adapter property and the
+        // `LEAdvertisingManager1` adapter interface were added to the bluez5 template after
+        // 0.31.1 (the apt version CI installs); 0.38.x has both. They are template inventory,
+        // not decoding coverage (the asserts above already cover every type involved), so
+        // assert their shape only when the template exposes them.
+        adapter[PropertyName("Roles")]?.let { roles ->
+            assertEquals(listOf("central", "peripheral"), roles.get<List<String>>())
+        }
+        adapterIfaces[LE_ADVERTISING_MANAGER1]?.let { advertising ->
+            assertEquals(
+                5u.toUByte(),
+                advertising[PropertyName("SupportedInstances")]?.get<UByte>()
+            )
+        }
 
         // Device entry: int16 RSSI/TxPower, uint16 Appearance, object-path Adapter link.
         val device = assertNotNull(managed.getValue(phonePath)[DEVICE1], "Device1 missing")
