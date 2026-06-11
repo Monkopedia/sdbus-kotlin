@@ -63,3 +63,9 @@ internal actual fun closeTestFd(fd: Int) {
 
 /** See the expect declaration (DbusmockForeignErrorTest.kt): sd-bus preserves foreign error names. */
 internal actual val peerErrorNameMappingSupported: Boolean = true
+
+/**
+ * See the expect declaration (DbusmockSecretServiceTest.kt): the native backend deserializes
+ * multi-out (grouped) replies from remote peers correctly.
+ */
+internal actual val peerGroupedReturnSupported: Boolean = true
