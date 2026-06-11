@@ -592,8 +592,8 @@ private fun DBusSignal.toSdbusMessage(connection: AbstractConnection?): Signal =
         empty = false
     ).withSenderCredentials(connection, source)
 ).also { signal ->
-    runCatching { parameters.toList() }.getOrElse { emptyList() }
-        .map(::fromJavaSignalValue)
+    val values = runCatching { parameters.toList() }.getOrElse { emptyList() }
+    fromJavaWireValues(values, runCatching { sig }.getOrNull())
         .forEach { signal.payload.add(it) }
 }
 
@@ -625,6 +625,10 @@ private fun toJavaSignalValue(value: Any?): Any? = when (value) {
     is com.monkopedia.sdbus.ObjectPath -> value.value
     is Signature -> value.value
     is Message.JvmVariantPayload -> toJavaVariantValue(value.signature, value.value)
+    // dbus-java marshals struct values from positional Object[] contents (see its
+    // Message.appendOne STRUCT1 case), so the decomposed struct payload converts its
+    // fields in order (issue #71).
+    is Message.JvmStructPayload -> value.fields.map(::toJavaSignalValue).toTypedArray()
     is Variant -> extractVariantPayload(value).let { payload ->
         toJavaVariantValue(payload.signature, payload.value)
     }
@@ -648,7 +652,7 @@ private fun fromJavaVariantValue(value: org.freedesktop.dbus.types.Variant<*>): 
     message.payload.add(
         Message.JvmVariantPayload(
             signature,
-            fromJavaSignalValue(value.value)
+            fromJavaWireValue(value.value, signature)
         )
     )
     return Variant().apply { deserializeFrom(message) }
@@ -674,10 +678,9 @@ private fun toJavaVariantValue(
     signature
 )
 
-// Counts the number of top-level D-Bus types in a signature (e.g. "sa{sv}" -> 2),
-// used to check that a declared body signature lines up with the payload it describes.
-private fun countTopLevelTypes(signature: String?): Int {
-    if (signature.isNullOrEmpty()) return 0
+// Splits a D-Bus signature into its top-level single complete types
+// (e.g. "sa{sv}(is)" -> ["s", "a{sv}", "(is)"]).
+private fun splitTopLevelTypes(signature: String): List<String> {
     fun parseOne(index: Int): Int {
         if (index >= signature.length) return index
         return when (signature[index]) {
@@ -700,15 +703,78 @@ private fun countTopLevelTypes(signature: String?): Int {
         }
     }
 
+    val types = mutableListOf<String>()
     var index = 0
-    var count = 0
     while (index < signature.length) {
         val next = parseOne(index)
         if (next <= index) break
-        count++
+        types += signature.substring(index, next)
         index = next
     }
-    return count
+    return types
+}
+
+// Counts the number of top-level D-Bus types in a signature (e.g. "sa{sv}" -> 2),
+// used to check that a declared body signature lines up with the payload it describes.
+private fun countTopLevelTypes(signature: String?): Int =
+    if (signature.isNullOrEmpty()) 0 else splitTopLevelTypes(signature).size
+
+// Signature-aware conversion of a dbus-java message body into the JVM payload model. The
+// wire signature is authoritative: it is the only way to tell a struct value (extracted by
+// dbus-java as positional Object[] contents) apart from an array, so structs become
+// Message.JvmStructPayload carrying their exact signature (issue #71). Values whose
+// signature is unavailable fall back to the value-shape-based conversion.
+private fun fromJavaWireValues(values: List<Any?>, signature: String?): List<Any?> {
+    val types = signature?.let(::splitTopLevelTypes).orEmpty()
+    return values.mapIndexed { index, value -> fromJavaWireValue(value, types.getOrNull(index)) }
+}
+
+private fun fromJavaWireValue(value: Any?, signature: String?): Any? {
+    if (value == null || signature.isNullOrEmpty()) return fromJavaSignalValue(value)
+    return when {
+        signature.startsWith("(") && signature.endsWith(")") -> {
+            val fields = wireValueAsList(value) ?: return fromJavaSignalValue(value)
+            val fieldTypes = splitTopLevelTypes(signature.substring(1, signature.length - 1))
+            Message.JvmStructPayload(
+                signature,
+                fields.mapIndexed { index, field ->
+                    fromJavaWireValue(field, fieldTypes.getOrNull(index))
+                }
+            )
+        }
+
+        signature.startsWith("a{") && signature.endsWith("}") -> {
+            val map = value as? Map<*, *> ?: return fromJavaSignalValue(value)
+            val entryTypes = splitTopLevelTypes(signature.substring(2, signature.length - 1))
+            map.entries.associate { (key, entryValue) ->
+                fromJavaWireValue(key, entryTypes.getOrNull(0)) to
+                    fromJavaWireValue(entryValue, entryTypes.getOrNull(1))
+            }
+        }
+
+        signature.startsWith("a") -> {
+            val items = wireValueAsList(value) ?: return fromJavaSignalValue(value)
+            val elementType = signature.substring(1)
+            items.map { fromJavaWireValue(it, elementType) }
+        }
+
+        // Primitives and variants: variants carry their own signature on the dbus-java side,
+        // which fromJavaVariantValue (via fromJavaSignalValue) follows recursively.
+        else -> fromJavaSignalValue(value)
+    }
+}
+
+private fun wireValueAsList(value: Any?): List<Any?>? = when (value) {
+    is List<*> -> value
+    is Array<*> -> value.toList()
+    is ByteArray -> value.toList()
+    is ShortArray -> value.toList()
+    is IntArray -> value.toList()
+    is LongArray -> value.toList()
+    is BooleanArray -> value.toList()
+    is FloatArray -> value.toList()
+    is DoubleArray -> value.toList()
+    else -> null
 }
 
 // Wire signature for an outgoing body. Prefer the declared signature accumulated from
@@ -734,6 +800,7 @@ private fun bodySignature(
 private fun inferSignalSignature(value: Any?): String? = when (value) {
     null -> null
     is Message.JvmVariantPayload -> "v"
+    is Message.JvmStructPayload -> value.signature
     is Variant -> "v"
     is Boolean -> "b"
     is Byte, is UByte -> "y"
@@ -769,6 +836,18 @@ private fun inferSignalSignature(value: Any?): String? = when (value) {
     }
 
     else -> null
+}
+
+// A remote error reply carries the D-Bus error name in its ERROR_NAME header (surfaced by
+// dbus-java's Message.getName() for Error messages) and the human-readable message as the
+// first body argument. Both must be preserved verbatim like the native backend does (sd-bus
+// copies them straight into sd_bus_error) instead of being squeezed through the errno-based
+// createError mapping, which made every foreign error surface as AccessDenied (issue #72).
+private fun org.freedesktop.dbus.messages.Error.toSdbusError(): com.monkopedia.sdbus.Error {
+    val wireName = runCatching { name }.getOrNull()?.takeIf { it.isNotBlank() }
+        ?: return createError(-1, "Remote method call failed")
+    val wireMessage = runCatching { parameters.firstOrNull() as? String }.getOrNull().orEmpty()
+    return com.monkopedia.sdbus.Error(wireName, wireMessage)
 }
 
 private fun AbstractConnection.uniqueNameOrNull(): String? = (this as? DBusConnection)?.uniqueName
@@ -1198,17 +1277,16 @@ private class PureJavaDbusProxy(
         } ?: throw createError(-1, "Method call timed out")
 
         if (rawReply is org.freedesktop.dbus.messages.Error) {
-            val remoteError = runCatching {
-                rawReply.throwException()
-                null
-            }.exceptionOrNull()
-            throw createError(-1, remoteError?.message ?: "Remote method call failed")
+            throw rawReply.toSdbusError()
         }
         val values = runCatching {
-            rawReply.parameters.toList()
+            fromJavaWireValues(
+                rawReply.parameters.toList(),
+                runCatching { rawReply.sig }.getOrNull()
+            )
         }.getOrElse {
             throw createError(-1, "callMethod failed: ${it.message}")
-        }.map(::fromJavaSignalValue)
+        }
         val sender = rawReply.source ?: destination.value
         return methodReplyFrom(
             Message.Metadata(
