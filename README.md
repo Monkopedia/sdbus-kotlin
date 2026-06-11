@@ -41,6 +41,10 @@ Application code is the same on every target — the choice is about deployment:
 A small number of fd-based entry points (`createDirectBusConnection(fd: UnixFd)`,
 `createServerBusConnection(fd: UnixFd)`) are native-only; their KDoc says so explicitly.
 
+For the full capability-by-capability contract between the two backends — including which
+test suite pins each behavior and the few known divergences — see
+[docs/BACKENDS.md](docs/BACKENDS.md).
+
 # Getting Started
 
 While sdbus-kotlin can be used directly without the generator, it can be a bit cumbersome to manage
