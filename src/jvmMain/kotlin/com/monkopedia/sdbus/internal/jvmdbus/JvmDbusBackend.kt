@@ -30,7 +30,6 @@ internal enum class JvmBusType {
     SYSTEM,
     SESSION,
     SESSION_ADDRESS,
-    REMOTE_SYSTEM,
     DIRECT_ADDRESS,
     DIRECT_FD,
     SERVER_FD

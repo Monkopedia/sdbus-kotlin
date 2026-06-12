@@ -255,16 +255,6 @@ expect fun createSessionBusConnection(name: ServiceName): Connection
 expect fun createSessionBusConnection(address: String): Connection
 
 /**
- * Creates/opens D-Bus system connection on a remote host using ssh
- *
- * @param host Name of the host to connect
- * @return [Connection] instance
- *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
- */
-expect fun createRemoteSystemBusConnection(host: String): Connection
-
-/**
  * Opens direct D-Bus connection at a custom address
  *
  * @param address ";"-separated list of addresses of bus brokers to try to connect to

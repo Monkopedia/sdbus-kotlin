@@ -47,7 +47,6 @@ class JvmFactoryMockkTest {
             createSessionBusConnection()
             createSessionBusConnection(serviceName)
             createSessionBusConnection("unix:path=/tmp/session")
-            createRemoteSystemBusConnection("example-host")
             createDirectBusConnection("unix:path=/tmp/direct")
             createDirectBusConnection(UnixFd.adopt(42))
             createServerBusConnection(UnixFd.adopt(99))
@@ -77,9 +76,6 @@ class JvmFactoryMockkTest {
                     null,
                     null
                 )
-            }
-            verify(exactly = 1) {
-                backend.createConnection(JvmBusType.REMOTE_SYSTEM, "example-host", null, null)
             }
             verify(exactly = 1) {
                 backend.createConnection(

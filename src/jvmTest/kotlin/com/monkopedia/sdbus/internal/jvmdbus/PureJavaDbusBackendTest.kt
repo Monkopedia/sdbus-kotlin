@@ -62,11 +62,11 @@ class PureJavaDbusBackendTest {
         val sessionAddressError = assertFailsWith<Error> {
             backend.createConnection(JvmBusType.SESSION_ADDRESS, null, null, null)
         }
-        val remoteSystemError = assertFailsWith<Error> {
-            backend.createConnection(JvmBusType.REMOTE_SYSTEM, null, null, null)
+        val directAddressError = assertFailsWith<Error> {
+            backend.createConnection(JvmBusType.DIRECT_ADDRESS, null, null, null)
         }
 
         assertTrue(sessionAddressError.message.orEmpty().contains("Failed to open bus"))
-        assertTrue(remoteSystemError.message.orEmpty().contains("Failed to open bus"))
+        assertTrue(directAddressError.message.orEmpty().contains("Failed to open bus"))
     }
 }

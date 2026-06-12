@@ -66,7 +66,6 @@ public final class com/monkopedia/sdbus/Connection_jvmKt {
 	public static final fun createBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createDirectBusConnection (Lcom/monkopedia/sdbus/UnixFd;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createDirectBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
-	public static final fun createRemoteSystemBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createServerBusConnection (Lcom/monkopedia/sdbus/UnixFd;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection ()Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
