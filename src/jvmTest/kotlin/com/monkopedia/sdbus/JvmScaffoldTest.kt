@@ -12,7 +12,7 @@ import kotlinx.coroutines.runBlocking
 
 class JvmScaffoldTest {
     @Test
-    fun createBusConnection_hasStubUniqueName() {
+    fun createBusConnection_hasUniqueName() {
         val connection = createBusConnection()
         assertTrue(connection.uniqueName.value.isNotBlank())
     }
