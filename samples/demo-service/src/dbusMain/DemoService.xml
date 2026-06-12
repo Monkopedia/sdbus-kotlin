@@ -1,0 +1,32 @@
+<node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <interface name="com.monkopedia.demo.DemoService1">
+    <!--
+      A method: takes a name and returns a greeting that uses the current Prefix
+      property.
+    -->
+    <method name="Greet">
+      <arg name="name" direction="in" type="s">
+        <doc:doc><doc:summary>Name of the person to greet</doc:summary></doc:doc>
+      </arg>
+      <arg name="greeting" direction="out" type="s">
+        <doc:doc><doc:summary>The composed greeting</doc:summary></doc:doc>
+      </arg>
+    </method>
+
+    <!--
+      A read/write property. Writing it emits org.freedesktop.DBus.Properties.PropertiesChanged
+      (see the EmitsChangedSignal annotation and the setter wiring in Main.kt).
+    -->
+    <property name="Prefix" type="s" access="readwrite">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <doc:doc><doc:summary>Text prepended to every greeting</doc:summary></doc:doc>
+    </property>
+
+    <!-- A signal the service emits periodically with a monotonically increasing counter. -->
+    <signal name="Tick">
+      <arg name="count" type="t">
+        <doc:doc><doc:summary>Number of ticks emitted since start-up</doc:summary></doc:doc>
+      </arg>
+    </signal>
+  </interface>
+</node>
