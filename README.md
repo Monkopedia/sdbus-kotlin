@@ -58,7 +58,7 @@ introspection XML files, conventionally placed in `src/dbusMain`.
 ```
 plugins {
     ...
-    id("com.monkopedia.sdbus.plugin") version "0.4.5"
+    id("com.monkopedia.sdbus.plugin") version "0.5.0"
 }
 
 sdbus {
@@ -92,7 +92,7 @@ module with implementations for `jvm`, `linuxX64`, and `linuxArm64`. Add the dep
 ```
 val nativeMain by getting {
     dependencies {
-       implementation("com.monkopedia:sdbus-kotlin:0.4.5")
+       implementation("com.monkopedia:sdbus-kotlin:0.5.0")
     }
 }
 ```
