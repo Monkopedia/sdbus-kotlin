@@ -108,6 +108,10 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.dbus.java.core)
                 runtimeOnly(libs.dbus.java.transport.junixsocket)
+                // Runtime synthesis of typed DBusInterface adapters so JVM-hosted server
+                // objects are reachable cross-process via dbus-java's native object export
+                // (issue #90). New jvmMain runtime dependency on the published -jvm artifact.
+                implementation(libs.byte.buddy)
                 implementation(kotlin("stdlib"))
             }
         }

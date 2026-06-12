@@ -28,11 +28,11 @@ Every row below is pinned by tests on current `main`, not by intention:
 | Error propagation: named D-Bus errors round-trip name + message verbatim | ✅ | ✅ | Incl. foreign (non-sdbus) peers; JVM fixed in #72 |
 | errno → D-Bus error-name mapping for locally created errors | ✅ | ✅ | JVM pinned to native output |
 | Call-after-release fails with `IllegalArgumentException("Connection has already been released")` | ✅ | ✅ | |
-| Properties: `Get`/`Set`/`GetAll`, property delegates (`values()`/`changes()`) — **as a client** | ✅ | ✅ | Client-verified; JVM *serving* properties to an external peer is in-process only — see "Server-side object export" |
+| Properties: `Get`/`Set`/`GetAll`, property delegates (`values()`/`changes()`) — **client + server** | ✅ | ✅ | Client-verified; JVM now also *serves* `Get`/`Set`/`GetAll` to external peers via dbus-java export (#90), busctl-verified cross-process — see "Server-side object export" |
 | `PropertiesChanged` emission incl. getter resolution | ✅ | ✅ | JVM fixed in #28; JVM emits to the real bus, but external reception is not test-verified |
 | Signals: emission, subscription, `signalFlow` | ✅ | ✅ | JVM emission goes to the real bus; subscription/`signalFlow` are cross-process-verified as a client |
-| ObjectManager: `GetManagedObjects`, `InterfacesAdded`/`Removed`, `ObjectManagerProxy` flows — **as a client** | ✅ | ✅ | Client-verified; JVM *serving* `GetManagedObjects` to an external peer is in-process only — see "Server-side object export" |
-| **Serving exported objects to external processes** (incoming method calls, `Properties.Get`/`Set`/`GetAll`, `GetManagedObjects`) | ⚠️ in-process only | ✅ | **JVM gap (#90):** the JVM backend dispatches incoming calls through an in-process table (`JvmStaticDispatch`); an external client (busctl, another process) gets `UnknownObject`. Native is a full server backend — see "Server-side object export" |
+| ObjectManager: `GetManagedObjects`, `InterfacesAdded`/`Removed`, `ObjectManagerProxy` flows — **client + server** | ✅ | ✅ | Client-verified; JVM now also *serves* `GetManagedObjects` to external peers via dbus-java export (#90), busctl-verified — see "Server-side object export" |
+| **Serving exported objects to external processes** (incoming method calls, `Properties.Get`/`Set`/`GetAll`, `GetManagedObjects`) | ✅* common types | ✅ | **#90:** JVM now exports server objects through dbus-java, so external callers (busctl, another process) reach methods, properties and `GetManagedObjects` cross-process (busctl-verified). *Methods whose signatures contain a **struct** or **multiple out-values** are not yet exported (in-process only) — see "Server-side object export" |
 | `UnixFd` type semantics (dup constructor vs `adopt`, `release` closes) | ✅* | ✅ | *JVM dup needs junixsocket native support |
 | Unix FD passing over the wire | ⚠️ untested | ✅ | JVM has the conversion path but no independent-peer test |
 | Connection factories (11 total) | 9 of 11 | 11 of 11 | fd-based factories are native-only |
@@ -72,9 +72,8 @@ of going through the daemon. Results are asserted equivalent by the commonTest s
 such calls do not exercise the wire. Cross-process behavior *as a client* is what the
 `cross_test` dbusmock suites pin.
 
-This in-process table is also, today, the **only** path by which a JVM-hosted object serves
-incoming method/property calls — see "Server-side object export" below for the consequence
-(#90): an *external* process calling a JVM-exported object is not served.
+This in-process table serves same-process JVM clients; external processes are served in
+parallel via dbus-java's object export — see "Server-side object export" below (#90).
 
 ## Timeouts
 
@@ -149,10 +148,10 @@ parity in issue #28 / PR #47.
   historical name, it now *asserts* JVM signal emission and `PropertiesChanged` emission are
   supported — it pins the closure of those former gaps).
 
-> **Serving caveat:** `Properties.Get`/`Set`/`GetAll` *served by a JVM object* are answered
-> from the in-process dispatch table, not over the wire (see "Server-side object export"). An
-> external process performing `Properties.Get` against a JVM-hosted object gets `UnknownObject`
-> (#90). `PropertiesChanged` *emission* does go to the real bus, but external reception is not
+> **Serving note:** `Properties.Get`/`Set`/`GetAll` *served by a JVM object* are reachable
+> cross-process (#90): same-process JVM clients use the in-process dispatch table, while an
+> external process is served via dbus-java export (busctl-verified — see "Server-side object
+> export"). `PropertiesChanged` *emission* goes to the real bus, but external reception is not
 > CI-verified. On native all of these are reachable cross-process.
 
 ## Signals
@@ -177,45 +176,52 @@ consumption, and the `ObjectManagerProxy` reactive state flows behave identicall
   round-trip + proxy flow convergence), and `cross_test/.../DbusmockBluezTest.kt`
   (ObjectManager discovery over the dbusmock `bluez5` template).
 
-> **Serving caveat:** the verified `GetManagedObjects` round-trips above exercise sdbus-kotlin
+> **Serving note:** the verified `GetManagedObjects` round-trips above exercise sdbus-kotlin
 > *as a client* against a foreign emitter, plus JVM in-process own-server. A JVM object
-> *serving* `GetManagedObjects` to an **external** process answers from the in-process registry
-> and is not reachable cross-process (#90); `InterfacesAdded`/`Removed` *emission* does reach
+> *serving* `GetManagedObjects` to an **external** process is now reachable cross-process via
+> dbus-java export (#90, busctl-verified); `InterfacesAdded`/`Removed` *emission* also reaches
 > the bus. On native, serving `GetManagedObjects` cross-process works fully. See "Server-side
 > object export".
 
-## Server-side object export (JVM limitation)
-
-This is the one place the two backends are **not** at parity, and the matrix rows above are
-scoped accordingly.
+## Server-side object export
 
 **Native** is a full server backend: `createObject(path).addVTable(...)` registers the object
 with sd-bus, so methods, `org.freedesktop.DBus.Properties` (`Get`/`Set`/`GetAll`), and
 `ObjectManager.GetManagedObjects` are callable by **any** peer on the bus — busctl, a native
 client, a JVM client, another process — exactly as you'd expect from a D-Bus service.
 
-**JVM** is fully capable as a *client*, and it emits signals (incl. `PropertiesChanged`,
-`InterfacesAdded`/`Removed`) to the real bus via dbus-java's `sendMessage`, so external
-subscribers do receive them. But its server side routes **incoming** method and property calls
-through an in-process dispatch table (`JvmStaticDispatch` / `LocalJvmSignalBus` /
-`LocalManagedObjectsRegistry` in `PureJavaDbusBackend.kt`) rather than registering the object
-with dbus-java's real export mechanism (`DBusConnection.exportObject` / `ExportedObject`).
+**JVM** now also serves exported objects cross-process (#90, approach A). In addition to its
+in-process dispatch table (`JvmStaticDispatch`, used by same-process JVM clients), each exported
+object is registered with dbus-java's real export mechanism (`AbstractConnection.exportObject` /
+`ExportedObject`) via a runtime-synthesized typed `DBusInterface`
+(`SdbusObjectExporter.kt`). For each D-Bus interface the bridge generates, with ByteBuddy, an
+interface whose Java method parameter/return types marshal back to the vtable's exact wire
+signatures, then exports a `java.lang.reflect.Proxy` whose handler converts dbus-java's
+deserialized values into the sdbus value model, routes through the **same** `JvmStaticDispatch`
+handlers the vtable already populates, and converts the reply back. dbus-java owns the wire
+codec, so there is no second serializer to keep in lockstep. A separate process (busctl, another
+client) calling a JVM-hosted object's method, `Properties.Get`/`Set`/`GetAll`, or
+`GetManagedObjects` is now served with real values — verified by `JvmCrossProcessExportTest`,
+which drives a JVM-exported object with `busctl` (a genuinely external process; two connections
+in the *same* JVM would short-circuit through `JvmStaticDispatch` and never exercise the wire).
 
-Consequence (issue #90): a JVM-hosted service claims its bus name, exports, emits, and shuts
-down cleanly, and in-process JVM clients reach it — but a call from a **separate process**
-(busctl, another client) to one of its methods or properties gets `UnknownObject`. The
-exported objects are invisible to external method/property callers on the actual bus.
+Remaining JVM server-side gaps (tracked in #90, in-process only for now; the bridge leaves such
+methods un-exported rather than failing registration):
 
-Why this is not a one-line fix: dbus-java's `exportObject` dispatches incoming calls by
-**reflecting a statically-typed `DBusInterface`** — it deserializes arguments from the wire
-using the Java *method's* declared parameter types, invokes the method reflectively, and
-serializes the reply from the method's return type (`ConnectionMethodInvocation`,
-`ExportedObject`). sdbus-kotlin's vtable is dynamic (signatures + callbacks resolved at
-runtime) and carries its own wire codec. dbus-java exposes no lower-level "raw incoming
-method-call" hook, so bridging the two requires either generating a typed `DBusInterface` per
-vtable at runtime (reconciling dbus-java's marshalling with sdbus-kotlin's codec) or
-intercepting the reader/transport below dbus-java's public API. Both are substantial; the fix
-is tracked in #90.
+- **methods whose signatures contain a struct** (`(...)`) — needs runtime generation of concrete
+  dbus-java `Struct` subclasses (positioned fields + constructor) so dbus-java's reflective
+  marshalling round-trips them. Struct-*valued* properties and `GetManagedObjects` entries are
+  unaffected because they travel inside a `Variant`, which is supported.
+- **methods returning multiple out-values** — needs runtime generation of `Tuple` subtypes for
+  the parameterized return type dbus-java requires.
+- **`g` (signature) arguments** — `Type[]`-typed, not yet bridged.
+
+Background on why this needed a bridge rather than a one-liner: dbus-java's `exportObject`
+dispatches incoming calls by **reflecting a statically-typed `DBusInterface`** — it deserializes
+arguments using the Java *method's* declared parameter types, invokes reflectively, and
+serializes the reply from the return type (`ConnectionMethodInvocation`, `ExportedObject`).
+sdbus-kotlin's vtable is dynamic, so the typed interface has to be synthesized at runtime; that
+synthesis (plus the value bridge) is exactly what `SdbusObjectExporter` provides.
 
 **Until then:** use the **native** backend for any service that must be reachable by external
 D-Bus consumers. The JVM backend is recommended for *client* use and for in-process JVM↔JVM

@@ -605,7 +605,7 @@ private fun DBusSignal.toSdbusMessage(connection: AbstractConnection?): Signal =
         .forEach { signal.payload.add(it) }
 }
 
-private fun fromJavaSignalValue(value: Any?): Any? = when (value) {
+internal fun fromJavaSignalValue(value: Any?): Any? = when (value) {
     is UInt16 -> value.toInt().toUShort()
     is UInt32 -> value.toLong().toUInt()
     is UInt64 -> value.value().toString().toULong()
@@ -621,7 +621,7 @@ private fun fromJavaSignalValue(value: Any?): Any? = when (value) {
     else -> value
 }
 
-private fun toJavaSignalValue(value: Any?): Any? = when (value) {
+internal fun toJavaSignalValue(value: Any?): Any? = when (value) {
     is UByte -> value.toByte()
     is UShort -> UInt16(value.toInt())
     is UInt -> UInt32(value.toLong())
@@ -666,7 +666,7 @@ private fun fromJavaVariantValue(value: org.freedesktop.dbus.types.Variant<*>): 
     return Variant().apply { deserializeFrom(message) }
 }
 
-private fun extractVariantPayload(variant: Variant): Message.JvmVariantPayload {
+internal fun extractVariantPayload(variant: Variant): Message.JvmVariantPayload {
     val signature = variant.peekValueType()
         ?: throw createError(-1, "Cannot convert empty variant to JVM D-Bus payload")
     val message = PlainMessage.createPlainMessage()
@@ -678,7 +678,7 @@ private fun extractVariantPayload(variant: Variant): Message.JvmVariantPayload {
     return Message.JvmVariantPayload(signature, value)
 }
 
-private fun toJavaVariantValue(
+internal fun toJavaVariantValue(
     signature: String,
     value: Any?
 ): org.freedesktop.dbus.types.Variant<Any?> = org.freedesktop.dbus.types.Variant(
@@ -688,7 +688,7 @@ private fun toJavaVariantValue(
 
 // Splits a D-Bus signature into its top-level single complete types
 // (e.g. "sa{sv}(is)" -> ["s", "a{sv}", "(is)"]).
-private fun splitTopLevelTypes(signature: String): List<String> {
+internal fun splitTopLevelTypes(signature: String): List<String> {
     fun parseOne(index: Int): Int {
         if (index >= signature.length) return index
         return when (signature[index]) {
@@ -732,12 +732,12 @@ private fun countTopLevelTypes(signature: String?): Int =
 // dbus-java as positional Object[] contents) apart from an array, so structs become
 // Message.JvmStructPayload carrying their exact signature (issue #71). Values whose
 // signature is unavailable fall back to the value-shape-based conversion.
-private fun fromJavaWireValues(values: List<Any?>, signature: String?): List<Any?> {
+internal fun fromJavaWireValues(values: List<Any?>, signature: String?): List<Any?> {
     val types = signature?.let(::splitTopLevelTypes).orEmpty()
     return values.mapIndexed { index, value -> fromJavaWireValue(value, types.getOrNull(index)) }
 }
 
-private fun fromJavaWireValue(value: Any?, signature: String?): Any? {
+internal fun fromJavaWireValue(value: Any?, signature: String?): Any? {
     if (value == null || signature.isNullOrEmpty()) return fromJavaSignalValue(value)
     return when {
         signature.startsWith("(") && signature.endsWith(")") -> {
@@ -772,7 +772,7 @@ private fun fromJavaWireValue(value: Any?, signature: String?): Any? {
     }
 }
 
-private fun wireValueAsList(value: Any?): List<Any?>? = when (value) {
+internal fun wireValueAsList(value: Any?): List<Any?>? = when (value) {
     is List<*> -> value
     is Array<*> -> value.toList()
     is ByteArray -> value.toList()
@@ -782,6 +782,10 @@ private fun wireValueAsList(value: Any?): List<Any?>? = when (value) {
     is BooleanArray -> value.toList()
     is FloatArray -> value.toList()
     is DoubleArray -> value.toList()
+    // dbus-java deserializes a struct argument into a concrete Struct instance whose fields,
+    // in @Position order, are returned by Container.getParameters() (issue #90 cross-process
+    // serve path). Treat it like the positional Object[] a struct otherwise arrives as.
+    is org.freedesktop.dbus.Container -> value.parameters.toList()
     else -> null
 }
 
@@ -885,8 +889,24 @@ private class PureJavaDbusConnection(internal val javaConnection: AbstractConnec
 
     override fun getMethodCallTimeout(): Duration = timeout
 
-    override fun addObjectManager(objectPath: ObjectPath): Resource =
-        LocalObjectManagerRegistry.register(objectPath.value, localUniqueName)
+    override fun addObjectManager(objectPath: ObjectPath): Resource {
+        val registration = LocalObjectManagerRegistry.register(objectPath.value, localUniqueName)
+        // Issue #90: also export an ObjectManager-serving object at this path through dbus-java so
+        // external processes can call org.freedesktop.DBus.ObjectManager.GetManagedObjects on it,
+        // routing back through the same JvmStaticDispatch handler the registration installs.
+        val exporter = SdbusObjectExporter(javaConnection, objectPath.value, localUniqueName)
+        runCatching {
+            exporter.update(
+                interfaces = emptyMap(),
+                serveProperties = false,
+                serveObjectManager = true
+            )
+        }
+        return ActionResource {
+            runCatching { exporter.close() }
+            registration.release()
+        }
+    }
 
     override fun uniqueName(): BusName = BusName(localUniqueName.ifEmpty { ":jvm-direct" })
 
@@ -1413,6 +1433,25 @@ private class PureJavaDbusObject(
     private var propertiesDispatchRegistered = false
     private val dispatchDestination = senderName ?: javaConnection?.uniqueNameOrNull().orEmpty()
 
+    // Issue #90: alongside the in-process JvmStaticDispatch registrations below, register the
+    // object with dbus-java's native object export so external processes can reach it. Only
+    // meaningful for a real (non in-process) connection. The exporter is best-effort and never
+    // affects the in-process path.
+    private val exporter: SdbusObjectExporter? = javaConnection?.let {
+        SdbusObjectExporter(it, objectPath.value, dispatchDestination)
+    }
+    private val exportedMethods =
+        mutableMapOf<String, List<SdbusObjectExporter.ExportedMethodSpec>>()
+    private var objectManagerServed = false
+
+    private fun refreshExport() {
+        exporter?.update(
+            interfaces = exportedMethods.toMap(),
+            serveProperties = propertiesDispatchRegistered,
+            serveObjectManager = objectManagerServed
+        )
+    }
+
     private fun parseInterfaceName(value: Any?): String = when (value) {
         is InterfaceName -> value.value
         is String -> value
@@ -1716,10 +1755,19 @@ private class PureJavaDbusObject(
         }
     }
 
-    override fun addObjectManager(): Resource =
-        LocalObjectManagerRegistry.register(objectPath.value, dispatchDestination).also {
-            registrations += it
+    override fun addObjectManager(): Resource {
+        val registration =
+            LocalObjectManagerRegistry.register(objectPath.value, dispatchDestination)
+        registrations += registration
+        objectManagerServed = true
+        refreshExport()
+        return ActionResource {
+            registration.release()
+            registrations.remove(registration)
+            objectManagerServed = false
+            refreshExport()
         }
+    }
 
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
@@ -1793,9 +1841,20 @@ private class PureJavaDbusObject(
             }
         }
         registrations.addAll(resources)
+        exportedMethods[interfaceName.value] = vtable.mapNotNull { item ->
+            val method = item as? MethodVTableItem ?: return@mapNotNull null
+            method.callbackHandler ?: return@mapNotNull null
+            SdbusObjectExporter.ExportedMethodSpec(
+                member = method.name.value,
+                inputSignature = method.inputSignature?.value.orEmpty(),
+                outputSignature = method.outputSignature?.value.orEmpty()
+            )
+        }
+        refreshExport()
         return ActionResource {
             resources.forEach { it.release() }
             registrations.removeAll(resources)
+            exportedMethods.remove(interfaceName.value)
             val current = registeredInterfaces[interfaceName.value] ?: 0
             if (current <= 1) {
                 registeredInterfaces.remove(interfaceName.value)
@@ -1809,6 +1868,7 @@ private class PureJavaDbusObject(
                     propertiesByInterface.remove(interfaceName.value)
                 }
             }
+            refreshExport()
         }
     }
 
@@ -1864,5 +1924,6 @@ private class PureJavaDbusObject(
     override fun release(): Unit = run {
         registrations.forEach { it.release() }
         registrations.clear()
+        exporter?.close()
     }
 }
