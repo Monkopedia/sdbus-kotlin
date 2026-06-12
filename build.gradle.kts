@@ -108,6 +108,11 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.dbus.java.core)
                 runtimeOnly(libs.dbus.java.transport.junixsocket)
+                // Owned D-Bus connection (epic #93): raw AF_UNIX transport on the compile
+                // classpath. junixsocket is already pulled transitively by dbus-java's
+                // junixsocket transport; depend on it directly so the owned connection can use
+                // AFUNIXSocket without going through dbus-java.
+                implementation(libs.junixsocket.core)
                 implementation(kotlin("stdlib"))
             }
         }
