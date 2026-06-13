@@ -41,7 +41,7 @@ kotlin {
                 implementation(kotlin("stdlib"))
                 // Version is a placeholder: the composite build in settings.gradle.kts
                 // substitutes this with the local sdbus-kotlin source tree.
-                implementation("com.monkopedia:sdbus-kotlin:0.4.5")
+                implementation("com.monkopedia:sdbus-kotlin:0.5.0")
             }
         }
     }
