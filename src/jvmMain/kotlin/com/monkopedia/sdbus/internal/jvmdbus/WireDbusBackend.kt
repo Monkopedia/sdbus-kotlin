@@ -64,9 +64,11 @@ internal class WireDbusBackend : JvmDbusBackend {
             when (busType) {
                 JvmBusType.DEFAULT, JvmBusType.SESSION -> DBusWireConnection.connectSession()
                 JvmBusType.SYSTEM -> DBusWireConnection.connectSystem()
-                JvmBusType.SESSION_ADDRESS,
-                JvmBusType.DIRECT_ADDRESS ->
-                    endpoint?.let(DBusWireConnection::connect)
+                JvmBusType.SESSION_ADDRESS -> endpoint?.let(DBusWireConnection::connect)
+                // A DIRECT (brokerless) endpoint is peer-to-peer with no message-bus daemon: open
+                // it in direct mode so the connection skips the org.freedesktop.DBus bootstrap
+                // (Hello/RequestName/AddMatch) that an UnknownObject would otherwise fail on.
+                JvmBusType.DIRECT_ADDRESS -> endpoint?.let(DBusWireConnection::connectDirect)
                 JvmBusType.DIRECT_FD, JvmBusType.SERVER_FD -> null
             }
         }.getOrElse {

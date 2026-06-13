@@ -87,8 +87,17 @@ internal fun interface SignalSubscription : Closeable
  * - [close] stops the reader (closing the socket unblocks its read), joins the thread, and fails
  *   all outstanding calls — no threads or sockets are leaked.
  */
-internal class DBusWireConnection private constructor(private val socket: AFUNIXSocket) :
-    Closeable {
+internal class DBusWireConnection private constructor(
+    private val socket: AFUNIXSocket,
+    /**
+     * Brokerless DIRECT (peer-to-peer) mode: there is NO message-bus daemon behind the socket, so
+     * the `org.freedesktop.DBus` bootstrap is skipped entirely — no `Hello` (no daemon-assigned
+     * unique name), no `RequestName`/`ReleaseName`, no `AddMatch`/`RemoveMatch`/`GetNameOwner`.
+     * Method calls, replies and signals flow straight to/from the single peer on the other end of
+     * the socket. Mirrors sd-bus direct mode and dbus-java's DirectConnection (epic #93 phase 6).
+     */
+    private val direct: Boolean = false
+) : Closeable {
 
     private val input: InputStream = BufferedInputStream(socket.inputStream)
     private val output: OutputStream = socket.outputStream
@@ -121,7 +130,10 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
     private var running = false
     private var readerThread: Thread? = null
 
-    /** The unique name assigned by the bus during [hello] (e.g. `:1.42`), or null before Hello. */
+    /**
+     * The unique name assigned by the bus during [hello] (e.g. `:1.42`), or null before Hello — and
+     * always null on a brokerless [direct] connection, which has no daemon to assign one.
+     */
     val uniqueName: String? get() = uniqueNameValue
 
     val isReaderRunning: Boolean get() = readerThread?.isAlive == true
@@ -234,6 +246,18 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
             val body = message.body.map { collectOutboundFds(it, fds) }
             if (fds.isEmpty()) message else message.copy(body = body, unixFds = fds.size)
         }
+        // Reject a negative (invalid) descriptor before it reaches SCM_RIGHTS. junixsocket (like the
+        // raw kernel sendmsg) refuses an fd of -1 with EBADF, which would otherwise break the whole
+        // connection mid-send. Fail just this call with a clean InvalidArgs error instead — the
+        // well-behaved equivalent of dbus-java refusing an invalid Unix FD client-side (it surfaced
+        // "Underlying transport returned -1" while corrupting its connection; we keep ours intact).
+        // Thrown as a DBusCallException so the call path maps it to a D-Bus error (see [callRemote]).
+        fds.firstOrNull { it < 0 }?.let { invalidFd ->
+            throw DBusCallException(
+                "org.freedesktop.DBus.Error.InvalidArgs",
+                "Invalid Unix FD: $invalidFd"
+            )
+        }
         synchronized(writeLock) {
             if (fds.isEmpty()) {
                 WireMessageCodec.write(output, outgoing)
@@ -312,6 +336,13 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         } catch (e: IOException) {
             pending.remove(serial)
             future.completeExceptionally(e)
+        } catch (e: Throwable) {
+            // A pre-send rejection (e.g. an invalid Unix FD) is synchronous: nothing went on the
+            // wire, so there is no reply to await. Evict the orphaned pending entry and rethrow so
+            // [call]/[callBlocking] surface it directly to the caller (the wire backend then maps a
+            // DBusCallException to a com.monkopedia.sdbus.Error — see WireDbusProxy.callRemote).
+            pending.remove(serial)
+            throw e
         }
         return PendingCall(serial, future)
     }
@@ -406,6 +437,9 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
 
     /** Requests ownership of [busName] with the given RequestName [flags]; returns the result code. */
     fun requestName(busName: String, flags: UInt = 0u): Int {
+        // A brokerless direct peer has no daemon to grant names; report primary ownership (1) so
+        // callers proceed unchanged — there is exactly one peer, so the name is trivially "ours".
+        if (direct) return DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER
         val reply = callBlocking(
             WireMessage(
                 type = WireMessageType.METHOD_CALL,
@@ -422,6 +456,8 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
 
     /** Releases ownership of [busName]; returns the ReleaseName result code. */
     fun releaseName(busName: String): Int {
+        // No daemon in direct mode; report "released" (1) without a bus round-trip.
+        if (direct) return DBUS_RELEASE_NAME_REPLY_RELEASED
         val reply = callBlocking(
             WireMessage(
                 type = WireMessageType.METHOD_CALL,
@@ -438,6 +474,10 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
 
     /** Installs a match [rule] on the bus so matching broadcast signals reach this connection. */
     fun addMatch(rule: String) {
+        // No daemon to route broadcasts in direct mode: the single peer delivers its signals
+        // straight down this socket, so there is nothing to AddMatch. Local SIGNAL filtering still
+        // happens in the reader (see WireDbusBackend.installSignalMatch); this is a pure no-op.
+        if (direct) return
         callBlocking(
             WireMessage(
                 type = WireMessageType.METHOD_CALL,
@@ -456,22 +496,30 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
      * the name has no owner. Used to match incoming signals (whose sender is a unique name)
      * against a subscription expressed by a well-known destination.
      */
-    fun getNameOwner(busName: String): String? = runCatching {
-        callBlocking(
-            WireMessage(
-                type = WireMessageType.METHOD_CALL,
-                destination = DBUS_SERVICE,
-                path = DBUS_PATH,
-                interfaceName = DBUS_INTERFACE,
-                member = "GetNameOwner",
-                signature = "s",
-                body = listOf(busName)
-            )
-        ).body.firstOrNull() as? String
-    }.getOrNull()
+    fun getNameOwner(busName: String): String? = if (direct) {
+        // No daemon to resolve names against; the single peer's signals carry no daemon-stamped
+        // unique sender, so there is nothing to resolve.
+        null
+    } else {
+        runCatching {
+            callBlocking(
+                WireMessage(
+                    type = WireMessageType.METHOD_CALL,
+                    destination = DBUS_SERVICE,
+                    path = DBUS_PATH,
+                    interfaceName = DBUS_INTERFACE,
+                    member = "GetNameOwner",
+                    signature = "s",
+                    body = listOf(busName)
+                )
+            ).body.firstOrNull() as? String
+        }.getOrNull()
+    }
 
     /** Removes a previously installed match [rule]. */
     fun removeMatch(rule: String) {
+        // Mirrors [addMatch]: nothing was registered with a daemon in direct mode.
+        if (direct) return
         callBlocking(
             WireMessage(
                 type = WireMessageType.METHOD_CALL,
@@ -508,6 +556,10 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         private const val TIMEOUT_ERROR_NAME = "org.freedesktop.DBus.Error.Timeout"
         private const val DEFAULT_SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
 
+        // org.freedesktop.DBus RequestName/ReleaseName reply codes synthesized in direct mode.
+        private const val DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER = 1
+        private const val DBUS_RELEASE_NAME_REPLY_RELEASED = 1
+
         // 4 KiB comfortably holds the cmsg for the kernel's SCM_MAX_FD (253) descriptors per recv.
         private const val ANCILLARY_RECEIVE_BUFFER_BYTES = 4096
 
@@ -525,19 +577,31 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         }
 
         /** Connects to the bus at [address], runs SASL + Hello, and returns a ready connection. */
-        fun connect(address: String): DBusWireConnection {
+        fun connect(address: String): DBusWireConnection = open(address, direct = false)
+
+        /**
+         * Connects to a brokerless DIRECT (peer-to-peer) endpoint at [address]: opens the socket and
+         * runs SASL EXTERNAL -> BEGIN, but SKIPS the message-bus bootstrap (`Hello`/RequestName/
+         * AddMatch) — there is no `org.freedesktop.DBus` daemon behind a direct connection. Mirrors
+         * sd-bus direct mode and dbus-java's DirectConnection (epic #93 phase 6).
+         */
+        fun connectDirect(address: String): DBusWireConnection = open(address, direct = true)
+
+        private fun open(address: String, direct: Boolean): DBusWireConnection {
             val socketAddress = parseAddress(address)
             val socket = AFUNIXSocket.newInstance()
             socket.connect(socketAddress)
             // Size the ancillary buffer so SCM_RIGHTS descriptors passed with a message are
-            // captured by the receiving recv() (D-Bus relays passed fds through the daemon). Sized
-            // for the kernel's per-message SCM_MAX_FD ceiling with comfortable slack.
+            // captured by the receiving recv() (D-Bus relays passed fds through the daemon, or the
+            // peer sends them directly in direct mode). Sized for the kernel's per-message
+            // SCM_MAX_FD ceiling with comfortable slack.
             runCatching { socket.ensureAncillaryReceiveBufferSize(ANCILLARY_RECEIVE_BUFFER_BYTES) }
-            val connection = DBusWireConnection(socket)
+            val connection = DBusWireConnection(socket, direct)
             try {
                 connection.performSasl()
                 connection.startReader()
-                connection.hello()
+                // Direct (brokerless) connections have no daemon to Hello: skip the bus bootstrap.
+                if (!direct) connection.hello()
             } catch (e: Throwable) {
                 connection.close()
                 throw e
