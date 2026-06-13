@@ -5,6 +5,7 @@ import com.monkopedia.sdbus.BusName
 import com.monkopedia.sdbus.Connection
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.JvmConnection
+import com.monkopedia.sdbus.MemberName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MessageHandler
 import com.monkopedia.sdbus.MethodCall
@@ -403,7 +404,7 @@ internal class WireDbusProxy(
                 valid = true,
                 empty = reply.body.isEmpty()
             ),
-            reply.body
+            fromWireReplyValues(reply.body, reply.signature)
         )
     }
 
@@ -583,7 +584,7 @@ private fun installSignalMatch(
                 empty = wireMessage.body.isEmpty()
             )
         )
-        signal.payload.addAll(wireMessage.body)
+        signal.payload.addAll(fromWireReplyValues(wireMessage.body, wireMessage.signature))
         JvmCurrentMessageContext.withMessage(signal) { callback(signal) }
     }
     val localResource = LocalJvmMatchBus.register(localMatch, callback)
@@ -612,6 +613,14 @@ private fun microsToMillis(micros: ULong): Long =
  */
 private fun toWireBodyValue(value: Any?): Any? = when (value) {
     is Variant -> variantToPayload(value)
+    // The string-like strong-name value classes arrive boxed in the payload (e.g. the
+    // InterfaceName/PropertyName args of a Properties.Get call), since serialize() adds the raw
+    // arg for a non-struct descriptor. Unwrap them to their String so the marshaller's `s`
+    // handling accepts them, mirroring the dbus-java path's toJavaSignalValue. (ObjectPath,
+    // Signature and UnixFd pass through: the marshaller coerces those itself.)
+    is BusName -> value.value
+    is InterfaceName -> value.value
+    is MemberName -> value.value
     is Message.JvmVariantPayload ->
         Message.JvmVariantPayload(value.signature, toWireBodyValue(value.value))
     is Message.JvmStructPayload ->
@@ -632,6 +641,114 @@ private fun variantToPayload(variant: Variant): Message.JvmVariantPayload {
     val value = message.nextDeserializedValue("variantToPayload")
     message.exitVariant()
     return Message.JvmVariantPayload(signature, toWireBodyValue(value))
+}
+
+// --- reply/signal value-model bridge (wire -> decoder) ---------------------------------------
+
+/**
+ * Converts the demarshaller's wire value model into the canonical decoder-compatible model the
+ * high-level deserializer expects -- the SAME model the dbus-java reply path produces
+ * ([com.monkopedia.sdbus.internal.jvmdbus] fromJavaWireValue): a wire variant
+ * ([Message.JvmVariantPayload]) becomes a high-level [Variant] (the decoder reads variants as
+ * [Variant], never as the raw payload box); an object-path/signature that demarshalled to a bare
+ * String becomes its strong [ObjectPath]/[Signature] type, so signature inference and grouped
+ * multi-out (`(vo)` etc.) detection see the right element type instead of "s"; structs/arrays/
+ * dicts recurse. The reply SIGNATURE header field is authoritative -- it is the only way to know a
+ * String is `o`/`g` or what an element/entry type is -- so it drives the conversion. Without this
+ * the reply body is NOT decoder-compatible (variants ClassCastException, `o` trips signature
+ * enforcement); the demarshaller alone is signature-agnostic about these distinctions.
+ */
+private fun fromWireReplyValues(body: List<Any?>, signature: String?): List<Any?> {
+    val types = signature?.let(::splitTopLevelTypes).orEmpty()
+    return body.mapIndexed { index, value -> fromWireReplyValue(value, types.getOrNull(index)) }
+}
+
+private fun fromWireReplyValue(value: Any?, signature: String?): Any? = when (value) {
+    is Message.JvmVariantPayload -> wireVariant(value)
+    is Message.JvmStructPayload -> {
+        val fieldTypes = splitTopLevelTypes(value.signature.removeSurrounding("(", ")"))
+        Message.JvmStructPayload(
+            value.signature,
+            value.fields.mapIndexed { i, field ->
+                fromWireReplyValue(field, fieldTypes.getOrNull(i))
+            }
+        )
+    }
+
+    is Map<*, *> -> {
+        val (keyType, valueType) = dictEntryTypes(signature)
+        value.entries.associate { (k, v) ->
+            fromWireReplyValue(k, keyType) to fromWireReplyValue(v, valueType)
+        }
+    }
+
+    is List<*> -> {
+        val elementType = signature?.takeIf { it.startsWith("a") }?.substring(1)
+        value.map { fromWireReplyValue(it, elementType) }
+    }
+
+    is String -> when (signature) {
+        "o" -> ObjectPath(value)
+        "g" -> Signature(value)
+        else -> value
+    }
+
+    else -> value
+}
+
+/**
+ * Wraps a demarshalled wire variant in a high-level [Variant], converting its inner value
+ * recursively so a nested variant/object-path is itself decoder-compatible once the variant is
+ * unwrapped via `get()`. Mirrors PureJavaDbusBackend.fromJavaVariantValue.
+ */
+private fun wireVariant(payload: Message.JvmVariantPayload): Variant {
+    val message = PlainMessage.createPlainMessage()
+    message.payload.add(
+        Message.JvmVariantPayload(
+            payload.signature,
+            fromWireReplyValue(payload.value, payload.signature)
+        )
+    )
+    return Variant().apply { deserializeFrom(message) }
+}
+
+/** Key/value element types of a dict signature `a{kv}`, or (null, null) if not a dict. */
+private fun dictEntryTypes(signature: String?): Pair<String?, String?> {
+    if (signature == null || !signature.startsWith("a{") || !signature.endsWith("}")) {
+        return null to null
+    }
+    val parts = splitTopLevelTypes(signature.substring(2, signature.length - 1))
+    return parts.getOrNull(0) to parts.getOrNull(1)
+}
+
+/** Splits a signature into its top-level complete types (e.g. "sa{sv}(is)" -> [s, a{sv}, (is)]). */
+private fun splitTopLevelTypes(signature: String): List<String> {
+    fun parseOne(index: Int): Int {
+        if (index >= signature.length) return index
+        return when (signature[index]) {
+            'a' -> parseOne(index + 1)
+            '(' -> {
+                var i = index + 1
+                while (i < signature.length && signature[i] != ')') i = parseOne(i)
+                (i + 1).coerceAtMost(signature.length)
+            }
+            '{' -> {
+                var i = index + 1
+                while (i < signature.length && signature[i] != '}') i = parseOne(i)
+                (i + 1).coerceAtMost(signature.length)
+            }
+            else -> index + 1
+        }
+    }
+    val types = mutableListOf<String>()
+    var index = 0
+    while (index < signature.length) {
+        val next = parseOne(index)
+        if (next <= index) break
+        types += signature.substring(index, next)
+        index = next
+    }
+    return types
 }
 
 /**
