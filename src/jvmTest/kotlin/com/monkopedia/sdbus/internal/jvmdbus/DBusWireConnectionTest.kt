@@ -1,5 +1,9 @@
 package com.monkopedia.sdbus.internal.jvmdbus
 
+import com.monkopedia.sdbus.JvmUnixFdSupport
+import com.monkopedia.sdbus.UnixFd
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -121,6 +125,121 @@ class DBusWireConnectionTest {
         } finally {
             subscription.close()
             connection.close()
+        }
+    }
+
+    /**
+     * Real SCM_RIGHTS round-trip closing #83: a UnixFd is sent from one owned connection to another
+     * as a method-call argument; the fd genuinely traverses the dbus daemon (which relays passed
+     * fds via SCM_RIGHTS, dup-ing them into a separate process and back), so the descriptor the
+     * server receives is a LIVE duplicate of the original pipe read-end -- proven by reading, from
+     * the received fd, the exact bytes written into the original write-end before the call.
+     */
+    @Test
+    fun unixFd_roundTripsAcrossConnections_throughDaemon_asLiveDuplicate() = runBlocking {
+        if (!JvmUnixFdSupport.supportsFdDuplicationSemantics) return@runBlocking
+        val server = connectOrNull() ?: return@runBlocking
+        val client = connectOrNull() ?: run {
+            server.close()
+            return@runBlocking
+        }
+        if (!server.unixFdNegotiated || !client.unixFdNegotiated) {
+            client.close()
+            server.close()
+            return@runBlocking
+        }
+        val pipe = JvmUnixFdSupport.createPipePair() ?: run {
+            client.close()
+            server.close()
+            return@runBlocking
+        }
+        val (readFd, writeFd) = pipe
+        val busName = "com.monkopedia.sdbus.wire.fdtest.s${System.nanoTime()}"
+        val path = "/com/monkopedia/sdbus/wire/fdtest"
+        val iface = "com.monkopedia.sdbus.wire.FdTest"
+        val payload = "live-dup-through-scm-rights"
+        val receivedBytes = CompletableDeferred<String>()
+
+        server.setIncomingCallHandler { message ->
+            try {
+                if (message.member == "SendFd" && message.interfaceName == iface) {
+                    val received = message.body.firstOrNull() as? UnixFd
+                    if (received == null) {
+                        receivedBytes.completeExceptionally(
+                            AssertionError("server did not receive a UnixFd; body=${message.body}")
+                        )
+                    } else {
+                        receivedBytes.complete(readFromFd(received.fd, 128))
+                        server.send(
+                            WireMessage(
+                                type = WireMessageType.METHOD_RETURN,
+                                replySerial = message.serial,
+                                destination = message.sender,
+                                signature = "b",
+                                body = listOf(true)
+                            )
+                        )
+                        received.release()
+                    }
+                }
+            } catch (t: Throwable) {
+                receivedBytes.completeExceptionally(t)
+            }
+        }
+
+        try {
+            assertEquals(1, server.requestName(busName), "server should own $busName")
+            // Buffer the known bytes in the pipe before sending the read-end, so the server can
+            // read them straight out of the received duplicate.
+            writeToFd(writeFd, payload)
+            val sent = UnixFd(readFd) // duplicates; we retain ownership of readFd
+            try {
+                val reply = withTimeout(5_000) {
+                    client.call(
+                        WireMessage(
+                            type = WireMessageType.METHOD_CALL,
+                            destination = busName,
+                            path = path,
+                            interfaceName = iface,
+                            member = "SendFd",
+                            signature = "h",
+                            body = listOf(sent)
+                        )
+                    )
+                }
+                assertEquals("b", reply.signature)
+                assertEquals(true, reply.body.first(), "server should acknowledge the fd")
+                assertEquals(
+                    payload,
+                    withTimeout(5_000) { receivedBytes.await() },
+                    "the received fd must be a live duplicate of the pipe read-end"
+                )
+            } finally {
+                sent.release()
+            }
+        } finally {
+            JvmUnixFdSupport.closeFd(readFd)
+            JvmUnixFdSupport.closeFd(writeFd)
+            client.close()
+            server.close()
+        }
+    }
+
+    // Writes [text] to a duplicate of [fd] so the original descriptor is left intact for the caller.
+    private fun writeToFd(fd: Int, text: String) {
+        val dup = JvmUnixFdSupport.checkedDup(fd)
+        FileOutputStream(JvmUnixFdSupport.descriptorForFd(dup)).use {
+            it.write(text.toByteArray(Charsets.UTF_8))
+        }
+    }
+
+    // Reads up to [max] bytes from a duplicate of [fd], leaving the original descriptor intact.
+    private fun readFromFd(fd: Int, max: Int): String {
+        val dup = JvmUnixFdSupport.checkedDup(fd)
+        return FileInputStream(JvmUnixFdSupport.descriptorForFd(dup)).use { stream ->
+            val buffer = ByteArray(max)
+            val read = stream.read(buffer)
+            String(buffer, 0, read.coerceAtLeast(0), Charsets.UTF_8)
         }
     }
 

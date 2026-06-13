@@ -20,6 +20,12 @@
  */
 package com.monkopedia.sdbus.integration
 
+import java.io.FileDescriptor
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+
 /**
  * Struct marshalling to/from remote peers is supported since the issue #71 fix (structs are
  * decomposed into wire-shaped values via JvmValueCodec on the way to/from dbus-java).
@@ -27,20 +33,114 @@ package com.monkopedia.sdbus.integration
 internal actual val peerStructMarshallingSupported: Boolean = true
 
 /**
- * The JVM has no portable way to surface a freshly created pipe as a raw integer file
- * descriptor from test code (java.io.FileDescriptor's int field is sealed behind JPMS),
- * so the unix-fd sub-case is exercised on the native backend only and skipped here.
+ * Closes #83: with the owned-connection (wire) JVM backend, raw fds round-trip natively via
+ * junixsocket SCM_RIGHTS, so the cross-process unix-fd case runs against a real dbusmock peer. We
+ * surface a real pipe through junixsocket's native primitives (the same path the library uses for
+ * UnixFd, reached reflectively so no `--add-opens` is needed for java.base/java.io).
+ *
+ * Only enabled on the wire backend. The legacy dbus-java backend converts fds through
+ * `org.freedesktop.dbus.FileDescriptor`, which reflects into `java.io.FileDescriptor`'s private
+ * `fd` field and so needs JPMS `--add-opens`; that path is being retired (epic #93 phase 6), so the
+ * sub-case stays skipped there rather than newly requiring add-opens for the old backend.
  */
-internal actual fun createTestPipe(): Pair<Int, Int>? = null
+internal actual fun createTestPipe(): Pair<Int, Int>? {
+    if (!wireBackendEnabled) return null
+    return JunixFdBridge.createPipePair()
+}
 
-internal actual fun writeToFd(fd: Int, data: ByteArray): Boolean =
-    throw UnsupportedOperationException("raw fds are not accessible on the JVM test backend")
+internal actual fun writeToFd(fd: Int, data: ByteArray): Boolean {
+    // Write through a duplicate so the caller's original descriptor stays open.
+    val dup = JunixFdBridge.duplicate(fd)
+    return FileOutputStream(JunixFdBridge.descriptorFor(dup)).use {
+        it.write(data)
+        it.flush()
+        true
+    }
+}
 
-internal actual fun readFromFd(fd: Int, maxBytes: Int): ByteArray? =
-    throw UnsupportedOperationException("raw fds are not accessible on the JVM test backend")
+internal actual fun readFromFd(fd: Int, maxBytes: Int): ByteArray? {
+    val dup = JunixFdBridge.duplicate(fd)
+    return FileInputStream(JunixFdBridge.descriptorFor(dup)).use { stream ->
+        val buffer = ByteArray(maxBytes)
+        val read = stream.read(buffer)
+        if (read < 0) ByteArray(0) else buffer.copyOf(read)
+    }
+}
 
 internal actual fun closeTestFd(fd: Int) {
-    // No raw fds are ever created on the JVM backend; nothing to close.
+    JunixFdBridge.close(fd)
+}
+
+private val wireBackendEnabled: Boolean by lazy {
+    System.getProperty("sdbus.jvm.wire")?.equals("true", ignoreCase = true)
+        ?: System.getenv("SDBUS_JVM_WIRE")?.equals("true", ignoreCase = true)
+        ?: false
+}
+
+/**
+ * Minimal reflective bridge onto junixsocket's `NativeUnixSocket` native primitives (pipe / dup /
+ * close / fd<->FileDescriptor), used only by JVM cross_test fd plumbing. junixsocket is on the test
+ * runtime classpath via the dbus-java junixsocket transport.
+ */
+private object JunixFdBridge {
+    private val initFd: Method
+    private val getFd: Method
+    private val closeFd: Method
+    private val duplicateFd: Method
+    private val initPipe: Method
+
+    init {
+        val type = Class.forName("org.newsclub.net.unix.NativeUnixSocket")
+        type.getDeclaredMethod("ensureSupported").apply { isAccessible = true }.invoke(null)
+        initFd = type.getDeclaredMethod(
+            "initFD",
+            FileDescriptor::class.java,
+            Int::class.javaPrimitiveType!!
+        ).apply { isAccessible = true }
+        getFd = type.getDeclaredMethod("getFD", FileDescriptor::class.java)
+            .apply { isAccessible = true }
+        closeFd = type.getDeclaredMethod("close", FileDescriptor::class.java)
+            .apply { isAccessible = true }
+        duplicateFd = type.getDeclaredMethod(
+            "duplicate",
+            FileDescriptor::class.java,
+            FileDescriptor::class.java
+        ).apply { isAccessible = true }
+        initPipe = type.getDeclaredMethod(
+            "initPipe",
+            FileDescriptor::class.java,
+            FileDescriptor::class.java,
+            Boolean::class.javaPrimitiveType!!
+        ).apply { isAccessible = true }
+    }
+
+    fun createPipePair(): Pair<Int, Int>? = runCatching {
+        val read = FileDescriptor()
+        val write = FileDescriptor()
+        invoke(initPipe, read, write, false)
+        fdOf(read) to fdOf(write)
+    }.getOrNull()
+
+    fun descriptorFor(fd: Int): FileDescriptor = FileDescriptor().also { invoke(initFd, it, fd) }
+
+    fun duplicate(fd: Int): Int {
+        val target = FileDescriptor()
+        val result = invoke(duplicateFd, descriptorFor(fd), target) as? FileDescriptor ?: target
+        return fdOf(result)
+    }
+
+    fun close(fd: Int) {
+        runCatching { invoke(closeFd, descriptorFor(fd)) }
+    }
+
+    private fun fdOf(descriptor: FileDescriptor): Int =
+        (invoke(getFd, descriptor) as Number).toInt()
+
+    private fun invoke(method: Method, vararg args: Any?): Any? = try {
+        method.invoke(null, *args)
+    } catch (e: InvocationTargetException) {
+        throw e.targetException ?: e
+    }
 }
 
 /**

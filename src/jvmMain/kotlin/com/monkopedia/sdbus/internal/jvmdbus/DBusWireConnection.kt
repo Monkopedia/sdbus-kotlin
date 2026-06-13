@@ -20,11 +20,15 @@
  */
 package com.monkopedia.sdbus.internal.jvmdbus
 
+import com.monkopedia.sdbus.JvmUnixFdSupport
+import com.monkopedia.sdbus.Message
+import com.monkopedia.sdbus.UnixFd
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.EOFException
 import java.io.File
+import java.io.FileDescriptor
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -166,12 +170,17 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
 
     // --- reader thread --------------------------------------------------------------------------
 
+    // FIFO of file descriptors received via SCM_RIGHTS, accessed only on the reader thread.
+    // junixsocket delivers passed fds out-of-band alongside the message bytes; we drain them after
+    // each frame and hand each message its declared UNIX_FDS count in arrival order.
+    private val receivedFdQueue = ArrayDeque<FileDescriptor>()
+
     private fun startReader() {
         running = true
         readerThread = thread(start = true, isDaemon = true, name = "sdbus-jvm-wire-reader") {
             try {
                 while (running) {
-                    dispatch(WireMessageCodec.read(input))
+                    dispatch(resolveReceivedFds(WireMessageCodec.read(input)))
                 }
             } catch (_: IOException) {
                 // Expected on close() (socket closed) or peer disconnect.
@@ -215,9 +224,76 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
     private fun nextSerial(): Int = serialCounter.incrementAndGet()
 
     private fun writeMessage(message: WireMessage) {
-        synchronized(writeLock) {
-            WireMessageCodec.write(output, message)
+        // Collect any UnixFds in the body (depth-first, body order) and replace each with its
+        // 0-based index into the attached fd array; the `h` wire value is that index, the actual
+        // fds travel out-of-band via SCM_RIGHTS.
+        val fds = mutableListOf<Int>()
+        val outgoing = if (message.body.isEmpty()) {
+            message
+        } else {
+            val body = message.body.map { collectOutboundFds(it, fds) }
+            if (fds.isEmpty()) message else message.copy(body = body, unixFds = fds.size)
         }
+        synchronized(writeLock) {
+            if (fds.isEmpty()) {
+                WireMessageCodec.write(output, outgoing)
+                return
+            }
+            if (!unixFdNegotiated) {
+                throw IOException(
+                    "Cannot send ${fds.size} file descriptor(s): UNIX_FD passing was not negotiated"
+                )
+            }
+            // Attach the fds to THIS message's bytes: setOutboundFileDescriptors arms the next
+            // write on the socket, which we perform immediately under the write lock so the kernel
+            // delivers the ancillary fds together with the framed message (D-Bus associates passed
+            // fds with the message carrying UNIX_FDS).
+            val descriptors = Array(fds.size) { JvmUnixFdSupport.descriptorForFd(fds[it]) }
+            socket.setOutboundFileDescriptors(*descriptors)
+            try {
+                WireMessageCodec.write(output, outgoing)
+            } finally {
+                // junixsocket consumes pending outbound fds on the send; clear defensively so a
+                // later fd-less write can never re-attach them.
+                if (socket.hasOutboundFileDescriptors()) {
+                    runCatching { socket.setOutboundFileDescriptors() }
+                }
+            }
+        }
+    }
+
+    /**
+     * Resolves the UNIX_FDS of a freshly read [message]: drains the fds junixsocket received
+     * alongside it, then rewrites the `h` indices in the decoded body to [UnixFd]s wrapping the
+     * corresponding received descriptors. A message with no UNIX_FDS is returned unchanged.
+     */
+    private fun resolveReceivedFds(message: WireMessage): WireMessage {
+        val count = message.unixFds ?: return message
+        if (count <= 0) return message
+        drainReceivedFds()
+        if (receivedFdQueue.size < count) {
+            throw DBusMarshallingException(
+                "Message declared $count unix fds but only ${receivedFdQueue.size} were received"
+            )
+        }
+        val fds = ArrayList<UnixFd>(count)
+        repeat(count) {
+            fds.add(
+                UnixFd.adopt(
+                    JvmUnixFdSupport.adoptReceivedDescriptor(receivedFdQueue.removeFirst())
+                )
+            )
+        }
+        val types = message.signature?.let { DBusSignatureParser.parse(it) }.orEmpty()
+        val body = message.body.mapIndexed { index, value ->
+            resolveInboundFds(types.getOrNull(index), value, fds)
+        }
+        return message.copy(body = body)
+    }
+
+    private fun drainReceivedFds() {
+        val received = socket.receivedFileDescriptors ?: return
+        for (descriptor in received) receivedFdQueue.addLast(descriptor)
     }
 
     private data class PendingCall(val serial: Int, val future: CompletableFuture<WireMessage>)
@@ -432,6 +508,9 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         private const val TIMEOUT_ERROR_NAME = "org.freedesktop.DBus.Error.Timeout"
         private const val DEFAULT_SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
 
+        // 4 KiB comfortably holds the cmsg for the kernel's SCM_MAX_FD (253) descriptors per recv.
+        private const val ANCILLARY_RECEIVE_BUFFER_BYTES = 4096
+
         /** Connects to the session bus (`DBUS_SESSION_BUS_ADDRESS`) and completes Hello. */
         fun connectSession(): DBusWireConnection {
             val address = System.getenv("DBUS_SESSION_BUS_ADDRESS")
@@ -450,6 +529,10 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
             val socketAddress = parseAddress(address)
             val socket = AFUNIXSocket.newInstance()
             socket.connect(socketAddress)
+            // Size the ancillary buffer so SCM_RIGHTS descriptors passed with a message are
+            // captured by the receiving recv() (D-Bus relays passed fds through the daemon). Sized
+            // for the kernel's per-message SCM_MAX_FD ceiling with comfortable slack.
+            runCatching { socket.ensureAncillaryReceiveBufferSize(ANCILLARY_RECEIVE_BUFFER_BYTES) }
             val connection = DBusWireConnection(socket)
             try {
                 connection.performSasl()
@@ -495,6 +578,94 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
 
         private fun encodeHex(bytes: ByteArray): String = buildString(bytes.size * 2) {
             for (b in bytes) append("%02x".format(b.toInt() and 0xff))
+        }
+    }
+}
+
+/**
+ * Walks an outgoing body value, appending the raw fd of every [UnixFd] to [fds] (depth-first, in
+ * body order) and replacing each with its 0-based index into that array. The marshaller then writes
+ * the index as the `h` (UNIX_FD) value while the real fds ride along via SCM_RIGHTS. Containers
+ * (structs, variants, arrays, dicts) recurse so fds nested anywhere in the body are handled.
+ */
+private fun collectOutboundFds(value: Any?, fds: MutableList<Int>): Any? = when (value) {
+    is UnixFd -> {
+        fds.add(value.fd)
+        fds.size - 1
+    }
+
+    is Message.JvmStructPayload ->
+        Message.JvmStructPayload(value.signature, value.fields.map { collectOutboundFds(it, fds) })
+
+    is Message.JvmVariantPayload ->
+        Message.JvmVariantPayload(value.signature, collectOutboundFds(value.value, fds))
+
+    is Map<*, *> ->
+        value.entries.associate { (k, v) ->
+            collectOutboundFds(k, fds) to collectOutboundFds(v, fds)
+        }
+
+    is List<*> -> value.map { collectOutboundFds(it, fds) }
+    is Array<*> -> value.map { collectOutboundFds(it, fds) }
+    else -> value
+}
+
+/**
+ * Signature-driven rewrite of a decoded incoming [value]: at every `h` position the demarshalled
+ * index is replaced with `fds[index]` (the received descriptor wrapped as a [UnixFd]). The wire
+ * value of an `h` is just an index, indistinguishable by type from an `i`, so the declared [type]
+ * is required to find them; containers recurse using their own embedded signatures.
+ */
+private fun resolveInboundFds(type: DBusType?, value: Any?, fds: List<UnixFd>): Any? = when (type) {
+    null -> value
+    is DBusType.Basic -> if (type.type == 'h') {
+        val index = (value as? Number)?.toInt()
+            ?: throw DBusMarshallingException("Expected an fd index for 'h', got $value")
+        fds.getOrNull(index)
+            ?: throw DBusMarshallingException(
+                "Unix fd index $index out of range (${fds.size} received)"
+            )
+    } else {
+        value
+    }
+
+    is DBusType.ArrayType -> when (val element = type.element) {
+        is DBusType.DictEntryType -> (value as? Map<*, *>)?.entries?.associate { (k, v) ->
+            resolveInboundFds(element.key, k, fds) to resolveInboundFds(element.value, v, fds)
+        } ?: value
+
+        else -> (value as? List<*>)?.map { resolveInboundFds(element, it, fds) } ?: value
+    }
+
+    is DBusType.StructType -> {
+        val payload = value as? Message.JvmStructPayload
+        if (payload == null) {
+            value
+        } else {
+            Message.JvmStructPayload(
+                payload.signature,
+                payload.fields.mapIndexed { i, field ->
+                    resolveInboundFds(type.fields.getOrNull(i), field, fds)
+                }
+            )
+        }
+    }
+
+    is DBusType.DictEntryType -> value // reached only via ArrayType above
+    DBusType.VariantType -> {
+        val payload = value as? Message.JvmVariantPayload
+        if (payload == null) {
+            value
+        } else {
+            val innerTypes = DBusSignatureParser.parse(payload.signature)
+            Message.JvmVariantPayload(
+                payload.signature,
+                if (innerTypes.size == 1) {
+                    resolveInboundFds(innerTypes.first(), payload.value, fds)
+                } else {
+                    payload.value
+                }
+            )
         }
     }
 }
