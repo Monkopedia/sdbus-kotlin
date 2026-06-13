@@ -31,8 +31,8 @@
 <script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
 <script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer="defer"></script>
-<link href="../../../images/logo-icon.svg">
 <link href="../../../images/monkopedia_icon.png">
+<link href="../../../images/logo-icon.svg">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
 </head>
 <body>
@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.4.5        </div>
+0.5.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -110,7 +110,7 @@
   <div class="breadcrumbs"><a href="../../../index.html">sdbus-kotlin</a><span class="delimiter">/</span><a href="../index.html">com.monkopedia.sdbus</a><span class="delimiter">/</span><span class="current">PropertyDelegate</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Property</span><wbr></wbr><span><span>Delegate</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="index.html">PropertyDelegate</a><span class="token operator">&lt;</span><a href="index.html">R</a><span class="token punctuation">, </span><a href="index.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">proxy<span class="token operator">: </span><a href="../-proxy/index.html">Proxy</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a><span class="token punctuation">, </span></span><span class="parameter ">type<span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization/KSerializer///PointingToDeclaration/">KSerializer</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">module<span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization.modules/SerializersModule///PointingToDeclaration/">SerializersModule</span><span class="token punctuation">, </span></span><span class="parameter ">signature<span class="token operator">: </span><a href="../-sdbus-sig/index.html">SdbusSig</a></span></span><span class="token punctuation">)</span> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.properties/-read-only-property/index.html">ReadOnlyProperty</a><span class="token operator">&lt;</span><a href="index.html">R</a><span class="token punctuation">, </span><a href="index.html">T</a><span class="token operator">&gt; </span></div><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mutable-property-delegate/index.html">MutablePropertyDelegate</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="index.html">PropertyDelegate</a><span class="token operator">&lt;</span><a href="index.html">R</a><span class="token punctuation">, </span><a href="index.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">proxy<span class="token operator">: </span><a href="../-proxy/index.html">Proxy</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>propertyName<span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a><span class="token punctuation">, </span></span><span class="parameter ">type<span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization/KSerializer///PointingToDeclaration/">KSerializer</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">module<span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization.modules/SerializersModule///PointingToDeclaration/">SerializersModule</span><span class="token punctuation">, </span></span><span class="parameter ">signature<span class="token operator">: </span><a href="../-sdbus-sig/index.html">SdbusSig</a></span></span><span class="token punctuation">)</span> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.properties/-read-only-property/index.html">ReadOnlyProperty</a><span class="token operator">&lt;</span><a href="index.html">R</a><span class="token punctuation">, </span><a href="index.html">T</a><span class="token operator">&gt; </span></div><p class="paragraph">A read-only Kotlin property delegate backed by a D-Bus property.</p><p class="paragraph">Reading the delegated property issues a D-Bus <code class="lang-kotlin">Get</code>. The delegate also offers convenience accessors (<a href="get-or-null.html">getOrNull</a>, <a href="await.html">await</a>) and reactive observation of the property (<a href="changes.html">changes</a>, <a href="values.html">values</a>, <a href="changes-or-null.html">changesOrNull</a>, <a href="values-or-null.html">valuesOrNull</a>). Obtain one via <a href="../prop-delegate.html">Proxy.propDelegate</a>.</p><p class="paragraph">The observation methods come in two families:</p><ul><li><p class="paragraph"><a href="changes.html">changes</a>/<a href="changes-or-null.html">changesOrNull</a> emit change events only — nothing is emitted until the property changes after collection starts.</p></li><li><p class="paragraph"><a href="values.html">values</a>/<a href="values-or-null.html">valuesOrNull</a> emit the current value first, then all subsequent changes.</p></li></ul><p class="paragraph">Each family has a throwing and a nullable variant: <a href="get.html">get</a>, <a href="changes.html">changes</a> and <a href="values.html">values</a> surface a missing/invalidated property as an exception or by dropping the event, while <a href="get-or-null.html">getOrNull</a>, <a href="changes-or-null.html">changesOrNull</a> and <a href="values-or-null.html">valuesOrNull</a> represent it as <code class="lang-kotlin">null</code>.</p><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mutable-property-delegate/index.html">MutablePropertyDelegate</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -146,7 +146,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="interface-name.html">interfaceName</a><span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="interface-name.html">interfaceName</a><span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a></div><div class="brief "><p class="paragraph">Interface that declares the property</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -161,7 +161,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="name.html">name</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="name.html">name</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The property name as a plain string.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -176,7 +176,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="property-name.html">propertyName</a><span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="property-name.html">propertyName</a><span class="token operator">: </span><a href="../-property-name/index.html">PropertyName</a></div><div class="brief "><p class="paragraph">Name of the property</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -210,7 +210,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="changes.html"><span class="token function">changes</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Produces a flow that observes the properties changed signal of a <a href="../-properties-proxy/index.html">PropertiesProxy</a> and will emit the new values for this property when it has changed.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="changes.html"><span class="token function">changes</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Produces a flow that observes the <code class="lang-kotlin">PropertiesChanged</code> signal and emits the new value of this property each time it changes.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -225,37 +225,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="changes-or-null.html"><span class="token function">changesOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Like <a href="changes.html">changes</a> but also will emit null whenever the property has been invalidated.</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="285514564%2FFunctions%2F1558683979" anchor-label="flow" id="285514564%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="flow.html"><span><span>flow</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="285514564%2FFunctions%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="flow.html"><span class="token function">flow</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Emits all the values from <a href="changes.html">changes</a> but also emits value from <a href="get.html">get</a> at start.</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1695871770%2FFunctions%2F1558683979" anchor-label="flowOrNull" id="1695871770%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="flow-or-null.html"><span>flow</span><wbr></wbr><span>Or</span><wbr></wbr><span><span>Null</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1695871770%2FFunctions%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="flow-or-null.html"><span class="token function">flowOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Emits all the values from <a href="changes-or-null.html">changesOrNull</a> but also emits value from <a href="get-or-null.html">getOrNull</a> at start.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="changes-or-null.html"><span class="token function">changesOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Like <a href="changes.html">changes</a> but also emits <code class="lang-kotlin">null</code> whenever the property has been invalidated (i.e. it appears in the <code class="lang-kotlin">invalidatedProperties</code> of a <code class="lang-kotlin">PropertiesChanged</code> signal), instead of dropping the event.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -270,7 +240,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="get.html"><span class="token function">get</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a></div><div class="brief "><p class="paragraph">Get the current value of the property.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="get.html"><span class="token function">get</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a></div><div class="brief "><p class="paragraph">Gets the current value of the property.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -285,7 +255,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="get-or-null.html"><span class="token function">getOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Gets the current value of the property, however if the property doesn't currently exist, returns null rather than throwing.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="get-or-null.html"><span class="token function">getOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Gets the current value of the property, however if the property doesn't currently exist (<code class="lang-kotlin">org.freedesktop.DBus.Error.InvalidArgs</code>), returns null rather than throwing. Any other <a href="../-error/index.html">com.monkopedia.sdbus.Error</a> is still thrown.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -301,6 +271,36 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">operator override </span><span class="token keyword">fun </span><a href="get-value.html"><span class="token function">getValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">thisRef<span class="token operator">: </span><a href="index.html">R</a><span class="token punctuation">, </span></span><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1422930064%2FFunctions%2F1558683979" anchor-label="values" id="1422930064%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="values.html"><span><span>values</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1422930064%2FFunctions%2F1558683979"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="values.html"><span class="token function">values</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Produces a flow of all values of the property: the current value (from <a href="get.html">get</a>) is emitted first when collection starts, followed by every subsequent change (from <a href="changes.html">changes</a>).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="427188070%2FFunctions%2F1558683979" anchor-label="valuesOrNull" id="427188070%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="values-or-null.html"><span>values</span><wbr></wbr><span>Or</span><wbr></wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="427188070%2FFunctions%2F1558683979"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="values-or-null.html"><span class="token function">valuesOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Like <a href="values.html">values</a> but null-safe: the current value (from <a href="get-or-null.html">getOrNull</a>, <code class="lang-kotlin">null</code> if the property doesn't currently exist) is emitted first when collection starts, followed by every subsequent change (from <a href="changes-or-null.html">changesOrNull</a>, which emits <code class="lang-kotlin">null</code> on invalidation).</p></div></div></div>
                 </div>
               </div>
             </div>

@@ -31,8 +31,8 @@
 <script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
 <script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer="defer"></script>
-<link href="../../../images/logo-icon.svg">
 <link href="../../../images/monkopedia_icon.png">
+<link href="../../../images/logo-icon.svg">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
 </head>
 <body>
@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.4.5        </div>
+0.5.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -111,7 +111,7 @@
   <div class="cover ">
     <h1 class="cover"><span>get</span><wbr></wbr><span>Or</span><wbr></wbr><span><span>Null</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="get-or-null.html"><span class="token function">getOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a><span class="token operator">?</span></div><p class="paragraph">Gets the current value of the property, however if the property doesn't currently exist, returns null rather than throwing.</p></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="get-or-null.html"><span class="token function">getOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a><span class="token operator">?</span></div><p class="paragraph">Gets the current value of the property, however if the property doesn't currently exist (<code class="lang-kotlin">org.freedesktop.DBus.Error.InvalidArgs</code>), returns null rather than throwing. Any other <a href="../-error/index.html">com.monkopedia.sdbus.Error</a> is still thrown.</p></div></div>
 </div>
     <div class="footer">
         <div class="footer--container">

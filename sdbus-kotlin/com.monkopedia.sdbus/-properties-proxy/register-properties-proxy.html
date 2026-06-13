@@ -31,8 +31,8 @@
 <script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
 <script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer="defer"></script>
-<link href="../../../images/logo-icon.svg">
 <link href="../../../images/monkopedia_icon.png">
+<link href="../../../images/logo-icon.svg">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
 </head>
 <body>
@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.4.5        </div>
+0.5.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -106,12 +106,12 @@
         </nav>
         <div id="resizer" class="resizer" data-item-type="BAR"></div>
         <div id="main" data-item-type="SECTION" role="main">
-<div class="main-content" data-page-type="member" id="content" pageIds="sdbus-kotlin::com.monkopedia.sdbus/PropertiesProxy/registerPropertiesProxy/#/PointingToDeclaration//1558683979">
+<div class="main-content" data-page-type="member" id="content" pageIds="sdbus-kotlin::com.monkopedia.sdbus/PropertiesProxy/registerPropertiesProxy/#kotlin.Function3[com.monkopedia.sdbus.InterfaceName,kotlin.collections.Map[com.monkopedia.sdbus.MemberName,com.monkopedia.sdbus.Variant],kotlin.collections.List[com.monkopedia.sdbus.MemberName],kotlin.Unit]/PointingToDeclaration//1558683979">
   <div class="breadcrumbs"><a href="../../../index.html">sdbus-kotlin</a><span class="delimiter">/</span><a href="../index.html">com.monkopedia.sdbus</a><span class="delimiter">/</span><a href="index.html">PropertiesProxy</a><span class="delimiter">/</span><span class="current">registerPropertiesProxy</span></div>
   <div class="cover ">
     <h1 class="cover"><span>register</span><wbr></wbr><span>Properties</span><wbr></wbr><span><span>Proxy</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="register-properties-proxy.html"><span class="token function">registerPropertiesProxy</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="register-properties-proxy.html"><span class="token function">registerPropertiesProxy</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">onPropertiesChanged<span class="token operator">: </span><span class="token punctuation">(</span>interfaceName<span class="token operator">: </span><a href="../-interface-name/index.html">InterfaceName</a><span class="token punctuation">, </span>changedProperties<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="../-property-name/index.html">PropertyName</a><span class="token punctuation">, </span><a href="../-variant/index.html">Variant</a><span class="token operator">&gt;</span><span class="token punctuation">, </span>invalidatedProperties<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../-property-name/index.html">PropertyName</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Subscribes to the PropertiesChanged signal so that <a href="register-properties-proxy.html">onPropertiesChanged</a> is invoked on updates. Call this once after constructing the proxy.</p><p class="paragraph">The subscription stays active for the lifetime of <a href="../-proxy-holder/proxy.html">proxy</a>. Library convention: <code class="lang-kotlin">register*</code> functions return a <a href="../-resource/index.html">Resource</a> when the registration must be explicitly released, and <code class="lang-kotlin">Unit</code> (or the registered item) otherwise.</p><h4 class="tableheader">Parameters</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>on</span><wbr></wbr><span>Properties</span><wbr></wbr><span><span>Changed</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Called when a PropertiesChanged signal is received, with the interface whose properties changed, the map of changed property names to their new values, and the names of properties that were invalidated without a new value</p></div></div></div></div></div></div></div>
 </div>
     <div class="footer">
         <div class="footer--container">
