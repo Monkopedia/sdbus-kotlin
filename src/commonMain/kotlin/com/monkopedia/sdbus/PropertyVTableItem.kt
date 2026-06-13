@@ -141,8 +141,10 @@ class PropertyVTableItem @PublishedApi internal constructor(
      */
     inline fun <reified T : Any> with(receiver: KProperty0<T>) {
         signature = Signature(signatureOf<T>().value)
-        getter = {
-            receiver.get()
+        getter = { reply ->
+            // Serialize the property value into the reply, mirroring withGetter; returning the
+            // value from the lambda is not enough — the callback type is (PropertyGetReply) -> Unit.
+            reply.serialize<T>(receiver.get())
         }
         if (receiver is KMutableProperty0) {
             setter = {

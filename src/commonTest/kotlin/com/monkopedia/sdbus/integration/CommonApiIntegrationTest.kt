@@ -44,6 +44,11 @@ class CommonApiIntegrationTest {
     @Serializable
     private data class Point(val x: Int, val y: Int)
 
+    // Backs the generated-adaptor `with(::prop)` binding exercised by the #89 regression test.
+    private class PropertyHolder {
+        var value: Int = 0
+    }
+
     private data class FixtureIds(
         val service: ServiceName,
         val path: ObjectPath,
@@ -1241,6 +1246,62 @@ class CommonApiIntegrationTest {
             val allAsync = propertiesProxy.getAllAsync(ids.iface)
             assertTrue(stateProperty in allAsync)
             assertTrue(allAsync[stateProperty]?.let { it.get<Boolean>() } == false)
+        } finally {
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
+    // Regression for #89: the generated-adaptor property binding path. AdaptorGenerator emits
+    // `with(this@Adaptor::<prop>)` for every property, and `with(KProperty0)` used to discard the
+    // value returned by the getter (`getter = { receiver.get() }`) instead of serializing it into
+    // the reply. That produced an empty Properties.Get/GetAll reply on the wire, breaking property
+    // reads for every codegen adaptor on native. This test binds via `with(::prop)` (NOT
+    // withGetter/withSetter) and performs a real remote Get/GetAll, asserting the real value comes
+    // back. It fails on main (empty/wrong value) and passes once the getter serializes.
+    @Test
+    fun propertiesProxy_supportsGetAndGetAllViaKotlinPropertyBinding() = runBlocking {
+        val ids = uniqueFixtureIds("propertiesKProp")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val countProperty = PropertyName("count")
+        val holder = PropertyHolder()
+        holder.value = 42
+        val obj = createObject(serverConnection, ids.path)
+        val registration = obj.addVTable(ids.iface) {
+            prop(countProperty) {
+                with(holder::value)
+            }
+        }
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path)
+        val propertiesProxy = PropertiesProxy(proxy)
+
+        try {
+            // Remote Properties.Get must return the real backing value, not an empty reply.
+            assertEquals(
+                42,
+                PropertiesProxy.run { propertiesProxy.get<Int>(ids.iface, countProperty) }
+            )
+
+            // GetAll must include the property with its real value.
+            val all = propertiesProxy.getAll(ids.iface)
+            assertTrue(countProperty in all)
+            assertEquals(42, all[countProperty]?.get<Int>())
+
+            // The mutable binding (KMutableProperty0) round-trips a Set back into the property.
+            PropertiesProxy.run {
+                propertiesProxy.set(ids.iface, countProperty, 7)
+            }
+            assertEquals(7, holder.value)
+            assertEquals(
+                7,
+                PropertiesProxy.run { propertiesProxy.get<Int>(ids.iface, countProperty) }
+            )
         } finally {
             registration.release()
             proxy.release()
