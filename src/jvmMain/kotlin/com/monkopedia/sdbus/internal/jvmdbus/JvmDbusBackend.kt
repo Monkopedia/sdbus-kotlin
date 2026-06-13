@@ -111,8 +111,20 @@ internal interface JvmDbusBackend {
     fun createObject(connection: Connection, objectPath: ObjectPath): JvmDbusObject
 }
 
+/**
+ * Whether the JVM client path should run on the self-owned D-Bus connection (epic #93) instead of
+ * dbus-java. Opt-in via `-Dsdbus.jvm.wire=true` or the `SDBUS_JVM_WIRE=true` environment variable;
+ * the default stays dbus-java until the owned path is complete (flipped in a later phase).
+ */
+internal fun isJvmWireBackendEnabled(): Boolean {
+    System.getProperty("sdbus.jvm.wire")?.let { return it.equals("true", ignoreCase = true) }
+    return System.getenv("SDBUS_JVM_WIRE")?.equals("true", ignoreCase = true) == true
+}
+
 internal object JvmDbusBackendProvider {
-    val backend: JvmDbusBackend = PureJavaDbusBackend()
+    val backend: JvmDbusBackend by lazy {
+        if (isJvmWireBackendEnabled()) WireDbusBackend() else PureJavaDbusBackend()
+    }
 }
 
 /**

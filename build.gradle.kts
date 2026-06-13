@@ -139,6 +139,12 @@ kotlin {
     }
 }
 
+// Phase 3 (#93): forward the owned-connection client toggle to the test JVMs so
+// `-Dsdbus.jvm.wire=true` on the Gradle invocation selects the wire client path under test.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    System.getProperty("sdbus.jvm.wire")?.let { systemProperty("sdbus.jvm.wire", it) }
+}
+
 fun firstExistingPath(vararg candidates: String): String? =
     candidates.firstOrNull { rootProject.file(it).exists() }
 

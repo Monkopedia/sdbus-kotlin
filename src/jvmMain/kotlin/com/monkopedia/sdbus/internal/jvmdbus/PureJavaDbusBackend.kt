@@ -295,7 +295,7 @@ private object LocalManagedObjectsRegistry {
     }
 }
 
-private object LocalObjectManagerRegistry {
+internal object LocalObjectManagerRegistry {
     private data class ManagerKey(val destination: String, val path: String)
 
     private val managerPaths = mutableMapOf<String, Int>()
@@ -354,7 +354,7 @@ private object LocalObjectManagerRegistry {
     }
 }
 
-private object LocalJvmServiceRegistry {
+internal object LocalJvmServiceRegistry {
     private val namesByUnique = mutableMapOf<String, MutableSet<String>>()
 
     fun registerLocalUniqueName(uniqueName: String) {
@@ -1392,7 +1392,7 @@ private fun addGenericSigHandler(
     return method.invoke(connection, matchRule, callback) as AutoCloseable
 }
 
-private class PureJavaDbusObject(
+internal class PureJavaDbusObject(
     private val objectPath: ObjectPath,
     private val javaConnection: AbstractConnection?,
     private val senderName: String?

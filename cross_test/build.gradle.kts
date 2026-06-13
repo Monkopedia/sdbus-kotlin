@@ -42,6 +42,11 @@ val reverseInteropEnabled = providers
     .systemProperty("kdbus.crossRuntimeInterop.reverse.enabled")
     .orElse(providers.gradleProperty("kdbus.crossRuntimeInterop.reverse.enabled"))
 
+// Phase 3 (#93): forward the owned-connection client toggle to cross_test's JVM test JVMs.
+tasks.withType<Test>().configureEach {
+    System.getProperty("sdbus.jvm.wire")?.let { systemProperty("sdbus.jvm.wire", it) }
+}
+
 tasks.register<Test>("jvmInteropTest") {
     group = "verification"
     description = "Runs JVM<->native direct-bus interop smoke tests in cross_test."
