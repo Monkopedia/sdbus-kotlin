@@ -139,7 +139,10 @@ class JvmScaffoldTest {
                 latch.countDown()
             }
 
-            assertTrue(pending.isPending())
+            // NB: do not assert pending.isPending() here — on a fast backend (the owned
+            // wire connection) the reply can arrive and fire the callback before this line
+            // runs, making isPending() legitimately false. See #97. The post-completion
+            // !isPending() assertion below verifies the call resolves.
             assertTrue(latch.await(3, TimeUnit.SECONDS))
             assertEquals(null, errorRef.get())
             assertEquals(7, resultRef.get())
