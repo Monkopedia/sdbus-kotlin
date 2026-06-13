@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 import kotlinx.coroutines.future.await
@@ -201,11 +202,14 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         }
     }
 
+    private data class PendingCall(val serial: Int, val future: CompletableFuture<WireMessage>)
+
     /**
      * Sends [request] (a serial is assigned automatically) and returns the registered future that
-     * the reader completes with the matching reply.
+     * the reader completes with the matching reply, plus the serial so callers can evict the
+     * pending entry if they give up waiting (timeout).
      */
-    private fun dispatchCall(request: WireMessage): CompletableFuture<WireMessage> {
+    private fun dispatchCall(request: WireMessage): PendingCall {
         val serial = nextSerial()
         val future = CompletableFuture<WireMessage>()
         pending[serial] = future
@@ -215,19 +219,50 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
             pending.remove(serial)
             future.completeExceptionally(e)
         }
-        return future
+        return PendingCall(serial, future)
     }
 
-    /** Suspends until the reply for [request] arrives; throws [DBusCallException] on a D-Bus error. */
-    suspend fun call(request: WireMessage): WireMessage =
-        dispatchCall(request).await().also(::throwIfError)
+    /**
+     * Suspends until the reply for [request] arrives or [timeoutMillis] elapses; throws
+     * [DBusCallException] on a D-Bus error or on timeout. A timeout bounds the wait so a reply
+     * that never arrives cannot hang the caller indefinitely (epic #93 phase 3).
+     */
+    suspend fun call(
+        request: WireMessage,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
+    ): WireMessage {
+        val (serial, future) = dispatchCall(request)
+        val reply = try {
+            future.orTimeout(timeoutMillis, TimeUnit.MILLISECONDS).await()
+        } catch (e: TimeoutException) {
+            pending.remove(serial)
+            throw DBusCallException(
+                TIMEOUT_ERROR_NAME,
+                "Method call timed out after ${timeoutMillis}ms"
+            )
+        }
+        throwIfError(reply)
+        return reply
+    }
 
     /** Blocking variant of [call], for bootstrap before any coroutine context exists. */
     fun callBlocking(
         request: WireMessage,
         timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
-    ): WireMessage =
-        dispatchCall(request).get(timeoutMillis, TimeUnit.MILLISECONDS).also(::throwIfError)
+    ): WireMessage {
+        val (serial, future) = dispatchCall(request)
+        val reply = try {
+            future.get(timeoutMillis, TimeUnit.MILLISECONDS)
+        } catch (e: TimeoutException) {
+            pending.remove(serial)
+            throw DBusCallException(
+                TIMEOUT_ERROR_NAME,
+                "Method call timed out after ${timeoutMillis}ms"
+            )
+        }
+        throwIfError(reply)
+        return reply
+    }
 
     /** Fire-and-forget send (e.g. a method call with NO_REPLY_EXPECTED, a signal, or a reply). */
     fun send(message: WireMessage): Int {
@@ -313,6 +348,25 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         )
     }
 
+    /**
+     * Resolves the current unique-name owner of a (possibly well-known) [busName], or null when
+     * the name has no owner. Used to match incoming signals (whose sender is a unique name)
+     * against a subscription expressed by a well-known destination.
+     */
+    fun getNameOwner(busName: String): String? = runCatching {
+        callBlocking(
+            WireMessage(
+                type = WireMessageType.METHOD_CALL,
+                destination = DBUS_SERVICE,
+                path = DBUS_PATH,
+                interfaceName = DBUS_INTERFACE,
+                member = "GetNameOwner",
+                signature = "s",
+                body = listOf(busName)
+            )
+        ).body.firstOrNull() as? String
+    }.getOrNull()
+
     /** Removes a previously installed match [rule]. */
     fun removeMatch(rule: String) {
         callBlocking(
@@ -347,6 +401,7 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         private const val DBUS_INTERFACE = "org.freedesktop.DBus"
         private const val DEFAULT_TIMEOUT_MILLIS = 30_000L
         private const val JOIN_TIMEOUT_MILLIS = 2_000L
+        private const val TIMEOUT_ERROR_NAME = "org.freedesktop.DBus.Error.Timeout"
         private const val DEFAULT_SYSTEM_BUS_ADDRESS = "unix:path=/var/run/dbus/system_bus_socket"
 
         /** Connects to the session bus (`DBUS_SESSION_BUS_ADDRESS`) and completes Hello. */

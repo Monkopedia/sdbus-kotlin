@@ -88,6 +88,52 @@ jobs:
             stress_test/build/test-results/**
             stress_test/build/reports/tests/**
 
+  wire-client-parity-x64:
+    # Epic #93 phase 3: run the JVM client suites on the self-owned wire connection
+    # (-Dsdbus.jvm.wire=true). A hard job timeout plus an inner `timeout` guard ensure a hung
+    # call/signal fails the job fast instead of stalling (a prior run hung for 21 hours).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Test Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus python3-dbusmock
+
+      - name: Run JVM Client Suites on the Owned Wire Connection
+        run: |
+          set -euo pipefail
+          dbus-run-session -- bash -lc '
+            set -euo pipefail
+            export DBUS_STARTER_BUS_TYPE=session
+            export DBUS_STARTER_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
+            export DBUS_SYSTEM_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
+            timeout 1800 ./gradlew --no-daemon :jvmTest :cross_test:jvmTest \
+              -Dsdbus.jvm.wire=true --stacktrace
+          '
+
+      - name: Upload Failure Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-client-parity-x64-${{ github.run_id }}
+          retention-days: 14
+          path: |
+            build/test-results/**
+            build/reports/tests/**
+            cross_test/build/test-results/**
+            cross_test/build/reports/tests/**
+
   native-build-x64:
     runs-on: ubuntu-24.04
     timeout-minutes: 60

@@ -123,6 +123,40 @@ class WireMessageCodecTest {
     }
 
     @Test
+    fun bigEndianFrame_decodesHandCraftedBytes() {
+        // A hand-assembled BIG-ENDIAN ('B') METHOD_RETURN frame (phase 2 follow-up): the codec
+        // only ever writes little-endian, so this is the only coverage of the big-endian decode
+        // path at the framing level. Layout (offsets):
+        //   0: 'B'  1: type=2  2: flags=0  3: version=1
+        //   4..7  body length = 7 (BE)        8..11 serial = 2 (BE)
+        //   12..15 header-array length = 15 (BE)
+        //   16..23 struct (yv): code 5 REPLY_SERIAL, variant "u" = 1
+        //   24..30 struct (yv): code 8 SIGNATURE, variant "g" = "s"
+        //   31     pad to 8-byte boundary
+        //   32..38 body: string "Hi" (BE u32 length 2, 'H','i', NUL)
+        val bytes = intArrayOf(
+            0x42, 0x02, 0x00, 0x01,
+            0x00, 0x00, 0x00, 0x07,
+            0x00, 0x00, 0x00, 0x02,
+            0x00, 0x00, 0x00, 0x0F,
+            0x05, 0x01, 0x75, 0x00, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x01, 0x67, 0x00, 0x01, 0x73, 0x00,
+            0x00,
+            0x00, 0x00, 0x00, 0x02, 0x48, 0x69, 0x00
+        ).map { it.toByte() }.toByteArray()
+
+        val decoded = WireMessageCodec.decode(bytes)
+        val streamed = WireMessageCodec.read(ByteArrayInputStream(bytes))
+        assertEquals(decoded, streamed)
+
+        assertEquals(WireMessageType.METHOD_RETURN, decoded.type)
+        assertEquals(2, decoded.serial)
+        assertEquals(1, decoded.replySerial)
+        assertEquals("s", decoded.signature)
+        assertEquals(listOf<Any?>("Hi"), decoded.body)
+    }
+
+    @Test
     fun emptyBody_roundTrips() {
         val message = WireMessage(
             type = WireMessageType.METHOD_CALL,
