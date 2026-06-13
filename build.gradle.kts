@@ -235,6 +235,9 @@ dokka {
     dokkaPublications.named("html") {
         outputDirectory.set(projectDir.resolve("build/dokka"))
     }
+    dokkaSourceSets.configureEach {
+        includes.from(rootProject.file("dokka/moduledoc.md"))
+    }
     pluginsConfiguration.html {
         customAssets.from(dokkaAssets)
         customStyleSheets.from(dokkaLogoStyleSheet)
