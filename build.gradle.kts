@@ -106,12 +106,9 @@ kotlin {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
                 implementation(libs.kotlinx.datetime)
-                implementation(libs.dbus.java.core)
-                runtimeOnly(libs.dbus.java.transport.junixsocket)
-                // Owned D-Bus connection (epic #93): raw AF_UNIX transport on the compile
-                // classpath. junixsocket is already pulled transitively by dbus-java's
-                // junixsocket transport; depend on it directly so the owned connection can use
-                // AFUNIXSocket without going through dbus-java.
+                // Owned D-Bus connection (epic #93): the JVM backend talks to the bus over a raw
+                // AF_UNIX socket via junixsocket and our own marshaller/dispatch — no dbus-java.
+                // junixsocket is a direct dependency so the owned connection can use AFUNIXSocket.
                 implementation(libs.junixsocket.core)
                 implementation(kotlin("stdlib"))
             }
@@ -137,12 +134,6 @@ kotlin {
             }
         }
     }
-}
-
-// Phase 3 (#93): forward the owned-connection client toggle to the test JVMs so
-// `-Dsdbus.jvm.wire=true` on the Gradle invocation selects the wire client path under test.
-tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
-    System.getProperty("sdbus.jvm.wire")?.let { systemProperty("sdbus.jvm.wire", it) }
 }
 
 fun firstExistingPath(vararg candidates: String): String? =

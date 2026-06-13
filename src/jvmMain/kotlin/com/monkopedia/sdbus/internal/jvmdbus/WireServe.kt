@@ -40,7 +40,7 @@ import java.nio.file.Paths
  * Routing reuses the SAME registries the in-process client path uses:
  *  - regular methods, `org.freedesktop.DBus.Properties` Get/Set/GetAll and
  *    `org.freedesktop.DBus.ObjectManager` GetManagedObjects all resolve through [JvmStaticDispatch]
- *    (the handlers PureJavaDbusObject registers in addVTable), so an object exported via addVTable
+ *    (the handlers [WireDbusObject] registers in addVTable), so an object exported via addVTable
  *    is reachable both in-process AND over the wire from the one registration;
  *  - `org.freedesktop.DBus.Introspectable` Introspect generates interface XML from the vtable
  *    metadata captured in [WireServeRegistry];
