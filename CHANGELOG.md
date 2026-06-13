@@ -5,7 +5,7 @@ All notable changes to sdbus-kotlin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - unreleased
+## [0.5.0] - 2026-06-13
 
 0.5.0 is the **1.0 API-freeze** release. It does two big things:
 
