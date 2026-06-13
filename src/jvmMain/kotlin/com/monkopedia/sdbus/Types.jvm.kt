@@ -105,6 +105,33 @@ internal object JvmUnixFdSupport {
             .recoverCatching { support.createFallbackPair() }
             .getOrNull()
     }
+
+    /**
+     * Wraps the raw integer [fd] in a [FileDescriptor] suitable for handing to junixsocket's
+     * `setOutboundFileDescriptors` (SCM_RIGHTS send). The kernel dup-on-send leaves [fd] owned by
+     * the caller; this descriptor is a throwaway wrapper that is never closed here.
+     */
+    fun descriptorForFd(fd: Int): FileDescriptor {
+        val support = nativeSupport
+            ?: throw createError(-1, "Unix-fd passing requires junixsocket native support")
+        return support.descriptorForFd(fd)
+    }
+
+    /**
+     * Adopts a [FileDescriptor] received via junixsocket's `getReceivedFileDescriptors`
+     * (SCM_RIGHTS receive), returning a raw fd that the caller owns outright (wrap it in
+     * [UnixFd.adopt]).
+     *
+     * The received descriptor is duplicated so the returned fd is fully independent, then the
+     * junixsocket-owned original is closed: that removes it from junixsocket's internal
+     * received-fd table (junixsocket attaches a close-callback to each received descriptor), so it
+     * is neither leaked until socket close nor double-closed. The result is a clean single owner.
+     */
+    fun adoptReceivedDescriptor(descriptor: FileDescriptor): Int {
+        val support = nativeSupport
+            ?: throw createError(-1, "Unix-fd passing requires junixsocket native support")
+        return support.adoptReceivedDescriptor(descriptor)
+    }
 }
 
 private class NativeUnixSocketSupport private constructor(
@@ -127,6 +154,22 @@ private class NativeUnixSocketSupport private constructor(
 
     fun close(fd: Int) {
         invokeStatic(close, descriptorFromFd(fd))
+    }
+
+    /** Builds a [FileDescriptor] wrapping the raw integer [fd] (for outbound SCM_RIGHTS sends). */
+    fun descriptorForFd(fd: Int): FileDescriptor = descriptorFromFd(fd)
+
+    /**
+     * Duplicates the int behind a received [descriptor] (so the caller owns an independent fd),
+     * then closes the original junixsocket-owned descriptor object — closing the *object* fires the
+     * close-callback junixsocket attached to it, evicting it from the received-fd table. Returns the
+     * duplicated fd.
+     */
+    fun adoptReceivedDescriptor(descriptor: FileDescriptor): Int {
+        val sourceFd = extractFd(descriptor)
+        val duplicated = duplicate(sourceFd)
+        runCatching { invokeStatic(close, descriptor) }
+        return duplicated
     }
 
     fun createPipePair(): Pair<Int, Int> {
