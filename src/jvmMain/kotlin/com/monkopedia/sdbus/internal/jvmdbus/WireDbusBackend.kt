@@ -30,23 +30,25 @@ import kotlin.concurrent.thread
 import kotlin.time.Duration
 
 /**
- * JVM backend that routes the CLIENT path through the self-owned D-Bus connection
- * ([DBusWireConnection]) instead of dbus-java (epic #93, phase 3). Selected via the
- * `sdbus.jvm.wire` toggle (see [isJvmWireBackendEnabled]); dbus-java remains the default.
+ * JVM backend that routes the CLIENT path (and signal emission) through the self-owned D-Bus
+ * connection ([DBusWireConnection]) instead of dbus-java (epic #93, phases 3 + 3b). Selected via
+ * the `sdbus.jvm.wire` toggle (see [isJvmWireBackendEnabled]); dbus-java remains the default.
  *
- * Scope this phase is deliberately CLIENT-ONLY, with a consistent same-process/cross-process split:
+ * Scope, with a consistent same-process/cross-process split:
  * - method calls (sync + async) to a REMOTE peer and Properties Get/Set/GetAll go over the wire;
  *   a call to an object served by one of our OWN connections is dispatched in-process through the
  *   shared static-dispatch tables ([JvmStaticDispatch], [LocalObjectManagerRegistry], ...), exactly
  *   as the dbus-java backend short-circuits same-process calls;
- * - signal RECEPTION uses the same split: signals from OTHER processes arrive over the wire
- *   (`AddMatch` + the reader's signal dispatch); signals our own served objects emit in the same
- *   process are delivered through the in-process [LocalJvmMatchBus]. Both are wired by
- *   [installSignalMatch] and are disjoint, so each signal is delivered exactly once;
- * - what stays DEFERRED to a dedicated phase is signal EMISSION over the wire (our object emitting
- *   a signal that a SEPARATE process receives over the bus) and incoming-call serving over the wire
- *   (phase 4). No in-suite test has an external peer receive a signal we emit; the only gated case
- *   is sender-credential resolution on a received signal, which needs real wire emission.
+ * - signal EMISSION goes OVER THE WIRE (phase 3b): an object served on the owned connection emits a
+ *   real D-Bus SIGNAL via [emitWireSignal], so the bus routes it to every subscriber -- external
+ *   processes AND same-JVM connections alike;
+ * - signal RECEPTION is correspondingly wire-only: every subscriber (whether listening to an
+ *   external peer or to one of our own objects) registers `AddMatch` + a reader filter via
+ *   [installSignalMatch] over its own socket, so each signal is delivered exactly once. The
+ *   in-process [LocalJvmSignalBus]/[LocalJvmMatchBus] is NOT used on this backend -- it stays the
+ *   dbus-java backend's same-process mechanism. Sender credentials of a signal from one of our own
+ *   connections are filled from the local process ([withLocalSenderCredentials]);
+ * - what stays DEFERRED is incoming method-call SERVING over the wire (phase 4).
  */
 internal class WireDbusBackend : JvmDbusBackend {
     override fun createConnection(
@@ -93,15 +95,61 @@ internal class WireDbusBackend : JvmDbusBackend {
         return WireDbusProxy(wireConnection, destination, objectPath)
     }
 
-    override fun createObject(connection: Connection, objectPath: ObjectPath): JvmDbusObject =
+    override fun createObject(connection: Connection, objectPath: ObjectPath): JvmDbusObject {
         // Reuse the in-process object machinery with no dbus-java connection: method dispatch and
-        // managed-object/property bookkeeping live in the shared local registries, while signal
-        // emission falls back to the in-process bus (wire emission is deferred -- epic #93).
-        PureJavaDbusObject(
+        // managed-object/property bookkeeping live in the shared local registries. Signal EMISSION,
+        // however, goes OVER THE WIRE (epic #93 phase 3b): we hand PureJavaDbusObject a
+        // WireSignalEmitter bound to this connection's socket, so every signal it emits is a real
+        // D-Bus SIGNAL the bus routes to all subscribers (external processes AND same-JVM
+        // connections, each via its own AddMatch) -- uniform with the native backend, and the only
+        // way a receiver can resolve our sender credentials off the bus.
+        val wire = (connection as? JvmConnection)?.backend
+            .let { it as? WireDbusConnection }
+            ?.wireConnection
+        val emitter = wire?.let { wireConnection ->
+            WireSignalEmitter { path, interfaceName, member, signature, payload ->
+                emitWireSignal(wireConnection, path, interfaceName, member, signature, payload)
+            }
+        }
+        return PureJavaDbusObject(
             objectPath,
             null,
-            runCatching { connection.uniqueName.value }.getOrNull()
+            runCatching { connection.uniqueName.value }.getOrNull(),
+            emitter
         )
+    }
+}
+
+/**
+ * Marshals [payload] (converted from the high-level value model via [toWireBodyValue]) against
+ * [signature] and sends it as a broadcast D-Bus SIGNAL on [wire]. The SENDER header is left unset:
+ * the bus daemon stamps the authoritative sender (our unique name) and attaches our credentials.
+ * An empty/blank signature means a no-argument signal (no body).
+ */
+private fun emitWireSignal(
+    wire: DBusWireConnection,
+    path: String,
+    interfaceName: String,
+    member: String,
+    signature: String?,
+    payload: List<Any?>
+) {
+    val effectiveSignature = signature?.takeUnless { it.isEmpty() }
+    val body = if (effectiveSignature == null) emptyList() else payload.map(::toWireBodyValue)
+    runCatching {
+        wire.send(
+            WireMessage(
+                type = WireMessageType.SIGNAL,
+                path = path,
+                interfaceName = interfaceName,
+                member = member,
+                signature = effectiveSignature,
+                body = body
+            )
+        )
+    }.getOrElse {
+        throw createError(-1, "emitSignal failed: ${it.message}")
+    }
 }
 
 internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbusConnection {
@@ -155,7 +203,7 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
     }
 
     override fun addMatch(match: String, callback: MessageHandler): Resource =
-        installSignalMatch(wire, match, parseMatchSpec(match), match, callback)
+        installSignalMatch(wire, match, parseMatchSpec(match), callback)
 
     override fun addMatchAsync(
         match: String,
@@ -486,17 +534,7 @@ internal class WireDbusProxy(
             resolvedOwner = owner
         )
         val rule = buildMatchRule(spec)
-        // In-process emitters (our own served objects) deliver through the shared local bus with
-        // their connection's unique name as the sender; resolve it so the local match lines up.
-        val localMatch = buildMatchRule(
-            MatchSpec(
-                sender = localDispatchOwnerOrNull(),
-                path = objectPath.value,
-                interfaceName = interfaceName.value,
-                member = signalName.value
-            )
-        )
-        return installSignalMatch(realWire, rule, spec, localMatch) { message ->
+        return installSignalMatch(realWire, rule, spec) { message ->
             signalHandler(message as com.monkopedia.sdbus.Signal)
         }
     }
@@ -552,20 +590,17 @@ private fun WireMessage.matches(spec: MatchSpec): Boolean {
     return true
 }
 
-// Installs a signal subscription on two paths so it mirrors the rest of the wire backend's
-// same-process/cross-process split:
-//  - the WIRE ([rule] + [spec] filter) carries signals from OTHER processes (e.g. a dbusmock
-//    peer), exercising the real bus reception path;
-//  - the in-process [LocalJvmMatchBus] ([localMatch]) carries signals our own served objects
-//    emit in the same process, which (like same-process method calls) are dispatched in-process
-//    rather than put on the wire. Cross-PROCESS signal EMISSION over the wire stays deferred
-//    (epic #93, dedicated phase); no in-suite test has an external peer receive a signal WE emit.
-// The two sources are disjoint, so a signal is delivered exactly once.
+// Installs a signal subscription that receives ENTIRELY over the wire (epic #93 phase 3b):
+// [rule] is registered on the bus via AddMatch and [spec] filters the incoming SIGNAL frames the
+// reader delivers. Because the wire backend now emits signals over the wire too (see
+// [emitWireSignal]), this single path covers BOTH cross-process senders (e.g. a dbusmock peer) and
+// our OWN same-JVM served objects: each connection has its own socket + AddMatch, so the bus routes
+// every matching signal to it exactly once. The in-process [LocalJvmSignalBus]/[LocalJvmMatchBus]
+// is no longer used on this backend (it stays the dbus-java backend's same-process mechanism).
 private fun installSignalMatch(
     wire: DBusWireConnection,
     rule: String,
     spec: MatchSpec,
-    localMatch: String,
     callback: MessageHandler
 ): Resource {
     runCatching { wire.addMatch(rule) }.getOrElse {
@@ -582,19 +617,74 @@ private fun installSignalMatch(
                 destination = wireMessage.destination,
                 valid = true,
                 empty = wireMessage.body.isEmpty()
-            )
+            ).withLocalSenderCredentials(wireMessage.sender)
         )
         signal.payload.addAll(fromWireReplyValues(wireMessage.body, wireMessage.signature))
         JvmCurrentMessageContext.withMessage(signal) { callback(signal) }
     }
-    val localResource = LocalJvmMatchBus.register(localMatch, callback)
     val removed = AtomicBoolean(false)
     return com.monkopedia.sdbus.ActionResource {
         if (!removed.compareAndSet(false, true)) return@ActionResource
         runCatching { subscription.close() }
         runCatching { wire.removeMatch(rule) }
-        runCatching { localResource.release() }
     }
+}
+
+// --- sender credentials (received signals) ---------------------------------------------------
+
+private data class WireSenderCredentials(
+    val pid: Int?,
+    val uid: UInt?,
+    val gid: UInt?,
+    val supplementaryGids: List<UInt>?,
+    val selinuxContext: String?
+)
+
+// Credentials of THIS process, used for senders that are one of our own connections (resolved via
+// LocalJvmServiceRegistry). A signal that traversed the bus carries the authoritative sender (the
+// bus stamps it), and for a same-process sender that is this very process -- so reporting the local
+// process credentials is correct and matches the dbus-java backend's local short-circuit
+// (resolveSenderCredentials -> localProcessCredentialsOrNull). Credentials of an EXTERNAL sender
+// would require a GetConnectionCredentials bus call, which cannot run on the reader thread that
+// delivers signals without deadlocking; no test needs it, so it is intentionally left out here.
+private val localProcessWireCredentials: WireSenderCredentials by lazy {
+    val pid = runCatching { ProcessHandle.current().pid().toInt() }.getOrNull()
+    val unix = runCatching { com.sun.security.auth.module.UnixSystem() }.getOrNull()
+    val selinuxContext = runCatching {
+        java.nio.file.Files.readString(java.nio.file.Paths.get("/proc/self/attr/current"))
+            .trim(' ', ' ')
+            .ifEmpty { null }
+    }.getOrNull()
+    WireSenderCredentials(
+        pid = pid,
+        uid = unix?.uid?.toUInt(),
+        gid = unix?.gid?.toUInt(),
+        supplementaryGids = unix?.groups?.map { it.toUInt() },
+        selinuxContext = selinuxContext
+    )
+}
+
+private fun Message.Metadata.withLocalSenderCredentials(sender: String?): Message.Metadata {
+    val senderName = sender?.takeIf { it.isNotBlank() } ?: return this
+    if (LocalJvmServiceRegistry.resolveLocalUniqueName(senderName) == null) return this
+    val creds = localProcessWireCredentials
+    if (creds.pid == null &&
+        creds.uid == null &&
+        creds.gid == null &&
+        creds.supplementaryGids == null &&
+        creds.selinuxContext == null
+    ) {
+        return this
+    }
+    return copy(
+        credsPid = creds.pid,
+        credsUid = creds.uid,
+        credsEuid = creds.uid,
+        credsGid = creds.gid,
+        credsEgid = creds.gid,
+        credsSupplementaryGids = creds.supplementaryGids,
+        selinuxContext = creds.selinuxContext
+    )
 }
 
 // --- value-model <-> marshaller-model bridge -------------------------------------------------

@@ -1392,11 +1392,56 @@ private fun addGenericSigHandler(
     return method.invoke(connection, matchRule, callback) as AutoCloseable
 }
 
+/**
+ * Sends a signal OVER THE WIRE on a self-owned connection (epic #93 phase 3b). Supplied to
+ * [PureJavaDbusObject] by the wire backend in place of in-process [LocalJvmSignalBus] delivery, so
+ * an object served on the owned connection emits a real D-Bus SIGNAL that the bus routes to every
+ * subscriber — external processes AND same-JVM connections (each of which has its own socket +
+ * `AddMatch`). The sender header is left unset: the bus stamps the authoritative sender (our unique
+ * name) and attaches the sender's credentials, which is what lets a receiver resolve them.
+ */
+internal fun interface WireSignalEmitter {
+    fun emitSignalOverWire(
+        path: String,
+        interfaceName: String,
+        member: String,
+        signature: String?,
+        payload: List<Any?>
+    )
+}
+
 internal class PureJavaDbusObject(
     private val objectPath: ObjectPath,
     private val javaConnection: AbstractConnection?,
-    private val senderName: String?
+    private val senderName: String?,
+    // When non-null (the wire backend), signals this object emits go over the wire instead of
+    // through the in-process [LocalJvmSignalBus]. The two are mutually exclusive on a given
+    // backend: dbus-java sends through its own connection (javaConnection != null); the wire
+    // backend has javaConnection == null and routes here; the in-process stub path keeps using
+    // [LocalJvmSignalBus]. This keeps signal delivery uniform with the native backend (always over
+    // the wire) for the owned connection. See WireDbusBackend.createObject.
+    private val wireSignalEmitter: WireSignalEmitter? = null
 ) : JvmDbusObject {
+
+    // Routes a signal whose owning connection is NOT dbus-java (javaConnection == null): over the
+    // wire when the wire backend supplied an emitter, otherwise through the in-process bus (the
+    // stub/no-connection path). The wire path needs the marshalling [signature]; the in-process
+    // path ignores it.
+    private fun emitLocalOrWire(
+        sender: String?,
+        path: String,
+        interfaceName: String,
+        member: String,
+        signature: String?,
+        payload: List<Any?>
+    ) {
+        val emitter = wireSignalEmitter
+        if (emitter != null) {
+            emitter.emitSignalOverWire(path, interfaceName, member, signature, payload)
+        } else {
+            LocalJvmSignalBus.emit(sender, path, interfaceName, member, payload)
+        }
+    }
     private val registrations = mutableListOf<Resource>()
     private val registeredInterfaces = mutableMapOf<String, Int>()
     private val asyncReplyTimeoutMs = 10_000L
@@ -1600,11 +1645,12 @@ internal class PureJavaDbusObject(
         val payload = listOf(interfaceName, changedProperties, invalidatedProperties)
         val realConnection = javaConnection
         if (realConnection == null) {
-            LocalJvmSignalBus.emit(
+            emitLocalOrWire(
                 sender = sender,
                 path = objectPath.value,
                 interfaceName = propertiesInterfaceName,
                 member = propertiesChangedMemberName,
+                signature = propertiesChangedSignature,
                 payload = payload
             )
             return
@@ -1650,11 +1696,12 @@ internal class PureJavaDbusObject(
         )
         val realConnection = javaConnection
         if (realConnection == null) {
-            LocalJvmSignalBus.emit(
+            emitLocalOrWire(
                 sender = sender,
                 path = signalPath,
                 interfaceName = objectManagerInterfaceName,
                 member = interfacesAddedMemberName,
+                signature = interfacesAddedSignature,
                 payload = payload
             )
             return
@@ -1689,11 +1736,12 @@ internal class PureJavaDbusObject(
         val payload = listOf(objectPath, interfaces)
         val realConnection = javaConnection
         if (realConnection == null) {
-            LocalJvmSignalBus.emit(
+            emitLocalOrWire(
                 sender = sender,
                 path = signalPath,
                 interfaceName = objectManagerInterfaceName,
                 member = interfacesRemovedMemberName,
+                signature = interfacesRemovedSignature,
                 payload = payload
             )
             return
@@ -1841,7 +1889,14 @@ internal class PureJavaDbusObject(
         val sender = message.sender?.value ?: senderName ?: javaConnection?.uniqueNameOrNull()
         val realConnection = javaConnection
         if (realConnection == null) {
-            LocalJvmSignalBus.emit(sender, path, interfaceName, signalName, message.payload)
+            emitLocalOrWire(
+                sender = sender,
+                path = path,
+                interfaceName = interfaceName,
+                member = signalName,
+                signature = signature,
+                payload = message.payload
+            )
             return
         }
         val rawSignal = runCatching {

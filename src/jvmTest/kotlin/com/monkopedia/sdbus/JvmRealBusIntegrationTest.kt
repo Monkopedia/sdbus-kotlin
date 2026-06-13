@@ -232,11 +232,10 @@ class JvmRealBusIntegrationTest {
 
     @Test
     fun signalCallback_resolvesSenderCredentialsFromBus() = runBlocking {
-        // wire signal emission deferred — epic #93 (dedicated phase): our object's signal is
-        // delivered in-process via the local bus, which carries no sender credentials. Resolving
-        // credentials needs the signal to travel over the wire (real wire emission), so this case
-        // is gated until that lands.
-        if (com.monkopedia.sdbus.internal.jvmdbus.isJvmWireBackendEnabled()) return@runBlocking
+        // Exercised on BOTH backends now (epic #93 phase 3b): the wire backend emits the signal over
+        // the wire, so the bus stamps the authoritative sender and the receiver resolves the
+        // sender's credentials (filled from the local process for a same-process sender), just as
+        // the dbus-java backend does.
         val suffix = "c${System.nanoTime()}"
         val service = ServiceName("com.monkopedia.sdbus.jvmreal.$suffix")
         val objectPath = ObjectPath("/com/monkopedia/sdbus/jvmreal$suffix/credentials")
