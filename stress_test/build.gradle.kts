@@ -27,8 +27,12 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation(libs.dbus.java.core)
-                runtimeOnly(libs.dbus.java.transport.junixsocket)
+                // dbus-java is an INDEPENDENT third-party D-Bus peer for the cross-runtime interop
+                // stress test — NOT sdbus-kotlin's backend (retired in epic #93 phase 6) and not a
+                // published dependency. Declared by literal coordinate so it stays out of the
+                // shared version catalog.
+                implementation("com.github.hypfvieh:dbus-java-core:5.2.0")
+                runtimeOnly("com.github.hypfvieh:dbus-java-transport-junixsocket:5.2.0")
             }
         }
     }

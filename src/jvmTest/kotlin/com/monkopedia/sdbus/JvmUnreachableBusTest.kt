@@ -7,11 +7,11 @@ import kotlin.test.assertTrue
 /**
  * Pins the issue #81 fix: when the bus is unreachable, the JVM connection factories must THROW
  * a [com.monkopedia.sdbus.Error] like the native backend (whose openBus fails with
- * "Failed to open bus") -- never silently fall back to the in-process stub backend
- * (`StubJvmDbusBackend`, unique name `:jvm-stub`) and fake a successful connection.
+ * "Failed to open bus") -- never silently fall back to a stub that fakes a successful connection.
  *
- * The exact D-Bus error *name* is not pinned across backends because dbus-java does not expose
- * the underlying errno that sd-bus would surface; the contract is the Error type and the throw.
+ * The exact D-Bus error *name* is not pinned across backends (the owned wire connection surfaces a
+ * connect/transport failure rather than an sd-bus errno); the contract is the Error type and the
+ * throw.
  */
 class JvmUnreachableBusTest {
 

@@ -547,19 +547,14 @@ class DbusmockTypeMatrixTest {
  * Whether this backend can marshal custom @Serializable struct values to/from a real remote
  * (out-of-process) peer.
  *
- * `true` on the native sd-bus backend. `false` on the JVM backend, which has TWO gaps that
- * only manifest against remote destinations (own-server tests miss both because in-process
- * calls short-circuit through JvmStaticDispatch, bypassing wire marshalling entirely):
+ * `true` on both backends. The native sd-bus backend always supported it; on the JVM the owned
+ * wire backend decomposes structs into wire-shaped values carrying their exact signature
+ * ([com.monkopedia.sdbus.Message.JvmStructPayload]) on the way to and from the marshaller, so a
+ * struct argument or reply round-trips against a remote peer.
  *
- * 1. Send direction: `Message.serialize` on JVM appends the raw Kotlin object to the payload
- *    and `toJavaSignalValue()` in PureJavaDbusBackend has no struct decomposition, so
- *    dbus-java fails with "Trying to marshall to unconvertible type (from ...SimpleStruct
- *    to ()" when sending a struct argument.
- * 2. Receive direction: `Message.deserialize` on JVM infers the *actual* signature from the
- *    runtime value; a decoded struct arrives as a list and is inferred as an array, so a
- *    struct reply fails with "signature mismatch expected=(is) actual=ai".
- *
- * Found by this suite (issue #35); the fix is ticketed separately.
+ * Found by this suite (issue #35) against the old dbus-java backend, which failed to marshal
+ * structs to/from remote destinations; fixed under issue #71 and the owned wire marshaller
+ * (epic #93). Both actuals are now `true`.
  */
 internal expect val peerStructMarshallingSupported: Boolean
 

@@ -14,7 +14,6 @@ hierynomus = "0.16.1"
 ktlint = "14.0.1"
 buildconfig = "6.0.9"
 vannik = "0.36.0"
-dbus-java = "5.2.0"
 junixsocket = "2.10.1"
 mockk = "1.14.9"
 
@@ -32,8 +31,6 @@ xmlutil = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "
 kotlinpoet = { module = "com.squareup:kotlinpoet-jvm", version.ref = "kotlinpoet" }
 kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt"}
-dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbus-java" }
-dbus-java-transport-junixsocket = { module = "com.github.hypfvieh:dbus-java-transport-junixsocket", version.ref = "dbus-java" }
 junixsocket-core = { module = "com.kohlschutter.junixsocket:junixsocket-core", version.ref = "junixsocket" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
