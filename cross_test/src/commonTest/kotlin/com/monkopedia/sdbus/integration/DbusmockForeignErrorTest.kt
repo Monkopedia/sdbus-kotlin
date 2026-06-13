@@ -154,17 +154,14 @@ class DbusmockForeignErrorTest {
  * Whether this backend preserves the D-Bus error name and message of error replies received
  * from a real remote (out-of-process) peer.
  *
- * `true` on the native sd-bus backend, where the wire error name/message land verbatim in
- * [com.monkopedia.sdbus.Error]'s `name`/`errorMessage`. `false` on the JVM backend:
- * `PureJavaDbusBackend.remoteCall` converts an `org.freedesktop.dbus.messages.Error` reply via
- * `createError(-1, message)`, which maps the `-1` errno through the EPERM entry of the errno
- * table — so EVERY foreign error surfaces as `org.freedesktop.DBus.Error.AccessDenied`
- * ("Operation not permitted...") regardless of the actual error name/message sent by the peer.
- * The same applies on the async path and to property Get/Set errors. Own-server tests miss
- * this because in-process calls short-circuit through JvmStaticDispatch, which rethrows the
- * original [com.monkopedia.sdbus.Error] without ever serializing it to the wire.
+ * `true` on both backends. On native sd-bus the wire error name/message land verbatim in
+ * [com.monkopedia.sdbus.Error]'s `name`/`errorMessage`. On the JVM the owned wire backend
+ * likewise copies the wire ERROR_NAME / message straight into [com.monkopedia.sdbus.Error]
+ * (see `WireDbusProxy.callRemote`) instead of squeezing them through the errno-based
+ * `createError` mapping.
  *
- * Found by this suite (issue #36); the fix is ticketed as issue #72 — when it lands, flip the
- * JVM actual to `true` so the full assertions enforce parity.
+ * Found by this suite (issue #36) against the old dbus-java backend, which mapped every foreign
+ * error to `org.freedesktop.DBus.Error.AccessDenied`; fixed under issue #72 when the JVM backend
+ * moved to the owned wire connection (epic #93). Both actuals are now `true`.
  */
 internal expect val peerErrorNameMappingSupported: Boolean

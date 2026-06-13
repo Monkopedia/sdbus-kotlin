@@ -45,15 +45,13 @@ import kotlinx.coroutines.runBlocking
  * JvmStaticDispatch the #90 investigation warned about: only true over-the-wire serving makes these
  * pass.
  *
- *  - wire backend BEFORE this phase: the read loop ignored incoming METHOD_CALLs, so busctl got
- *    `UnknownObject` (or timed out) and every assertion here FAILED;
- *  - wire backend AFTER this phase: the calls are routed to the vtable handlers and replied over the
- *    wire, so busctl gets correct results.
+ *  - before phase 4: the read loop ignored incoming METHOD_CALLs, so busctl got `UnknownObject`
+ *    (or timed out) and every assertion here FAILED;
+ *  - after phase 4: the calls are routed to the vtable handlers and replied over the wire, so
+ *    busctl gets correct results.
  *
- * Gated to the owned-wire backend (`-Dsdbus.jvm.wire=true`, exercised by CI's
- * `wire-client-parity-x64` job): the dbus-java backend serves exported objects in-process only
- * (the documented #90 limitation), so the test skips cleanly there rather than asserting a known
- * gap. Also skips when no session bus or no `busctl` is available.
+ * The owned wire connection is now the only JVM backend (epic #93 phase 6 retired dbus-java), so
+ * this always runs. Skips cleanly when no session bus or no `busctl` is available.
  */
 class WireServeExternalTest {
 
@@ -62,12 +60,6 @@ class WireServeExternalTest {
         val sessionBus = System.getenv("DBUS_SESSION_BUS_ADDRESS")
         if (sessionBus == null) {
             println("[WireServeExternalTest] SKIP: no DBUS_SESSION_BUS_ADDRESS.")
-            return@runBlocking
-        }
-        if (!System.getProperty("sdbus.jvm.wire").equals("true", ignoreCase = true)) {
-            println(
-                "[WireServeExternalTest] SKIP: owned-wire backend not enabled (sdbus.jvm.wire)."
-            )
             return@runBlocking
         }
         val busctl = findExecutable("busctl")

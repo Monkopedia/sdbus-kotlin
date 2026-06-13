@@ -28,7 +28,7 @@ import java.lang.reflect.Method
 
 /**
  * Struct marshalling to/from remote peers is supported since the issue #71 fix (structs are
- * decomposed into wire-shaped values via JvmValueCodec on the way to/from dbus-java).
+ * decomposed into wire-shaped values via JvmValueCodec on the way to/from the wire marshaller).
  */
 internal actual val peerStructMarshallingSupported: Boolean = true
 
@@ -38,15 +38,10 @@ internal actual val peerStructMarshallingSupported: Boolean = true
  * surface a real pipe through junixsocket's native primitives (the same path the library uses for
  * UnixFd, reached reflectively so no `--add-opens` is needed for java.base/java.io).
  *
- * Only enabled on the wire backend. The legacy dbus-java backend converts fds through
- * `org.freedesktop.dbus.FileDescriptor`, which reflects into `java.io.FileDescriptor`'s private
- * `fd` field and so needs JPMS `--add-opens`; that path is being retired (epic #93 phase 6), so the
- * sub-case stays skipped there rather than newly requiring add-opens for the old backend.
+ * The owned wire connection is now the only JVM backend (epic #93 phase 6 retired dbus-java), so
+ * raw fds round-trip natively over SCM_RIGHTS via junixsocket — closing the #83 JVM fd wire gap.
  */
-internal actual fun createTestPipe(): Pair<Int, Int>? {
-    if (!wireBackendEnabled) return null
-    return JunixFdBridge.createPipePair()
-}
+internal actual fun createTestPipe(): Pair<Int, Int>? = JunixFdBridge.createPipePair()
 
 internal actual fun writeToFd(fd: Int, data: ByteArray): Boolean {
     // Write through a duplicate so the caller's original descriptor stays open.
@@ -71,16 +66,10 @@ internal actual fun closeTestFd(fd: Int) {
     JunixFdBridge.close(fd)
 }
 
-private val wireBackendEnabled: Boolean by lazy {
-    System.getProperty("sdbus.jvm.wire")?.equals("true", ignoreCase = true)
-        ?: System.getenv("SDBUS_JVM_WIRE")?.equals("true", ignoreCase = true)
-        ?: false
-}
-
 /**
  * Minimal reflective bridge onto junixsocket's `NativeUnixSocket` native primitives (pipe / dup /
  * close / fd<->FileDescriptor), used only by JVM cross_test fd plumbing. junixsocket is on the test
- * runtime classpath via the dbus-java junixsocket transport.
+ * runtime classpath as a direct dependency (the owned JVM backend uses it).
  */
 private object JunixFdBridge {
     private val initFd: Method

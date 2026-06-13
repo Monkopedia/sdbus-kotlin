@@ -16,8 +16,8 @@ import kotlinx.serialization.modules.SerializersModule
 // instead of writing into an sd-bus message, values are encoded into/decoded from the JVM
 // backend's payload value tree, where a D-Bus struct is represented by
 // [Message.JvmStructPayload] (mirroring how [Message.JvmVariantPayload] represents variants).
-// This is what allows @Serializable struct types to survive the trip through the dbus-java
-// wire layer, which needs structs decomposed into positional values (issue #71), and what
+// This is what allows @Serializable struct types to survive the trip through the wire
+// marshaller, which needs structs decomposed into positional values (issue #71), and what
 // allows multi-out (grouped) replies to consume one payload value per out-arg (issue #74,
 // via the common degrouping machinery in DegroupingReturns.kt, which bypasses
 // beginStructure/endStructure on this encoder/decoder).

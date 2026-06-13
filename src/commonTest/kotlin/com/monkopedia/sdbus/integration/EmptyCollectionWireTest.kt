@@ -26,7 +26,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 
 /**
- * Exhaustive over-the-wire coverage of *empty* collection arguments, on both backends.
+ * Exhaustive over-the-wire coverage of *empty* collection arguments.
  *
  * Empty collections used to break the JVM backend: the wire signature was inferred from the
  * runtime value, and an empty value has nothing to infer from, so an empty `Map` emitted the
@@ -34,7 +34,7 @@ import kotlinx.serialization.Serializable
  * connection. The fix captures the *declared* signature from the serializer descriptor at
  * serialize time ([Message.declaredBodySignature]) and uses that for the wire body, only
  * falling back to value-inference when no declared signature is available
- * (see `inferSignalSignature` / `declaredBodySignature` in `PureJavaDbusBackend`).
+ * (see `wireBodySignature` / `declaredBodySignature` in the JVM wire backend).
  *
  * This extends the two cases added in #11 (empty `a{sv}` / empty `as` method args) to cover:
  *  - empty arrays of every common element type (incl. unsigned + `ay`)

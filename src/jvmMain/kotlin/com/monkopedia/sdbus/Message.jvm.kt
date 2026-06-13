@@ -21,8 +21,8 @@ actual sealed class Message {
     // Wire-shaped representation of a D-Bus struct value in the JVM payload model: the
     // declared struct signature (e.g. "(is)") plus its decomposed field values in order.
     // Produced by JvmValueEncoder (serializing @Serializable struct types) and by the
-    // signature-aware dbus-java conversion in PureJavaDbusBackend (receiving structs from a
-    // remote peer); consumed by JvmValueDecoder. See JvmValueCodec.jvm.kt (issue #71).
+    // signature-aware wire demarshaller (receiving structs from a remote peer); consumed by
+    // JvmValueDecoder. See JvmValueCodec.jvm.kt (issue #71).
     internal data class JvmStructPayload(val signature: String, val fields: List<Any?>)
     internal data class Metadata(
         val interfaceName: String? = null,
@@ -327,9 +327,9 @@ private fun coerceForDescriptor(value: Any?, descriptor: SerialDescriptor): Any?
             else -> value
         }
 
-        // D-Bus y/q/u/t map to Kotlin's unsigned inline classes. dbus-java hands back the
-        // signed primitive (e.g. a `ay` byte array arrives as java.lang.Byte values), so box
-        // it into the expected unsigned type — otherwise a List<UByte> ends up holding Byte
+        // D-Bus y/q/u/t map to Kotlin's unsigned inline classes. The wire demarshaller may hand
+        // back the signed primitive (e.g. a `ay` byte array arrives as java.lang.Byte values), so
+        // box it into the expected unsigned type — otherwise a List<UByte> ends up holding Byte
         // and unboxing throws ClassCastException (e.g. reading a GATT characteristic value).
         "kotlin.UByte" -> when (value) {
             is UByte -> value
@@ -544,7 +544,7 @@ internal actual fun <T> Message.serialize(
     val signature = runCatching { serializer.descriptor.asSignature.value }.getOrNull()
     if (signature != null && signature.contains('(')) {
         // Struct-containing types are decomposed into the wire-shaped value tree (structs
-        // become JvmStructPayload) so the dbus-java layer can marshal them (issue #71). A
+        // become JvmStructPayload) so the wire marshaller can marshal them (issue #71). A
         // degrouped serializer (multi-out reply, see DegroupingReturns.kt) produces one
         // top-level value per out-arg here, matching the wire shape of a grouped reply
         // (issue #74).

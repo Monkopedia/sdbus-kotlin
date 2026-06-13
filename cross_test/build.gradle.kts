@@ -30,8 +30,16 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation(libs.dbus.java.core)
-                runtimeOnly(libs.dbus.java.transport.junixsocket)
+                // dbus-java here is an INDEPENDENT third-party D-Bus peer used by
+                // CrossRuntimeInteropSmokeTest to prove sdbus-kotlin interoperates with another
+                // JVM D-Bus stack over a real bus. It is NOT sdbus-kotlin's backend (that was
+                // retired in epic #93 phase 6) and is not a published dependency; it is declared
+                // by literal coordinate so it stays out of the shared version catalog.
+                implementation("com.github.hypfvieh:dbus-java-core:5.2.0")
+                runtimeOnly("com.github.hypfvieh:dbus-java-transport-junixsocket:5.2.0")
+                // junixsocket on the test runtime classpath: the JVM fd cross-tests reflect onto
+                // its native primitives (see DbusmockFdSupport.jvm.kt).
+                implementation(libs.junixsocket.core)
             }
         }
     }
@@ -41,11 +49,6 @@ val crossNativeTestBinary = layout.buildDirectory.file("bin/linuxX64/debugTest/t
 val reverseInteropEnabled = providers
     .systemProperty("kdbus.crossRuntimeInterop.reverse.enabled")
     .orElse(providers.gradleProperty("kdbus.crossRuntimeInterop.reverse.enabled"))
-
-// Phase 3 (#93): forward the owned-connection client toggle to cross_test's JVM test JVMs.
-tasks.withType<Test>().configureEach {
-    System.getProperty("sdbus.jvm.wire")?.let { systemProperty("sdbus.jvm.wire", it) }
-}
 
 tasks.register<Test>("jvmInteropTest") {
     group = "verification"

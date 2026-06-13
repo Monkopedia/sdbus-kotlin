@@ -37,7 +37,7 @@ import com.monkopedia.sdbus.UnixFd
  * Implements the D-Bus marshalling rules faithfully: per-type natural alignment counted from the
  * start of the message body, all basic types, arrays/structs/dict-entries/variants, and BOTH
  * little- and big-endian read+write. This phase is standalone (no transport, no connection wiring)
- * and exercised by differential tests against dbus-java, hand-computed spec canaries, and the
+ * and exercised by hand-computed spec canaries, real-peer round-trips, and the
  * #71/#74/#26/#11/#27 bug corpus.
  *
  * NOTE: variants are consumed/produced as [Message.JvmVariantPayload]; the

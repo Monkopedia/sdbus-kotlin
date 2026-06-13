@@ -30,9 +30,9 @@ import kotlin.concurrent.thread
 import kotlin.time.Duration
 
 /**
- * JVM backend that routes the CLIENT path (and signal emission) through the self-owned D-Bus
- * connection ([DBusWireConnection]) instead of dbus-java (epic #93, phases 3 + 3b). Selected via
- * the `sdbus.jvm.wire` toggle (see [isJvmWireBackendEnabled]); dbus-java remains the default.
+ * The JVM D-Bus backend (epic #93): the one and only backend, routing everything through the
+ * self-owned D-Bus connection ([DBusWireConnection]) — raw junixsocket transport, our own
+ * marshaller and read/dispatch loop. dbus-java has been retired (phase 6).
  *
  * Scope, with a consistent same-process/cross-process split:
  * - method calls (sync + async) to a REMOTE peer and Properties Get/Set/GetAll go over the wire;
@@ -64,9 +64,11 @@ internal class WireDbusBackend : JvmDbusBackend {
             when (busType) {
                 JvmBusType.DEFAULT, JvmBusType.SESSION -> DBusWireConnection.connectSession()
                 JvmBusType.SYSTEM -> DBusWireConnection.connectSystem()
-                JvmBusType.SESSION_ADDRESS,
-                JvmBusType.DIRECT_ADDRESS ->
-                    endpoint?.let(DBusWireConnection::connect)
+                JvmBusType.SESSION_ADDRESS -> endpoint?.let(DBusWireConnection::connect)
+                // A DIRECT (brokerless) endpoint is peer-to-peer with no message-bus daemon: open
+                // it in direct mode so the connection skips the org.freedesktop.DBus bootstrap
+                // (Hello/RequestName/AddMatch) that an UnknownObject would otherwise fail on.
+                JvmBusType.DIRECT_ADDRESS -> endpoint?.let(DBusWireConnection::connectDirect)
                 JvmBusType.DIRECT_FD, JvmBusType.SERVER_FD -> null
             }
         }.getOrElse {
@@ -96,24 +98,19 @@ internal class WireDbusBackend : JvmDbusBackend {
     }
 
     override fun createObject(connection: Connection, objectPath: ObjectPath): JvmDbusObject {
-        // Reuse the in-process object machinery with no dbus-java connection: method dispatch and
-        // managed-object/property bookkeeping live in the shared local registries. Signal EMISSION,
-        // however, goes OVER THE WIRE (epic #93 phase 3b): we hand PureJavaDbusObject a
-        // WireSignalEmitter bound to this connection's socket, so every signal it emits is a real
+        // Method dispatch and managed-object/property bookkeeping live in the shared in-process
+        // registries; signal EMISSION goes OVER THE WIRE (epic #93 phase 3b): we hand WireDbusObject
+        // a WireSignalEmitter bound to this connection's socket, so every signal it emits is a real
         // D-Bus SIGNAL the bus routes to all subscribers (external processes AND same-JVM
         // connections, each via its own AddMatch) -- uniform with the native backend, and the only
         // way a receiver can resolve our sender credentials off the bus.
-        val wire = (connection as? JvmConnection)?.backend
-            .let { it as? WireDbusConnection }
-            ?.wireConnection
-        val emitter = wire?.let { wireConnection ->
-            WireSignalEmitter { path, interfaceName, member, signature, payload ->
-                emitWireSignal(wireConnection, path, interfaceName, member, signature, payload)
-            }
+        val wire = ((connection as? JvmConnection)?.backend as? WireDbusConnection)?.wireConnection
+            ?: throw createError(-1, "createObject failed: connection has no wire transport")
+        val emitter = WireSignalEmitter { path, interfaceName, member, signature, payload ->
+            emitWireSignal(wire, path, interfaceName, member, signature, payload)
         }
-        return PureJavaDbusObject(
+        return WireDbusObject(
             objectPath,
-            null,
             runCatching { connection.uniqueName.value }.getOrNull(),
             emitter
         )

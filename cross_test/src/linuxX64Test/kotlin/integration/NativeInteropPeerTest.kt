@@ -336,6 +336,10 @@ class NativeInteropPeerTest {
                     inputParamNames = listOf("fd")
                     outputParamNames = listOf("accepted")
                     call { fd: UnixFd ->
+                        // A negative descriptor would never legitimately arrive here: a well-behaved
+                        // client refuses to put an invalid Unix FD on the wire (neither sd-bus nor
+                        // junixsocket can pass -1 over SCM_RIGHTS — sendmsg fails EBADF). The client
+                        // therefore rejects it locally and this branch is defensive only.
                         if (fd.fd < 0) {
                             invalidRejected.value = true
                             throw peerError("Invalid Unix FD")
@@ -374,15 +378,16 @@ class NativeInteropPeerTest {
             }
 
             try {
+                // The invalid-FD (-1) case is rejected on the CLIENT (it cannot be marshalled onto
+                // SCM_RIGHTS), so it never reaches this peer — gate only on the valid round-trip
+                // having completed. (Previously this also required [invalidRejected], which no
+                // client could ever satisfy; the wait simply timed out and the failure was masked by
+                // --ktest_no_exit_code.)
                 assertTrue(
-                    waitUntil(
-                        { verificationComplete.value && invalidRejected.value },
-                        timeout = 20.seconds
-                    ),
-                    "Timed out waiting for JVM client FD verification + invalid rejection"
+                    waitUntil({ verificationComplete.value }, timeout = 20.seconds),
+                    "Timed out waiting for JVM client FD verification"
                 )
                 assertEquals(true, verificationComplete.value)
-                assertEquals(true, invalidRejected.value)
             } finally {
                 clearStoredPipe()
                 registration.release()
