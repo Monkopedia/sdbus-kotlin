@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
@@ -92,6 +93,18 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
     private val serialCounter = AtomicInteger(0)
     private val pending = ConcurrentHashMap<Int, CompletableFuture<WireMessage>>()
     private val signalListeners = CopyOnWriteArrayList<(WireMessage) -> Unit>()
+
+    // Incoming METHOD_CALL handler (epic #93 phase 4: serving). When set, every incoming method
+    // call is handed to it on a worker thread so a slow/async handler never stalls the reader.
+    @Volatile
+    private var incomingCallHandler: ((WireMessage) -> Unit)? = null
+
+    // Worker pool for serving incoming calls. Off the reader thread so handler execution (and any
+    // nested call a handler makes back on this same connection) cannot block reads or deadlock the
+    // reader: the reader only enqueues, then keeps reading and completing pending-call futures.
+    private val serveExecutor = Executors.newCachedThreadPool { runnable ->
+        thread(start = false, isDaemon = true, name = "sdbus-jvm-wire-serve") { runnable.run() }
+    }
 
     @Volatile
     private var uniqueNameValue: String? = null
@@ -181,7 +194,12 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
                 signalListeners.forEach { listener -> runCatching { listener(message) } }
 
             WireMessageType.METHOD_CALL -> {
-                // Phase 4: serving incoming calls. Ignored for now.
+                val handler = incomingCallHandler ?: return
+                // Hand off to a worker so the reader thread keeps draining the socket; a handler
+                // may itself call back on this connection and await a reply the reader delivers.
+                runCatching {
+                    serveExecutor.execute { runCatching { handler(message) } }
+                }
             }
         }
     }
@@ -285,6 +303,15 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
         return SignalSubscription { signalListeners.remove(listener) }
     }
 
+    /**
+     * Installs the handler that serves incoming METHOD_CALL messages (epic #93 phase 4). The
+     * handler runs on a worker thread (never the reader) and is responsible for sending any reply
+     * via [send]. At most one handler is installed per connection.
+     */
+    fun setIncomingCallHandler(handler: (WireMessage) -> Unit) {
+        incomingCallHandler = handler
+    }
+
     // --- bus bootstrap & standard calls ---------------------------------------------------------
 
     private fun hello() {
@@ -386,6 +413,7 @@ internal class DBusWireConnection private constructor(private val socket: AFUNIX
 
     override fun close() {
         running = false
+        runCatching { serveExecutor.shutdownNow() }
         runCatching { socket.close() }
         readerThread?.let { reader ->
             if (reader !== Thread.currentThread()) {
