@@ -1764,10 +1764,23 @@ internal class PureJavaDbusObject(
         }
     }
 
-    override fun addObjectManager(): Resource =
-        LocalObjectManagerRegistry.register(objectPath.value, dispatchDestination).also {
-            registrations += it
+    override fun addObjectManager(): Resource {
+        val local = LocalObjectManagerRegistry.register(objectPath.value, dispatchDestination)
+        registrations += local
+        // Wire backend: also advertise ObjectManager for over-the-wire introspection/serving.
+        val wireResource = if (wireSignalEmitter != null) {
+            WireServeRegistry.registerObjectManager(dispatchDestination, objectPath.value)
+                .also { registrations += it }
+        } else {
+            null
         }
+        return ActionResource {
+            local.release()
+            wireResource?.release()
+            registrations.remove(local)
+            wireResource?.let { registrations.remove(it) }
+        }
+    }
 
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
@@ -1794,6 +1807,17 @@ internal class PureJavaDbusObject(
             interfaceName = interfaceName.value
         ) {
             snapshotInterfaceProperties(interfaceName.value)
+        }
+        // Wire backend (epic #93 phase 4): capture the vtable metadata so the owned connection can
+        // route, introspect and serve this object to EXTERNAL callers over the bus, not just
+        // in-process. The dbus-java/stub paths (wireSignalEmitter == null) don't need this.
+        if (wireSignalEmitter != null) {
+            resources += WireServeRegistry.registerVTable(
+                destination = dispatchDestination,
+                path = objectPath.value,
+                interfaceName = interfaceName.value,
+                vtable = vtable
+            )
         }
         resources += vtable.mapNotNull { item ->
             val method = item as? MethodVTableItem ?: return@mapNotNull null

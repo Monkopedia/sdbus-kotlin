@@ -163,6 +163,12 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
 
     init {
         LocalJvmServiceRegistry.registerLocalUniqueName(localUniqueName)
+        // Serve incoming method calls (epic #93 phase 4 — closes #90): route every METHOD_CALL the
+        // bus delivers to one of our exported objects through the shared dispatch tables and send
+        // the reply. Runs on the connection's serve worker, never the reader thread.
+        wire.setIncomingCallHandler { message ->
+            WireServe.handleIncomingCall(wire, localUniqueName, message)
+        }
     }
 
     override fun startEventLoop(): Unit = Unit
@@ -701,7 +707,7 @@ private fun microsToMillis(micros: ULong): Long =
  * (e.g. [ObjectPath]/[Signature] as strings, [UnixFd] as its int). The reply path needs NO
  * conversion: the demarshaller already produces decoder-compatible values.
  */
-private fun toWireBodyValue(value: Any?): Any? = when (value) {
+internal fun toWireBodyValue(value: Any?): Any? = when (value) {
     is Variant -> variantToPayload(value)
     // The string-like strong-name value classes arrive boxed in the payload (e.g. the
     // InterfaceName/PropertyName args of a Properties.Get call), since serialize() adds the raw
@@ -710,6 +716,8 @@ private fun toWireBodyValue(value: Any?): Any? = when (value) {
     // Signature and UnixFd pass through: the marshaller coerces those itself.)
     is BusName -> value.value
     is InterfaceName -> value.value
+    // MemberName covers its PropertyName/SignalName/MethodName typealiases (e.g. GetAll's
+    // PropertyName map keys), which must unwrap to their String for the marshaller's `s` handling.
     is MemberName -> value.value
     is Message.JvmVariantPayload ->
         Message.JvmVariantPayload(value.signature, toWireBodyValue(value.value))
@@ -748,7 +756,7 @@ private fun variantToPayload(variant: Variant): Message.JvmVariantPayload {
  * the reply body is NOT decoder-compatible (variants ClassCastException, `o` trips signature
  * enforcement); the demarshaller alone is signature-agnostic about these distinctions.
  */
-private fun fromWireReplyValues(body: List<Any?>, signature: String?): List<Any?> {
+internal fun fromWireReplyValues(body: List<Any?>, signature: String?): List<Any?> {
     val types = signature?.let(::splitTopLevelTypes).orEmpty()
     return body.mapIndexed { index, value -> fromWireReplyValue(value, types.getOrNull(index)) }
 }
