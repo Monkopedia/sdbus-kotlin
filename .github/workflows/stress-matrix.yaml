@@ -223,3 +223,43 @@ jobs:
         run: |
           echo "Stress flake triage policy: docs/FLAKE_TRIAGE.md"
           echo "Re-run locally with the failing matrix case filter and direction."
+
+  # Native Kotlin/Native GC-cleaner soak. Probabilistic (forces GC, polls for finalizers), so it is
+  # excluded from the default linuxX64Test run (see the gcSoak gate in build.gradle.kts) and only runs
+  # here on the nightly schedule. All probes are bus-free (pseudo connection), so no dbus is required.
+  cleaner-soak:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tier == 'nightly')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Native Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev
+
+      - name: Run GC Cleaner Soak (linuxX64)
+        run: |
+          set -euo pipefail
+          ./gradlew :linuxX64Test --tests "*CleanerSoakTest*" -PgcSoak \
+            --rerun-tasks --stacktrace | tee cleaner-soak-linuxx64.log
+
+      - name: Upload Failure Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleaner-soak-${{ github.run_id }}
+          retention-days: 30
+          path: |
+            cleaner-soak-*.log
+            build/test-results/**
+            build/reports/tests/**
