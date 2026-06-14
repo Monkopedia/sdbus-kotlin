@@ -228,6 +228,15 @@ tasks.register("crossRuntimeStressTests") {
     dependsOn(":stress_test:jvmInteropStressTest")
 }
 
+// The native GC-cleaner soak suite (CleanerSoakTest) is probabilistic by nature (it forces GC and
+// polls for finalizers), so it is excluded from the default test run to keep the PR gate flake-free.
+// It runs on the nightly schedule via `-PgcSoak` (see the cleaner-soak job in stress-matrix.yaml).
+if (!project.hasProperty("gcSoak")) {
+    tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
+        filter.excludeTestsMatching("com.monkopedia.sdbus.unit.CleanerSoakTest")
+    }
+}
+
 val dokkaAssets = rootProject.file("dokka/assets").listFiles()?.toList().orEmpty()
 val dokkaLogoStyleSheet = rootProject.file("dokka/styles/logo-styles.css")
 
