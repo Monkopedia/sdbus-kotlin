@@ -83,8 +83,11 @@ actual class MethodCall internal constructor(
         )
         sdbusRequire(r < 0, "Failed to call method asynchronously", -r)
 
+        // Local capture so the cleanup closure does not pin this MethodCall message (see
+        // ConnectionImpl.addObjectVTable); the slot Reference outlives the closure's execution.
+        val localSdbus = sdbus
         Reference(slot[0]) {
-            sdbus.sd_bus_slot_unref(it)
+            localSdbus.sd_bus_slot_unref(it)
             userDataRef?.dispose()
         }
     }

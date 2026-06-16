@@ -224,9 +224,10 @@ jobs:
           echo "Stress flake triage policy: docs/FLAKE_TRIAGE.md"
           echo "Re-run locally with the failing matrix case filter and direction."
 
-  # Native Kotlin/Native GC-cleaner soak. Probabilistic (forces GC, polls for finalizers), so it is
-  # excluded from the default linuxX64Test run (see the gcSoak gate in build.gradle.kts) and only runs
-  # here on the nightly schedule. All probes are bus-free (pseudo connection), so no dbus is required.
+  # GC-cleaner soak (native + JVM). Probabilistic (forces GC, polls for finalizers), so it is excluded
+  # from the default test run (see the gcSoak gate in build.gradle.kts) and only runs here on the
+  # nightly schedule. CleanerSoakTest is bus-free, but the lifecycle suites (native + JVM) exercise a
+  # real served object/connection, so the whole run is wrapped in dbus-run-session.
   cleaner-soak:
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tier == 'nightly')
     runs-on: ubuntu-latest
@@ -245,13 +246,14 @@ jobs:
       - name: Install Native Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus
 
-      - name: Run GC Cleaner Soak (linuxX64)
+      - name: Run GC Cleaner Soak (native + JVM)
         run: |
           set -euo pipefail
-          ./gradlew :linuxX64Test --tests "*CleanerSoakTest*" -PgcSoak \
-            --rerun-tasks --stacktrace | tee cleaner-soak-linuxx64.log
+          dbus-run-session -- ./gradlew :linuxX64Test :jvmTest \
+            --tests "*Cleaner*SoakTest*" -PgcSoak \
+            --rerun-tasks --stacktrace | tee cleaner-soak.log
 
       - name: Upload Failure Artifacts
         if: failure()
@@ -260,6 +262,6 @@ jobs:
           name: cleaner-soak-${{ github.run_id }}
           retention-days: 30
           path: |
-            cleaner-soak-*.log
+            cleaner-soak*.log
             build/test-results/**
             build/reports/tests/**

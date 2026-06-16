@@ -211,6 +211,12 @@ internal class ObjectImpl(
         fun clear() {
             scope.clear()
             obj = null
+            // Drop references to user-supplied callbacks. The VTable object can outlive release()
+            // (it is held by its Reference's GC cleaner until collected), and these callbacks capture
+            // the owning adaptor/object — so failing to clear them leaks the served object.
+            methods.clear()
+            signals.clear()
+            properties.clear()
         }
 
         data class MethodItem(
