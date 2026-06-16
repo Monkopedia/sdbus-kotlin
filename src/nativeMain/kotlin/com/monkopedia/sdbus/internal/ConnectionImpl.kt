@@ -368,8 +368,9 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
         sdbusRequire(r < 0, "Failed to add object manager", -r)
 
+        val localSdbus = sdbus
         Reference(slot[0]) {
-            sdbus.sd_bus_slot_unref(it)
+            localSdbus.sd_bus_slot_unref(it)
         }
     }
 
@@ -437,8 +438,10 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         )
         sdbusRequire(r < 0, "Failed to add match", -r)
 
+        // Local capture so the cleanup closure does not pin `this@ConnectionImpl` (see addObjectVTable).
+        val localSdbus = sdbus
         Reference(matchInfo to slot[0]) { (_, ref) ->
-            sdbus.sd_bus_slot_unref(ref)
+            localSdbus.sd_bus_slot_unref(ref)
             stableRef.dispose()
         }.also(floatingMatchRules::add)
     }
@@ -467,8 +470,14 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         sdbusRequire(r < 0, "Failed to register object vtable", -r)
 
         val cPointer = slot[0]
+        // Capture `sdbus` into a local so the cleanup closure does NOT capture `this@ConnectionImpl`.
+        // The closure is retained by the returned Reference's GC cleaner even after it runs, so a
+        // `this` capture here would pin the whole connection for the lifetime of every registered
+        // object's vtable slot (the compiler's non-capturing createCleaner check does not catch it
+        // because the capture is laundered through Reference's onLeaveScopes parameter).
+        val localSdbus = sdbus
         Reference(cPointer) {
-            sdbus.sd_bus_slot_unref(it)
+            localSdbus.sd_bus_slot_unref(it)
             ref?.dispose()
         }
     }
@@ -671,8 +680,9 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
         sdbusRequire(r < 0, "Failed to register signal handler", -r)
 
+        val localSdbus = sdbus
         Reference(slot[0]) {
-            sdbus.sd_bus_slot_unref(it)
+            localSdbus.sd_bus_slot_unref(it)
             ref?.dispose()
         }
     }

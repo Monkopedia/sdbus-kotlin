@@ -415,6 +415,11 @@ internal class WireDbusObject(
                 if (props.isNullOrEmpty()) {
                     propertiesByInterface.remove(interfaceName.value)
                 }
+                // When no property interfaces remain, drop the shared Properties dispatch handlers
+                // so this object (and its captured adaptor) is not pinned by the dispatch singleton.
+                if (propertiesByInterface.isEmpty()) {
+                    unregisterPropertiesDispatch()
+                }
             }
         }
     }
@@ -453,9 +458,34 @@ internal class WireDbusObject(
         )
     }
 
+    private fun unregisterPropertiesDispatch() {
+        if (!propertiesDispatchRegistered) return
+        // The Properties Get/Set/GetAll handlers live in the process-wide JvmStaticDispatch
+        // singleton and each captures this WireDbusObject (and through it the user adaptor's
+        // getters/setters and the wire connection). They must be removed on teardown or the
+        // served object leaks for its whole process lifetime.
+        unregisterPropertiesMethod("Get", 2)
+        unregisterPropertiesMethod("Set", 3)
+        unregisterPropertiesMethod("GetAll", 1)
+        propertiesDispatchRegistered = false
+    }
+
+    private fun unregisterPropertiesMethod(methodName: String, argCount: Int) {
+        JvmStaticDispatch.unregister(
+            objectPath = objectPath.value,
+            interfaceName = propertiesInterfaceName,
+            methodName = methodName,
+            argCount = argCount,
+            destination = dispatchDestination
+        )
+    }
+
     override fun release(): Unit = run {
         registrations.forEach { it.release() }
         registrations.clear()
+        unregisterPropertiesDispatch()
+        propertiesByInterface.clear()
+        registeredInterfaces.clear()
     }
 }
 
