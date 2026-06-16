@@ -9,11 +9,14 @@ import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Resource
+import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.createBusConnection
 import com.monkopedia.sdbus.createObject
+import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.onSignal
 import com.monkopedia.sdbus.prop
 import com.monkopedia.sdbus.signal
 import kotlin.experimental.ExperimentalNativeApi
@@ -54,6 +57,7 @@ class CleanerLifecycleSoakTest {
     private val attempts = 600
     private val iface = InterfaceName("org.sdbuskotlin.soak.Iface")
     private val path = ObjectPath("/org/sdbuskotlin/soak")
+    private val peer = ServiceName("org.sdbuskotlin.soak.Peer")
 
     /**
      * A minimal adaptor whose registrations capture `this` exactly the way generated adaptors do:
@@ -106,6 +110,40 @@ class CleanerLifecycleSoakTest {
     @Test
     fun connectionIsCollectedAfterServingAndRelease() {
         assertCollects("Connection after serving + release()", setUpAndReleaseConnection())
+    }
+
+    @Test
+    fun proxyIsCollectedAfterSignalSubscriptionAndRelease() {
+        val conn = createBusConnection()
+        try {
+            assertCollects("Proxy after signal subscription", setUpAndReleaseProxy(conn))
+        } finally {
+            conn.release()
+        }
+    }
+
+    @Test
+    fun connectionIsCollectedAfterProxySignalSubscription() {
+        // Exercises ConnectionImpl.registerSignalHandler: its slot Reference cleanup closure used to
+        // capture this@ConnectionImpl, pinning the connection for the subscription's lifetime.
+        assertCollects("Connection after proxy subscription", setUpAndReleaseProxyConnection())
+    }
+
+    /** Subscribe a signal on a proxy, then tear the proxy down; the proxy must be collectable. */
+    private fun setUpAndReleaseProxy(conn: Connection): WeakReference<Any> {
+        val proxy = createProxy(conn, peer, path, runEventLoopThread = false)
+        proxy.onSignal(iface, SignalName("Tick")) { call { _: ULong -> } }.release()
+        proxy.release()
+        return WeakReference(proxy)
+    }
+
+    private fun setUpAndReleaseProxyConnection(): WeakReference<Any> {
+        val conn = createBusConnection()
+        val proxy = createProxy(conn, peer, path, runEventLoopThread = false)
+        proxy.onSignal(iface, SignalName("Tick")) { call { _: ULong -> } }.release()
+        proxy.release()
+        conn.release()
+        return WeakReference(conn)
     }
 
     /** Frame returns a weak ref only; the adaptor is unreachable on return once released. */
