@@ -6,6 +6,39 @@
 // - Show declarations: true
 
 // Library unique name: <com.monkopedia:sdbus-kotlin>
+final enum class com.monkopedia.sdbus/RequestNameFlag : kotlin/Enum<com.monkopedia.sdbus/RequestNameFlag> { // com.monkopedia.sdbus/RequestNameFlag|null[0]
+    enum entry ALLOW_REPLACEMENT // com.monkopedia.sdbus/RequestNameFlag.ALLOW_REPLACEMENT|null[0]
+    enum entry DO_NOT_QUEUE // com.monkopedia.sdbus/RequestNameFlag.DO_NOT_QUEUE|null[0]
+    enum entry REPLACE_EXISTING // com.monkopedia.sdbus/RequestNameFlag.REPLACE_EXISTING|null[0]
+
+    final val entries // com.monkopedia.sdbus/RequestNameFlag.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.monkopedia.sdbus/RequestNameFlag> // com.monkopedia.sdbus/RequestNameFlag.entries.<get-entries>|<get-entries>#static(){}[0]
+    final val mask // com.monkopedia.sdbus/RequestNameFlag.mask|{}mask[0]
+        final fun <get-mask>(): kotlin/UInt // com.monkopedia.sdbus/RequestNameFlag.mask.<get-mask>|<get-mask>(){}[0]
+
+    final fun valueOf(kotlin/String): com.monkopedia.sdbus/RequestNameFlag // com.monkopedia.sdbus/RequestNameFlag.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.monkopedia.sdbus/RequestNameFlag> // com.monkopedia.sdbus/RequestNameFlag.values|values#static(){}[0]
+}
+
+final enum class com.monkopedia.sdbus/RequestNameReply : kotlin/Enum<com.monkopedia.sdbus/RequestNameReply> { // com.monkopedia.sdbus/RequestNameReply|null[0]
+    enum entry ALREADY_OWNER // com.monkopedia.sdbus/RequestNameReply.ALREADY_OWNER|null[0]
+    enum entry EXISTS // com.monkopedia.sdbus/RequestNameReply.EXISTS|null[0]
+    enum entry IN_QUEUE // com.monkopedia.sdbus/RequestNameReply.IN_QUEUE|null[0]
+    enum entry PRIMARY_OWNER // com.monkopedia.sdbus/RequestNameReply.PRIMARY_OWNER|null[0]
+
+    final val code // com.monkopedia.sdbus/RequestNameReply.code|{}code[0]
+        final fun <get-code>(): kotlin/Int // com.monkopedia.sdbus/RequestNameReply.code.<get-code>|<get-code>(){}[0]
+    final val entries // com.monkopedia.sdbus/RequestNameReply.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.monkopedia.sdbus/RequestNameReply> // com.monkopedia.sdbus/RequestNameReply.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.monkopedia.sdbus/RequestNameReply // com.monkopedia.sdbus/RequestNameReply.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.monkopedia.sdbus/RequestNameReply> // com.monkopedia.sdbus/RequestNameReply.values|values#static(){}[0]
+
+    final object Companion { // com.monkopedia.sdbus/RequestNameReply.Companion|null[0]
+        final fun fromCode(kotlin/Int): com.monkopedia.sdbus/RequestNameReply? // com.monkopedia.sdbus/RequestNameReply.Companion.fromCode|fromCode(kotlin.Int){}[0]
+    }
+}
+
 abstract interface com.monkopedia.sdbus/Connection : com.monkopedia.sdbus/Resource { // com.monkopedia.sdbus/Connection|null[0]
     abstract val currentlyProcessedMessage // com.monkopedia.sdbus/Connection.currentlyProcessedMessage|{}currentlyProcessedMessage[0]
         abstract fun <get-currentlyProcessedMessage>(): com.monkopedia.sdbus/Message // com.monkopedia.sdbus/Connection.currentlyProcessedMessage.<get-currentlyProcessedMessage>|<get-currentlyProcessedMessage>(){}[0]
@@ -19,7 +52,7 @@ abstract interface com.monkopedia.sdbus/Connection : com.monkopedia.sdbus/Resour
     abstract fun addMatch(kotlin/String, kotlin/Function1<com.monkopedia.sdbus/Message, kotlin/Unit>): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addMatch|addMatch(kotlin.String;kotlin.Function1<com.monkopedia.sdbus.Message,kotlin.Unit>){}[0]
     abstract fun addObjectManager(com.monkopedia.sdbus/ObjectPath): com.monkopedia.sdbus/Resource // com.monkopedia.sdbus/Connection.addObjectManager|addObjectManager(com.monkopedia.sdbus.ObjectPath){}[0]
     abstract fun releaseName(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Connection.releaseName|releaseName(com.monkopedia.sdbus.BusName){}[0]
-    abstract fun requestName(com.monkopedia.sdbus/BusName) // com.monkopedia.sdbus/Connection.requestName|requestName(com.monkopedia.sdbus.BusName){}[0]
+    abstract fun requestName(com.monkopedia.sdbus/BusName, kotlin/Array<out com.monkopedia.sdbus/RequestNameFlag>...): com.monkopedia.sdbus/RequestNameReply // com.monkopedia.sdbus/Connection.requestName|requestName(com.monkopedia.sdbus.BusName;kotlin.Array<out|com.monkopedia.sdbus.RequestNameFlag>...){}[0]
     abstract fun startEventLoop() // com.monkopedia.sdbus/Connection.startEventLoop|startEventLoop(){}[0]
     abstract suspend fun stopEventLoop() // com.monkopedia.sdbus/Connection.stopEventLoop|stopEventLoop(){}[0]
 }

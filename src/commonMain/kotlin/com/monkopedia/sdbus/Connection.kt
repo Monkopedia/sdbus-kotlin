@@ -139,10 +139,12 @@ interface Connection : Resource {
      * Requests a well-known D-Bus service name on a bus
      *
      * @param name Name to request
+     * @param flags Zero or more [RequestNameFlag]s controlling queueing/replacement behavior
+     * @return The [RequestNameReply] outcome reported by the bus
      *
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
-    fun requestName(name: ServiceName)
+    fun requestName(name: ServiceName, vararg flags: RequestNameFlag): RequestNameReply
 
     /**
      * Releases an acquired well-known D-Bus service name on a bus
@@ -152,6 +154,46 @@ interface Connection : Resource {
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun releaseName(name: ServiceName)
+}
+
+/**
+ * Flags controlling how a well-known service name is requested via [Connection.requestName].
+ *
+ * The [mask] values mirror the D-Bus `RequestName` flag bits.
+ */
+enum class RequestNameFlag(val mask: UInt) {
+    /** Allow another client to take the name away from us later (`DBUS_NAME_FLAG_ALLOW_REPLACEMENT`). */
+    ALLOW_REPLACEMENT(0x1u),
+
+    /** Take the name away from its current owner if that owner allowed replacement (`DBUS_NAME_FLAG_REPLACE_EXISTING`). */
+    REPLACE_EXISTING(0x2u),
+
+    /** Do not queue behind the current owner; fail immediately if the name is taken (`DBUS_NAME_FLAG_DO_NOT_QUEUE`). */
+    DO_NOT_QUEUE(0x4u)
+}
+
+/**
+ * The outcome of a [Connection.requestName] call, mirroring the D-Bus `RequestName` reply codes.
+ *
+ * The [code] values mirror the D-Bus `DBUS_REQUEST_NAME_REPLY_*` reply codes.
+ */
+enum class RequestNameReply(val code: Int) {
+    /** The caller is now the primary owner of the name (`DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER`). */
+    PRIMARY_OWNER(1),
+
+    /** The name already had an owner; the caller has been placed in the queue (`DBUS_REQUEST_NAME_REPLY_IN_QUEUE`). */
+    IN_QUEUE(2),
+
+    /** The name already had an owner and `DO_NOT_QUEUE` was set, so the request was refused (`DBUS_REQUEST_NAME_REPLY_EXISTS`). */
+    EXISTS(3),
+
+    /** The caller already was the owner of the name (`DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER`). */
+    ALREADY_OWNER(4);
+
+    companion object {
+        /** Maps a raw D-Bus `RequestName` reply [code] (1..4) to its [RequestNameReply], or `null` if unknown. */
+        fun fromCode(code: Int): RequestNameReply? = entries.firstOrNull { it.code == code }
+    }
 }
 
 internal expect fun now(): Duration
@@ -234,50 +276,3 @@ expect fun createSessionBusConnection(address: String): Connection
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createDirectBusConnection(address: String): Connection
-
-/**
- * Opens direct D-Bus connection at the given file descriptor
- *
- * Native-only API.
- * On JVM, fd-backed direct connections are not supported by the underlying transport stack.
- *
- * @param fd File descriptor used to communicate directly from/to a D-Bus server
- * @return [Connection] instance
- *
- * The connection adopts (takes over ownership of) the file descriptor held by [fd] without
- * duplicating it: on success, [fd] no longer owns the descriptor (it is detached, and neither
- * releasing nor garbage-collecting [fd] will close it), and the connection closes the
- * descriptor when it is destroyed. If, however, the call throws an exception, the ownership
- * of the descriptor remains with [fd].
- *
- * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
- * a duplicate while keeping your own descriptor.
- *
- * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
- */
-expect fun createDirectBusConnection(fd: UnixFd): Connection
-
-/**
- * Opens direct D-Bus connection at fd as a server
- *
- * Native-only API.
- * On JVM, fd-backed server buses are not supported by the underlying transport stack.
- *
- * @param fd File descriptor to use for server DBus connection
- * @return [Connection] server instance
- *
- * This creates a new, custom bus object in server mode. One can then call createDirectBusConnection()
- * on client side to connect to this bus.
- *
- * The connection adopts (takes over ownership of) the file descriptor held by [fd] without
- * duplicating it: on success, [fd] no longer owns the descriptor (it is detached, and neither
- * releasing nor garbage-collecting [fd] will close it), and the connection closes the
- * descriptor when it is destroyed. If, however, the call throws an exception, the ownership
- * of the descriptor remains with [fd].
- *
- * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
- * a duplicate while keeping your own descriptor.
- *
- * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
- */
-expect fun createServerBusConnection(fd: UnixFd): Connection

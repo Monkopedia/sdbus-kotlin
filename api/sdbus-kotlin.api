@@ -54,7 +54,7 @@ public abstract interface class com/monkopedia/sdbus/Connection : com/monkopedia
 	public abstract fun getMethodCallTimeout-UwyO8pc ()J
 	public abstract fun getUniqueName-AwvMx1g ()Ljava/lang/String;
 	public abstract fun releaseName-em-jQOc (Ljava/lang/String;)V
-	public abstract fun requestName-em-jQOc (Ljava/lang/String;)V
+	public abstract fun requestName-joT7nYs (Ljava/lang/String;[Lcom/monkopedia/sdbus/RequestNameFlag;)Lcom/monkopedia/sdbus/RequestNameReply;
 	public abstract fun setMethodCallTimeout-LRDsOJo (J)V
 	public abstract fun startEventLoop ()V
 	public abstract fun stopEventLoop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -67,9 +67,7 @@ public final class com/monkopedia/sdbus/Connection$DefaultImpls {
 public final class com/monkopedia/sdbus/Connection_jvmKt {
 	public static final fun createBusConnection ()Lcom/monkopedia/sdbus/Connection;
 	public static final fun createBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
-	public static final fun createDirectBusConnection (Lcom/monkopedia/sdbus/UnixFd;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createDirectBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
-	public static final fun createServerBusConnection (Lcom/monkopedia/sdbus/UnixFd;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection ()Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
 	public static final fun createSessionBusConnection-em-jQOc (Ljava/lang/String;)Lcom/monkopedia/sdbus/Connection;
@@ -470,6 +468,32 @@ public final class com/monkopedia/sdbus/Proxy_jvmKt {
 	public static synthetic fun createProxy-C_B2loI$default (Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Proxy;
 	public static final fun createProxy-M1YkbpM (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Proxy;
 	public static synthetic fun createProxy-M1YkbpM$default (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Proxy;
+}
+
+public final class com/monkopedia/sdbus/RequestNameFlag : java/lang/Enum {
+	public static final field ALLOW_REPLACEMENT Lcom/monkopedia/sdbus/RequestNameFlag;
+	public static final field DO_NOT_QUEUE Lcom/monkopedia/sdbus/RequestNameFlag;
+	public static final field REPLACE_EXISTING Lcom/monkopedia/sdbus/RequestNameFlag;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getMask-pVg5ArA ()I
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/RequestNameFlag;
+	public static fun values ()[Lcom/monkopedia/sdbus/RequestNameFlag;
+}
+
+public final class com/monkopedia/sdbus/RequestNameReply : java/lang/Enum {
+	public static final field ALREADY_OWNER Lcom/monkopedia/sdbus/RequestNameReply;
+	public static final field Companion Lcom/monkopedia/sdbus/RequestNameReply$Companion;
+	public static final field EXISTS Lcom/monkopedia/sdbus/RequestNameReply;
+	public static final field IN_QUEUE Lcom/monkopedia/sdbus/RequestNameReply;
+	public static final field PRIMARY_OWNER Lcom/monkopedia/sdbus/RequestNameReply;
+	public final fun getCode ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/sdbus/RequestNameReply;
+	public static fun values ()[Lcom/monkopedia/sdbus/RequestNameReply;
+}
+
+public final class com/monkopedia/sdbus/RequestNameReply$Companion {
+	public final fun fromCode (I)Lcom/monkopedia/sdbus/RequestNameReply;
 }
 
 public abstract interface class com/monkopedia/sdbus/Resource : java/lang/AutoCloseable {

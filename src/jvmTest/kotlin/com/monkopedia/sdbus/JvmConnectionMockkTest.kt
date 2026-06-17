@@ -60,17 +60,17 @@ class JvmConnectionMockkTest {
 
         every { backend.addObjectManager(objectPath) } returns managerResource
         every { backend.addMatch(match, callback) } returns matchResource
-        every { backend.requestName(service) } just Runs
+        every { backend.requestName(service, 0u) } returns RequestNameReply.PRIMARY_OWNER
         every { backend.releaseName(service) } just Runs
 
         assertEquals(managerResource, connection.addObjectManager(objectPath))
         assertEquals(matchResource, connection.addMatch(match, callback))
-        connection.requestName(service)
+        assertEquals(RequestNameReply.PRIMARY_OWNER, connection.requestName(service))
         connection.releaseName(service)
 
         verify(exactly = 1) { backend.addObjectManager(objectPath) }
         verify(exactly = 1) { backend.addMatch(match, callback) }
-        verify(exactly = 1) { backend.requestName(service) }
+        verify(exactly = 1) { backend.requestName(service, 0u) }
         verify(exactly = 1) { backend.releaseName(service) }
     }
 }

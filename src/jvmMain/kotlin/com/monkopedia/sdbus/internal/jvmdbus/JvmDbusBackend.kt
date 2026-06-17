@@ -12,6 +12,7 @@ import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.RequestNameReply
 import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
@@ -40,7 +41,7 @@ internal interface JvmDbusConnection : Resource {
     fun addMatch(match: String, callback: MessageHandler): Resource
 
     fun uniqueName(): BusName
-    fun requestName(name: ServiceName)
+    fun requestName(name: ServiceName, flags: UInt = 0u): RequestNameReply
     fun releaseName(name: ServiceName)
 }
 

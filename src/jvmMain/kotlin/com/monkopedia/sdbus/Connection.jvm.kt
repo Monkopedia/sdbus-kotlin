@@ -26,7 +26,8 @@ internal class JvmConnection(
 
     override val uniqueName: BusName get() = backend.uniqueName()
 
-    override fun requestName(name: ServiceName): Unit = backend.requestName(name)
+    override fun requestName(name: ServiceName, vararg flags: RequestNameFlag): RequestNameReply =
+        backend.requestName(name, flags.fold(0u) { acc, flag -> acc or flag.mask })
 
     override fun releaseName(name: ServiceName): Unit = backend.releaseName(name)
 
@@ -91,19 +92,3 @@ actual fun createDirectBusConnection(address: String): Connection = JvmConnectio
         null
     )
 )
-
-@Deprecated(
-    message = "createDirectBusConnection(fd) is native-only and not supported on JVM.",
-    level = DeprecationLevel.ERROR
-)
-actual fun createDirectBusConnection(fd: UnixFd): Connection = JvmConnection(
-    JvmDbusBackendProvider.backend.createConnection(JvmBusType.DIRECT_FD, null, null, fd.fd)
-).also { fd.detach() }
-
-@Deprecated(
-    message = "createServerBusConnection(fd) is native-only and not supported on JVM.",
-    level = DeprecationLevel.ERROR
-)
-actual fun createServerBusConnection(fd: UnixFd): Connection = JvmConnection(
-    JvmDbusBackendProvider.backend.createConnection(JvmBusType.SERVER_FD, null, null, fd.fd)
-).also { fd.detach() }
