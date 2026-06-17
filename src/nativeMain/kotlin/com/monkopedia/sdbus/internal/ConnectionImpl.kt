@@ -252,8 +252,18 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         checkNotReleased()
         checkServiceName(name.value)
 
-        val mask = flags.fold(0u) { acc, flag -> acc or flag.mask }
-        val r = sdbus.sd_bus_request_name(bus.value, name.value, mask.convert())
+        // RequestNameFlag carries the D-Bus WIRE bits (DO_NOT_QUEUE=0x4); the C `sd_bus_request_name`
+        // takes sd-bus's OWN flag enum, where bit 0x4 is SD_BUS_NAME_QUEUE — the INVERSE (opt-in
+        // queueing). ALLOW_REPLACEMENT (0x1) / REPLACE_EXISTING (0x2) coincide; the queue bit must be
+        // inverted. Feeding the wire bits straight in would flip queueing and diverge from the JVM
+        // backend, which passes the wire flags to the daemon directly.
+        // sd-bus flag bits: SD_BUS_NAME_ALLOW_REPLACEMENT=0x1, SD_BUS_NAME_REPLACE_EXISTING=0x2,
+        // SD_BUS_NAME_QUEUE=0x4 (set when NOT DO_NOT_QUEUE, i.e. the inverted queue bit).
+        var sdbusMask = 0u
+        if (RequestNameFlag.ALLOW_REPLACEMENT in flags) sdbusMask = sdbusMask or 0x1u
+        if (RequestNameFlag.REPLACE_EXISTING in flags) sdbusMask = sdbusMask or 0x2u
+        if (RequestNameFlag.DO_NOT_QUEUE !in flags) sdbusMask = sdbusMask or 0x4u
+        val r = sdbus.sd_bus_request_name(bus.value, name.value, sdbusMask.convert())
         // sd_bus_request_name collapses the four RequestName reply codes onto its return value:
         //   PRIMARY_OWNER -> 1, IN_QUEUE -> 0, EXISTS -> -EEXIST, ALREADY_OWNER -> -EALREADY.
         // All four outcomes are therefore recoverable; any other negative value is a real failure.
