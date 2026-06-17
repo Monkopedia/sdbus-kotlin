@@ -170,7 +170,7 @@ actual sealed class Message {
         get() = metadata.memberName?.let(::MemberName)
     actual val sender: BusName?
         get() = metadata.sender?.let(::BusName)
-    actual val path: ObjectPath?
+    actual val objectPath: ObjectPath?
         get() = metadata.path?.let(::ObjectPath)
     actual val destination: BusName?
         get() = metadata.destination?.let(::BusName)
@@ -486,8 +486,9 @@ actual class MethodCall internal constructor() : Message() {
     }
 }
 
-actual class MethodReply internal constructor(private val parentCall: MethodCall? = null) :
-    Message() {
+actual class MethodReply internal constructor(private val parentCall: MethodCall?) : Message() {
+    internal constructor() : this(null)
+
     internal var error: SdbusException? = null
 
     actual fun send(): Unit = run {
@@ -529,11 +530,9 @@ actual class PropertySetCall internal constructor() : Message()
 
 actual class PropertyGetReply internal constructor() : Message()
 
-actual class PlainMessage internal constructor() : Message() {
-    actual companion object {
-        actual fun createPlainMessage(): PlainMessage = PlainMessage()
-    }
-}
+actual class PlainMessage internal constructor() : Message()
+
+actual fun createPlainMessage(): PlainMessage = PlainMessage()
 
 @PublishedApi
 internal actual fun <T> Message.serialize(
@@ -674,7 +673,10 @@ private fun <T : Any> Message.deserializeStructured(
     }
 }
 
-internal actual fun <T> Message.deserializeArrayFast(signature: SdbusSig, items: MutableList<T>) {
+internal actual fun <T> Message.deserializeArrayFast(
+    signature: TypeSignature,
+    items: MutableList<T>
+) {
     @Suppress("UNCHECKED_CAST")
     val values = when (val value = nextRawValue("Message.deserializeArrayFast")) {
         is List<*> -> value

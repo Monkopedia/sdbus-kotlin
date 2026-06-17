@@ -12,11 +12,11 @@ public abstract class NetworkServer1Adaptor(
     obj.addVTable(NetworkServer1.Companion.INTERFACE_NAME) {
       method(MethodName("Register")) {
         inputParamNames = listOf("uuid", "bridge")
-        acall(this@NetworkServer1Adaptor::register)
+        asyncCall(this@NetworkServer1Adaptor::register)
       }
       method(MethodName("Unregister")) {
         inputParamNames = listOf("uuid")
-        acall(this@NetworkServer1Adaptor::unregister)
+        asyncCall(this@NetworkServer1Adaptor::unregister)
       }
     }
   }

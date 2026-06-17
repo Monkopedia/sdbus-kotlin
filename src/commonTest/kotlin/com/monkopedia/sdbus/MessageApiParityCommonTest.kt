@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 class MessageApiParityCommonTest {
     @Test
     fun plainMessage_supportsPrimitivePayloadRoundTrip() {
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
         message.append(42)
         message.append("hello")
         message.append(true)
@@ -21,7 +21,7 @@ class MessageApiParityCommonTest {
 
     @Test
     fun containerAndStructEntryOperations_supportSequentialPayload() {
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
 
         message.openContainer("{is}")
         message.openDictEntry("is")
@@ -42,7 +42,7 @@ class MessageApiParityCommonTest {
 
     @Test
     fun deserializeArrayFast_readsListPayload() {
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
         message.serialize(listOf(3, 4, 5))
         message.seal()
 

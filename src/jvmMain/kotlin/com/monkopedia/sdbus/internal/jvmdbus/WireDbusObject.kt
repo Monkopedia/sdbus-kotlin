@@ -441,7 +441,7 @@ internal class WireDbusObject(
             ?: throw createError(-1, "emitSignal failed: missing interface name")
         val signalName = message.memberName?.value
             ?: throw createError(-1, "emitSignal failed: missing signal name")
-        val path = message.path?.value ?: objectPath.value
+        val path = message.objectPath?.value ?: objectPath.value
         // Prefer the declared signature (correct even for empty collections, which carry no
         // runtime element to infer from); fall back to value inference only when no usable
         // declared signature is available. Mirrors the method-call body path.

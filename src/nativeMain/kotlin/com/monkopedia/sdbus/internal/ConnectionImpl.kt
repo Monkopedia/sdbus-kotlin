@@ -400,7 +400,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
     override fun addMatch(match: String, callback: MessageHandler): Resource = memScoped {
         checkNotReleased()
         val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-        val matchInfo = MatchInfo(callback, {}, WeakReference(this@ConnectionImpl))
+        val matchInfo = MatchInfo(callback, WeakReference(this@ConnectionImpl))
         val stableRef = StableRef.create(matchInfo)
         val bus = sdbus
         val r = bus.sd_bus_add_match(
@@ -414,34 +414,6 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
         Reference(matchInfo to slot[0]) { (_, ref) ->
             bus.sd_bus_slot_unref(ref)
-            stableRef.dispose()
-        }.also(floatingMatchRules::add)
-    }
-
-    override fun addMatchAsync(
-        match: String,
-        callback: MessageHandler,
-        installCallback: MessageHandler
-    ): Resource = memScoped {
-        checkNotReleased()
-        val slot = cValue<CPointerVar<sd_bus_slot>>().getPointer(this)
-        val matchInfo = MatchInfo(callback, installCallback, WeakReference(this@ConnectionImpl))
-        val stableRef = StableRef.create(matchInfo)
-
-        val r = sdbus.sd_bus_add_match_async(
-            bus.value,
-            slot,
-            match,
-            sdbus_match_callback,
-            sdbus_match_install_callback,
-            stableRef.asCPointer()
-        )
-        sdbusRequire(r < 0, "Failed to add match", -r)
-
-        // Local capture so the cleanup closure does not pin `this@ConnectionImpl` (see addObjectVTable).
-        val localSdbus = sdbus
-        Reference(matchInfo to slot[0]) { (_, ref) ->
-            localSdbus.sd_bus_slot_unref(ref)
             stableRef.dispose()
         }.also(floatingMatchRules::add)
     }
@@ -733,7 +705,6 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
     private data class MatchInfo(
         val callback: MessageHandler,
-        val installCallback: MessageHandler,
         val connection: WeakReference<ConnectionImpl>
     )
 
@@ -878,24 +849,6 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
     }
 
     companion object {
-        val sdbus_match_install_callback =
-            staticCFunction {
-                    sdbusMessage: CPointer<sd_bus_message>?,
-                    userData: COpaquePointer?,
-                    retError: CPointer<sd_bus_error>?
-                ->
-                val ok = invokeHandlerAndCatchErrors(retError) {
-                    val matchInfo = userData?.asStableRef<MatchInfo>()?.get()
-                    require(matchInfo != null)
-
-                    val message = PlainMessage(
-                        sdbusMessage!!,
-                        matchInfo.connection.get()!!.getSdBusInterface()
-                    )
-                    matchInfo.installCallback(message)
-                }
-                if (ok) 0 else -1
-            }
         val sdbus_match_callback =
             staticCFunction {
                     sdbusMessage: CPointer<sd_bus_message>?,

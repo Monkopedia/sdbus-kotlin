@@ -82,7 +82,7 @@ private class DemoServiceImpl(obj: Object) : DemoService1Adaptor(obj) {
             method(MethodName("Greet")) {
                 inputParamNames = listOf("name")
                 outputParamNames = listOf("greeting")
-                acall(this@DemoServiceImpl::greet)
+                asyncCall(this@DemoServiceImpl::greet)
             }
             signal(SignalName("Tick")) {
                 with<ULong>("count")

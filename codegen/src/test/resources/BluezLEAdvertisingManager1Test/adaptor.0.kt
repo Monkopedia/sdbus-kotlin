@@ -14,11 +14,11 @@ public abstract class LEAdvertisingManager1Adaptor(
     obj.addVTable(LEAdvertisingManager1.Companion.INTERFACE_NAME) {
       method(MethodName("RegisterAdvertisement")) {
         inputParamNames = listOf("advertisement", "options")
-        acall(this@LEAdvertisingManager1Adaptor::registerAdvertisement)
+        asyncCall(this@LEAdvertisingManager1Adaptor::registerAdvertisement)
       }
       method(MethodName("UnregisterAdvertisement")) {
         inputParamNames = listOf("service")
-        acall(this@LEAdvertisingManager1Adaptor::unregisterAdvertisement)
+        asyncCall(this@LEAdvertisingManager1Adaptor::unregisterAdvertisement)
       }
       prop(PropertyName("ActiveInstances")) {
         with(this@LEAdvertisingManager1Adaptor::activeInstances)

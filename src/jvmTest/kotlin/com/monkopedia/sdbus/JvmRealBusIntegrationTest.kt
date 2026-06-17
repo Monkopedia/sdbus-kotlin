@@ -115,7 +115,7 @@ class JvmRealBusIntegrationTest {
         try {
             obj.emitInterfacesAddedSignal(listOf(childInterface))
             val message = withTimeout(2_000) { seen.await() }
-            assertEquals(managerPath, message.path)
+            assertEquals(managerPath, message.objectPath)
         } finally {
             signalRegistration.release()
             proxy.release()

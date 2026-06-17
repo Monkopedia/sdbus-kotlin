@@ -12,7 +12,7 @@ public abstract class ObjectManagerAdaptor(
     obj.addVTable(ObjectManager.Companion.INTERFACE_NAME) {
       method(MethodName("GetManagedObjects")) {
         outputParamNames = listOf("value")
-        acall(this@ObjectManagerAdaptor::getManagedObjects)
+        asyncCall(this@ObjectManagerAdaptor::getManagedObjects)
       }
     }
   }

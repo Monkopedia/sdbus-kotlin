@@ -25,14 +25,11 @@ package com.monkopedia.sdbus
 /**
  * Represents any of the message types, or just a message that serves as a container for data
  */
-expect class PlainMessage : Message {
+expect class PlainMessage : Message
 
-    companion object {
-        /**
-         * Creates a new, empty plain message usable as a standalone data container.
-         *
-         * @return A fresh [PlainMessage]
-         */
-        fun createPlainMessage(): PlainMessage
-    }
-}
+/**
+ * Creates a new, empty plain message usable as a standalone data container.
+ *
+ * @return A fresh [PlainMessage]
+ */
+expect fun createPlainMessage(): PlainMessage

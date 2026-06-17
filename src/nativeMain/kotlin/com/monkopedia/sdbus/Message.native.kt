@@ -571,7 +571,7 @@ actual sealed class Message(
     actual val sender: BusName?
         get() = sd_bus_message_get_sender(msg)?.toKString()?.let(::BusName)
 
-    actual val path: ObjectPath?
+    actual val objectPath: ObjectPath?
         get() = sd_bus_message_get_path(msg)?.toKString()?.let(::ObjectPath)
 
     actual val destination: BusName?
@@ -718,7 +718,7 @@ actual fun <T : Any> Message.deserialize(
 ): T = MessageDecoder(this, module).decodeSerializableValue(serializer)
 
 internal actual fun <T> Message.deserializeArrayFast(
-    signature: SdbusSig,
+    signature: TypeSignature,
     items: MutableList<T>
 ): Unit = memScoped {
     val arrayPtr = cValue<COpaquePointerVar>().getPointer(this)

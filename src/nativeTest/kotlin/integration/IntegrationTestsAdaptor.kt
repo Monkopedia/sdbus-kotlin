@@ -102,7 +102,7 @@ abstract class IntegrationTestsAdaptor(val obj: Object) {
                 inputParamNames = listOf("arg0")
                 outputParamNames = listOf("arg0")
                 implementedAs(
-                    acall { arg0: UInt ->
+                    asyncCall { arg0: UInt ->
                         doOperationAsync(arg0)
                     } withContext Dispatchers.Unconfined
                 )

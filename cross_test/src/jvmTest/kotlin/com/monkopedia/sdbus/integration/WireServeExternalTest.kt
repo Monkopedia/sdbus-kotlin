@@ -87,11 +87,11 @@ class WireServeExternalTest {
                 outputParamNames = listOf("sum")
                 call { a: Int, b: Int -> a + b }
             }
-            // Async (acall) handler — completes off the caller's thread.
+            // Async (asyncCall) handler — completes off the caller's thread.
             method(MethodName("Concat")) {
                 inputParamNames = listOf("a", "b")
                 outputParamNames = listOf("joined")
-                acall { a: String, b: String -> a + b }
+                asyncCall { a: String, b: String -> a + b }
             }
             prop(PropertyName("Prefix")) {
                 withGetter { prefix }
@@ -130,7 +130,7 @@ class WireServeExternalTest {
             )
             assertTrue("5" in addOut, "Add reply missing expected sum: $addOut")
 
-            // 2. Method call (async acall handler): Concat("foo", "bar") -> "foobar".
+            // 2. Method call (async asyncCall handler): Concat("foo", "bar") -> "foobar".
             val (concatCode, concatOut) = busctl(
                 "call",
                 service.value,

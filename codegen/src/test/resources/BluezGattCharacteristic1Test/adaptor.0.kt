@@ -15,30 +15,30 @@ public abstract class GattCharacteristic1Adaptor(
       method(MethodName("ReadValue")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("value")
-        acall(this@GattCharacteristic1Adaptor::readValue)
+        asyncCall(this@GattCharacteristic1Adaptor::readValue)
       }
       method(MethodName("WriteValue")) {
         inputParamNames = listOf("value", "options")
-        acall(this@GattCharacteristic1Adaptor::writeValue)
+        asyncCall(this@GattCharacteristic1Adaptor::writeValue)
       }
       method(MethodName("AcquireWrite")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("fd", "mtu")
-        acall(this@GattCharacteristic1Adaptor::acquireWrite)
+        asyncCall(this@GattCharacteristic1Adaptor::acquireWrite)
       }
       method(MethodName("AcquireNotify")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("fd", "mtu")
-        acall(this@GattCharacteristic1Adaptor::acquireNotify)
+        asyncCall(this@GattCharacteristic1Adaptor::acquireNotify)
       }
       method(MethodName("StartNotify")) {
-        acall(this@GattCharacteristic1Adaptor::startNotify)
+        asyncCall(this@GattCharacteristic1Adaptor::startNotify)
       }
       method(MethodName("StopNotify")) {
-        acall(this@GattCharacteristic1Adaptor::stopNotify)
+        asyncCall(this@GattCharacteristic1Adaptor::stopNotify)
       }
       method(MethodName("Confirm")) {
-        acall(this@GattCharacteristic1Adaptor::confirm)
+        asyncCall(this@GattCharacteristic1Adaptor::confirm)
       }
       prop(PropertyName("UUID")) {
         with(this@GattCharacteristic1Adaptor::uUID)

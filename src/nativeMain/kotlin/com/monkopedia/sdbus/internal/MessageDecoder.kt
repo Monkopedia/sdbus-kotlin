@@ -30,9 +30,9 @@ import com.monkopedia.sdbus.MapSig
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PrimitiveSig
-import com.monkopedia.sdbus.SdbusSig
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.StructSig
+import com.monkopedia.sdbus.TypeSignature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.asSignature
@@ -270,7 +270,7 @@ internal class NonSequentialListDecoder(private val baseDecoder: MessageDecoder)
 internal class ListDecoder<K, N : CVariable>(
     private val target: Message,
     override val serializersModule: SerializersModule,
-    private val signature: SdbusSig,
+    private val signature: TypeSignature,
     private val converter: NativeTypeConverter<K, N>
 ) : BaseMessageDecoder() {
     private val list = mutableListOf<K>()

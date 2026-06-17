@@ -72,7 +72,7 @@ class FailurePathParityTest {
         val serverDelayMs = 600L
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Slow")) {
-                acall { value: Int ->
+                asyncCall { value: Int ->
                     delay(serverDelayMs)
                     value
                 }
@@ -133,7 +133,7 @@ class FailurePathParityTest {
         val serverDelayMs = 600L
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Slow")) {
-                acall { value: Int ->
+                asyncCall { value: Int ->
                     delay(serverDelayMs)
                     value
                 }

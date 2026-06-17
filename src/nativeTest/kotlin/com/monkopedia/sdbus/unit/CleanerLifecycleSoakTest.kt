@@ -43,7 +43,7 @@ import platform.posix.usleep
  *     laundered through `Reference`'s `onLeaveScopes` so the compiler's non-capturing `createCleaner`
  *     check could not catch it — pinning the whole connection.
  *
- * The adaptor below registers a method (captures `this` via `acall`), a property getter (captures
+ * The adaptor below registers a method (captures `this` via `asyncCall`), a property getter (captures
  * `this`), a signal, and an object manager — exercising the registration paths that leaked. The test
  * does the full cycle against a real bus: create -> register -> tear down -> drop refs -> force GC ->
  * assert collected. A failure here is a genuine leak, not a flaky cleaner.
@@ -61,7 +61,7 @@ class CleanerLifecycleSoakTest {
 
     /**
      * A minimal adaptor whose registrations capture `this` exactly the way generated adaptors do:
-     * `acall(this::ping)` for the method and `withGetter { value }` for the property. `release()` must
+     * `asyncCall(this::ping)` for the method and `withGetter { value }` for the property. `release()` must
      * drop every one of those so the adaptor (and the object, and the connection) can be collected.
      */
     private class SoakAdaptor(connection: Connection, path: ObjectPath, iface: InterfaceName) {
@@ -74,7 +74,7 @@ class CleanerLifecycleSoakTest {
             objManager = obj.addObjectManager()
             vtable = obj.addVTable(iface) {
                 method(MethodName("Ping")) {
-                    acall(this@SoakAdaptor::ping)
+                    asyncCall(this@SoakAdaptor::ping)
                 }
                 prop(PropertyName("Value")) {
                     withGetter { value }

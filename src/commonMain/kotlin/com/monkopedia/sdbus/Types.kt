@@ -22,7 +22,6 @@
  */
 package com.monkopedia.sdbus
 
-import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -116,7 +115,7 @@ class Variant constructor() {
     internal fun <T : Any> get(
         type: DeserializationStrategy<T>,
         module: SerializersModule,
-        signature: SdbusSig
+        signature: TypeSignature
     ): T {
         msg.rewind(false)
 

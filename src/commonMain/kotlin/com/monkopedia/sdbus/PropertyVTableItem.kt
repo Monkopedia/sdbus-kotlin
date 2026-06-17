@@ -109,14 +109,14 @@ class PropertyVTableItem @PublishedApi internal constructor(
 
     /** Whether this property is marked deprecated. */
     var isDeprecated: Boolean
-        get() = flags.test(DEPRECATED)
+        get() = flags.has(DEPRECATED)
         set(value) {
             flags.set(DEPRECATED, value)
         }
 
     /** Whether this property is marked as requiring privileged access. */
     var isPrivileged: Boolean
-        get() = flags.test(PRIVILEGED)
+        get() = flags.has(PRIVILEGED)
         set(value) {
             flags.set(PRIVILEGED, value)
         }

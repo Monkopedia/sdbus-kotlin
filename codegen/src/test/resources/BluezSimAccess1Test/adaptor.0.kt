@@ -13,7 +13,7 @@ public abstract class SimAccess1Adaptor(
   public override fun register() {
     obj.addVTable(SimAccess1.Companion.INTERFACE_NAME) {
       method(MethodName("Disconnect")) {
-        acall(this@SimAccess1Adaptor::disconnect)
+        asyncCall(this@SimAccess1Adaptor::disconnect)
       }
       prop(PropertyName("Connected")) {
         with(this@SimAccess1Adaptor::connected)

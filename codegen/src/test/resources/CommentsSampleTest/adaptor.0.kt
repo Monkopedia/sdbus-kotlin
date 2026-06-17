@@ -21,7 +21,7 @@ public abstract class PropertiesAdaptor(
       method(MethodName("Get")) {
         inputParamNames = listOf("interface_name", "property_name")
         outputParamNames = listOf("value")
-        acall(this@PropertiesAdaptor::`get`)
+        asyncCall(this@PropertiesAdaptor::`get`)
       }
       signal(SignalName("PropertiesChanged")) {
         with<String>("interface_name")

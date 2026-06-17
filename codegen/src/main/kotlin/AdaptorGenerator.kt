@@ -128,7 +128,7 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
                             )
                         }
                         add(
-                            "acall(this@%N::%N)\n",
+                            "asyncCall(this@%N::%N)\n",
                             intf.name.simpleName + "Adaptor",
                             it.name.decapitalCamelCase
                         )

@@ -1,11 +1,11 @@
 package com.monkopedia.sdbus.unit
 
 import com.monkopedia.sdbus.ObjectPath
-import com.monkopedia.sdbus.PlainMessage
 import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
+import com.monkopedia.sdbus.createPlainMessage
 import com.monkopedia.sdbus.deserialize
 import com.monkopedia.sdbus.serialize
 import kotlin.test.Test
@@ -22,25 +22,25 @@ private typealias CommonMessageComplexType =
 class MessageCommonTest {
     @Test
     fun aMessage_CanBeDefaultConstructed() {
-        PlainMessage.createPlainMessage()
+        createPlainMessage()
     }
 
     @Test
     fun aMessage_IsEmptyWhenContainsNoValue() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         assertTrue(msg.isEmpty)
     }
 
     @Test
     fun aMessage_IsNotEmptyWhenContainsAValue() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         msg.serialize("I am a string")
         assertFalse(msg.isEmpty)
     }
 
     @Test
     fun aMessage_CanCarryASimpleInteger() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = 5
         msg.serialize(dataWritten)
         msg.seal()
@@ -50,7 +50,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryAString() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = "Hello"
         msg.serialize(dataWritten)
         msg.seal()
@@ -60,7 +60,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryADictionary() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = mapOf(1 to "one", 2 to "two")
         msg.serialize(dataWritten)
         msg.seal()
@@ -70,7 +70,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryArrayOfIntegersAsList() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = listOf(3545342, 43643532, 324325)
         msg.serialize(dataWritten)
         msg.seal()
@@ -80,7 +80,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryArrayOfIntegersAsArray() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = arrayOf(3545342, 43643532, 324325)
         msg.serialize(dataWritten)
         msg.seal()
@@ -90,7 +90,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryArrayOfLongsAsList() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = listOf(3545342L, 43643532L, 324325L)
         msg.serialize(dataWritten)
         msg.seal()
@@ -100,7 +100,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarrySignature() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = Signature("s")
         msg.serialize(dataWritten)
         msg.seal()
@@ -110,7 +110,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryArrayOfSignaturesAsList() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = listOf(Signature("s"), Signature("u"), Signature("b"))
         msg.serialize(dataWritten)
         msg.seal()
@@ -120,7 +120,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryArrayOfSignaturesAsArray() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = arrayOf(Signature("s"), Signature("u"), Signature("b"))
         msg.serialize(dataWritten)
         msg.seal()
@@ -130,7 +130,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryUnixFd() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = UnixFd(0)
         msg.serialize(dataWritten)
         msg.seal()
@@ -144,7 +144,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryAVariant() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = Variant(3.14)
         msg.serialize(dataWritten)
         msg.seal()
@@ -154,11 +154,11 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CreatesDeepCopyWhenExplicitlyCopied() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         msg.serialize("I am a string")
         msg.seal()
 
-        val msgCopy = PlainMessage.createPlainMessage()
+        val msgCopy = createPlainMessage()
         msg.copyTo(msgCopy, true)
         msgCopy.seal()
         msg.rewind(true)
@@ -169,7 +169,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CreatesShallowCopyWhenCopyConstructed() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         msg.serialize("I am a string")
         msg.seal()
 
@@ -186,7 +186,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryCollectionOfEmbeddedVariants() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val value = listOf(Variant("hello"), Variant(3.14))
         val dataWritten = Variant(value)
         msg.serialize(dataWritten)
@@ -198,7 +198,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanCarryComplexType() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         val dataWritten = mapOf(
             1.toULong() to
                 ComplexTypeForMessageValue(
@@ -224,7 +224,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanPeekSimpleType() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         msg.serialize(123)
         msg.seal()
 
@@ -236,7 +236,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_CanPeekContainerContents() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         msg.serialize(mapOf(1 to "one", 2 to "two"))
         msg.seal()
 
@@ -248,7 +248,7 @@ class MessageCommonTest {
 
     @Test
     fun aMessage_ThrowsWhenVariantIsReadAsWrongType() {
-        val msg = PlainMessage.createPlainMessage()
+        val msg = createPlainMessage()
         msg.serialize(Variant(5))
         msg.seal()
 

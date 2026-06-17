@@ -12,11 +12,11 @@ public abstract class ProfileManager1Adaptor(
     obj.addVTable(ProfileManager1.Companion.INTERFACE_NAME) {
       method(MethodName("RegisterProfile")) {
         inputParamNames = listOf("profile", "UUID", "options")
-        acall(this@ProfileManager1Adaptor::registerProfile)
+        asyncCall(this@ProfileManager1Adaptor::registerProfile)
       }
       method(MethodName("UnregisterProfile")) {
         inputParamNames = listOf("profile")
-        acall(this@ProfileManager1Adaptor::unregisterProfile)
+        asyncCall(this@ProfileManager1Adaptor::unregisterProfile)
       }
     }
   }

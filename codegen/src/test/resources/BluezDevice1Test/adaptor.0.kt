@@ -13,24 +13,24 @@ public abstract class Device1Adaptor(
   public override fun register() {
     obj.addVTable(Device1.Companion.INTERFACE_NAME) {
       method(MethodName("Connect")) {
-        acall(this@Device1Adaptor::connect)
+        asyncCall(this@Device1Adaptor::connect)
       }
       method(MethodName("Disconnect")) {
-        acall(this@Device1Adaptor::disconnect)
+        asyncCall(this@Device1Adaptor::disconnect)
       }
       method(MethodName("ConnectProfile")) {
         inputParamNames = listOf("uuid")
-        acall(this@Device1Adaptor::connectProfile)
+        asyncCall(this@Device1Adaptor::connectProfile)
       }
       method(MethodName("DisconnectProfile")) {
         inputParamNames = listOf("uuid")
-        acall(this@Device1Adaptor::disconnectProfile)
+        asyncCall(this@Device1Adaptor::disconnectProfile)
       }
       method(MethodName("Pair")) {
-        acall(this@Device1Adaptor::pair)
+        asyncCall(this@Device1Adaptor::pair)
       }
       method(MethodName("CancelPairing")) {
-        acall(this@Device1Adaptor::cancelPairing)
+        asyncCall(this@Device1Adaptor::cancelPairing)
       }
       prop(PropertyName("Address")) {
         with(this@Device1Adaptor::address)

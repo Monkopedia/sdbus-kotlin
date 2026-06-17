@@ -6,6 +6,7 @@ import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PlainMessage
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.UnixFd
+import com.monkopedia.sdbus.createPlainMessage
 import com.monkopedia.sdbus.internal.ConnectionImpl
 import com.monkopedia.sdbus.internal.InternalConnection.Companion.getPseudoConnectionInstance
 import com.monkopedia.sdbus.internal.ObjectImpl
@@ -91,7 +92,7 @@ class CleanerSoakTest {
 
     @Test
     fun plainMessageIsCollected() = assertCollected("PlainMessage") {
-        PlainMessage.createPlainMessage()
+        createPlainMessage()
     }
 
     @Test

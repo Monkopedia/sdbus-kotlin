@@ -13,7 +13,7 @@ public abstract class LEAdvertisement1Adaptor(
   public override fun register() {
     obj.addVTable(LEAdvertisement1.Companion.INTERFACE_NAME) {
       method(MethodName("Release")) {
-        acall(this@LEAdvertisement1Adaptor::release)
+        asyncCall(this@LEAdvertisement1Adaptor::release)
       }
       prop(PropertyName("Type")) {
         with(this@LEAdvertisement1Adaptor::type)

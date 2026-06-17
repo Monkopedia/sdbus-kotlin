@@ -91,7 +91,7 @@ class JvmScaffoldTest {
         val obj = createObject(connection, path)
         val registration = obj.addVTable(InterfaceName("org.example.Async")) {
             method(MethodName("Add")) {
-                acall { a: Int, b: Int -> a + b }
+                asyncCall { a: Int, b: Int -> a + b }
             }
         }
         try {

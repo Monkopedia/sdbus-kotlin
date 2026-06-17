@@ -15,11 +15,11 @@ public abstract class GattDescriptor1Adaptor(
       method(MethodName("ReadValue")) {
         inputParamNames = listOf("options")
         outputParamNames = listOf("value")
-        acall(this@GattDescriptor1Adaptor::readValue)
+        asyncCall(this@GattDescriptor1Adaptor::readValue)
       }
       method(MethodName("WriteValue")) {
         inputParamNames = listOf("value", "options")
-        acall(this@GattDescriptor1Adaptor::writeValue)
+        asyncCall(this@GattDescriptor1Adaptor::writeValue)
       }
       prop(PropertyName("UUID")) {
         with(this@GattDescriptor1Adaptor::uUID)

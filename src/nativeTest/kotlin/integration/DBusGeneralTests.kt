@@ -64,31 +64,10 @@ class CppEventLoop : BaseTest() {
         val matchRule = "sender='$SERVICE_NAME',path='$OBJECT_PATH'"
         var matchingMessageReceived = atomic(false)
         val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
-            if (msg.path == OBJECT_PATH) {
+            if (msg.objectPath == OBJECT_PATH) {
                 matchingMessageReceived.value = true
             }
         }
-
-        fixture.adaptor?.emitSimpleSignal()
-
-        assertTrue(waitUntil(matchingMessageReceived))
-        slot.release()
-    }
-
-    @Test
-    fun canInstallMatchRuleAsynchronously() {
-        val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
-        val matchingMessageReceived = atomic(false)
-        val matchRuleInstalled = atomic(false)
-        val slot = globalProxyConnection.addMatchAsync(matchRule, { msg: Message ->
-            if (msg.path == OBJECT_PATH) {
-                matchingMessageReceived.value = true
-            }
-        }, {
-            matchRuleInstalled.value = true
-        })
-
-        assertTrue(waitUntil(matchRuleInstalled))
 
         fixture.adaptor?.emitSimpleSignal()
 
@@ -101,7 +80,7 @@ class CppEventLoop : BaseTest() {
         val matchRule = "sender='${SERVICE_NAME.value}',path='${OBJECT_PATH.value}'"
         val matchingMessageReceived = atomic(false)
         val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
-            if (msg.path == OBJECT_PATH) matchingMessageReceived.value = true
+            if (msg.objectPath == OBJECT_PATH) matchingMessageReceived.value = true
         }
         slot.release()
 
@@ -119,7 +98,7 @@ class CppEventLoop : BaseTest() {
         try {
             con.startEventLoop()
             val callback = { msg: Message ->
-                if (msg.path == OBJECT_PATH) {
+                if (msg.objectPath == OBJECT_PATH) {
                     matchingMessageReceived.value = true
                 }
             }
@@ -143,22 +122,16 @@ class CppEventLoop : BaseTest() {
     fun willNotPassToMatchCallbackMessagesThatDoNotMatchTheRule() {
         val matchRule =
             "type='signal',interface='${INTERFACE_NAME.value}',member='simpleSignal'"
-        val matchRuleInstalled = atomic(false)
         val numberOfMatchingMessages = atomic(0.convert<size_t>())
-        val slot = globalProxyConnection.addMatchAsync(
-            match = matchRule,
-            callback = { msg: Message ->
-                if (msg.memberName?.value == "simpleSignal") {
-                    numberOfMatchingMessages.value++
-                }
-            },
-            installCallback = { matchRuleInstalled.value = true }
-        )
+        val slot = globalProxyConnection.addMatch(matchRule) { msg: Message ->
+            if (msg.memberName?.value == "simpleSignal") {
+                numberOfMatchingMessages.value++
+            }
+        }
         val adaptor2 = TestAdaptor(globalAdaptorConnection, OBJECT_PATH_2).apply {
             registerAdaptor()
         }
         try {
-            assertTrue(waitUntil(matchRuleInstalled))
             fixture.adaptor?.emitSignalWithMap(emptyMap())
             adaptor2.emitSimpleSignal()
             fixture.adaptor?.emitSimpleSignal()

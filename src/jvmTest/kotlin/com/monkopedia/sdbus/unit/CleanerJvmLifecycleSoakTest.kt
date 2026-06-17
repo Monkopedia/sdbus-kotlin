@@ -47,7 +47,7 @@ class CleanerJvmLifecycleSoakTest {
             // remove the Properties dispatch handlers, so a property-bearing object leaked forever.
             obj.addVTable(iface) {
                 method(MethodName("Ping")) {
-                    acall(this@SoakAdaptor::ping)
+                    asyncCall(this@SoakAdaptor::ping)
                 }
                 prop(PropertyName("Value")) {
                     withGetter { value }
