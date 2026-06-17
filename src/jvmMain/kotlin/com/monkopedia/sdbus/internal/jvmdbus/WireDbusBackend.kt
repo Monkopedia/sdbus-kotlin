@@ -13,6 +13,7 @@ import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
+import com.monkopedia.sdbus.RequestNameReply
 import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalHandler
@@ -184,18 +185,19 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
 
     override fun uniqueName(): BusName = BusName(localUniqueName.ifEmpty { ":jvm-wire" })
 
-    override fun requestName(name: ServiceName) {
-        val result = runCatching { wire.requestName(name.value) }.getOrElse {
+    override fun requestName(name: ServiceName, flags: UInt): RequestNameReply {
+        val result = runCatching { wire.requestName(name.value, flags) }.getOrElse {
             throw createError(-1, "requestName failed: ${it.message}")
         }
-        // 1 = primary owner, 4 = already owner. Anything else means we did not get the name.
-        if (result != 1 && result != 4) {
-            throw createError(
-                -1,
-                "requestName failed: RequestName returned $result for ${name.value}"
-            )
+        val reply = RequestNameReply.fromCode(result) ?: throw createError(
+            -1,
+            "requestName failed: RequestName returned $result for ${name.value}"
+        )
+        // Only register the well-known alias when we actually own the name.
+        if (reply == RequestNameReply.PRIMARY_OWNER || reply == RequestNameReply.ALREADY_OWNER) {
+            LocalJvmServiceRegistry.addAlias(localUniqueName, name.value)
         }
-        LocalJvmServiceRegistry.addAlias(localUniqueName, name.value)
+        return reply
     }
 
     override fun releaseName(name: ServiceName) {

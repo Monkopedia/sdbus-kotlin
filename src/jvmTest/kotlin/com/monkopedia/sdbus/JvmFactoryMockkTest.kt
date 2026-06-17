@@ -27,7 +27,6 @@ class JvmFactoryMockkTest {
     }
 
     @Test
-    @Suppress("DEPRECATION_ERROR")
     fun createConnectionFactories_delegateExpectedBusTypeAndEndpoint() {
         val backend = mockk<JvmDbusBackend>()
         val connectionBackend = mockConnectionBackend()
@@ -48,8 +47,6 @@ class JvmFactoryMockkTest {
             createSessionBusConnection(serviceName)
             createSessionBusConnection("unix:path=/tmp/session")
             createDirectBusConnection("unix:path=/tmp/direct")
-            createDirectBusConnection(UnixFd.adopt(42))
-            createServerBusConnection(UnixFd.adopt(99))
 
             verify(exactly = 1) {
                 backend.createConnection(JvmBusType.DEFAULT, null, null, null)
@@ -84,12 +81,6 @@ class JvmFactoryMockkTest {
                     null,
                     null
                 )
-            }
-            verify(exactly = 1) {
-                backend.createConnection(JvmBusType.DIRECT_FD, null, null, 42)
-            }
-            verify(exactly = 1) {
-                backend.createConnection(JvmBusType.SERVER_FD, null, null, 99)
             }
         } finally {
             unmockkObject(JvmDbusBackendProvider)

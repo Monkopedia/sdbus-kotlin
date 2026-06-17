@@ -40,6 +40,8 @@ import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PlainMessage
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.RequestNameFlag
+import com.monkopedia.sdbus.RequestNameReply
 import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
@@ -81,6 +83,8 @@ import platform.linux.EFD_NONBLOCK
 import platform.linux.eventfd
 import platform.linux.eventfd_read
 import platform.linux.eventfd_write
+import platform.posix.EALREADY
+import platform.posix.EEXIST
 import platform.posix.EINTR
 import platform.posix.EINVAL
 import platform.posix.POLLIN
@@ -244,16 +248,38 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         loopJob?.join()
     }
 
-    override fun requestName(name: ServiceName) {
+    override fun requestName(name: ServiceName, vararg flags: RequestNameFlag): RequestNameReply {
         checkNotReleased()
         checkServiceName(name.value)
 
-        val r = sdbus.sd_bus_request_name(bus.value, name.value, 0u)
-        sdbusRequire(r < 0, "Failed to request bus name", -r)
+        // RequestNameFlag carries the D-Bus WIRE bits (DO_NOT_QUEUE=0x4); the C `sd_bus_request_name`
+        // takes sd-bus's OWN flag enum, where bit 0x4 is SD_BUS_NAME_QUEUE — the INVERSE (opt-in
+        // queueing). ALLOW_REPLACEMENT (0x1) / REPLACE_EXISTING (0x2) coincide; the queue bit must be
+        // inverted. Feeding the wire bits straight in would flip queueing and diverge from the JVM
+        // backend, which passes the wire flags to the daemon directly.
+        // sd-bus flag bits: SD_BUS_NAME_ALLOW_REPLACEMENT=0x1, SD_BUS_NAME_REPLACE_EXISTING=0x2,
+        // SD_BUS_NAME_QUEUE=0x4 (set when NOT DO_NOT_QUEUE, i.e. the inverted queue bit).
+        var sdbusMask = 0u
+        if (RequestNameFlag.ALLOW_REPLACEMENT in flags) sdbusMask = sdbusMask or 0x1u
+        if (RequestNameFlag.REPLACE_EXISTING in flags) sdbusMask = sdbusMask or 0x2u
+        if (RequestNameFlag.DO_NOT_QUEUE !in flags) sdbusMask = sdbusMask or 0x4u
+        val r = sdbus.sd_bus_request_name(bus.value, name.value, sdbusMask.convert())
+        // sd_bus_request_name collapses the four RequestName reply codes onto its return value:
+        //   PRIMARY_OWNER -> 1, IN_QUEUE -> 0, EXISTS -> -EEXIST, ALREADY_OWNER -> -EALREADY.
+        // All four outcomes are therefore recoverable; any other negative value is a real failure.
+        val reply = when (r) {
+            -EEXIST -> RequestNameReply.EXISTS
+            -EALREADY -> RequestNameReply.ALREADY_OWNER
+            else -> {
+                sdbusRequire(r < 0, "Failed to request bus name", -r)
+                if (r == 0) RequestNameReply.IN_QUEUE else RequestNameReply.PRIMARY_OWNER
+            }
+        }
 
         // In some cases we need to explicitly notify the event loop
         // to process messages that may have arrived while executing the call
         eventThread.wakeUpEventLoopIfMessagesInQueue()
+        return reply
     }
 
     override fun releaseName(name: ServiceName) {

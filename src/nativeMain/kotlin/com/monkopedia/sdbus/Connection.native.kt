@@ -73,10 +73,53 @@ fun createRemoteSystemBusConnection(host: String): Connection = remoteConnection
 actual fun createDirectBusConnection(address: String): Connection =
     privateConnection(SdBus(), address)
 
-actual fun createDirectBusConnection(fd: UnixFd): Connection =
+/**
+ * Opens direct D-Bus connection at the given file descriptor
+ *
+ * Native-only API. fd-backed direct connections are not supported by the JVM transport stack,
+ * so this function is not declared in the common API.
+ *
+ * @param fd File descriptor used to communicate directly from/to a D-Bus server
+ * @return [Connection] instance
+ *
+ * The connection adopts (takes over ownership of) the file descriptor held by [fd] without
+ * duplicating it: on success, [fd] no longer owns the descriptor (it is detached, and neither
+ * releasing nor garbage-collecting [fd] will close it), and the connection closes the
+ * descriptor when it is destroyed. If, however, the call throws an exception, the ownership
+ * of the descriptor remains with [fd].
+ *
+ * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
+ * a duplicate while keeping your own descriptor.
+ *
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
+ */
+fun createDirectBusConnection(fd: UnixFd): Connection =
     privateConnection(SdBus(), fd.fd).also { fd.detach() }
 
-actual fun createServerBusConnection(fd: UnixFd): Connection =
+/**
+ * Opens direct D-Bus connection at fd as a server
+ *
+ * Native-only API. fd-backed server buses are not supported by the JVM transport stack,
+ * so this function is not declared in the common API.
+ *
+ * @param fd File descriptor to use for server DBus connection
+ * @return [Connection] server instance
+ *
+ * This creates a new, custom bus object in server mode. One can then call createDirectBusConnection()
+ * on client side to connect to this bus.
+ *
+ * The connection adopts (takes over ownership of) the file descriptor held by [fd] without
+ * duplicating it: on success, [fd] no longer owns the descriptor (it is detached, and neither
+ * releasing nor garbage-collecting [fd] will close it), and the connection closes the
+ * descriptor when it is destroyed. If, however, the call throws an exception, the ownership
+ * of the descriptor remains with [fd].
+ *
+ * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
+ * a duplicate while keeping your own descriptor.
+ *
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
+ */
+fun createServerBusConnection(fd: UnixFd): Connection =
     serverConnection(SdBus(), fd.fd).also { fd.detach() }
 
 internal fun createBusConnection(bus: CPointer<sd_bus>): Connection =
