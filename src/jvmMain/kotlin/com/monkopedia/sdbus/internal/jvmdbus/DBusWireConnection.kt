@@ -705,6 +705,14 @@ internal class DBusWireConnection private constructor(
  * concurrently-parked nested handlers cannot be served by fewer than ~N threads without deadlock).
  * Surplus compensating workers retire once idle (`allowCoreThreadTimeOut`), shrinking the pool back
  * to [bound] after a nested-dispatch storm subsides.
+ *
+ * SCOPE / CONSTRAINT on serve handlers: compensation only covers a worker that blocks *on its own
+ * thread* inside [call]/[callBlocking] (where [beginNestedBlock] runs). A serve handler that instead
+ * (a) offloads its nested same-connection call to a DIFFERENT thread/dispatcher (e.g.
+ * `withContext(Dispatchers.IO) { connection.call(...) }`) while keeping the worker parked, or
+ * (b) blocks on a non-same-connection dependency (a shared lock, another handler's result), is NOT
+ * compensated and can starve the bounded pool. Serve handlers must perform any nested same-connection
+ * call synchronously on the worker thread, and must not block the worker on unrelated work.
  */
 private class ServeWorkerPool {
     /** Steady-state worker count: ~2x CPUs, clamped so it is neither starved nor wildly large. */
