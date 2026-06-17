@@ -22,18 +22,13 @@
 import com.monkopedia.demo.DemoService1
 import com.monkopedia.demo.DemoService1Adaptor
 import com.monkopedia.demo.DemoService1Proxy
-import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.ServiceName
-import com.monkopedia.sdbus.SignalName
-import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.createBusConnection
 import com.monkopedia.sdbus.createObject
-import com.monkopedia.sdbus.method
-import com.monkopedia.sdbus.prop
-import com.monkopedia.sdbus.signal
+import com.monkopedia.sdbus.notifying
 import com.monkopedia.sdbus.withService
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.awaitCancellation
@@ -51,48 +46,23 @@ private val OBJECT_PATH = ObjectPath("/com/monkopedia/demo/service")
 /**
  * Concrete implementation of the generated [DemoService1Adaptor].
  *
- * We subclass the generated adaptor (so we reuse its interface, its `onTick` signal emitter,
- * and `INTERFACE_NAME`) but override [register] to install the vtable with the explicit
- * [com.monkopedia.sdbus.prop] / withGetter / withSetter DSL. Binding the property callbacks
- * directly is what lets the setter emit `PropertiesChanged`, and it keeps the value
- * serialization explicit on both the JVM and native targets.
+ * We subclass the generated adaptor (so we reuse its interface, its generated `register()` vtable,
+ * its `onTick` signal emitter, and `INTERFACE_NAME`) and only supply the behaviour: the `Greet`
+ * method and the `Prefix` backing field.
+ *
+ * `Prefix` is delegated to [notifying], so every assignment — whether from a remote
+ * `org.freedesktop.DBus.Properties.Set` (which the generated vtable routes through this setter) or
+ * a server-side assignment in our own code — auto-emits `PropertiesChanged` (skipping the emit when
+ * the value is unchanged). No hand-rolled `register()` override or manual emit is needed anymore.
  */
 private class DemoServiceImpl(obj: Object) : DemoService1Adaptor(obj) {
-    private var backingPrefix: String = "Hello"
+    override var prefix: String by obj.notifying(
+        DemoService1.INTERFACE_NAME,
+        PropertyName("Prefix"),
+        "Hello"
+    )
 
-    override var prefix: String
-        get() = backingPrefix
-        set(value) = updatePrefix(value)
-
-    override suspend fun greet(name: String): String = "$backingPrefix, $name!"
-
-    private fun updatePrefix(value: String) {
-        if (value == backingPrefix) return
-        backingPrefix = value
-        // Notify subscribers (e.g. `busctl --user monitor`, or a PropertiesProxy.changes()
-        // flow) that the property changed.
-        obj.emitPropertiesChangedSignal(
-            DemoService1.INTERFACE_NAME,
-            listOf(PropertyName("Prefix"))
-        )
-    }
-
-    override fun register() {
-        obj.addVTable(DemoService1.INTERFACE_NAME) {
-            method(MethodName("Greet")) {
-                inputParamNames = listOf("name")
-                outputParamNames = listOf("greeting")
-                asyncCall(this@DemoServiceImpl::greet)
-            }
-            signal(SignalName("Tick")) {
-                with<ULong>("count")
-            }
-            prop(PropertyName("Prefix")) {
-                withGetter { backingPrefix }
-                withSetter<String> { updatePrefix(it) }
-            }
-        }
-    }
+    override suspend fun greet(name: String): String = "$prefix, $name!"
 }
 
 fun main(args: Array<String>): Unit = runBlocking {
@@ -105,12 +75,13 @@ fun main(args: Array<String>): Unit = runBlocking {
 private suspend fun runServer(runForSeconds: Int?) = coroutineScope {
     println("Starting demo service, requesting name ${SERVICE_NAME.value} ...")
     val connection = createBusConnection(SERVICE_NAME)
-    connection.startEventLoop()
 
     // Install an ObjectManager so clients can discover the exported object via
     // GetManagedObjects / InterfacesAdded.
     val managerRegistration = connection.addObjectManager(MANAGER_PATH)
 
+    // createObject auto-starts the connection's I/O event loop (runEventLoopThread defaults to
+    // true, mirroring createProxy); startEventLoop is idempotent, so no explicit call is needed.
     val obj = createObject(connection, OBJECT_PATH)
     val service = DemoServiceImpl(obj)
     // Registers the generated vtable (method Greet, property Prefix, signal Tick) on the object.

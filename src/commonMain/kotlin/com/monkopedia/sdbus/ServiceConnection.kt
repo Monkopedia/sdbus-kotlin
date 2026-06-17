@@ -54,5 +54,6 @@ class ServiceConnection(val connection: Connection, val serviceName: ServiceName
      *
      * Creates an object on the given connection.
      */
-    fun createObject(objectPath: ObjectPath): Object = createObject(connection, objectPath)
+    fun createObject(objectPath: ObjectPath, runEventLoopThread: Boolean = true): Object =
+        createObject(connection, objectPath, runEventLoopThread = runEventLoopThread)
 }

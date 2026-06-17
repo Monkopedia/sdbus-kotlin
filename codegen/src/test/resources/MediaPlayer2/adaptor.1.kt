@@ -7,14 +7,30 @@ import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.emitSignal
 import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.notifying
 import com.monkopedia.sdbus.prop
 import com.monkopedia.sdbus.signal
+import kotlin.Boolean
+import kotlin.Double
 import kotlin.Long
+import kotlin.String
 import kotlin.Unit
 
 public abstract class PlayerAdaptor(
   public val obj: Object,
 ) : Player {
+  override var loopStatus: String by
+      obj.notifying(Player.Companion.INTERFACE_NAME, PropertyName("LoopStatus"), "")
+
+  override var rate: Double by
+      obj.notifying(Player.Companion.INTERFACE_NAME, PropertyName("Rate"), 0.0)
+
+  override var shuffle: Boolean by
+      obj.notifying(Player.Companion.INTERFACE_NAME, PropertyName("Shuffle"), false)
+
+  override var volume: Double by
+      obj.notifying(Player.Companion.INTERFACE_NAME, PropertyName("Volume"), 0.0)
+
   public override fun register() {
     obj.addVTable(Player.Companion.INTERFACE_NAME) {
       method(MethodName("Next")) {

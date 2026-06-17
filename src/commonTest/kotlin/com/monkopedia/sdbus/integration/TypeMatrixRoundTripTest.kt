@@ -86,7 +86,7 @@ class TypeMatrixRoundTripTest {
         val ids = uniqueFixtureIds(suffix)
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {
                 call { input: T -> input }
@@ -381,7 +381,7 @@ class TypeMatrixRoundTripTest {
         val ids = uniqueFixtureIds("mismatch")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         // The server's Echo is declared and replies with a single Int (signature "i") ...
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {

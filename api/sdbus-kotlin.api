@@ -295,6 +295,10 @@ public final class com/monkopedia/sdbus/Object$DefaultImpls {
 	public static fun close (Lcom/monkopedia/sdbus/Object;)V
 }
 
+public final class com/monkopedia/sdbus/ObjectKt {
+	public static final fun notifying-ad17TgA (Lcom/monkopedia/sdbus/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)Lkotlin/properties/ReadWriteProperty;
+}
+
 public final class com/monkopedia/sdbus/ObjectManagerProxy {
 	public static final field Companion Lcom/monkopedia/sdbus/ObjectManagerProxy$Companion;
 	public fun <init> (Lcom/monkopedia/sdbus/Proxy;)V
@@ -336,7 +340,8 @@ public final class com/monkopedia/sdbus/ObjectPath$Companion : kotlinx/serializa
 }
 
 public final class com/monkopedia/sdbus/Object_jvmKt {
-	public static final fun createObject-NvYYnfA (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;)Lcom/monkopedia/sdbus/Object;
+	public static final fun createObject-LYhAe-A (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Object;
+	public static synthetic fun createObject-LYhAe-A$default (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Object;
 }
 
 public final class com/monkopedia/sdbus/PeekedType {
@@ -514,7 +519,8 @@ public final class com/monkopedia/sdbus/SdbusException : java/lang/Exception {
 
 public final class com/monkopedia/sdbus/ServiceConnection {
 	public synthetic fun <init> (Lcom/monkopedia/sdbus/Connection;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun createObject-PVsJK3s (Ljava/lang/String;)Lcom/monkopedia/sdbus/Object;
+	public final fun createObject-jeFENQc (Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Object;
+	public static synthetic fun createObject-jeFENQc$default (Lcom/monkopedia/sdbus/ServiceConnection;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Object;
 	public final fun createProxy-jeFENQc (Ljava/lang/String;Z)Lcom/monkopedia/sdbus/Proxy;
 	public static synthetic fun createProxy-jeFENQc$default (Lcom/monkopedia/sdbus/ServiceConnection;Ljava/lang/String;ZILjava/lang/Object;)Lcom/monkopedia/sdbus/Proxy;
 	public final fun getConnection ()Lcom/monkopedia/sdbus/Connection;

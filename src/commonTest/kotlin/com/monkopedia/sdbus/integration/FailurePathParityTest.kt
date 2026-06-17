@@ -64,7 +64,7 @@ class FailurePathParityTest {
         val ids = uniqueFixtureIds("timeout")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         // The handler delays past the client's per-call timeout, then completes. We keep both
         // event loops running until after it has finished so its (now-late) reply is sent while
         // the connection is still up -- on the native backend, a reply send into an already
@@ -126,7 +126,7 @@ class FailurePathParityTest {
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
         proxyConnection.methodCallTimeout = 100.milliseconds
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         // Same slow-method fixture as methodCallTimeout_surfacesTimeoutError: the handler
         // sleeps past the (connection-default) timeout, then completes while both loops are
         // still up so its late reply doesn't hit a torn-down native connection.
@@ -195,7 +195,7 @@ class FailurePathParityTest {
         val errorMessage = "A test error occurred"
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Throw")) {
                 call<Int, Int> { _ ->
@@ -230,7 +230,7 @@ class FailurePathParityTest {
         val ids = uniqueFixtureIds("noMethod")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Present")) {
                 call { value: Int -> value }
@@ -264,7 +264,7 @@ class FailurePathParityTest {
         val ids = uniqueFixtureIds("wrongArg")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("WantsInt")) {
                 call { value: Int -> value }
@@ -307,7 +307,7 @@ class FailurePathParityTest {
         val ids = uniqueFixtureIds("teardownClean")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {
                 call { value: Int -> value }
@@ -363,7 +363,7 @@ class FailurePathParityTest {
         val ids = uniqueFixtureIds("teardownServer")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {
                 call { value: Int -> value }

@@ -46,11 +46,11 @@ class ObjectManagerTestAdaptor(val obj: Object) {
     }
 
     constructor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath) :
-        this(createObject(connection, path))
+        this(createObject(connection, path, runEventLoopThread = false))
 }
 
 class TestAdaptor(connection: com.monkopedia.sdbus.Connection, path: ObjectPath) :
-    IntegrationTestsAdaptor(createObject(connection, path)) {
+    IntegrationTestsAdaptor(createObject(connection, path, runEventLoopThread = false)) {
     private val cleaner = createCleaner(obj) {
         it.release()
     }

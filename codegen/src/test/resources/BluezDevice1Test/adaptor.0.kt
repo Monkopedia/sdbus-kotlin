@@ -5,11 +5,26 @@ import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.notifying
 import com.monkopedia.sdbus.prop
+import kotlin.Boolean
+import kotlin.String
 
 public abstract class Device1Adaptor(
   public val obj: Object,
 ) : Device1 {
+  override var trusted: Boolean by
+      obj.notifying(Device1.Companion.INTERFACE_NAME, PropertyName("Trusted"), false)
+
+  override var blocked: Boolean by
+      obj.notifying(Device1.Companion.INTERFACE_NAME, PropertyName("Blocked"), false)
+
+  override var wakeAllowed: Boolean by
+      obj.notifying(Device1.Companion.INTERFACE_NAME, PropertyName("WakeAllowed"), false)
+
+  override var alias: String by
+      obj.notifying(Device1.Companion.INTERFACE_NAME, PropertyName("Alias"), "")
+
   public override fun register() {
     obj.addVTable(Device1.Companion.INTERFACE_NAME) {
       method(MethodName("Connect")) {

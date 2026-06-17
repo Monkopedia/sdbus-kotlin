@@ -41,8 +41,17 @@ internal class JvmObject(
     override fun release(): Unit = backend.release()
 }
 
-actual fun createObject(connection: Connection, objectPath: ObjectPath): Object = JvmObject(
-    connection,
-    objectPath,
-    JvmDbusBackendProvider.backend.createObject(connection, objectPath)
-)
+actual fun createObject(
+    connection: Connection,
+    objectPath: ObjectPath,
+    runEventLoopThread: Boolean
+): Object {
+    if (runEventLoopThread) {
+        connection.startEventLoop()
+    }
+    return JvmObject(
+        connection,
+        objectPath,
+        JvmDbusBackendProvider.backend.createObject(connection, objectPath)
+    )
+}

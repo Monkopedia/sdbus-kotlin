@@ -70,7 +70,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("typed")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Add")) {
                 call { a: Int, b: Int -> a + b }
@@ -114,7 +114,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("emptyDict")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("CountOptions")) {
                 call { options: Map<String, Variant> -> options.size }
@@ -154,7 +154,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("emptyArray")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("CountItems")) {
                 call { items: List<String> -> items.size }
@@ -213,7 +213,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("release")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {
                 call { value: Int -> value }
@@ -250,7 +250,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncCallback")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Multiply")) {
                 call { a: Int, b: Int -> a * b }
@@ -293,7 +293,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncSuspend")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Add")) {
                 call { a: Int, b: Int -> a + b }
@@ -324,7 +324,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("methodSend")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Add")) {
                 call { a: Int, b: Int -> a + b }
@@ -359,7 +359,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("typedError")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Fail")) {
                 call<Int, Int> { _ ->
@@ -391,7 +391,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("typedComplex")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Build")) {
                 call { base: Int, items: List<Int> ->
@@ -431,7 +431,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncError")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Fail")) {
                 call<Int, Int> { _ ->
@@ -471,7 +471,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncTimeout")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
                 asyncCall { a: Int, b: Int ->
@@ -516,7 +516,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncTimeoutQuick")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
                 asyncCall { a: Int, b: Int ->
@@ -564,7 +564,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncPending")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
                 asyncCall { a: Int, b: Int ->
@@ -606,7 +606,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncCancel")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
                 asyncCall { a: Int, b: Int ->
@@ -650,7 +650,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncSuspendError")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Fail")) {
                 call<Int, Int> { _ ->
@@ -684,7 +684,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncParallel")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("WaitAndEcho")) {
                 asyncCall { value: Int ->
@@ -722,7 +722,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("asyncBulkParallel")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {
                 asyncCall { value: Int -> value }
@@ -765,7 +765,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("signal")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -803,7 +803,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("signalSend")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -841,7 +841,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("signalCurrentMessage")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -882,7 +882,7 @@ class CommonApiIntegrationTest {
         val serverConnection = createBusConnection(ids.service)
         val proxyConnectionA = createBusConnection()
         val proxyConnectionB = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -943,7 +943,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("signalReregister")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -998,8 +998,8 @@ class CommonApiIntegrationTest {
         val serverConnection = createBusConnection(ids.service)
         val otherConnection = createBusConnection(otherService)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
-        val otherObj = createObject(otherConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
+        val otherObj = createObject(otherConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -1047,7 +1047,7 @@ class CommonApiIntegrationTest {
         val proxyConnection = createBusConnection()
         val stateProperty = PropertyName("state")
         var state = false
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             prop(stateProperty) {
                 withGetter { state }
@@ -1125,7 +1125,7 @@ class CommonApiIntegrationTest {
         val ids = uniqueFixtureIds("match")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Changed")) {
                 with<String>("value")
@@ -1174,7 +1174,7 @@ class CommonApiIntegrationTest {
         val proxyConnection = createBusConnection()
         val stateProperty = PropertyName("state")
         var state = false
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             prop(stateProperty) {
                 withGetter { state }
@@ -1227,7 +1227,7 @@ class CommonApiIntegrationTest {
         val countProperty = PropertyName("count")
         val holder = PropertyHolder()
         holder.value = 42
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             prop(countProperty) {
                 with(holder::value)
@@ -1274,7 +1274,7 @@ class CommonApiIntegrationTest {
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
         val stateProperty = PropertyName("state")
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             prop(stateProperty) {
                 withGetter { true }
@@ -1310,7 +1310,7 @@ class CommonApiIntegrationTest {
         var state = false
         val memberSeen = CompletableDeferred<String>()
         val senderSeen = CompletableDeferred<String>()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             prop(stateProperty) {
                 withGetter { state }
@@ -1348,9 +1348,9 @@ class CommonApiIntegrationTest {
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
         val managerPath = ObjectPath("/com/monkopedia/sdbus/common")
-        val managerObj = createObject(serverConnection, managerPath)
+        val managerObj = createObject(serverConnection, managerPath, runEventLoopThread = false)
         val manager = managerObj.addObjectManager()
-        val obj = createObject(serverConnection, ids.path)
+        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Ping")) {
                 call<Unit> { Unit }
