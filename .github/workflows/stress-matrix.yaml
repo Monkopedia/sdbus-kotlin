@@ -249,10 +249,11 @@ jobs:
           sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus
 
       - name: Run GC Cleaner Soak (native + JVM)
+        # `-PgcSoak` makes the build run ONLY the Cleaner*SoakTest suites (see build.gradle.kts); no
+        # `--tests` filter — that is unreliable across two test tasks and ran the full suite in CI.
         run: |
           set -euo pipefail
-          dbus-run-session -- ./gradlew :linuxX64Test :jvmTest \
-            --tests "*Cleaner*SoakTest*" -PgcSoak \
+          dbus-run-session -- ./gradlew :linuxX64Test :jvmTest -PgcSoak \
             --rerun-tasks --stacktrace | tee cleaner-soak.log
 
       - name: Upload Failure Artifacts

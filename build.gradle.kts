@@ -228,12 +228,17 @@ tasks.register("crossRuntimeStressTests") {
     dependsOn(":stress_test:jvmInteropStressTest")
 }
 
-// The native GC-cleaner soak suites (CleanerSoakTest + CleanerLifecycleSoakTest) are probabilistic by
-// nature (they force GC and poll for finalizers), so they are excluded from the default test run to
-// keep the PR gate flake-free. They run on the nightly schedule via `-PgcSoak` (see the cleaner-soak
-// job in stress-matrix.yaml).
-if (!project.hasProperty("gcSoak")) {
-    tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
+// The GC-cleaner soak suites (Cleaner*SoakTest) are probabilistic by nature (they force GC and poll
+// for finalizers), so by default they are EXCLUDED from every test run to keep the PR gate flake-free.
+// Passing `-PgcSoak` inverts this to run ONLY the soak suites (see the cleaner-soak job in
+// stress-matrix.yaml). Driving the selection from this gate — rather than a command-line `--tests`
+// filter — is deliberate: `--tests` across multiple test tasks (`:linuxX64Test :jvmTest`) is applied
+// to only one task and silently runs the other unfiltered, which ran the full integration suite in CI.
+tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
+    if (project.hasProperty("gcSoak")) {
+        filter.isFailOnNoMatchingTests = false
+        filter.includeTestsMatching("com.monkopedia.sdbus.unit.Cleaner*SoakTest")
+    } else {
         filter.excludeTestsMatching("com.monkopedia.sdbus.unit.Cleaner*SoakTest")
     }
 }
