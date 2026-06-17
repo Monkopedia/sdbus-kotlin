@@ -305,6 +305,13 @@ internal fun Proxy.callMethodAsync(
  *
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
+@Suppress("DEPRECATION")
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct typed accessor " +
+        "Proxy.getPropertyAsync(interfaceName, propertyName) instead. Removed at 1.0.",
+    ReplaceWith("getPropertyAsync(interfaceName, propertyName)"),
+    DeprecationLevel.WARNING
+)
 fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGetter =
     AsyncPropertyGetter(this, propertyName)
 
@@ -327,6 +334,13 @@ fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGetter =
  *
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
+@Suppress("DEPRECATION")
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct typed accessor " +
+        "Proxy.setPropertyAsync(interfaceName, propertyName, value) instead. Removed at 1.0.",
+    ReplaceWith("setPropertyAsync(interfaceName, propertyName, value)"),
+    DeprecationLevel.WARNING
+)
 fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySetter =
     AsyncPropertySetter(this, propertyName)
 
@@ -345,6 +359,13 @@ fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySetter =
  *
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
+@Suppress("DEPRECATION")
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct accessor " +
+        "Proxy.getAllProperties(interfaceName) instead. Removed at 1.0.",
+    ReplaceWith("getAllProperties(interfaceName)"),
+    DeprecationLevel.WARNING
+)
 fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
 
 /**
@@ -363,7 +384,13 @@ fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
  *
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
-
+@Suppress("DEPRECATION")
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct accessor " +
+        "Proxy.getAllPropertiesAsync(interfaceName) instead. Removed at 1.0.",
+    ReplaceWith("getAllPropertiesAsync(interfaceName)"),
+    DeprecationLevel.WARNING
+)
 fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPropertiesGetter(this)
 
 /**

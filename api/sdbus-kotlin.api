@@ -406,6 +406,11 @@ public class com/monkopedia/sdbus/PropertyDelegate : kotlin/properties/ReadOnlyP
 public final class com/monkopedia/sdbus/PropertyGetReply : com/monkopedia/sdbus/Message {
 }
 
+public final class com/monkopedia/sdbus/PropertyGetterKt {
+	public static final fun getAllProperties-y7Q0YME (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;)Ljava/util/Map;
+	public static final fun getAllPropertiesAsync-oeU1YUc (Lcom/monkopedia/sdbus/Proxy;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/monkopedia/sdbus/PropertySetCall : com/monkopedia/sdbus/Message {
 }
 

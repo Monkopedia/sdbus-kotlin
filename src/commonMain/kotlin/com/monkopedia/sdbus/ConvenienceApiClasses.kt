@@ -34,11 +34,23 @@ import kotlinx.serialization.serializer
  * Obtain an instance via [Proxy.getPropertyAsync], chain [onInterface] to select the interface,
  * then await the value with [get].
  */
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct typed accessor " +
+        "Proxy.getPropertyAsync(interfaceName, propertyName) instead. Removed at 1.0.",
+    ReplaceWith("getPropertyAsync"),
+    DeprecationLevel.WARNING
+)
 class AsyncPropertyGetter(private val proxy: Proxy, private val propertyName: PropertyName) {
 
     private var interfaceName: InterfaceName? = null
 
     /** Selects the interface that declares the property and returns this builder. */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct typed accessor " +
+            "Proxy.getPropertyAsync(interfaceName, propertyName) instead. Removed at 1.0.",
+        ReplaceWith("getPropertyAsync(interfaceName, propertyName)"),
+        DeprecationLevel.WARNING
+    )
     fun onInterface(interfaceName: InterfaceName): AsyncPropertyGetter = apply {
         this.interfaceName = interfaceName
     }
@@ -80,17 +92,35 @@ class AsyncPropertyGetter(private val proxy: Proxy, private val propertyName: Pr
  * Obtain an instance via [Proxy.setPropertyAsync], chain [onInterface] and [toValue], then issue
  * the write with [getResult].
  */
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct typed accessor " +
+        "Proxy.setPropertyAsync(interfaceName, propertyName, value) instead. Removed at 1.0.",
+    ReplaceWith("setPropertyAsync"),
+    DeprecationLevel.WARNING
+)
 class AsyncPropertySetter(private val proxy: Proxy, private val propertyName: PropertyName) {
 
     private var value: Pair<Typed<*>, Any>? = null
     private var interfaceName: InterfaceName? = null
 
     /** Selects the interface that declares the property and returns this builder. */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct typed accessor " +
+            "Proxy.setPropertyAsync(interfaceName, propertyName, value) instead. Removed at 1.0.",
+        ReplaceWith("setPropertyAsync(interfaceName, propertyName, value)"),
+        DeprecationLevel.WARNING
+    )
     fun onInterface(interfaceName: InterfaceName): AsyncPropertySetter = apply {
         this.interfaceName = interfaceName
     }
 
     /** Sets the value to write, deducing its type from the reified type [T]. */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct typed accessor " +
+            "Proxy.setPropertyAsync(interfaceName, propertyName, value) instead. Removed at 1.0.",
+        ReplaceWith("setPropertyAsync(interfaceName, propertyName, value)"),
+        DeprecationLevel.WARNING
+    )
     inline fun <reified T : Any> toValue(value: T) = toValue(typed<T>(), value)
 
     @PublishedApi
@@ -99,6 +129,12 @@ class AsyncPropertySetter(private val proxy: Proxy, private val propertyName: Pr
     }
 
     /** Suspends until the property write has completed. */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct typed accessor " +
+            "Proxy.setPropertyAsync(interfaceName, propertyName, value) instead. Removed at 1.0.",
+        ReplaceWith("setPropertyAsync(interfaceName, propertyName, value)"),
+        DeprecationLevel.WARNING
+    )
     suspend fun getResult() {
         require(interfaceName?.value?.isNotEmpty() == true)
 
@@ -113,12 +149,27 @@ class AsyncPropertySetter(private val proxy: Proxy, private val propertyName: Pr
  *
  * Obtain an instance via [Proxy.getAllProperties] and read the values with [onInterface].
  */
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct accessor " +
+        "Proxy.getAllProperties(interfaceName) instead. Removed at 1.0.",
+    ReplaceWith("getAllProperties"),
+    DeprecationLevel.WARNING
+)
 class AllPropertiesGetter(val proxy: Proxy) {
     /**
      * Reads all properties declared on the given interface.
      *
+     * Note: this is a synchronous, blocking call; the direct replacement
+     * [Proxy.getAllProperties] is likewise blocking.
+     *
      * @return A map of property name to its current value
      */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct accessor " +
+            "Proxy.getAllProperties(interfaceName) instead. Removed at 1.0.",
+        ReplaceWith("getAllProperties(interfaceName)"),
+        DeprecationLevel.WARNING
+    )
     fun onInterface(interfaceName: InterfaceName): Map<PropertyName, Variant> =
         proxy.callMethod(PropertiesProxy.INTERFACE_NAME, MethodName("GetAll")) {
             call(interfaceName)
@@ -131,10 +182,22 @@ class AllPropertiesGetter(val proxy: Proxy) {
  * Obtain an instance via [Proxy.getAllPropertiesAsync], chain [onInterface], then await the values
  * with [getResult].
  */
+@Deprecated(
+    "The fluent property layer is deprecated; use the direct accessor " +
+        "Proxy.getAllPropertiesAsync(interfaceName) instead. Removed at 1.0.",
+    ReplaceWith("getAllPropertiesAsync"),
+    DeprecationLevel.WARNING
+)
 class AsyncAllPropertiesGetter(private val proxy: Proxy) {
     private var interfaceName: InterfaceName? = null
 
     /** Selects the interface whose properties will be read and returns this builder. */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct accessor " +
+            "Proxy.getAllPropertiesAsync(interfaceName) instead. Removed at 1.0.",
+        ReplaceWith("getAllPropertiesAsync(interfaceName)"),
+        DeprecationLevel.WARNING
+    )
     fun onInterface(interfaceName: InterfaceName): AsyncAllPropertiesGetter = apply {
         this.interfaceName = interfaceName
     }
@@ -144,6 +207,12 @@ class AsyncAllPropertiesGetter(private val proxy: Proxy) {
      *
      * @return A map of property name to its current value
      */
+    @Deprecated(
+        "The fluent property layer is deprecated; use the direct accessor " +
+            "Proxy.getAllPropertiesAsync(interfaceName) instead. Removed at 1.0.",
+        ReplaceWith("getAllPropertiesAsync(interfaceName)"),
+        DeprecationLevel.WARNING
+    )
     suspend fun getResult(): Map<PropertyName, Variant> {
         require(interfaceName?.value?.isNotEmpty() == true)
         return proxy.callMethodAsync(PropertiesProxy.INTERFACE_NAME, MethodName("GetAll")) {

@@ -86,6 +86,98 @@ inline fun <reified T : Any> Proxy.setProperty(
 }
 
 /**
+ * Asynchronously gets the value of a property of the D-Bus object.
+ *
+ * This is the direct, one-shot async equivalent of [getProperty]: it suspends until the property
+ * value is retrieved and deserialized as type [T], returning the value directly rather than a
+ * builder.
+ *
+ * @param interfaceName Interface that declares the property
+ * @param propertyName Name of the property
+ * @return The current property value
+ *
+ * Example of use:
+ * ```
+ * val state: Int = proxy.getPropertyAsync(InterfaceName("com.kistler.foo"), PropertyName("state"))
+ * ```
+ *
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
+ */
+suspend inline fun <reified T : Any> Proxy.getPropertyAsync(
+    interfaceName: InterfaceName,
+    propertyName: PropertyName
+): T = callMethodAsync<Variant>(PropertiesProxy.INTERFACE_NAME, MethodName("Get")) {
+    call(interfaceName, propertyName)
+}.get<T>()
+
+/**
+ * Asynchronously sets a property on the D-Bus object.
+ *
+ * This is the direct, one-shot async equivalent of [setProperty]: it suspends until the write has
+ * completed. The value's signature is deduced from the reified type [T].
+ *
+ * @param interfaceName Interface that declares the property
+ * @param propertyName Name of the property to set
+ * @param value New value
+ * @param dontExpectReply When `true`, send the set without waiting for a reply
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
+ */
+suspend inline fun <reified T : Any> Proxy.setPropertyAsync(
+    interfaceName: InterfaceName,
+    propertyName: PropertyName,
+    value: T,
+    dontExpectReply: Boolean = false
+) {
+    callMethodAsync<Unit>(PropertiesProxy.INTERFACE_NAME, MethodName("Set")) {
+        this.dontExpectReply = dontExpectReply
+        call(interfaceName, propertyName, Variant(value))
+    }
+}
+
+/**
+ * Gets the values of all properties declared on the given interface.
+ *
+ * This is the direct, blocking equivalent of the [AllPropertiesGetter] builder: it returns the map
+ * of property values directly rather than a builder.
+ *
+ * @param interfaceName Interface whose properties will be read
+ * @return A map of property name to its current value
+ *
+ * Example of use:
+ * ```
+ * val props = proxy.getAllProperties(InterfaceName("com.kistler.foo"))
+ * ```
+ *
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
+ */
+fun Proxy.getAllProperties(interfaceName: InterfaceName): Map<PropertyName, Variant> =
+    callMethod(PropertiesProxy.INTERFACE_NAME, MethodName("GetAll")) {
+        call(interfaceName)
+    }
+
+/**
+ * Asynchronously gets the values of all properties declared on the given interface.
+ *
+ * This is the direct, one-shot async equivalent of [getAllProperties]: it suspends until all
+ * properties have been retrieved, returning the map of property values directly rather than a
+ * builder.
+ *
+ * @param interfaceName Interface whose properties will be read
+ * @return A map of property name to its current value
+ *
+ * Example of use:
+ * ```
+ * val props = proxy.getAllPropertiesAsync(InterfaceName("com.kistler.foo"))
+ * ```
+ *
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
+ */
+suspend fun Proxy.getAllPropertiesAsync(interfaceName: InterfaceName): Map<PropertyName, Variant> =
+    callMethodAsync(PropertiesProxy.INTERFACE_NAME, MethodName("GetAll")) {
+        call(interfaceName)
+    }
+
+/**
  * Creates a read-only Kotlin property delegate backed by a D-Bus property.
  *
  * @param interfaceName Interface that declares the property
