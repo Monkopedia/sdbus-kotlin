@@ -11,6 +11,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
@@ -240,6 +243,161 @@ class DBusWireConnectionTest {
             val buffer = ByteArray(max)
             val read = stream.read(buffer)
             String(buffer, 0, read.coerceAtLeast(0), Charsets.UTF_8)
+        }
+    }
+
+    /**
+     * Regression for issue #101 (bounded serve pool must not deadlock on nested same-connection
+     * dispatch). A served "Outer" handler makes a BLOCKING call back to "Inner" on the SAME
+     * connection: Outer runs on a serve worker and PARKS waiting for Inner's reply, and Inner needs
+     * its own serve worker. We fire MORE concurrent Outer calls than the pool's [serveBound] so that
+     * — with a naive fixed bound — every worker would be parked on an Outer and the queued Inner
+     * calls could never get a thread, deadlocking. The bounded pool's compensation must instead let
+     * every chain finish. [withTimeout] makes a regression FAIL FAST rather than hang.
+     */
+    @Test
+    fun nestedSameConnectionDispatch_underBoundedPool_completesWithoutDeadlock() = runBlocking {
+        val server = connectOrNull() ?: return@runBlocking
+        val client = connectOrNull() ?: run {
+            server.close()
+            return@runBlocking
+        }
+        val busName = "com.monkopedia.sdbus.wire.nest.s${System.nanoTime()}"
+        val path = "/com/monkopedia/sdbus/wire/nest"
+        val iface = "com.monkopedia.sdbus.wire.Nest"
+
+        server.setIncomingCallHandler { message ->
+            when (message.member) {
+                "Inner" -> server.send(
+                    WireMessage(
+                        type = WireMessageType.METHOD_RETURN,
+                        replySerial = message.serial,
+                        destination = message.sender,
+                        signature = "b",
+                        body = listOf(true)
+                    )
+                )
+
+                "Outer" -> {
+                    // Nested call on THIS same connection: parks this serve worker until the reader
+                    // delivers Inner's reply, which itself must be served on another worker.
+                    val innerOk = runCatching {
+                        server.callBlocking(
+                            WireMessage(
+                                type = WireMessageType.METHOD_CALL,
+                                destination = busName,
+                                path = path,
+                                interfaceName = iface,
+                                member = "Inner"
+                            )
+                        ).body.firstOrNull() == true
+                    }.getOrDefault(false)
+                    server.send(
+                        WireMessage(
+                            type = WireMessageType.METHOD_RETURN,
+                            replySerial = message.serial,
+                            destination = message.sender,
+                            signature = "b",
+                            body = listOf(innerOk)
+                        )
+                    )
+                }
+            }
+        }
+
+        try {
+            assertEquals(1, server.requestName(busName), "server should own $busName")
+            // Strictly exceed the pool bound so a fixed-bound pool would have no spare worker for the
+            // nested Inner calls (every worker parked on an Outer) -> deadlock without compensation.
+            val concurrency = server.serveBound + 8
+            val replies = withTimeout(20_000) {
+                (1..concurrency).map {
+                    async(Dispatchers.IO) {
+                        client.call(
+                            WireMessage(
+                                type = WireMessageType.METHOD_CALL,
+                                destination = busName,
+                                path = path,
+                                interfaceName = iface,
+                                member = "Outer"
+                            )
+                        )
+                    }
+                }.awaitAll()
+            }
+            assertEquals(concurrency, replies.size)
+            assertTrue(
+                replies.all { it.body.firstOrNull() == true },
+                "every nested Outer->Inner chain should complete successfully"
+            )
+        } finally {
+            client.close()
+            server.close()
+        }
+    }
+
+    /**
+     * The serve pool must NOT grow a thread per concurrently-served call (the old
+     * newCachedThreadPool behavior, issue #101). A flood of independent slow (non-nested) handlers,
+     * far exceeding [serveBound], must all complete while the live worker count stays capped at
+     * [serveBound]: the surplus calls queue instead of spawning unbounded threads.
+     */
+    @Test
+    fun serveWorkerPool_underFloodOfSlowHandlers_staysBounded() = runBlocking {
+        val server = connectOrNull() ?: return@runBlocking
+        val client = connectOrNull() ?: run {
+            server.close()
+            return@runBlocking
+        }
+        val busName = "com.monkopedia.sdbus.wire.flood.s${System.nanoTime()}"
+        val path = "/com/monkopedia/sdbus/wire/flood"
+        val iface = "com.monkopedia.sdbus.wire.Flood"
+
+        server.setIncomingCallHandler { message ->
+            if (message.member == "Slow") {
+                // Slow, but INDEPENDENT: no call back on this connection, so it never compensates.
+                Thread.sleep(200)
+                server.send(
+                    WireMessage(
+                        type = WireMessageType.METHOD_RETURN,
+                        replySerial = message.serial,
+                        destination = message.sender,
+                        signature = "b",
+                        body = listOf(true)
+                    )
+                )
+            }
+        }
+
+        try {
+            assertEquals(1, server.requestName(busName), "server should own $busName")
+            val concurrency = server.serveBound * 4
+            val replies = withTimeout(30_000) {
+                (1..concurrency).map {
+                    async(Dispatchers.IO) {
+                        client.call(
+                            WireMessage(
+                                type = WireMessageType.METHOD_CALL,
+                                destination = busName,
+                                path = path,
+                                interfaceName = iface,
+                                member = "Slow"
+                            )
+                        )
+                    }
+                }.awaitAll()
+            }
+            assertEquals(concurrency, replies.size)
+            assertTrue(replies.all { it.body.firstOrNull() == true }, "all slow calls should reply")
+            assertTrue(
+                server.serveLargestPoolSize <= server.serveBound,
+                "serve pool grew to ${server.serveLargestPoolSize} threads, exceeding the bound " +
+                    "of ${server.serveBound}: a flood of slow handlers must queue, not spawn " +
+                    "unbounded threads"
+            )
+        } finally {
+            client.close()
+            server.close()
         }
     }
 

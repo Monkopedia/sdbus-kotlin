@@ -36,7 +36,9 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
@@ -112,12 +114,18 @@ internal class DBusWireConnection private constructor(
     @Volatile
     private var incomingCallHandler: ((WireMessage) -> Unit)? = null
 
-    // Worker pool for serving incoming calls. Off the reader thread so handler execution (and any
-    // nested call a handler makes back on this same connection) cannot block reads or deadlock the
-    // reader: the reader only enqueues, then keeps reading and completing pending-call futures.
-    private val serveExecutor = Executors.newCachedThreadPool { runnable ->
-        thread(start = false, isDaemon = true, name = "sdbus-jvm-wire-serve") { runnable.run() }
-    }
+    // Bounded, nested-dispatch-safe worker pool for serving incoming calls (issue #101). Off the
+    // reader thread so handler execution (and any nested call a handler makes back on this same
+    // connection) cannot block reads: the reader only enqueues, then keeps reading and completing
+    // pending-call futures. See [ServeWorkerPool] for why a bounded pool here is nonetheless free of
+    // the nested-same-connection-dispatch deadlock that a naive bound would introduce.
+    private val serveWorkers = ServeWorkerPool()
+
+    /** Steady-state worker bound of the serve pool (test/diagnostic visibility only). */
+    internal val serveBound: Int get() = serveWorkers.bound
+
+    /** High-water mark of live serve-worker threads (test/diagnostic visibility only). */
+    internal val serveLargestPoolSize: Int get() = serveWorkers.largestPoolSize
 
     @Volatile
     private var uniqueNameValue: String? = null
@@ -219,7 +227,7 @@ internal class DBusWireConnection private constructor(
                 // Hand off to a worker so the reader thread keeps draining the socket; a handler
                 // may itself call back on this connection and await a reply the reader delivers.
                 runCatching {
-                    serveExecutor.execute { runCatching { handler(message) } }
+                    serveWorkers.execute { runCatching { handler(message) } }
                 }
             }
         }
@@ -357,6 +365,10 @@ internal class DBusWireConnection private constructor(
         timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
     ): WireMessage {
         val (serial, future) = dispatchCall(request)
+        // If a serve worker is making this (nested same-connection) call it is about to PARK
+        // waiting for a reply the reader delivers; compensate so the queued nested work still has a
+        // runnable worker (see [ServeWorkerPool]). A no-op off the serve pool.
+        val compensating = serveWorkers.beginNestedBlock()
         val reply = try {
             future.orTimeout(timeoutMillis, TimeUnit.MILLISECONDS).await()
         } catch (e: TimeoutException) {
@@ -365,6 +377,8 @@ internal class DBusWireConnection private constructor(
                 TIMEOUT_ERROR_NAME,
                 "Method call timed out after ${timeoutMillis}ms"
             )
+        } finally {
+            if (compensating) serveWorkers.endNestedBlock()
         }
         throwIfError(reply)
         return reply
@@ -376,6 +390,9 @@ internal class DBusWireConnection private constructor(
         timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
     ): WireMessage {
         val (serial, future) = dispatchCall(request)
+        // A blocking nested call from a serve worker parks the worker until the reader delivers the
+        // reply; compensate so the queued nested work keeps a runnable worker (see [ServeWorkerPool]).
+        val compensating = serveWorkers.beginNestedBlock()
         val reply = try {
             future.get(timeoutMillis, TimeUnit.MILLISECONDS)
         } catch (e: TimeoutException) {
@@ -384,6 +401,8 @@ internal class DBusWireConnection private constructor(
                 TIMEOUT_ERROR_NAME,
                 "Method call timed out after ${timeoutMillis}ms"
             )
+        } finally {
+            if (compensating) serveWorkers.endNestedBlock()
         }
         throwIfError(reply)
         return reply
@@ -537,7 +556,7 @@ internal class DBusWireConnection private constructor(
 
     override fun close() {
         running = false
-        runCatching { serveExecutor.shutdownNow() }
+        runCatching { serveWorkers.shutdownNow() }
         runCatching { socket.close() }
         readerThread?.let { reader ->
             if (reader !== Thread.currentThread()) {
@@ -643,6 +662,139 @@ internal class DBusWireConnection private constructor(
         private fun encodeHex(bytes: ByteArray): String = buildString(bytes.size * 2) {
             for (b in bytes) append("%02x".format(b.toInt() and 0xff))
         }
+    }
+}
+
+/**
+ * Bounded, nested-dispatch-safe worker pool that serves incoming METHOD_CALL messages off the
+ * reader thread (issue #101).
+ *
+ * Why bounded: serving previously used [java.util.concurrent.Executors.newCachedThreadPool], which
+ * creates one thread per concurrently-served call, so a flood of slow or blocking handlers grew the
+ * thread (and stack/memory) count without limit — a resource-exhaustion hazard. This pool keeps a
+ * fixed [bound] of worker threads (a small multiple of the CPU count) and lets surplus calls QUEUE,
+ * so a burst of slow handlers degrades into latency rather than unbounded thread growth.
+ *
+ * Why a naive bound would be WORSE than unbounded — the nested-same-connection-dispatch deadlock: a
+ * served handler may itself make a synchronous call back on THIS connection whose target is also
+ * served here. Concretely handler X (on a worker thread) calls `callBlocking` -> the request goes
+ * out on the wire -> the daemon routes it back to us -> the reader reads it as a METHOD_CALL and
+ * submits handler Y -> Y replies -> the reader completes X's future. So X PARKS on a worker thread
+ * waiting for Y, and Y needs its OWN worker thread. With a fixed bound whose workers are all parked
+ * (e.g. a flood of such handlers), Y can never get a thread and the chain deadlocks forever.
+ * `newCachedThreadPool` avoided this only by always conjuring a spare thread.
+ *
+ * How this stays deadlock-free — ForkJoinPool-style COMPENSATION. The reader is the SOLE submitter
+ * and must never run a handler inline (it has to stay free to read the very replies that unpark
+ * parked workers), so the queue is unbounded and [execute] never blocks or rejects. Live-thread
+ * capacity is governed purely by `corePoolSize` (with an unbounded queue the pool never spawns
+ * threads beyond `corePoolSize`). Whenever a WORKER thread is about to park on a nested
+ * same-connection call it calls [beginNestedBlock], which raises `corePoolSize` by one and
+ * pre-starts a replacement worker; [endNestedBlock] lowers it again. Therefore at every instant
+ *
+ *     live worker threads == bound + (workers currently parked on a nested call),
+ *
+ * i.e. there are always at least [bound] RUNNABLE workers no matter how many are parked. A nested
+ * chain of depth D parks at most D-1 workers, each compensated, so Y (and the rest of the chain)
+ * always finds a thread: the pool is deadlock-free at any nesting depth.
+ *
+ * What stays bounded is exactly the dangerous case: a flood of INDEPENDENT slow handlers never
+ * compensates (they never call back on this connection), so the worker count stays pinned at
+ * [bound] and the excess simply queues. Threads grow ONLY by the number of handlers genuinely
+ * parked on nested dispatch — the irreducible minimum for those to make progress at all (N
+ * concurrently-parked nested handlers cannot be served by fewer than ~N threads without deadlock).
+ * Surplus compensating workers retire once idle (`allowCoreThreadTimeOut`), shrinking the pool back
+ * to [bound] after a nested-dispatch storm subsides.
+ *
+ * SCOPE / CONSTRAINT on serve handlers: compensation only covers a worker that blocks *on its own
+ * thread* inside [call]/[callBlocking] (where [beginNestedBlock] runs). A serve handler that instead
+ * (a) offloads its nested same-connection call to a DIFFERENT thread/dispatcher (e.g.
+ * `withContext(Dispatchers.IO) { connection.call(...) }`) while keeping the worker parked, or
+ * (b) blocks on a non-same-connection dependency (a shared lock, another handler's result), is NOT
+ * compensated and can starve the bounded pool. Serve handlers must perform any nested same-connection
+ * call synchronously on the worker thread, and must not block the worker on unrelated work.
+ */
+private class ServeWorkerPool {
+    /** Steady-state worker count: ~2x CPUs, clamped so it is neither starved nor wildly large. */
+    val bound: Int =
+        (Runtime.getRuntime().availableProcessors() * 2).coerceIn(MIN_BOUND, MAX_BOUND)
+
+    // Marks threads owned by this pool, so a nested blocking call made from inside a handler can be
+    // detected (it runs on one of these threads) and compensated for; see [beginNestedBlock].
+    private val onWorkerThread = ThreadLocal.withInitial { false }
+    private val threadCounter = AtomicInteger(0)
+
+    // Guards corePoolSize mutations and [parked]; the invariant corePoolSize == bound + parked is
+    // maintained only under this lock so concurrent nested blocks compose correctly.
+    private val poolLock = Any()
+    private var parked = 0
+
+    private val executor = ThreadPoolExecutor(
+        bound,
+        // Unreachable in practice: with the unbounded queue below the pool never grows past
+        // corePoolSize, so the live-thread count is driven entirely by corePoolSize (which
+        // compensation adjusts). A generous ceiling just keeps setCorePoolSize legal.
+        Int.MAX_VALUE,
+        WORKER_KEEPALIVE_SECONDS,
+        TimeUnit.SECONDS,
+        // Unbounded: the reader must never block or reject on submit (it has to keep reading the
+        // replies that unpark parked workers), so surplus calls queue instead.
+        LinkedBlockingQueue(),
+        ThreadFactory { runnable ->
+            thread(
+                start = false,
+                isDaemon = true,
+                name = "sdbus-jvm-wire-serve-${threadCounter.incrementAndGet()}"
+            ) {
+                onWorkerThread.set(true)
+                runnable.run()
+            }
+        }
+    ).apply {
+        // Let compensating (and otherwise idle base) workers retire so the pool returns to [bound]
+        // once a nested-dispatch storm subsides.
+        allowCoreThreadTimeOut(true)
+    }
+
+    val largestPoolSize: Int get() = executor.largestPoolSize
+
+    fun execute(task: () -> Unit) {
+        executor.execute(task)
+    }
+
+    /**
+     * Called by a worker thread immediately before it PARKS on a nested same-connection call: adds
+     * one compensating worker so queued nested work keeps a runnable thread, and returns true (the
+     * caller MUST pair it with [endNestedBlock]). Off the worker pool it is a no-op returning false.
+     */
+    fun beginNestedBlock(): Boolean {
+        if (!onWorkerThread.get()) return false
+        synchronized(poolLock) {
+            parked++
+            executor.corePoolSize = bound + parked
+            // Make a replacement worker live now (even before the nested METHOD_CALL is queued) so
+            // it is ready to pick the nested task up the instant the reader submits it.
+            executor.prestartCoreThread()
+        }
+        return true
+    }
+
+    /** Retires the compensating worker added by a matching [beginNestedBlock]. */
+    fun endNestedBlock() {
+        synchronized(poolLock) {
+            parked--
+            executor.corePoolSize = bound + parked
+        }
+    }
+
+    fun shutdownNow() {
+        executor.shutdownNow()
+    }
+
+    private companion object {
+        private const val MIN_BOUND = 4
+        private const val MAX_BOUND = 64
+        private const val WORKER_KEEPALIVE_SECONDS = 30L
     }
 }
 
