@@ -122,8 +122,9 @@ interface PropertiesProxy : ProxyHolder {
      * @param value New value, wrapped in a [Variant]
      */
     suspend fun setAsync(interfaceName: InterfaceName, propertyName: PropertyName, value: Variant) =
-        proxy.setPropertyAsync(propertyName).onInterface(interfaceName).toValue(value)
-            .getResult()
+        proxy.callMethodAsync<Unit>(INTERFACE_NAME, MethodName("Set")) {
+            call(interfaceName, propertyName, value)
+        }
 
     /**
      * Reads all properties declared on the given interface.
@@ -131,7 +132,7 @@ interface PropertiesProxy : ProxyHolder {
      * @return A map of property name to its current value
      */
     fun getAll(interfaceName: InterfaceName): Map<PropertyName, Variant> =
-        proxy.getAllProperties().onInterface(interfaceName)
+        proxy.getAllProperties(interfaceName)
 
     /**
      * Asynchronously reads all properties declared on the given interface.
@@ -139,7 +140,7 @@ interface PropertiesProxy : ProxyHolder {
      * @return A map of property name to its current value
      */
     suspend fun getAllAsync(interfaceName: InterfaceName): Map<PropertyName, Variant> =
-        proxy.getAllPropertiesAsync().onInterface(interfaceName).getResult()
+        proxy.getAllPropertiesAsync(interfaceName)
 
     companion object {
 
@@ -175,7 +176,7 @@ interface PropertiesProxy : ProxyHolder {
         suspend inline fun <reified T> PropertiesProxy.getAsync(
             interfaceName: InterfaceName,
             propertyName: PropertyName
-        ): T = proxy.getPropertyAsync(propertyName).onInterface(interfaceName).get()
+        ): T = proxy.getPropertyAsync(interfaceName, propertyName)
 
         /**
          * Reads a property, deserializing it as the reified type [T].
