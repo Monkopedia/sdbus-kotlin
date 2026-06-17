@@ -20,7 +20,7 @@
  */
 @file:OptIn(ExperimentalForeignApi::class)
 
-package com.monkopedia.sdbus.unit
+package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Connection
 import com.monkopedia.sdbus.InterfaceName
