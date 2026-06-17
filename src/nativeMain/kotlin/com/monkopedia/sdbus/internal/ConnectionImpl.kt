@@ -22,7 +22,8 @@
  */
 @file:OptIn(
     ExperimentalForeignApi::class,
-    ExperimentalNativeApi::class
+    ExperimentalNativeApi::class,
+    DelicateCoroutinesApi::class
 )
 
 package com.monkopedia.sdbus.internal
@@ -74,10 +75,12 @@ import kotlinx.cinterop.placeTo
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
+import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newFixedThreadPoolContext
+import kotlinx.coroutines.newSingleThreadContext
 import platform.linux.EFD_CLOEXEC
 import platform.linux.EFD_NONBLOCK
 import platform.linux.eventfd
@@ -188,6 +191,14 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
     private var asyncLoopThread: Job? = null
     private var eventLoopStarting = false
     private val asyncLoopStateLock = atomic(false)
+
+    // The event loop runs a BLOCKING poll() for its whole lifetime, so it pins whatever thread it
+    // runs on. Each connection therefore gets its OWN single-thread dispatcher (created lazily on
+    // first startEventLoop, reused across stop/start, closed in release) rather than sharing a fixed
+    // pool — otherwise only as many loops as the pool has threads could ever run concurrently, and
+    // the rest would be queued and never reach poll(). Guarded by [asyncLoopStateLock].
+    private val connectionId = nextConnectionId.getAndIncrement()
+    private var eventDispatcher: CloseableCoroutineDispatcher? = null
     val floatingMatchRules = mutableListOf<Resource>()
     private val eventThread = EventLoopThread(bus, sdbus)
     private val loopExitResource = Reference(eventThread.exitFd) {
@@ -217,7 +228,8 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
                 waitedMs += 10
             }
             // Fail-safe: if the loop never exits, avoid unref-ing resources
-            // that may still be touched by the running event loop.
+            // that may still be touched by the running event loop. We also deliberately leave the
+            // dispatcher open here — its thread may still be parked in poll().
             if (!loopJob.isCompleted) return
             withAsyncLoopStateLock {
                 if (asyncLoopThread === loopJob) {
@@ -225,6 +237,12 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
                 }
             }
         }
+        // The loop has stopped (or never started). Close the dedicated dispatcher exactly once so we
+        // do not leak its thread; reading + nulling under the lock guards against a double close.
+        val dispatcherToClose = withAsyncLoopStateLock {
+            eventDispatcher.also { eventDispatcher = null }
+        }
+        dispatcherToClose?.close()
         loopExitResource.release()
         floatingMatchRules.forEach { it.release() }
         floatingMatchRules.clear()
@@ -323,8 +341,15 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         // would cause a newly started loop to terminate immediately.
         eventThread.clearPendingExitNotifications()
 
+        // Lazily create this connection's dedicated single-thread dispatcher and reuse it across
+        // stop/start cycles. It is closed once in release(), after the loop has stopped.
+        val dispatcher = withAsyncLoopStateLock {
+            eventDispatcher ?: newSingleThreadContext("sdbus-eventloop-$connectionId")
+                .also { eventDispatcher = it }
+        }
+
         val launchedLoop = try {
-            eventThread.launch(CoroutineScope(eventPool))
+            eventThread.launch(CoroutineScope(dispatcher))
         } catch (throwable: Throwable) {
             withAsyncLoopStateLock {
                 eventLoopStarting = false
@@ -895,7 +920,9 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
                 if (ok) 0 else -1
             }
 
-        private val eventPool = newFixedThreadPoolContext(8, "EventThreads")
+        // Monotonic id used only to give each connection's dedicated event-loop thread a distinct,
+        // debuggable name.
+        private val nextConnectionId = atomic(0L)
 
         fun defaultConnection(intf: ISdBus) = ConnectionImpl(intf) { intf.sd_bus_open(it) }
 
