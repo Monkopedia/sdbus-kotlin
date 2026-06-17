@@ -829,7 +829,7 @@ class NativeInteropPeerTest {
                     timeout = 5.seconds
                     call(UnixFd.adopt(-1))
                 }
-            }.exceptionOrNull() as? com.monkopedia.sdbus.Error
+            }.exceptionOrNull() as? com.monkopedia.sdbus.SdbusException
             assertTrue(invalidError != null, "Expected invalid Unix FD call to fail")
             assertTrue(
                 invalidError.errorMessage.contains("Invalid Unix FD", ignoreCase = true),
@@ -1115,5 +1115,5 @@ class NativeInteropPeerTest {
  * Replaces the previously-used internal `createError(errNo, msg)` helper; the asserting side only
  * matches on the error message, so a stable generic error name is used.
  */
-private fun peerError(message: String): com.monkopedia.sdbus.Error =
-    com.monkopedia.sdbus.Error("org.freedesktop.DBus.Error.Failed", message)
+private fun peerError(message: String): com.monkopedia.sdbus.SdbusException =
+    com.monkopedia.sdbus.SdbusException("org.freedesktop.DBus.Error.Failed", message)

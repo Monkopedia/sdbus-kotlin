@@ -20,7 +20,6 @@
  */
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MutablePropertyDelegate
@@ -28,6 +27,7 @@ import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyDelegate
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.callMethod
@@ -71,7 +71,7 @@ import kotlinx.serialization.Serializable
  *   to/from a real remote peer, which covers every `(oayays)` Secret transfer.
  * - issue #72 ([peerErrorNameMappingSupported]): foreign error names/messages are discarded
  *   (everything surfaces as AccessDenied), so error-name assertions are gated while the
- *   `assertFailsWith<Error>` part always runs.
+ *   `assertFailsWith<SdbusException>` part always runs.
  * - issue #74 ([peerGroupedReturnSupported], FOUND BY THIS SUITE): multi-out method replies
  *   (`isGroupedReturn`, the shape codegen emits for 2+-out-arg methods) cannot be
  *   deserialized from a real remote peer, which covers `OpenSession` (vo), service-level
@@ -113,7 +113,7 @@ class DbusmockSecretServiceTest {
             val session = SecretSessionProxy(sessionProxy)
             session.close()
             // The session object is gone from the peer once closed.
-            assertFailsWith<Error> { session.close() }
+            assertFailsWith<SdbusException> { session.close() }
         }
 
         // Closing the second session does not affect the first.
@@ -351,7 +351,7 @@ class DbusmockSecretServiceTest {
                 // itself is asserted: the error *name* for a vanished object is produced by
                 // the foreign stack and is implementation-defined.)
                 withProxyAt(itemPath) { itemProxy ->
-                    assertFailsWith<Error> {
+                    assertFailsWith<SdbusException> {
                         SecretItemProxy(itemProxy).getSecret(ObjectPath("/"))
                     }
                 }
@@ -388,13 +388,16 @@ class DbusmockSecretServiceTest {
             // Reading a secret of an item in a locked collection is rejected. (The error
             // happens before any secret struct is marshalled, so this runs on both backends.)
             withProxyAt(vaultItem) { itemProxy ->
-                val error = assertFailsWith<Error> { SecretItemProxy(itemProxy).getSecret(session) }
+                val error =
+                    assertFailsWith<SdbusException> {
+                        SecretItemProxy(itemProxy).getSecret(session)
+                    }
                 assertSecretError(error, "org.freedesktop.Secret.Error.IsLocked")
             }
 
             if (peerStructMarshallingSupported) {
                 // Creating an item in a locked collection is rejected too.
-                val error = assertFailsWith<Error> {
+                val error = assertFailsWith<SdbusException> {
                     vault.createItem(
                         mapOf("org.freedesktop.Secret.Item.Label" to Variant("Denied")),
                         Secret(session, emptyList(), "nope".toSecretBytes(), "text/plain"),
@@ -450,7 +453,10 @@ class DbusmockSecretServiceTest {
             assertEquals(listOf(ObjectPath(VAULT_PATH)), locked.objects)
             assertTrue(vault.locked)
             withProxyAt(vaultItem) { itemProxy ->
-                val error = assertFailsWith<Error> { SecretItemProxy(itemProxy).getSecret(session) }
+                val error =
+                    assertFailsWith<SdbusException> {
+                        SecretItemProxy(itemProxy).getSecret(session)
+                    }
                 assertSecretError(error, "org.freedesktop.Secret.Error.IsLocked")
             }
         }
@@ -459,10 +465,10 @@ class DbusmockSecretServiceTest {
     /**
      * Asserts the D-Bus error name produced by the mocked Secret Service — gated on
      * [peerErrorNameMappingSupported] (issue #72), where the JVM backend is known to discard
-     * foreign error names. The fact that an [Error] is thrown at all is asserted
+     * foreign error names. The fact that an [SdbusException] is thrown at all is asserted
      * unconditionally at each call site via `assertFailsWith`.
      */
-    private fun assertSecretError(error: Error, expectedName: String) {
+    private fun assertSecretError(error: SdbusException, expectedName: String) {
         if (!peerErrorNameMappingSupported) {
             // KNOWN JVM BACKEND BUG (issue #72; see peerErrorNameMappingSupported KDoc).
             println(

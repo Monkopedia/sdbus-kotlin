@@ -66,7 +66,7 @@ actual fun createSessionBusConnection(address: String): Connection =
  * @param host Name of the host to connect
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 fun createRemoteSystemBusConnection(host: String): Connection = remoteConnection(SdBus(), host)
 

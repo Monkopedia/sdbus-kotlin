@@ -43,7 +43,7 @@ expect class Signal : Message {
     /**
      * Emits this signal on the bus.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun send()
 }

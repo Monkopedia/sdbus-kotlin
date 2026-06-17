@@ -1,9 +1,9 @@
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.callMethod
@@ -23,11 +23,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /**
- * Error / failure-path consistency tests. These assert that BOTH backends (the native sd-bus
+ * SdbusException / failure-path consistency tests. These assert that BOTH backends (the native sd-bus
  * backend exercised by the linux*Test targets and the pure-JVM backend exercised by jvmTest)
- * surface failures the same way: a timeout becomes a timeout [Error], a server-thrown named
+ * surface failures the same way: a timeout becomes a timeout [SdbusException], a server-thrown named
  * D-Bus error round-trips its name + message, a wrong-argument-type / signature mismatch becomes
- * an [Error] rather than reaching the handler, and tearing a connection down stays consistent
+ * an [SdbusException] rather than reaching the handler, and tearing a connection down stays consistent
  * without crashing or hanging.
  *
  * Because the suite is in commonTest it is compiled and run against every target, so a backend
@@ -58,7 +58,7 @@ class FailurePathParityTest {
     // --- method-call timeout ---------------------------------------------------------------
 
     // A server method that deliberately sleeps far past the client's per-call timeout must
-    // surface as a timeout Error on both backends -- not a hang, and not some other error type.
+    // surface as a timeout SdbusException on both backends -- not a hang, and not some other error type.
     @Test
     fun methodCallTimeout_surfacesTimeoutError() = runBlocking {
         val ids = uniqueFixtureIds("timeout")
@@ -83,7 +83,7 @@ class FailurePathParityTest {
 
         try {
             val thrown = withTimeout(3_000) {
-                assertFailsWith<Error> {
+                assertFailsWith<SdbusException> {
                     proxy.callMethodAsync<Int>(ids.iface, MethodName("Slow")) {
                         call(1)
                         timeout = 100.milliseconds
@@ -146,7 +146,7 @@ class FailurePathParityTest {
             // No per-call timeout anywhere in this call: the raw message API's
             // callMethod(message) overload carries the unset sentinel, so the connection's
             // methodCallTimeout default must apply and expire the call.
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 val call = proxy.createMethodCall(ids.iface, MethodName("Slow"))
                 call.append(1)
                 proxy.callMethod(call)
@@ -185,7 +185,7 @@ class FailurePathParityTest {
 
     // --- remote D-Bus error propagation ----------------------------------------------------
 
-    // A handler that throws a named D-Bus Error must reach the client with the same name AND
+    // A handler that throws a named D-Bus SdbusException must reach the client with the same name AND
     // message on both backends. This pins the error model: the name is the contract, not an
     // implementation detail that one backend is free to rewrite.
     @Test
@@ -199,7 +199,7 @@ class FailurePathParityTest {
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Throw")) {
                 call<Int, Int> { _ ->
-                    throw Error(errorName, errorMessage)
+                    throw SdbusException(errorName, errorMessage)
                 }
             }
         }
@@ -207,7 +207,7 @@ class FailurePathParityTest {
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 proxy.callMethod<Int>(ids.iface, MethodName("Throw")) {
                     call(1)
                 }
@@ -223,7 +223,7 @@ class FailurePathParityTest {
         }
     }
 
-    // A method that simply doesn't exist must produce an Error (the daemon's UnknownMethod) on
+    // A method that simply doesn't exist must produce an SdbusException (the daemon's UnknownMethod) on
     // both backends rather than silently returning or hanging.
     @Test
     fun callToNonexistentMethod_surfacesError() = runBlocking {
@@ -240,7 +240,7 @@ class FailurePathParityTest {
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 proxy.callMethod<Int>(ids.iface, MethodName("DoesNotExist")) {
                     call(1)
                 }
@@ -356,7 +356,7 @@ class FailurePathParityTest {
     }
 
     // Tearing down the server side while the client still holds a proxy must not crash the
-    // client: a call to the now-gone service surfaces as an Error on both backends. Time-bounded
+    // client: a call to the now-gone service surfaces as an SdbusException on both backends. Time-bounded
     // to keep a teardown hang from stalling the suite.
     @Test
     fun callAfterServerTeardown_failsConsistently() = runBlocking {
@@ -386,9 +386,9 @@ class FailurePathParityTest {
             obj.release()
             serverConnection.release()
 
-            // The service no longer exists; the client call must surface an Error, not hang.
+            // The service no longer exists; the client call must surface an SdbusException, not hang.
             withTimeout(5_000) {
-                assertFailsWith<Error> {
+                assertFailsWith<SdbusException> {
                     proxy.callMethod<Int>(ids.iface, MethodName("Echo")) {
                         call(10)
                         timeout = 2_000.milliseconds

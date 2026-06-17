@@ -1,6 +1,5 @@
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
@@ -8,6 +7,7 @@ import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
 import com.monkopedia.sdbus.PropertiesProxy
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
@@ -232,7 +232,7 @@ class CommonApiIntegrationTest {
 
             registration.release()
 
-            assertFailsWith<Error> {
+            assertFailsWith<SdbusException> {
                 proxy.callMethod<Int>(ids.iface, MethodName("Echo")) {
                     call(42)
                 }
@@ -259,7 +259,7 @@ class CommonApiIntegrationTest {
         serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
         val callbackValue = CompletableDeferred<Int>()
-        val callbackError = CompletableDeferred<Error?>()
+        val callbackError = CompletableDeferred<SdbusException?>()
 
         try {
             val call = proxy.createMethodCall(ids.iface, MethodName("Multiply"))
@@ -371,7 +371,7 @@ class CommonApiIntegrationTest {
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 proxy.callMethod<Int>(ids.iface, MethodName("Fail")) {
                     call(1)
                 }
@@ -441,7 +441,7 @@ class CommonApiIntegrationTest {
         }
         serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
-        val callbackError = CompletableDeferred<Error?>()
+        val callbackError = CompletableDeferred<SdbusException?>()
 
         try {
             val call = proxy.createMethodCall(ids.iface, MethodName("Fail"))
@@ -482,7 +482,7 @@ class CommonApiIntegrationTest {
         }
         serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
-        val callbackError = CompletableDeferred<Error?>()
+        val callbackError = CompletableDeferred<SdbusException?>()
 
         try {
             val call = proxy.createMethodCall(ids.iface, MethodName("SlowAdd"))
@@ -527,7 +527,7 @@ class CommonApiIntegrationTest {
         }
         serverConnection.startEventLoop()
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
-        val callbackError = CompletableDeferred<Error?>()
+        val callbackError = CompletableDeferred<SdbusException?>()
 
         try {
             val call = proxy.createMethodCall(ids.iface, MethodName("SlowAdd"))
@@ -662,7 +662,7 @@ class CommonApiIntegrationTest {
         val proxy = createProxy(proxyConnection, ids.service, ids.path)
 
         try {
-            assertFailsWith<Error> {
+            assertFailsWith<SdbusException> {
                 proxy.callMethodAsync<Int>(ids.iface, MethodName("Fail")) {
                     call(1)
                 }
@@ -1329,7 +1329,7 @@ class CommonApiIntegrationTest {
         val propertiesProxy = PropertiesProxy(proxy)
 
         try {
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 PropertiesProxy.run {
                     propertiesProxy.set(ids.iface, stateProperty, false)
                 }

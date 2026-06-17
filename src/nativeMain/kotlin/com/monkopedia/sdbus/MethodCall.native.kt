@@ -100,7 +100,7 @@ actual class MethodCall internal constructor(
         MethodReply(sdbusReply[0]!!, sdbus, adoptMessage = true)
     }
 
-    actual fun createErrorReply(error: Error): MethodReply = memScoped {
+    actual fun createErrorReply(error: SdbusException): MethodReply = memScoped {
         val sdbusError = sdBusNullError()
         sd_bus_error_set(sdbusError, error.name, error.errorMessage)
 
@@ -132,7 +132,7 @@ actual class MethodCall internal constructor(
 
         if (sd_bus_error_is_set(sdbusError) != 0) {
             sdbusError[0].apply {
-                throw Error(name?.toKString()!!, message?.toKString()!!)
+                throw SdbusException(name?.toKString()!!, message?.toKString()!!)
             }
         }
 

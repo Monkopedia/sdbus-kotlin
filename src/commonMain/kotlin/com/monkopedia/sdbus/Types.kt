@@ -135,7 +135,7 @@ class Variant constructor() {
      * Serializes the value held by this variant into [msg].
      *
      * @param msg Destination message to append the variant's contents to
-     * @throws [com.monkopedia.sdbus.Error] if this variant is empty
+     * @throws [com.monkopedia.sdbus.SdbusException] if this variant is empty
      */
     fun serializeTo(msg: Message) {
         if (isEmpty) {

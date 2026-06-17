@@ -30,7 +30,7 @@ import kotlin.time.Duration
  * An interface to D-Bus bus connection. Incorporates implementation
  * of both synchronous and asynchronous D-Bus I/O event loop.
  *
- * All methods throw [com.monkopedia.sdbus.Error] in case of failure. All methods in
+ * All methods throw [com.monkopedia.sdbus.SdbusException] in case of failure. All methods in
  * this class are thread-aware, but not thread-safe.
  *
  ***********************************************/
@@ -51,7 +51,7 @@ interface Connection : Resource {
      * This causes the loop started by [startEventLoop] to exit, and frees the
      * thread serving the loop
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     suspend fun stopEventLoop()
 
@@ -76,7 +76,7 @@ interface Connection : Resource {
      * General method call timeout is used for all method calls upon this connection.
      * Method call-specific timeout overrides this general setting.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     var methodCallTimeout: Duration
 
@@ -97,7 +97,7 @@ interface Connection : Resource {
      *
      * @see Object.addObjectManager
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun addObjectManager(objectPath: ObjectPath): Resource
 
@@ -125,7 +125,7 @@ interface Connection : Resource {
      *
      * For more information, consult `man sd_bus_add_match`.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun addMatch(match: String, callback: MessageHandler): Resource
 
@@ -149,7 +149,7 @@ interface Connection : Resource {
      *
      * For more information, consult `man sd_bus_add_match_async`.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun addMatchAsync(
         match: String,
@@ -160,7 +160,7 @@ interface Connection : Resource {
     /**
      * The unique name of the connection. E.g. ":1.xx"
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     val uniqueName: BusName
 
@@ -169,7 +169,7 @@ interface Connection : Resource {
      *
      * @param name Name to request
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun requestName(name: ServiceName)
 
@@ -178,7 +178,7 @@ interface Connection : Resource {
      *
      * @param name Name to release
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun releaseName(name: ServiceName)
 }
@@ -190,7 +190,7 @@ internal expect fun now(): Duration
  *
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createBusConnection(): Connection
 
@@ -200,7 +200,7 @@ expect fun createBusConnection(): Connection
  * @param name Name to request on the connection after its opening
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createBusConnection(name: ServiceName): Connection
 
@@ -209,7 +209,7 @@ expect fun createBusConnection(name: ServiceName): Connection
  *
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createSystemBusConnection(): Connection
 
@@ -219,7 +219,7 @@ expect fun createSystemBusConnection(): Connection
  * @param name Name to request on the connection after its opening
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createSystemBusConnection(name: ServiceName): Connection
 
@@ -228,7 +228,7 @@ expect fun createSystemBusConnection(name: ServiceName): Connection
  *
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createSessionBusConnection(): Connection
 
@@ -238,7 +238,7 @@ expect fun createSessionBusConnection(): Connection
  * @param name Name to request on the connection after its opening
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createSessionBusConnection(name: ServiceName): Connection
 
@@ -248,7 +248,7 @@ expect fun createSessionBusConnection(name: ServiceName): Connection
  * @param address ";"-separated list of addresses of bus brokers to try to connect
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  *
  * Consult manual pages for `sd_bus_set_address` of the underlying sd-bus library for more information.
  */
@@ -260,7 +260,7 @@ expect fun createSessionBusConnection(address: String): Connection
  * @param address ";"-separated list of addresses of bus brokers to try to connect to
  * @return [Connection] instance
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createDirectBusConnection(address: String): Connection
 
@@ -282,7 +282,7 @@ expect fun createDirectBusConnection(address: String): Connection
  * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
  * a duplicate while keeping your own descriptor.
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createDirectBusConnection(fd: UnixFd): Connection
 
@@ -307,6 +307,6 @@ expect fun createDirectBusConnection(fd: UnixFd): Connection
  * Use `UnixFd.adopt(rawFd)` to hand off a raw descriptor you own, or `UnixFd(rawFd)` to pass
  * a duplicate while keeping your own descriptor.
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 expect fun createServerBusConnection(fd: UnixFd): Connection

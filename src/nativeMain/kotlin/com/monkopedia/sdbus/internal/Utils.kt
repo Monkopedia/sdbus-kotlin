@@ -24,7 +24,7 @@
 
 package com.monkopedia.sdbus.internal
 
-import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.sdbusRequire
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
@@ -47,7 +47,7 @@ internal inline fun invokeHandlerAndCatchErrors(
 ): Boolean {
     try {
         callable()
-    } catch (e: Error) {
+    } catch (e: SdbusException) {
         sd_bus_error_set(retError, e.name, e.message)
         return false
     } catch (t: Throwable) {

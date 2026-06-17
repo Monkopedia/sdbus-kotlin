@@ -329,14 +329,14 @@ internal class JvmValueDecoder(
         }
     }
 
-    private fun slotTypeError(operation: String, slot: Any?): Error = createError(
+    private fun slotTypeError(operation: String, slot: Any?): SdbusException = createError(
         -1,
         "$operation failed: unexpected payload type ${slot?.let { it::class.simpleName }}"
     )
 
     // ENXIO mirrors the native backend, which fails entering a mismatched container with
     // -ENXIO from sd_bus_message_enter_container.
-    private fun structMismatchError(descriptor: SerialDescriptor, slot: Any?): Error {
+    private fun structMismatchError(descriptor: SerialDescriptor, slot: Any?): SdbusException {
         val expected = runCatching { descriptor.asSignature.value }.getOrNull() ?: "?"
         val actual = inferJvmPayloadSignature(slot) ?: slot?.let { it::class.simpleName } ?: "null"
         return createError(

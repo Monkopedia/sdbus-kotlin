@@ -20,9 +20,9 @@
  */
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.callMethod
 import com.monkopedia.sdbus.callMethodAsync
 import com.monkopedia.sdbus.getProperty
@@ -33,7 +33,7 @@ import kotlin.test.assertFailsWith
 /**
  * Foreign error mapping against the python-dbusmock independent peer (issue #36): D-Bus error
  * replies produced by a non-sdbus implementation (Python/GDBus raising `DBusException` with
- * arbitrary error names) must surface as [com.monkopedia.sdbus.Error] with the error name and
+ * arbitrary error names) must surface as [com.monkopedia.sdbus.SdbusException] with the error name and
  * message preserved verbatim.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
@@ -46,7 +46,7 @@ class DbusmockForeignErrorTest {
     @Test
     fun standardErrorName_surfacesWithNameAndMessage() = withDbusmockPeer("ErrStd") {
         addRaisingMethod("Boom", "org.freedesktop.DBus.Error.NotSupported", "peer says no")
-        val error = assertFailsWith<Error> {
+        val error = assertFailsWith<SdbusException> {
             proxy.callMethod<Unit>(iface, MethodName("Boom")) {}
         }
         assertForeignError(error, "org.freedesktop.DBus.Error.NotSupported", "peer says no")
@@ -59,7 +59,7 @@ class DbusmockForeignErrorTest {
             "com.monkopedia.sdbus.test.SomethingWentWrong",
             "completely custom failure detail"
         )
-        val error = assertFailsWith<Error> {
+        val error = assertFailsWith<SdbusException> {
             proxy.callMethod<Unit>(iface, MethodName("Custom")) {}
         }
         assertForeignError(
@@ -70,7 +70,7 @@ class DbusmockForeignErrorTest {
 
         // AccessDenied-style names commonly raised by real services map the same way.
         addRaisingMethod("Denied", "org.freedesktop.DBus.Error.AccessDenied", "not for you")
-        val denied = assertFailsWith<Error> {
+        val denied = assertFailsWith<SdbusException> {
             proxy.callMethod<Unit>(iface, MethodName("Denied")) {}
         }
         assertForeignError(denied, "org.freedesktop.DBus.Error.AccessDenied", "not for you")
@@ -79,7 +79,7 @@ class DbusmockForeignErrorTest {
     @Test
     fun asyncCallPath_mapsForeignErrorsIdentically() = withDbusmockPeer("ErrAsync") {
         addRaisingMethod("Boom", "org.freedesktop.DBus.Error.InvalidArgs", "async boom")
-        val error = assertFailsWith<Error> {
+        val error = assertFailsWith<SdbusException> {
             proxy.callMethodAsync<Unit>(iface, MethodName("Boom")) {}
         }
         assertForeignError(error, "org.freedesktop.DBus.Error.InvalidArgs", "async boom")
@@ -90,7 +90,7 @@ class DbusmockForeignErrorTest {
         // The error here is produced by the foreign stack itself (dbus-python's dispatch),
         // not by scripted code; the message text is implementation-defined so only the name
         // is asserted.
-        val error = assertFailsWith<Error> {
+        val error = assertFailsWith<SdbusException> {
             proxy.callMethod<Unit>(iface, MethodName("NoSuchMethodHere")) {}
         }
         assertForeignError(error, "org.freedesktop.DBus.Error.UnknownMethod")
@@ -99,7 +99,7 @@ class DbusmockForeignErrorTest {
     @Test
     fun foreignPropertyErrors_surfaceWithPeerErrorNames() = withDbusmockPeer("ErrProp") {
         // dbusmock raises "<main interface>.UnknownProperty" for a Get on a missing property.
-        val error = assertFailsWith<Error> {
+        val error = assertFailsWith<SdbusException> {
             proxy.getProperty<Int>(iface, PropertyName("NoSuchProperty"))
         }
         assertForeignError(
@@ -112,11 +112,11 @@ class DbusmockForeignErrorTest {
     /**
      * Asserts that [error]'s name (and, when given, message) match what the foreign peer put
      * in its error reply — gated on [peerErrorNameMappingSupported] where the JVM backend is
-     * known to discard both (the `Error` is still thrown, which is asserted unconditionally
+     * known to discard both (the `SdbusException` is still thrown, which is asserted unconditionally
      * at each call site via `assertFailsWith`).
      */
     private fun assertForeignError(
-        error: Error,
+        error: SdbusException,
         expectedName: String,
         expectedMessage: String? = null
     ) {
@@ -155,8 +155,8 @@ class DbusmockForeignErrorTest {
  * from a real remote (out-of-process) peer.
  *
  * `true` on both backends. On native sd-bus the wire error name/message land verbatim in
- * [com.monkopedia.sdbus.Error]'s `name`/`errorMessage`. On the JVM the owned wire backend
- * likewise copies the wire ERROR_NAME / message straight into [com.monkopedia.sdbus.Error]
+ * [com.monkopedia.sdbus.SdbusException]'s `name`/`errorMessage`. On the JVM the owned wire backend
+ * likewise copies the wire ERROR_NAME / message straight into [com.monkopedia.sdbus.SdbusException]
  * (see `WireDbusProxy.callRemote`) instead of squeezing them through the errno-based
  * `createError` mapping.
  *

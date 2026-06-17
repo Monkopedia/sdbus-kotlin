@@ -11,11 +11,11 @@ class JvmRealBusIntegrationTest {
 
     // These tests need a *real* bus. The connection factories throw when the bus is
     // unreachable (issue #81) instead of silently returning the in-process stub backend, so
-    // "no usable bus in this environment" now surfaces as a thrown Error -- treat it as a
+    // "no usable bus in this environment" now surfaces as a thrown SdbusException -- treat it as a
     // skip, the way the old ":jvm-stub" unique-name gate did.
     private fun connectOrNull(connect: () -> Connection): Connection? = try {
         connect()
-    } catch (e: Error) {
+    } catch (e: SdbusException) {
         null
     }
 

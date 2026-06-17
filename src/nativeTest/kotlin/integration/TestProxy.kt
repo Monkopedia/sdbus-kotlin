@@ -24,7 +24,6 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodName
@@ -32,6 +31,7 @@ import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
@@ -72,7 +72,7 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
     var gotSignalWithVariant = atomic(false)
     var variantFromSignal = 0.0
 
-    var doOperationClientSideAsyncReplyHandler: ((UInt, Error?) -> Unit)? = null
+    var doOperationClientSideAsyncReplyHandler: ((UInt, SdbusException?) -> Unit)? = null
     var propertiesChangedHandler: (
         (InterfaceName, Map<PropertyName, Variant>, List<PropertyName>) -> Unit
     )? =
@@ -98,7 +98,7 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
         gotSignalWithVariant.value = true
     }
 
-    fun onDoOperationReply(returnValue: UInt, error: Error?) {
+    fun onDoOperationReply(returnValue: UInt, error: SdbusException?) {
         doOperationClientSideAsyncReplyHandler?.invoke(returnValue, error)
     }
 
@@ -114,7 +114,7 @@ class TestProxy private constructor(proxy: Proxy) : IntegrationTestsProxy(proxy)
         )
     }
 
-    fun installDoOperationClientSideAsyncReplyHandler(handler: (UInt, Error?) -> Unit) {
+    fun installDoOperationClientSideAsyncReplyHandler(handler: (UInt, SdbusException?) -> Unit) {
         doOperationClientSideAsyncReplyHandler = handler
     }
 

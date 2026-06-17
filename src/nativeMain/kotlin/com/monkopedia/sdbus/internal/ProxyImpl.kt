@@ -27,7 +27,6 @@ package com.monkopedia.sdbus.internal
 import cnames.structs.sd_bus_message
 import com.monkopedia.sdbus.AsyncReplyHandler
 import com.monkopedia.sdbus.CallbackAsyncProxy
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodCall
@@ -35,6 +34,7 @@ import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.Resource
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signal
 import com.monkopedia.sdbus.SignalHandler
@@ -158,8 +158,8 @@ internal class ProxyImpl(
 
         try {
             return deferred.await()
-        } catch (e: Error) {
-            throw Error(e.name, e.errorMessage)
+        } catch (e: SdbusException) {
+            throw SdbusException(e.name, e.errorMessage)
         }
     }
 
@@ -260,7 +260,7 @@ internal class ProxyImpl(
                             if (error == null) {
                                 asyncCallInfo.callback(message, null)
                             } else {
-                                val exception = Error(
+                                val exception = SdbusException(
                                     error[0].name?.toKString() ?: "",
                                     error[0].message?.toKString() ?: ""
                                 )

@@ -33,7 +33,7 @@ import kotlin.time.Duration
  * The proxy enables calling methods on remote objects, receiving signals from remote
  * objects, and getting/setting properties of remote objects.
  *
- * All IProxy member methods throw @c [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-kotlin error.
+ * All IProxy member methods throw @c [com.monkopedia.sdbus.SdbusException] in case of D-Bus or sdbus-kotlin error.
  * The IProxy class has been designed as thread-aware. However, the operation of
  * creating and sending method calls (both synchronously and asynchronously) is
  * thread-safe by design.
@@ -79,7 +79,7 @@ interface Proxy : Resource {
      * the message with serialized arguments to the @c callMethod function.
      * Alternatively, use higher-level API @c callMethod(const & methodName: String) defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun createMethodCall(interfaceName: InterfaceName, methodName: MethodName): MethodCall
 
@@ -109,7 +109,7 @@ interface Proxy : Resource {
      *
      * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure (also in case the remote function returned an error)
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure (also in case the remote function returned an error)
      */
     fun callMethod(message: MethodCall): MethodReply
 
@@ -141,7 +141,7 @@ interface Proxy : Resource {
      *
      * Note: To avoid messing with messages, use API on a higher level of abstraction defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure (also in case the remote function returned an error)
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure (also in case the remote function returned an error)
      */
     fun callMethod(message: MethodCall, timeout: Duration): MethodReply
 
@@ -155,14 +155,14 @@ interface Proxy : Resource {
      * This is a std::future-based way of asynchronously calling a remote D-Bus method.
      *
      * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.Error]
+     * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.SdbusException]
      * in case the remote method threw an exception).
      *
      * The default D-Bus method call timeout is used. See [Connection.methodCallTimeout].
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     suspend fun callMethodAsync(message: MethodCall): MethodReply
 
@@ -177,7 +177,7 @@ interface Proxy : Resource {
      * This is a std::future-based way of asynchronously calling a remote D-Bus method.
      *
      * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.Error]
+     * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.SdbusException]
      * in case the remote method threw an exception, or the call timed out).
      *
      * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used.
@@ -185,7 +185,7 @@ interface Proxy : Resource {
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     suspend fun callMethodAsync(message: MethodCall, timeout: Duration): MethodReply
 
@@ -206,7 +206,7 @@ interface Proxy : Resource {
      * Library convention: `register*` functions return a [Resource] when the registration
      * must be explicitly released, and `Unit` (or the registered item) otherwise.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun registerSignalHandler(
         interfaceName: InterfaceName,
@@ -303,7 +303,7 @@ internal fun Proxy.callMethodAsync(
  *   .get()
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGetter =
     AsyncPropertyGetter(this, propertyName)
@@ -325,7 +325,7 @@ fun Proxy.getPropertyAsync(propertyName: PropertyName): AsyncPropertyGetter =
  *   .toValue(state)
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySetter =
     AsyncPropertySetter(this, propertyName)
@@ -343,7 +343,7 @@ fun Proxy.setPropertyAsync(propertyName: PropertyName): AsyncPropertySetter =
  * val props = proxy.getAllProperties().onInterface(InterfaceName("com.kistler.foo"))
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
 
@@ -361,7 +361,7 @@ fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
  *   getResult();
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 
 fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllPropertiesGetter(this)

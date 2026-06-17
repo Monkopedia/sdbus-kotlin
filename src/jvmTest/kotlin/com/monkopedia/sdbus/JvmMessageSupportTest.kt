@@ -73,7 +73,7 @@ class JvmMessageSupportTest {
             call.append(20)
             call.append(22)
 
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 call.send(1.milliseconds)
             }
             assertTrue(thrown.errorMessage.contains("timed out"))
@@ -133,7 +133,7 @@ class JvmMessageSupportTest {
             )
         }
 
-        assertFailsWith<Error> {
+        assertFailsWith<SdbusException> {
             signal.send()
         }
     }
@@ -161,13 +161,13 @@ class JvmMessageSupportTest {
     fun credentialAccessors_withoutSenderCredentialsFailWithSdbusError() {
         val message = PlainMessage.createPlainMessage()
 
-        assertFailsWith<Error> { message.credsPid }
-        assertFailsWith<Error> { message.credsUid }
-        assertFailsWith<Error> { message.credsEuid }
-        assertFailsWith<Error> { message.credsGid }
-        assertFailsWith<Error> { message.credsEgid }
-        assertFailsWith<Error> { message.credsSupplementaryGids }
-        assertFailsWith<Error> { message.seLinuxContext }
+        assertFailsWith<SdbusException> { message.credsPid }
+        assertFailsWith<SdbusException> { message.credsUid }
+        assertFailsWith<SdbusException> { message.credsEuid }
+        assertFailsWith<SdbusException> { message.credsGid }
+        assertFailsWith<SdbusException> { message.credsEgid }
+        assertFailsWith<SdbusException> { message.credsSupplementaryGids }
+        assertFailsWith<SdbusException> { message.seLinuxContext }
     }
 
     // Regression: D-Bus `ay` (e.g. a GATT characteristic value) arrives from dbus-java as

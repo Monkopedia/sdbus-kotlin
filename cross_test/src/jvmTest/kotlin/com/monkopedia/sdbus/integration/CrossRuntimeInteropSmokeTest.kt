@@ -357,7 +357,7 @@ class CrossRuntimeInteropSmokeTest {
                     ) {
                         call(UnixFd.adopt(-1))
                     }
-                }.exceptionOrNull() as? com.monkopedia.sdbus.Error
+                }.exceptionOrNull() as? com.monkopedia.sdbus.SdbusException
                 assertTrue(invalidFailure != null, "Expected invalid Unix FD call to fail")
                 val message = invalidFailure.errorMessage
                 assertTrue(

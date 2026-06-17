@@ -75,7 +75,7 @@ package com.monkopedia.sdbus
  * The function provides strong exception guarantee. The state of the object remains
  * unmodified in face of an exception.
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  * @see [com.monkopedia.sdbus.Resource]
  * @see [prop]
  * @see [method]

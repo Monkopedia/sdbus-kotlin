@@ -348,7 +348,7 @@ internal class DBusWireConnection private constructor(
             // A pre-send rejection (e.g. an invalid Unix FD) is synchronous: nothing went on the
             // wire, so there is no reply to await. Evict the orphaned pending entry and rethrow so
             // [call]/[callBlocking] surface it directly to the caller (the wire backend then maps a
-            // DBusCallException to a com.monkopedia.sdbus.Error — see WireDbusProxy.callRemote).
+            // DBusCallException to a com.monkopedia.sdbus.SdbusException — see WireDbusProxy.callRemote).
             pending.remove(serial)
             throw e
         }

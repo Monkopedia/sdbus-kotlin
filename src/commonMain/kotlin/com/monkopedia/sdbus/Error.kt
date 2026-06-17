@@ -37,21 +37,29 @@ package com.monkopedia.sdbus
  * @property name The D-Bus error name
  * @property errorMessage Human-readable detail describing the error
  */
-class Error(val name: String, val errorMessage: String = "") : Exception("$name: $errorMessage")
+class SdbusException(val name: String, val errorMessage: String = "") :
+    Exception("$name: $errorMessage")
+
+@Deprecated(
+    "Renamed to SdbusException",
+    ReplaceWith("SdbusException", "com.monkopedia.sdbus.SdbusException"),
+    DeprecationLevel.WARNING
+)
+typealias Error = SdbusException
 
 internal fun Throwable.toError() =
-    (this as? Error) ?: Error(message ?: toString(), stackTraceToString())
+    (this as? SdbusException) ?: SdbusException(message ?: toString(), stackTraceToString())
 
 /**
- * Creates an [Error] from a numeric error code and a custom message.
+ * Creates an [SdbusException] from a numeric error code and a custom message.
  *
  * The error code is mapped to a corresponding D-Bus error name where possible.
  *
  * @param errNo Numeric (errno-style) error code
  * @param customMsg Additional human-readable context for the error
- * @return The constructed [Error]
+ * @return The constructed [SdbusException]
  */
-internal expect fun createError(errNo: Int, customMsg: String): Error
+internal expect fun createError(errNo: Int, customMsg: String): SdbusException
 
 internal inline fun sdbusRequire(condition: () -> Boolean, msg: String, errNo: Int) {
     if (condition()) throw createError((errNo), (msg))

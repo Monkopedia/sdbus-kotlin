@@ -58,15 +58,15 @@ private val errnoMappings: Map<Int, ErrnoMapping> = mapOf(
  * and the message is `"$customMsg (<strerror text>)"`. Keeping the same mapping on
  * the JVM makes error names a cross-backend contract instead of a backend detail.
  */
-internal actual fun createError(errNo: Int, customMsg: String): Error {
+internal actual fun createError(errNo: Int, customMsg: String): SdbusException {
     // sd_bus_error_set_errno accepts negated errnos (e.g. -EINVAL) and takes the absolute value.
     val errno = if (errNo < 0) -errNo else errNo
     if (errno == 0) {
         // sd_bus_error_set_errno(0) leaves the error unset; the native createError then falls
         // back to "$errNo" as the name and an empty strerror text.
-        return Error("$errNo", "$customMsg ()")
+        return SdbusException("$errNo", "$customMsg ()")
     }
     val mapping = errnoMappings[errno]
         ?: ErrnoMapping("${DBUS_ERROR_PREFIX}Failed", "Unknown error $errno")
-    return Error(mapping.name, "$customMsg (${mapping.description})")
+    return SdbusException(mapping.name, "$customMsg (${mapping.description})")
 }

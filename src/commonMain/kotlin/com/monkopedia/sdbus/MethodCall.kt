@@ -39,7 +39,7 @@ expect class MethodCall : Message {
      *
      * @param timeout Call timeout; [Duration.ZERO] uses the connection default
      * @return The reply message
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun send(timeout: Duration): MethodReply
 
@@ -51,7 +51,7 @@ expect class MethodCall : Message {
      *
      * @param error The error to report back to the caller
      */
-    fun createErrorReply(error: Error): MethodReply
+    fun createErrorReply(error: SdbusException): MethodReply
 
     /** Whether this call is flagged to not expect a reply. */
     var dontExpectReply: Boolean

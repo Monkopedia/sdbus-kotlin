@@ -53,7 +53,7 @@ import kotlinx.serialization.serializer
  * val state = object.getProperty(InterfaceName("com.kistler.foo"), PropertyName("state"))
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 inline fun <reified T : Any> Proxy.getProperty(
     interfaceName: InterfaceName,
@@ -71,7 +71,7 @@ inline fun <reified T : Any> Proxy.getProperty(
  * @param propertyName Name of the property to set
  * @param value New value
  * @param dontExpectReply When `true`, send the set without waiting for a reply
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 inline fun <reified T : Any> Proxy.setProperty(
     interfaceName: InterfaceName,
@@ -160,7 +160,7 @@ open class PropertyDelegate<R, T : Any>(
     /**
      * Gets the current value of the property.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure, including when the property
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure, including when the property
      * doesn't currently exist (use [getOrNull] for a null-returning variant)
      */
     fun get(): T = proxy.callMethod<Variant>(PropertiesProxy.INTERFACE_NAME, MethodName("Get")) {
@@ -170,11 +170,11 @@ open class PropertyDelegate<R, T : Any>(
     /**
      * Gets the current value of the property, however if the property doesn't currently exist
      * (`org.freedesktop.DBus.Error.InvalidArgs`), returns null rather than throwing. Any other
-     * [com.monkopedia.sdbus.Error] is still thrown.
+     * [com.monkopedia.sdbus.SdbusException] is still thrown.
      */
     fun getOrNull(): T? = try {
         get()
-    } catch (e: Error) {
+    } catch (e: SdbusException) {
         if (e.name != "org.freedesktop.DBus.Error.InvalidArgs") {
             throw e
         }
@@ -231,7 +231,7 @@ open class PropertyDelegate<R, T : Any>(
      * first when collection starts, followed by every subsequent change (from [changes]).
      *
      * Because the initial emission uses [get], collecting this flow throws
-     * [com.monkopedia.sdbus.Error] if the property doesn't currently exist; use [valuesOrNull]
+     * [com.monkopedia.sdbus.SdbusException] if the property doesn't currently exist; use [valuesOrNull]
      * for a null-emitting variant. Use [changes] to observe change events only, without the
      * initial value.
      */

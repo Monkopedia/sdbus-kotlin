@@ -1,8 +1,8 @@
 package com.monkopedia.sdbus.unit
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PlainMessage
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
@@ -179,7 +179,7 @@ class MessageCommonTest {
         try {
             msgCopy.deserialize<String>()
             fail("Expected read failure from shallow copy")
-        } catch (_: Error) {
+        } catch (_: SdbusException) {
             // Expected: both references share cursor state.
         }
     }
@@ -256,7 +256,7 @@ class MessageCommonTest {
         try {
             variant.get<Boolean>()
             fail("Expected variant type mismatch error")
-        } catch (_: Error) {
+        } catch (_: SdbusException) {
             // Expected mismatch.
         }
     }

@@ -101,7 +101,7 @@ internal object WireServe {
                 INTROSPECTABLE_INTERFACE -> serveIntrospect(localUniqueName, message, member)
                 else -> serveDispatch(localUniqueName, message, iface, member)
             }
-        } catch (e: com.monkopedia.sdbus.Error) {
+        } catch (e: com.monkopedia.sdbus.SdbusException) {
             errorReply(message, e.name, e.errorMessage)
         } catch (e: Throwable) {
             errorReply(message, ERROR_FAILED, e.message ?: "Handler failed")

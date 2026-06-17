@@ -1,9 +1,9 @@
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.Variant
@@ -398,7 +398,7 @@ class TypeMatrixRoundTripTest {
 
         try {
             // ... while the client deserializes the reply as a struct (signature "(ii)").
-            val thrown = assertFailsWith<Error> {
+            val thrown = assertFailsWith<SdbusException> {
                 proxy.callMethod<IntPair>(ids.iface, MethodName("Echo")) {
                     call(7)
                 }
