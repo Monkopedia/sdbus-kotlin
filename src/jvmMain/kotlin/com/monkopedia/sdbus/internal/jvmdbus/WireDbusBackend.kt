@@ -296,7 +296,7 @@ internal class WireDbusProxy(
             // (phase 4), so our own peer would never reply and the caller would hang until
             // timeout. Fail fast with UnknownMethod, the same outcome dbus-java produces by
             // auto-replying for an unexported member.
-            throw com.monkopedia.sdbus.Error(
+            throw com.monkopedia.sdbus.SdbusException(
                 "org.freedesktop.DBus.Error.UnknownMethod",
                 "No handler for $path:$interfaceName.$methodName on local destination " +
                     destination.value
@@ -340,7 +340,7 @@ internal class WireDbusProxy(
                 java.util.concurrent.TimeUnit.MILLISECONDS
             )
         ) {
-            throw com.monkopedia.sdbus.Error(
+            throw com.monkopedia.sdbus.SdbusException(
                 "org.freedesktop.DBus.Error.Timeout",
                 "Method call timed out"
             )
@@ -438,7 +438,7 @@ internal class WireDbusProxy(
         } catch (e: DBusCallException) {
             // Preserve the wire ERROR_NAME verbatim, like the native backend copies it straight
             // into sd_bus_error instead of squeezing it through the errno mapping (issue #72).
-            throw com.monkopedia.sdbus.Error(
+            throw com.monkopedia.sdbus.SdbusException(
                 e.errorName ?: "org.freedesktop.DBus.Error.Failed",
                 e.errorMessage.orEmpty()
             )
@@ -487,7 +487,7 @@ internal class WireDbusProxy(
             outcome.fold(
                 onSuccess = { asyncReplyCallback(it, null) },
                 onFailure = {
-                    val error = it as? com.monkopedia.sdbus.Error
+                    val error = it as? com.monkopedia.sdbus.SdbusException
                         ?: createError(-1, it.message ?: "JVM wire async call failed")
                     asyncReplyCallback(invalidReply(path, interfaceName, methodName), error)
                 }

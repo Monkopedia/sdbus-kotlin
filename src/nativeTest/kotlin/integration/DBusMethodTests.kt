@@ -24,10 +24,10 @@
 
 package com.monkopedia.sdbus.integration
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.ObjectPath
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.addVTable
@@ -187,8 +187,8 @@ class DBusMethodTests : BaseTest() {
                 1.microseconds,
                 1000u
             ) // The operation will take 1s, but the timeout is 1us, so we should time out
-            fail("Expected Error exception")
-        } catch (e: Error) {
+            fail("Expected SdbusException exception")
+        } catch (e: SdbusException) {
             assertContains(
                 listOf("org.freedesktop.DBus.Error.Timeout", "org.freedesktop.DBus.Error.NoReply"),
                 e.name
@@ -206,8 +206,8 @@ class DBusMethodTests : BaseTest() {
     fun callsMethodThatThrowsError() {
         try {
             fixture.proxy!!.throwError()
-            fail("Expected Error exception")
-        } catch (e: Error) {
+            fail("Expected SdbusException exception")
+        } catch (e: SdbusException) {
             assertEquals("org.freedesktop.DBus.Error.AccessDenied", e.name)
             assertEquals("A test error occurred (Operation not permitted)", e.errorMessage)
         }
@@ -225,7 +225,7 @@ class DBusMethodTests : BaseTest() {
         try {
             fixture.proxy!!.callNonexistentMethod()
             fail("Expected error")
-        } catch (t: Error) {
+        } catch (t: SdbusException) {
             // Expected error
         }
     }
@@ -235,7 +235,7 @@ class DBusMethodTests : BaseTest() {
         try {
             fixture.proxy!!.callMethodOnNonexistentInterface()
             fail("Expected error")
-        } catch (t: Error) {
+        } catch (t: SdbusException) {
             // Expected error
         }
     }
@@ -248,7 +248,7 @@ class DBusMethodTests : BaseTest() {
             try {
                 proxy.getInt()
                 fail("Expected error")
-            } catch (t: Error) {
+            } catch (t: SdbusException) {
                 // Expected error
             }
         } finally {
@@ -263,7 +263,7 @@ class DBusMethodTests : BaseTest() {
             try {
                 proxy.getInt()
                 fail("Expected error")
-            } catch (t: Error) {
+            } catch (t: SdbusException) {
                 // Expected error
             }
         } finally {

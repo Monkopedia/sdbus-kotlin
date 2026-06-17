@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * sdbus-kotlin. If not, see <https://www.gnu.org/licenses/>.
  */
-import com.monkopedia.sdbus.Error
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ObjectManagerProxy
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.ServiceName
@@ -62,10 +62,10 @@ fun main(args: Array<String>) {
                 val device = Device1Proxy(connection.createProxy(path))
                 try {
                     println("Found device ${device.name} ${device.address}")
-                } catch (t: Error) {
+                } catch (t: SdbusException) {
                     try {
                         println("Found device ${device.address}")
-                    } catch (t: Error) {
+                    } catch (t: SdbusException) {
                         println("Can't handle device $path")
                     }
                 }

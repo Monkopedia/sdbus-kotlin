@@ -51,8 +51,8 @@ import kotlinx.serialization.serializer
 /** Handler invoked with an incoming [MethodCall] for a method exported by an [Object]. */
 typealias MethodCallback = (msg: MethodCall) -> Unit
 
-/** Handler invoked with the [MethodReply] (or [Error]) of an asynchronous method call. */
-internal typealias AsyncReplyHandler = (reply: MethodReply, error: Error?) -> Unit
+/** Handler invoked with the [MethodReply] (or [SdbusException]) of an asynchronous method call. */
+internal typealias AsyncReplyHandler = (reply: MethodReply, error: SdbusException?) -> Unit
 
 /** Handler invoked with an incoming [Signal]. */
 typealias SignalHandler = (signal: Signal) -> Unit

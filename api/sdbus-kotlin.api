@@ -79,13 +79,6 @@ public final class com/monkopedia/sdbus/DegroupingReturnsKt {
 	public static final fun maybeDegrouped-qeoUwEc (Ljava/lang/String;Z)Ljava/lang/String;
 }
 
-public final class com/monkopedia/sdbus/Error : java/lang/Exception {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getErrorMessage ()Ljava/lang/String;
-	public final fun getName ()Ljava/lang/String;
-}
-
 public final class com/monkopedia/sdbus/Flags {
 	public fun <init> ()V
 	public final fun set (Lcom/monkopedia/sdbus/Flags$GeneralFlags;Z)V
@@ -228,7 +221,7 @@ public final class com/monkopedia/sdbus/MethodBuilderKt {
 }
 
 public final class com/monkopedia/sdbus/MethodCall : com/monkopedia/sdbus/Message {
-	public final fun createErrorReply (Lcom/monkopedia/sdbus/Error;)Lcom/monkopedia/sdbus/MethodReply;
+	public final fun createErrorReply (Lcom/monkopedia/sdbus/SdbusException;)Lcom/monkopedia/sdbus/MethodReply;
 	public final fun createReply ()Lcom/monkopedia/sdbus/MethodReply;
 	public final fun getDontExpectReply ()Z
 	public final fun send-LRDsOJo (J)Lcom/monkopedia/sdbus/MethodReply;
@@ -478,6 +471,13 @@ public final class com/monkopedia/sdbus/Proxy_jvmKt {
 
 public abstract interface class com/monkopedia/sdbus/Resource {
 	public abstract fun release ()V
+}
+
+public final class com/monkopedia/sdbus/SdbusException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
 }
 
 public abstract class com/monkopedia/sdbus/SdbusSig {

@@ -22,7 +22,7 @@ class JvmScaffoldTest {
         val proxy = createProxy(ServiceName("org.example"), ObjectPath("/org/example"))
         val call = proxy.createMethodCall(InterfaceName("org.example"), MethodName("Ping"))
 
-        assertFailsWith<Error> {
+        assertFailsWith<SdbusException> {
             proxy.callMethod(call)
         }
     }
@@ -79,7 +79,7 @@ class JvmScaffoldTest {
         assertEquals(10, reply.readInt())
 
         registration.release()
-        assertFailsWith<Error> {
+        assertFailsWith<SdbusException> {
             proxy.callMethod(call)
         }
     }
@@ -129,7 +129,7 @@ class JvmScaffoldTest {
 
             val latch = CountDownLatch(1)
             val resultRef = AtomicReference<Int?>(null)
-            val errorRef = AtomicReference<Error?>(null)
+            val errorRef = AtomicReference<SdbusException?>(null)
             val pending = proxy.callMethodAsync(call) { reply, error ->
                 errorRef.set(error)
                 if (error == null) {

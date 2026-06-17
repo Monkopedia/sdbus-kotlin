@@ -21,7 +21,6 @@
 package com.monkopedia.sdbus.integration
 
 import com.monkopedia.sdbus.Connection
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MutablePropertyDelegate
@@ -31,6 +30,7 @@ import com.monkopedia.sdbus.PropertiesProxy
 import com.monkopedia.sdbus.PropertyDelegate
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.Proxy
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
 import com.monkopedia.sdbus.Variant
@@ -105,7 +105,7 @@ import kotlinx.coroutines.withTimeout
  * The BlueZ wire profile is dicts/object-paths/arrays — no structs (#71) and no multi-out
  * methods (#74) anywhere in the covered surface, so only issue #72 needs gating:
  * `org.bluez.Error.*` error-name assertions run behind [peerErrorNameMappingSupported] while
- * the `assertFailsWith<Error>` part always runs on both backends.
+ * the `assertFailsWith<SdbusException>` part always runs on both backends.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
  * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`). Skips cleanly when
@@ -334,12 +334,12 @@ class DbusmockBluezTest {
             assertEquals(true, events.awaitChanged(DEVICE1, "Connected").get<Boolean>())
 
             // Connecting an already-connected device is rejected.
-            val alreadyConnected = assertFailsWith<Error> { device.connect() }
+            val alreadyConnected = assertFailsWith<SdbusException> { device.connect() }
             assertBluezError(alreadyConnected, "org.bluez.Error.AlreadyConnected")
 
             device.disconnect()
             assertEquals(false, events.awaitChanged(DEVICE1, "Connected").get<Boolean>())
-            val notConnected = assertFailsWith<Error> { device.disconnect() }
+            val notConnected = assertFailsWith<SdbusException> { device.disconnect() }
             assertBluezError(notConnected, "org.bluez.Error.NotConnected")
 
             // The ConnectDevice/DisconnectDevice conveniences update the property store too,
@@ -368,7 +368,7 @@ class DbusmockBluezTest {
             assertTrue(device.paired)
             assertTrue(device.uuids.isNotEmpty(), "pairing should populate service UUIDs")
 
-            val alreadyPaired = assertFailsWith<Error> { device.pair() }
+            val alreadyPaired = assertFailsWith<SdbusException> { device.pair() }
             assertBluezError(alreadyPaired, "org.bluez.Error.AlreadyExists")
         }
     }
@@ -491,10 +491,10 @@ class DbusmockBluezTest {
     /**
      * Asserts the `org.bluez.Error.*` name produced by the BlueZ-shaped peer — gated on
      * [peerErrorNameMappingSupported] (issue #72), where the JVM backend is known to discard
-     * foreign error names. The fact that an [Error] is thrown at all is asserted
+     * foreign error names. The fact that an [SdbusException] is thrown at all is asserted
      * unconditionally at each call site via `assertFailsWith`.
      */
-    private fun assertBluezError(error: Error, expectedName: String) {
+    private fun assertBluezError(error: SdbusException, expectedName: String) {
         if (!peerErrorNameMappingSupported) {
             // KNOWN JVM BACKEND BUG (issue #72; see peerErrorNameMappingSupported KDoc).
             println(

@@ -32,7 +32,7 @@ package com.monkopedia.sdbus
  * from the D-Bus message concept. Signal arguments are automatically serialized
  * in a message and D-Bus signatures automatically deduced from the provided native arguments.
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 inline fun Object.emitSignal(
     interfaceName: InterfaceName = InterfaceName(""),
@@ -44,7 +44,7 @@ inline fun Object.emitSignal(
  * Emits the signal described by the given [SignalEmitter] from this object.
  *
  * @param signal Emitter carrying the interface, signal name, and serialized arguments
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 fun Object.emit(signal: SignalEmitter) {
     val m = createSignal(signal.interfaceName, signal.signalName)

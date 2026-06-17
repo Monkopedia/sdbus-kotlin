@@ -134,7 +134,7 @@ private object JunixFdBridge {
 
 /**
  * Foreign error names/messages are preserved verbatim since the issue #72 fix (remote error
- * replies construct Error(wireName, wireMessage) instead of going through the errno mapping).
+ * replies construct SdbusException(wireName, wireMessage) instead of going through the errno mapping).
  */
 internal actual val peerErrorNameMappingSupported: Boolean = true
 

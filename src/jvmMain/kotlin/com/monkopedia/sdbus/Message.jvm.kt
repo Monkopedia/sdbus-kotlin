@@ -468,7 +468,7 @@ actual class MethodCall internal constructor() : Message() {
     actual fun createReply(): MethodReply = MethodReply(this).also {
         it.metadata = Metadata(valid = true, empty = true)
     }
-    actual fun createErrorReply(error: Error): MethodReply = MethodReply(this).also {
+    actual fun createErrorReply(error: SdbusException): MethodReply = MethodReply(this).also {
         it.error = error
         it.metadata = Metadata(valid = false, empty = true)
     }
@@ -488,7 +488,7 @@ actual class MethodCall internal constructor() : Message() {
 
 actual class MethodReply internal constructor(private val parentCall: MethodCall? = null) :
     Message() {
-    internal var error: Error? = null
+    internal var error: SdbusException? = null
 
     actual fun send(): Unit = run {
         if (metadata.valid) {
@@ -584,7 +584,7 @@ internal actual fun <T : Any> Message.deserialize(
         !isSignatureCompatible(expectedSig, actualSig)
     ) {
         // ENXIO: the native backend surfaces a signature mismatch as -ENXIO from
-        // sd_bus_message_enter_container / read_basic, i.e. Error("System.Error.ENXIO", ...).
+        // sd_bus_message_enter_container / read_basic, i.e. SdbusException("System.Error.ENXIO", ...).
         throw createError(
             6,
             "Message.deserialize failed: signature mismatch expected=$expectedSig actual=$actualSig"

@@ -50,7 +50,7 @@ import kotlinx.coroutines.flow.callbackFlow
  * object_.uponSignal(levelChanged).onInterface(foo).call([this](uint16_t level){ this->onLevelChanged(level); });
  * @endcode
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 inline fun Proxy.onSignal(
     interfaceName: InterfaceName,

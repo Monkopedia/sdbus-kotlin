@@ -34,7 +34,7 @@ import sdbus.sd_bus_error
 import sdbus.sd_bus_error_free
 import sdbus.sd_bus_error_set_errno
 
-internal actual fun createError(errNo: Int, customMsg: String): Error {
+internal actual fun createError(errNo: Int, customMsg: String): SdbusException {
     memScoped {
         val sdbusError: CPointer<sd_bus_error> = cValue<sd_bus_error>().getPointer(this)
 
@@ -49,6 +49,6 @@ internal actual fun createError(errNo: Int, customMsg: String): Error {
             append(')')
         }
 
-        return Error(name, message)
+        return SdbusException(name, message)
     }
 }

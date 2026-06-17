@@ -1,8 +1,8 @@
 package com.monkopedia.sdbus.unit
 
-import com.monkopedia.sdbus.Error
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
+import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.containsValueOfType
@@ -105,7 +105,7 @@ class TypesCommonTest {
         val msg = createPlainMessage()
         try {
             variant.serializeTo(msg)
-        } catch (_: Error) {
+        } catch (_: SdbusException) {
             return
         }
         kotlin.test.fail("Expected serialization to fail for empty variant")
@@ -138,15 +138,15 @@ class TypesCommonTest {
 
     @Test
     fun anError_CanBeConstructedFromANameAndAMessage() {
-        val error = Error("org.sdbuscpp.error", "message")
+        val error = SdbusException("org.sdbuscpp.error", "message")
         assertEquals("org.sdbuscpp.error", error.name)
         assertEquals("message", error.errorMessage)
     }
 
     @Test
     fun anError_CanBeConstructedFromANameOnly() {
-        val error1 = Error("org.sdbuscpp.error")
-        val error2 = Error("org.sdbuscpp.error", "")
+        val error1 = SdbusException("org.sdbuscpp.error")
+        val error2 = SdbusException("org.sdbuscpp.error", "")
         assertEquals("org.sdbuscpp.error", error1.name)
         assertEquals("org.sdbuscpp.error", error2.name)
         assertEquals("", error1.errorMessage)

@@ -147,15 +147,6 @@ final class com.monkopedia.sdbus/AsyncPropertySetter { // com.monkopedia.sdbus/A
     final suspend fun getResult() // com.monkopedia.sdbus/AsyncPropertySetter.getResult|getResult(){}[0]
 }
 
-final class com.monkopedia.sdbus/Error : kotlin/Exception { // com.monkopedia.sdbus/Error|null[0]
-    constructor <init>(kotlin/String, kotlin/String = ...) // com.monkopedia.sdbus/Error.<init>|<init>(kotlin.String;kotlin.String){}[0]
-
-    final val errorMessage // com.monkopedia.sdbus/Error.errorMessage|{}errorMessage[0]
-        final fun <get-errorMessage>(): kotlin/String // com.monkopedia.sdbus/Error.errorMessage.<get-errorMessage>|<get-errorMessage>(){}[0]
-    final val name // com.monkopedia.sdbus/Error.name|{}name[0]
-        final fun <get-name>(): kotlin/String // com.monkopedia.sdbus/Error.name.<get-name>|<get-name>(){}[0]
-}
-
 final class com.monkopedia.sdbus/Flags { // com.monkopedia.sdbus/Flags|null[0]
     constructor <init>() // com.monkopedia.sdbus/Flags.<init>|<init>(){}[0]
 
@@ -233,7 +224,7 @@ final class com.monkopedia.sdbus/MethodCall : com.monkopedia.sdbus/Message { // 
         final fun <get-dontExpectReply>(): kotlin/Boolean // com.monkopedia.sdbus/MethodCall.dontExpectReply.<get-dontExpectReply>|<get-dontExpectReply>(){}[0]
         final fun <set-dontExpectReply>(kotlin/Boolean) // com.monkopedia.sdbus/MethodCall.dontExpectReply.<set-dontExpectReply>|<set-dontExpectReply>(kotlin.Boolean){}[0]
 
-    final fun createErrorReply(com.monkopedia.sdbus/Error): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.createErrorReply|createErrorReply(com.monkopedia.sdbus.Error){}[0]
+    final fun createErrorReply(com.monkopedia.sdbus/SdbusException): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.createErrorReply|createErrorReply(com.monkopedia.sdbus.SdbusException){}[0]
     final fun createReply(): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.createReply|createReply(){}[0]
     final fun send(kotlin.time/Duration): com.monkopedia.sdbus/MethodReply // com.monkopedia.sdbus/MethodCall.send|send(kotlin.time.Duration){}[0]
 }
@@ -372,6 +363,15 @@ final class com.monkopedia.sdbus/PropertyVTableItem : com.monkopedia.sdbus/VTabl
     final inline fun <#A1: reified kotlin/Any> with(kotlin.reflect/KProperty0<#A1>) // com.monkopedia.sdbus/PropertyVTableItem.with|with(kotlin.reflect.KProperty0<0:0>){0§<kotlin.Any>}[0]
     final inline fun <#A1: reified kotlin/Any> withGetter(crossinline kotlin/Function0<#A1>): com.monkopedia.sdbus/PropertyVTableItem // com.monkopedia.sdbus/PropertyVTableItem.withGetter|withGetter(kotlin.Function0<0:0>){0§<kotlin.Any>}[0]
     final inline fun <#A1: reified kotlin/Any> withSetter(crossinline kotlin/Function1<#A1, kotlin/Unit>): com.monkopedia.sdbus/PropertyVTableItem // com.monkopedia.sdbus/PropertyVTableItem.withSetter|withSetter(kotlin.Function1<0:0,kotlin.Unit>){0§<kotlin.Any>}[0]
+}
+
+final class com.monkopedia.sdbus/SdbusException : kotlin/Exception { // com.monkopedia.sdbus/SdbusException|null[0]
+    constructor <init>(kotlin/String, kotlin/String = ...) // com.monkopedia.sdbus/SdbusException.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val errorMessage // com.monkopedia.sdbus/SdbusException.errorMessage|{}errorMessage[0]
+        final fun <get-errorMessage>(): kotlin/String // com.monkopedia.sdbus/SdbusException.errorMessage.<get-errorMessage>|<get-errorMessage>(){}[0]
+    final val name // com.monkopedia.sdbus/SdbusException.name|{}name[0]
+        final fun <get-name>(): kotlin/String // com.monkopedia.sdbus/SdbusException.name.<get-name>|<get-name>(){}[0]
 }
 
 final class com.monkopedia.sdbus/ServiceConnection { // com.monkopedia.sdbus/ServiceConnection|null[0]

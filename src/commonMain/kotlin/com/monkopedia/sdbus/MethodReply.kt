@@ -33,7 +33,7 @@ expect class MethodReply : Message {
     /**
      * Sends this reply back to the original caller.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun send()
 }

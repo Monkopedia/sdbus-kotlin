@@ -53,7 +53,7 @@ import kotlinx.serialization.serializer
  * println("Got result of multiplying $a and $b: $result")
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 suspend inline fun <reified R : Any> Proxy.callMethodAsync(
     interfaceName: InterfaceName,
@@ -100,8 +100,8 @@ internal suspend fun <R : Any> Proxy.callMethodAsyncImpl(
 
         try {
             return completable.await()
-        } catch (t: Error) {
-            throw Error(t.name, t.errorMessage)
+        } catch (t: SdbusException) {
+            throw SdbusException(t.name, t.errorMessage)
         } catch (t: CancellationException) {
             call.release()
             throw t
@@ -131,7 +131,7 @@ internal suspend fun <R : Any> Proxy.callMethodAsyncImpl(
  * println("Got result of multiplying $a and $b: $result")
  * ```
  *
- * @throws [com.monkopedia.sdbus.Error] in case of failure
+ * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
 inline fun <reified R : Any> Proxy.callMethod(
     interfaceName: InterfaceName,

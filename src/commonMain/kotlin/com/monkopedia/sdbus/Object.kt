@@ -28,7 +28,7 @@ package com.monkopedia.sdbus
  * D-Bus object provides its interfaces, methods, signals and properties on a bus
  * identified by a specific bus name.
  *
- * All Object member methods throw [com.monkopedia.sdbus.Error] in case of D-Bus or sdbus-kotlin error.
+ * All Object member methods throw [com.monkopedia.sdbus.SdbusException] in case of D-Bus or sdbus-kotlin error.
  * The Object class has been designed as thread-aware. However, the operation of
  * creating and sending asynchronous method replies, as well as creating and emitting
  * signals, is thread-safe by design.
@@ -42,7 +42,7 @@ interface Object : Resource {
      * @param interfaceName Name of an interface that properties belong to
      * @param propNames Names of properties that will be included in the PropertiesChanged signal
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitPropertiesChangedSignal(interfaceName: InterfaceName, propNames: List<PropertyName>)
 
@@ -51,7 +51,7 @@ interface Object : Resource {
      *
      * @param interfaceName Name of an interface
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitPropertiesChangedSignal(interfaceName: InterfaceName)
 
@@ -65,7 +65,7 @@ interface Object : Resource {
      * call can figure out the list of supported interfaces itself. Furthermore, it properly
      * adds the builtin org.freedesktop.DBus.* interfaces.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitInterfacesAddedSignal()
 
@@ -75,7 +75,7 @@ interface Object : Resource {
      * This emits an InterfacesAdded signal on this object path with explicitly provided list
      * of registered interfaces.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitInterfacesAddedSignal(interfaces: List<InterfaceName>)
 
@@ -86,7 +86,7 @@ interface Object : Resource {
      * object path. This only includes any registered interfaces but skips the properties.
      * This function shall be called (just) before destroying the object.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitInterfacesRemovedSignal()
 
@@ -96,7 +96,7 @@ interface Object : Resource {
      * This emits an InterfacesRemoved signal on the given path with explicitly provided list
      * of registered interfaces.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitInterfacesRemovedSignal(interfaces: List<InterfaceName>)
 
@@ -117,7 +117,7 @@ interface Object : Resource {
      *
      * @see Connection.addObjectManager
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun addObjectManager(): Resource
 
@@ -170,7 +170,7 @@ interface Object : Resource {
      * The function provides strong exception guarantee. The state of the object remains
      * unmodified in face of an exception.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>): Resource
 
@@ -185,7 +185,7 @@ interface Object : Resource {
      * the message with serialized arguments to the @c emitSignal function.
      * Alternatively, use higher-level API @c emitSignal(signalName: String) defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun createSignal(interfaceName: InterfaceName, signalName: SignalName): Signal
 
@@ -196,7 +196,7 @@ interface Object : Resource {
      *
      * Note: To avoid messing with messages, use higher-level API defined below.
      *
-     * @throws [com.monkopedia.sdbus.Error] in case of failure
+     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun emitSignal(message: Signal)
 }
