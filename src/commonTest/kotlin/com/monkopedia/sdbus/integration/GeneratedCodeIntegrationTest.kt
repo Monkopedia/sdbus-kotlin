@@ -20,7 +20,7 @@ class GeneratedCodeIntegrationTest {
         val path = ObjectPath("/com/monkopedia/sdbus/generated/case$id")
         val serverConnection = createBusConnection(service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, path, runEventLoopThread = false)
+        val obj = createObject(serverConnection, path)
         val adaptor = object : InterestingInterfaceAdaptor(obj) {
             private var nextId = 1u
 

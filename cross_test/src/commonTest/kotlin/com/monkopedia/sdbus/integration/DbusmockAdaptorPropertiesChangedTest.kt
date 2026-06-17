@@ -77,7 +77,7 @@ class DbusmockAdaptorPropertiesChangedTest {
         val property = PropertyName("Level")
 
         val serverConnection = createBusConnection(serviceName)
-        val obj = createObject(serverConnection, path, runEventLoopThread = false)
+        val obj = createObject(serverConnection, path)
         val service = LevelService(obj, iface, property)
         val registration = obj.addVTable(iface) {
             prop(property) {

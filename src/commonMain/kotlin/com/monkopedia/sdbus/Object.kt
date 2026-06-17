@@ -22,8 +22,11 @@
  */
 package com.monkopedia.sdbus
 
+import kotlin.concurrent.Volatile
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /********************************************/
 /**
@@ -263,13 +266,23 @@ private class NotifyingProperty<T>(
     private val propertyName: PropertyName,
     initialValue: T
 ) : ReadWriteProperty<Any?, T> {
+    private val lock = SynchronizedObject()
+
+    // A property can be assigned from the connection's serve/loop thread (a remote
+    // `Properties.Set`) and from an application thread concurrently. `current` is @Volatile so the
+    // unlocked read in getValue sees the latest write, and the check-and-set-and-emit in setValue
+    // runs under `lock` so two concurrent setters can't both pass the unchanged-guard and
+    // double-emit (or interleave the emit).
+    @Volatile
     private var current: T = initialValue
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T = current
 
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        if (current == value) return
-        current = value
-        obj.emitPropertiesChangedSignal(interfaceName, listOf(propertyName))
+        synchronized(lock) {
+            if (current == value) return
+            current = value
+            obj.emitPropertiesChangedSignal(interfaceName, listOf(propertyName))
+        }
     }
 }

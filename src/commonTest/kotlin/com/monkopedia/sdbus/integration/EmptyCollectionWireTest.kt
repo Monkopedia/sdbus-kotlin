@@ -84,7 +84,7 @@ class EmptyCollectionWireTest {
         val ids = uniqueFixtureIds(suffix)
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
+        val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName(memberName)) {
                 call { value: T -> handler(value) }
@@ -271,7 +271,7 @@ class EmptyCollectionWireTest {
         val ids = uniqueFixtureIds("structEmptyArr")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
+        val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Describe")) {
                 call { value: StructWithList -> "${value.label}:${value.items.size}" }
@@ -310,7 +310,7 @@ class EmptyCollectionWireTest {
         val ids = uniqueFixtureIds("variantEmptyDict")
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
+        val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("CountInVariant")) {
                 call { value: Variant -> value.get<Map<String, Variant>>().size }
@@ -359,7 +359,7 @@ class EmptyCollectionWireTest {
         val ids = uniqueFixtureIds(suffix)
         val serverConnection = createBusConnection(ids.service)
         val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path, runEventLoopThread = false)
+        val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             signal(SignalName("Empty")) {
                 with<T>("value")
