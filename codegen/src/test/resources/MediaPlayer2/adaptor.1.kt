@@ -18,34 +18,34 @@ public abstract class PlayerAdaptor(
   public override fun register() {
     obj.addVTable(Player.Companion.INTERFACE_NAME) {
       method(MethodName("Next")) {
-        acall(this@PlayerAdaptor::next)
+        asyncCall(this@PlayerAdaptor::next)
       }
       method(MethodName("Previous")) {
-        acall(this@PlayerAdaptor::previous)
+        asyncCall(this@PlayerAdaptor::previous)
       }
       method(MethodName("Pause")) {
-        acall(this@PlayerAdaptor::pause)
+        asyncCall(this@PlayerAdaptor::pause)
       }
       method(MethodName("PlayPause")) {
-        acall(this@PlayerAdaptor::playPause)
+        asyncCall(this@PlayerAdaptor::playPause)
       }
       method(MethodName("Stop")) {
-        acall(this@PlayerAdaptor::stop)
+        asyncCall(this@PlayerAdaptor::stop)
       }
       method(MethodName("Play")) {
-        acall(this@PlayerAdaptor::play)
+        asyncCall(this@PlayerAdaptor::play)
       }
       method(MethodName("Seek")) {
         inputParamNames = listOf("Offset")
-        acall(this@PlayerAdaptor::seek)
+        asyncCall(this@PlayerAdaptor::seek)
       }
       method(MethodName("SetPosition")) {
         inputParamNames = listOf("TrackId", "Position")
-        acall(this@PlayerAdaptor::setPosition)
+        asyncCall(this@PlayerAdaptor::setPosition)
       }
       method(MethodName("OpenUri")) {
         inputParamNames = listOf("Uri")
-        acall(this@PlayerAdaptor::openUri)
+        asyncCall(this@PlayerAdaptor::openUri)
       }
       signal(SignalName("Seeked")) {
         with<Long>("Position")

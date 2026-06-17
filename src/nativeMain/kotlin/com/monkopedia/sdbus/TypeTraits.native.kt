@@ -41,7 +41,7 @@ import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.IntVar
 
-actual sealed class SdbusSig actual constructor() {
+actual sealed class TypeSignature actual constructor() {
     @PublishedApi
     internal actual abstract val value: String
 
@@ -64,49 +64,49 @@ internal data class PrimitiveSig<K, N : CVariable> internal constructor(
     override val valid: Boolean = false,
     override val isTrivial: Boolean = false,
     internal val converter: NativeTypeConverter<K, N>? = null
-) : SdbusSig()
+) : TypeSignature()
 
-internal actual val VoidSig: SdbusSig =
+internal actual val VoidSig: TypeSignature =
     PrimitiveSig<Unit, COpaquePointerVar>("", valid = true, isTrivial = false)
 
-internal actual val BoolSig: SdbusSig =
+internal actual val BoolSig: TypeSignature =
     PrimitiveSig("b", valid = true, isTrivial = true, BooleanTypeConverter)
 
-internal actual val UByteSig: SdbusSig =
+internal actual val UByteSig: TypeSignature =
     PrimitiveSig("y", valid = true, isTrivial = true, UByteTypeConverter)
 
-internal actual val ShortSig: SdbusSig =
+internal actual val ShortSig: TypeSignature =
     PrimitiveSig("n", valid = true, isTrivial = true, ShortTypeConverter)
 
-internal actual val UShortSig: SdbusSig =
+internal actual val UShortSig: TypeSignature =
     PrimitiveSig("q", valid = true, isTrivial = true, UShortTypeConverter)
 
-internal actual val IntSig: SdbusSig =
+internal actual val IntSig: TypeSignature =
     PrimitiveSig("i", valid = true, isTrivial = true, IntTypeConverter)
 
-internal actual val UIntSig: SdbusSig =
+internal actual val UIntSig: TypeSignature =
     PrimitiveSig("u", valid = true, isTrivial = true, UIntTypeConverter)
 
-internal actual val LongSig: SdbusSig =
+internal actual val LongSig: TypeSignature =
     PrimitiveSig("x", valid = true, isTrivial = true, LongTypeConverter)
 
-internal actual val ULongSig: SdbusSig =
+internal actual val ULongSig: TypeSignature =
     PrimitiveSig("t", valid = true, isTrivial = true, ULongTypeConverter)
 
-internal actual val DoubleSig: SdbusSig =
+internal actual val DoubleSig: TypeSignature =
     PrimitiveSig("d", valid = true, isTrivial = true, DoubleTypeConverter)
 
-internal actual val StringSig: SdbusSig =
+internal actual val StringSig: TypeSignature =
     PrimitiveSig<String, CPointerVar<ByteVar>>("s", valid = true, isTrivial = false)
 
-internal actual val ObjectPathSig: SdbusSig =
+internal actual val ObjectPathSig: TypeSignature =
     PrimitiveSig<ObjectPath, CPointerVar<ByteVar>>("o", valid = true, isTrivial = false)
 
-internal actual val SignatureSig: SdbusSig =
+internal actual val SignatureSig: TypeSignature =
     PrimitiveSig<Signature, CPointerVar<ByteVar>>("g", valid = true, isTrivial = false)
 
-internal actual val UnixFdSig: SdbusSig =
+internal actual val UnixFdSig: TypeSignature =
     PrimitiveSig<UnixFd, IntVar>("h", valid = true, isTrivial = false)
 
-internal actual val VariantSig: SdbusSig =
+internal actual val VariantSig: TypeSignature =
     PrimitiveSig<Any, COpaquePointerVar>("v", valid = true, isTrivial = false)

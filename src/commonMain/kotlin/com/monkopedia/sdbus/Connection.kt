@@ -117,8 +117,7 @@ interface Connection : Resource {
      *
      * Note: synchronous installation does not imply synchronous callback delivery. Matching messages are
      * still dispatched via the connection's event loop and may be observed with scheduler/runtime delay.
-     * In timing-sensitive flows, avoid immediate delivery assumptions and consider `addMatchAsync()` with
-     * an `installCallback` as an explicit readiness barrier before emitting test or control signals.
+     * In timing-sensitive flows, avoid immediate delivery assumptions.
      *
      * The lifetime of the match rule is bound to the lifetime of the returned resource instance.
      * Releasing the resource instance implies uninstalling of the match rule from the bus connection.
@@ -128,34 +127,6 @@ interface Connection : Resource {
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
     fun addMatch(match: String, callback: MessageHandler): Resource
-
-    /**
-     * Asynchronously installs a match rule for messages received on this bus connection
-     *
-     * @param match Match expression to filter incoming D-Bus message
-     * @param callback Callback handler to be called upon processing an inbound D-Bus message matching the rule
-     * @param installCallback Callback handler to be called upon processing an inbound D-Bus message matching the rule
-     * @return [Resource] handle owning the registration
-     *
-     * This method operates the same as `addMatch()` above, just that it installs the match rule asynchronously,
-     * in a non-blocking fashion. A request is sent to the broker, but the call does not wait for a response.
-     * The `installCallback' callable is called when the response is later received, with the response message
-     * from the broker as parameter. If it's an empty function object, a default implementation is used that
-     * terminates the bus connection should installing the match fail.
-     *
-     * The lifetime of the match rule is bound to the lifetime of the returned resource instance.
-     * Releasing the resource instance implies the uninstalling of the match rule from the bus
-     * connection.
-     *
-     * For more information, consult `man sd_bus_add_match_async`.
-     *
-     * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
-     */
-    fun addMatchAsync(
-        match: String,
-        callback: MessageHandler,
-        installCallback: MessageHandler
-    ): Resource
 
     /**
      * The unique name of the connection. E.g. ":1.xx"

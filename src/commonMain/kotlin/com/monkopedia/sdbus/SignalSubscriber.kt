@@ -57,13 +57,13 @@ inline fun Proxy.onSignal(
     signalName: SignalName,
     builder: SignalSubscriber.() -> Unit
 ): Resource {
-    val methodCall = SignalSubscriber().also(builder).methodCall
+    val handler = SignalSubscriber().also(builder).handler
         ?: error("No method call specified for signal handler")
     return registerSignalHandler(
         interfaceName,
         signalName
     ) { signal ->
-        methodCall.invoke(signal)
+        handler.invoke(signal)
     }
 }
 
@@ -83,14 +83,14 @@ inline fun <T> Proxy.signalFlow(
     signalName: SignalName,
     builder: SignalSubscriber.() -> Unit
 ): Flow<T> {
-    val methodCall = SignalSubscriber().also(builder).methodCall
+    val handler = SignalSubscriber().also(builder).handler
         ?: error("No method call specified for signal handler")
     return callbackFlow {
         val registration = registerSignalHandler(
             interfaceName,
             signalName
         ) { signal ->
-            methodCall.invoke(signal, onSuccess = { _, res ->
+            handler.invoke(signal, onSuccess = { _, res ->
                 @Suppress("UNCHECKED_CAST")
                 channel.trySendBlocking(res as T)
             }, onFailure = {
@@ -106,23 +106,23 @@ inline fun <T> Proxy.signalFlow(
 /**
  * Builder context for subscribing to a signal, exposed as the receiver of the lambda passed to
  * [Proxy.onSignal] and [Proxy.signalFlow]. Bind the handler that decodes the signal payload via the
- * inherited [call]/[acall] overloads.
+ * inherited [call]/[asyncCall] overloads.
  */
 class SignalSubscriber : TypedMethodBuilderContext() {
-    /** The handler bound via [call]/[acall], invoked for each received signal. */
-    var methodCall: TypedMethodCall<*>? = null
+    /** The handler bound via [call]/[asyncCall], invoked for each received signal. */
+    var handler: TypedMethodCall<*>? = null
 
     override fun createCall(
         method: TypedMethod,
         handler: (List<Any?>) -> Any?,
         errorCall: ((Throwable?) -> Unit)?
-    ): TypedMethodCall<*> = super.createCall(method, handler, errorCall).also { methodCall = it }
+    ): TypedMethodCall<*> = super.createCall(method, handler, errorCall).also { this.handler = it }
 
-    override fun createACall(
+    override fun createAsyncCall(
         method: TypedMethod,
         handler: suspend (List<Any?>) -> Any?,
         errorCall: (suspend (Throwable?) -> Unit)?,
         coroutineContext: CoroutineContext
-    ): TypedMethodCall<*> = super.createACall(method, handler, errorCall, coroutineContext)
-        .also { methodCall = it }
+    ): TypedMethodCall<*> = super.createAsyncCall(method, handler, errorCall, coroutineContext)
+        .also { this.handler = it }
 }

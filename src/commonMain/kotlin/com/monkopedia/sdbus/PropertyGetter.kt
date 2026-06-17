@@ -149,7 +149,7 @@ open class PropertyDelegate<R, T : Any>(
     val propertyName: PropertyName,
     protected val type: KSerializer<T>,
     protected val module: SerializersModule,
-    protected val signature: SdbusSig
+    protected val signature: TypeSignature
 ) : ReadOnlyProperty<R, T> {
     override fun getValue(thisRef: R, property: KProperty<*>): T = get()
 
@@ -260,7 +260,7 @@ class MutablePropertyDelegate<R, T : Any>(
     propertyName: PropertyName,
     private val serializer: KSerializer<T>,
     module: SerializersModule,
-    signature: SdbusSig
+    signature: TypeSignature
 ) : PropertyDelegate<R, T>(proxy, interfaceName, propertyName, serializer, module, signature),
     ReadWriteProperty<R, T> {
 

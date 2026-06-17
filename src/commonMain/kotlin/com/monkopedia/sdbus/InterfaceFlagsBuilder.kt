@@ -48,21 +48,21 @@ class InterfaceFlagsVTableItem @PublishedApi internal constructor(val flags: Fla
 
     /** Whether the interface is marked deprecated. */
     var isDeprecated: Boolean
-        get() = flags.test(DEPRECATED)
+        get() = flags.has(DEPRECATED)
         set(value) {
             flags.set(DEPRECATED, value)
         }
 
     /** Whether the interface is marked as requiring privileged access. */
     var isPrivileged: Boolean
-        get() = flags.test(PRIVILEGED)
+        get() = flags.has(PRIVILEGED)
         set(value) {
             flags.set(PRIVILEGED, value)
         }
 
     /** Whether methods on the interface default to not producing a reply. */
     var hasNoReply: Boolean
-        get() = flags.test(METHOD_NO_REPLY)
+        get() = flags.has(METHOD_NO_REPLY)
         set(value) {
             flags.set(METHOD_NO_REPLY, value)
         }

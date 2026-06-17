@@ -140,7 +140,7 @@ class JvmMessageSupportTest {
 
     @Test
     fun credentialAccessors_doNotUseUnsupportedOperationExceptions() {
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
 
         val failures = listOf(
             runCatching { message.credsPid }.exceptionOrNull(),
@@ -159,7 +159,7 @@ class JvmMessageSupportTest {
 
     @Test
     fun credentialAccessors_withoutSenderCredentialsFailWithSdbusError() {
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
 
         assertFailsWith<SdbusException> { message.credsPid }
         assertFailsWith<SdbusException> { message.credsUid }
@@ -176,7 +176,7 @@ class JvmMessageSupportTest {
     // "class java.lang.Byte cannot be cast to class kotlin.UByte".
     @Test
     fun deserialize_ayByteArray_coercesSignedBytesToUByteList() {
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
         message.payload.add(listOf<Byte>(0xBF.toByte(), 0x01, 0x02))
 
         val result = message.deserialize<List<UByte>>()

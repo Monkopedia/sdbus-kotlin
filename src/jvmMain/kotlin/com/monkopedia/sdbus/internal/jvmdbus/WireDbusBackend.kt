@@ -13,7 +13,6 @@ import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.MethodReply
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
-import com.monkopedia.sdbus.PlainMessage
 import com.monkopedia.sdbus.Resource
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalHandler
@@ -22,6 +21,7 @@ import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.createError
+import com.monkopedia.sdbus.createPlainMessage
 import com.monkopedia.sdbus.methodReplyFrom
 import com.monkopedia.sdbus.signalFromMetadata
 import java.io.IOException
@@ -173,7 +173,7 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
     override suspend fun stopEventLoop(): Unit = Unit
 
     override fun currentlyProcessedMessage(): Message =
-        JvmCurrentMessageContext.current() ?: PlainMessage.createPlainMessage()
+        JvmCurrentMessageContext.current() ?: createPlainMessage()
 
     override fun setMethodCallTimeout(timeout: Duration): Unit = run { this.timeout = timeout }
 
@@ -207,14 +207,6 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
 
     override fun addMatch(match: String, callback: MessageHandler): Resource =
         installSignalMatch(wire, match, parseMatchSpec(match), callback)
-
-    override fun addMatchAsync(
-        match: String,
-        callback: MessageHandler,
-        installCallback: MessageHandler
-    ): Resource = addMatch(match, callback).also {
-        installCallback(signalFromMetadata(Message.Metadata(valid = true, empty = true)))
-    }
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
@@ -260,7 +252,7 @@ internal class WireDbusProxy(
             ?: throw createError(-1, "callMethod failed: missing interface name")
         val methodName = message.memberName?.value
             ?: throw createError(-1, "callMethod failed: missing method name")
-        val path = message.path?.value ?: objectPath.value
+        val path = message.objectPath?.value ?: objectPath.value
 
         // Same-process serving: a call to an object served by any connection in our own process is
         // dispatched in-process through the shared static-dispatch table (this is not wire serving;
@@ -473,7 +465,7 @@ internal class WireDbusProxy(
         val pending = AtomicBoolean(true)
         val interfaceName = message.interfaceName?.value.orEmpty()
         val methodName = message.memberName?.value.orEmpty()
-        val path = message.path?.value ?: objectPath.value
+        val path = message.objectPath?.value ?: objectPath.value
         thread(
             start = true,
             isDaemon = true,
@@ -729,7 +721,7 @@ internal fun toWireBodyValue(value: Any?): Any? = when (value) {
 private fun variantToPayload(variant: Variant): Message.JvmVariantPayload {
     val signature = variant.peekValueType()
         ?: throw createError(-1, "Cannot marshal an empty variant")
-    val message = PlainMessage.createPlainMessage()
+    val message = createPlainMessage()
     variant.serializeTo(message)
     message.rewind(false)
     message.enterVariant(signature)
@@ -797,7 +789,7 @@ private fun fromWireReplyValue(value: Any?, signature: String?): Any? = when (va
  * unwrapped via `get()`. Mirrors PureJavaDbusBackend.fromJavaVariantValue.
  */
 private fun wireVariant(payload: Message.JvmVariantPayload): Variant {
-    val message = PlainMessage.createPlainMessage()
+    val message = createPlainMessage()
     message.payload.add(
         Message.JvmVariantPayload(
             payload.signature,

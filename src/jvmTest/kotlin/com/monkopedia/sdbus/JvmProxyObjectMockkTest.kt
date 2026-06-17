@@ -26,7 +26,7 @@ class JvmProxyObjectMockkTest {
         val resource = mockk<Resource>()
         val signalHandler: SignalHandler = {}
         val callback: AsyncReplyHandler = { _, _ -> }
-        val currentMessage = PlainMessage.createPlainMessage()
+        val currentMessage = createPlainMessage()
 
         every { backend.currentlyProcessedMessage() } returns currentMessage
         every { backend.createMethodCall(InterfaceName("com.example"), MethodName("Ping")) } returns
@@ -93,7 +93,7 @@ class JvmProxyObjectMockkTest {
         val managerResource = mockk<Resource>()
         val vtableResource = mockk<Resource>()
         val signal = Signal()
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
         val interfaceName = InterfaceName("com.example.Object")
 
         every {

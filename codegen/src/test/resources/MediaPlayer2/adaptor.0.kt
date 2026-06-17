@@ -13,10 +13,10 @@ public abstract class MediaPlayer2Adaptor(
   public override fun register() {
     obj.addVTable(MediaPlayer2.Companion.INTERFACE_NAME) {
       method(MethodName("Raise")) {
-        acall(this@MediaPlayer2Adaptor::raise)
+        asyncCall(this@MediaPlayer2Adaptor::raise)
       }
       method(MethodName("Quit")) {
-        acall(this@MediaPlayer2Adaptor::quit)
+        asyncCall(this@MediaPlayer2Adaptor::quit)
       }
       prop(PropertyName("CanQuit")) {
         with(this@MediaPlayer2Adaptor::canQuit)

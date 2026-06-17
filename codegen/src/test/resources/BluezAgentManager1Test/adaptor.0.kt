@@ -12,15 +12,15 @@ public abstract class AgentManager1Adaptor(
     obj.addVTable(AgentManager1.Companion.INTERFACE_NAME) {
       method(MethodName("RegisterAgent")) {
         inputParamNames = listOf("agent", "capability")
-        acall(this@AgentManager1Adaptor::registerAgent)
+        asyncCall(this@AgentManager1Adaptor::registerAgent)
       }
       method(MethodName("UnregisterAgent")) {
         inputParamNames = listOf("agent")
-        acall(this@AgentManager1Adaptor::unregisterAgent)
+        asyncCall(this@AgentManager1Adaptor::unregisterAgent)
       }
       method(MethodName("RequestDefaultAgent")) {
         inputParamNames = listOf("agent")
-        acall(this@AgentManager1Adaptor::requestDefaultAgent)
+        asyncCall(this@AgentManager1Adaptor::requestDefaultAgent)
       }
     }
   }

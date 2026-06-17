@@ -37,10 +37,10 @@ import sdbus.SD_BUS_VTABLE_UNPRIVILEGED
 internal fun Flags.toSdBusInterfaceFlags(): ULong {
     var sdbusFlags: ULong = 0u
 
-    if (test(DEPRECATED)) {
+    if (has(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
     }
-    if (!test(PRIVILEGED)) {
+    if (!has(PRIVILEGED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_UNPRIVILEGED
     }
 
@@ -52,13 +52,13 @@ internal fun Flags.toSdBusInterfaceFlags(): ULong {
 internal fun Flags.toSdBusMethodFlags(): ULong {
     var sdbusFlags: ULong = 0u
 
-    if (test(DEPRECATED)) {
+    if (has(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
     }
-    if (!test(PRIVILEGED)) {
+    if (!has(PRIVILEGED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_UNPRIVILEGED
     }
-    if (test(METHOD_NO_REPLY)) {
+    if (has(METHOD_NO_REPLY)) {
         sdbusFlags = sdbusFlags or 0u // SD_BUS_VTABLE_METHOD_NO_REPLY
     }
 
@@ -68,7 +68,7 @@ internal fun Flags.toSdBusMethodFlags(): ULong {
 internal fun Flags.toSdBusSignalFlags(): ULong {
     var sdbusFlags: ULong = 0u
 
-    if (test(DEPRECATED)) {
+    if (has(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
     }
 
@@ -78,10 +78,10 @@ internal fun Flags.toSdBusSignalFlags(): ULong {
 internal fun Flags.toSdBusPropertyFlags(): ULong {
     var sdbusFlags: ULong = 0u
 
-    if (test(DEPRECATED)) {
+    if (has(DEPRECATED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_DEPRECATED
     }
-    // if (!test(GeneralFlags.PRIVILEGED))
+    // if (!has(GeneralFlags.PRIVILEGED))
     //    sdbusFlags |= SD_BUS_VTABLE_UNPRIVILEGED
 
     sdbusFlags = testEmitsFlags(sdbusFlags)
@@ -90,21 +90,21 @@ internal fun Flags.toSdBusPropertyFlags(): ULong {
 }
 
 private fun Flags.testEmitsFlags(sdbusFlags: ULong): ULong = sdbusFlags or when {
-    test(
+    has(
         Flags.PropertyUpdateBehaviorFlags.EMITS_CHANGE_SIGNAL
     ) -> SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE
-    test(
+    has(
         Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
     ) -> SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION
-    test(Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE) -> SD_BUS_VTABLE_PROPERTY_CONST
-    test(Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL) -> 0u
+    has(Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE) -> SD_BUS_VTABLE_PROPERTY_CONST
+    has(Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL) -> 0u
     else -> 0u
 }
 
 internal fun Flags.toSdBusWritablePropertyFlags(): ULong {
     var sdbusFlags = toSdBusPropertyFlags()
 
-    if (!test(PRIVILEGED)) {
+    if (!has(PRIVILEGED)) {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_UNPRIVILEGED
     }
 

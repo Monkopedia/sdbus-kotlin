@@ -40,7 +40,7 @@ fun VTableBuilder.method(methodName: MethodName, builder: MethodVTableItem.() ->
  * A vtable entry describing a method exported by an [Object].
  *
  * Construct one inside an [addVTable] block via [method]. The input/output signatures are usually
- * derived automatically when binding a handler via [call]/[acall]/[implementedAs]; the parameter
+ * derived automatically when binding a handler via [call]/[asyncCall]/[implementedAs]; the parameter
  * name lists may be set for introspection.
  *
  * @property name The method name
@@ -67,18 +67,18 @@ class MethodVTableItem internal constructor(
         errorCall: ((Throwable?) -> Unit)?
     ): TypedMethodCall<*> = super.createCall(method, handler, errorCall).also(this::implementedAs)
 
-    override fun createACall(
+    override fun createAsyncCall(
         method: TypedMethod,
         handler: suspend (List<Any?>) -> Any?,
         errorCall: (suspend (Throwable?) -> Unit)?,
         coroutineContext: CoroutineContext
-    ): TypedMethodCall<*> = super.createACall(method, handler, errorCall, coroutineContext)
+    ): TypedMethodCall<*> = super.createAsyncCall(method, handler, errorCall, coroutineContext)
         .also(this::implementedAs)
 
     /**
      * Binds this method to the given typed callback, deriving the input/output signatures from it.
      *
-     * @param callback The typed method call produced by [call] or [acall]
+     * @param callback The typed method call produced by [call] or [asyncCall]
      * @return This item, for chaining
      */
     fun implementedAs(callback: TypedMethodCall<*>): MethodVTableItem = apply {
@@ -107,21 +107,21 @@ class MethodVTableItem internal constructor(
 
     /** Whether this method is marked deprecated. */
     var isDeprecated: Boolean
-        get() = flags.test(DEPRECATED)
+        get() = flags.has(DEPRECATED)
         set(value) {
             flags.set(DEPRECATED, value)
         }
 
     /** Whether this method is marked as requiring privileged access. */
     var isPrivileged: Boolean
-        get() = flags.test(PRIVILEGED)
+        get() = flags.has(PRIVILEGED)
         set(value) {
             flags.set(PRIVILEGED, value)
         }
 
     /** Whether this method does not produce a reply. */
     var hasNoReply: Boolean
-        get() = flags.test(METHOD_NO_REPLY)
+        get() = flags.has(METHOD_NO_REPLY)
         set(value) {
             flags.set(METHOD_NO_REPLY, value)
         }

@@ -13,7 +13,7 @@ public abstract class InterestingInterfaceAdaptor(
       method(MethodName("AddContact")) {
         inputParamNames = listOf("name", "email")
         outputParamNames = listOf("id")
-        acall(this@InterestingInterfaceAdaptor::addContact)
+        asyncCall(this@InterestingInterfaceAdaptor::addContact)
       }
     }
   }

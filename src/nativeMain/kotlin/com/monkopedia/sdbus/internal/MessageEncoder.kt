@@ -30,9 +30,9 @@ import com.monkopedia.sdbus.MapSig
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PrimitiveSig
-import com.monkopedia.sdbus.SdbusSig
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.StructSig
+import com.monkopedia.sdbus.TypeSignature
 import com.monkopedia.sdbus.UnixFd
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.append
@@ -82,8 +82,8 @@ internal class SerialDescriptorStack {
     val peek: SerialDescriptor
         get() = head ?: error("Stack is empty")
 
-    private var signatureImpl: SdbusSig? = null
-    val signature: SdbusSig
+    private var signatureImpl: TypeSignature? = null
+    val signature: TypeSignature
         get() = signatureImpl ?: peek.asSignature.also {
             signatureImpl = it
         }
@@ -279,7 +279,7 @@ internal class MessageEncoder(
 internal class ListEncoder<K, N : CVariable>(
     private val target: Message,
     override val serializersModule: SerializersModule,
-    private val signature: SdbusSig,
+    private val signature: TypeSignature,
     private val converter: NativeTypeConverter<K, N>
 ) : AbstractEncoder() {
     private val list = mutableListOf<K>()

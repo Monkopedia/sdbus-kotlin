@@ -20,7 +20,7 @@ import kotlin.time.Duration
 class JvmFactoryMockkTest {
     private fun mockConnectionBackend(): JvmDbusConnection {
         val connection = mockk<JvmDbusConnection>(relaxed = true)
-        every { connection.currentlyProcessedMessage() } returns PlainMessage.createPlainMessage()
+        every { connection.currentlyProcessedMessage() } returns createPlainMessage()
         every { connection.getMethodCallTimeout() } returns Duration.ZERO
         every { connection.uniqueName() } returns BusName(":jvm-factory")
         return connection

@@ -139,7 +139,7 @@ expect sealed class Message {
     val sender: BusName?
 
     /** The object path this message targets, or `null` if not set. */
-    val path: ObjectPath?
+    val objectPath: ObjectPath?
 
     /** The destination bus name of the message, or `null` if not set. */
     val destination: BusName?

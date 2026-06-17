@@ -11,7 +11,7 @@ public abstract class InterestingInterfaceAdaptor(public val obj: Object) : Inte
             method(MethodName("AddContact")) {
                 inputParamNames = listOf("name", "email")
                 outputParamNames = listOf("id")
-                acall(this@InterestingInterfaceAdaptor::addContact)
+                asyncCall(this@InterestingInterfaceAdaptor::addContact)
             }
         }
     }

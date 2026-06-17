@@ -38,9 +38,6 @@ actual class PlainMessage internal constructor(
 ) : Message(msg, sdbus, adoptMessage) {
 
     constructor(o: PlainMessage) : this(o.msg, o.sdbus)
-
-    actual companion object {
-        actual fun createPlainMessage(): PlainMessage =
-            getPseudoConnectionInstance().createPlainMessage()
-    }
 }
+
+actual fun createPlainMessage(): PlainMessage = getPseudoConnectionInstance().createPlainMessage()

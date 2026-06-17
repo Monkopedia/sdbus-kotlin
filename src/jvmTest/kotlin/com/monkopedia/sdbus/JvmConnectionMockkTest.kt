@@ -19,7 +19,7 @@ class JvmConnectionMockkTest {
         val backend = mockk<JvmDbusConnection>()
         val connection = JvmConnection(backend)
         val timeout = 5.seconds
-        val message = PlainMessage.createPlainMessage()
+        val message = createPlainMessage()
         val unique = BusName(":jvm-mock")
 
         every { backend.startEventLoop() } just Runs
@@ -52,32 +52,24 @@ class JvmConnectionMockkTest {
         val backend = mockk<JvmDbusConnection>()
         val connection = JvmConnection(backend)
         val matchResource = mockk<Resource>()
-        val installResource = mockk<Resource>()
         val managerResource = mockk<Resource>()
         val objectPath = ObjectPath("/com/example")
         val match = "type='signal'"
         val service = ServiceName("com.example.Test")
         val callback: MessageHandler = {}
-        val installCallback: MessageHandler = {}
 
         every { backend.addObjectManager(objectPath) } returns managerResource
         every { backend.addMatch(match, callback) } returns matchResource
-        every { backend.addMatchAsync(match, callback, installCallback) } returns installResource
         every { backend.requestName(service) } just Runs
         every { backend.releaseName(service) } just Runs
 
         assertEquals(managerResource, connection.addObjectManager(objectPath))
         assertEquals(matchResource, connection.addMatch(match, callback))
-        assertEquals(
-            installResource,
-            connection.addMatchAsync(match, callback, installCallback)
-        )
         connection.requestName(service)
         connection.releaseName(service)
 
         verify(exactly = 1) { backend.addObjectManager(objectPath) }
         verify(exactly = 1) { backend.addMatch(match, callback) }
-        verify(exactly = 1) { backend.addMatchAsync(match, callback, installCallback) }
         verify(exactly = 1) { backend.requestName(service) }
         verify(exactly = 1) { backend.releaseName(service) }
     }

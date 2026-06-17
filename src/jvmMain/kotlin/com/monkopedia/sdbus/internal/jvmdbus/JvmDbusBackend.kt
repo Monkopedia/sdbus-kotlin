@@ -38,11 +38,6 @@ internal interface JvmDbusConnection : Resource {
     fun getMethodCallTimeout(): Duration
     fun addObjectManager(objectPath: ObjectPath): Resource
     fun addMatch(match: String, callback: MessageHandler): Resource
-    fun addMatchAsync(
-        match: String,
-        callback: MessageHandler,
-        installCallback: MessageHandler
-    ): Resource
 
     fun uniqueName(): BusName
     fun requestName(name: ServiceName)

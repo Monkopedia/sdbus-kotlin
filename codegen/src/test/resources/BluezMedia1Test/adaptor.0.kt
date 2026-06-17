@@ -12,19 +12,19 @@ public abstract class Media1Adaptor(
     obj.addVTable(Media1.Companion.INTERFACE_NAME) {
       method(MethodName("RegisterEndpoint")) {
         inputParamNames = listOf("endpoint", "properties")
-        acall(this@Media1Adaptor::registerEndpoint)
+        asyncCall(this@Media1Adaptor::registerEndpoint)
       }
       method(MethodName("UnregisterEndpoint")) {
         inputParamNames = listOf("endpoint")
-        acall(this@Media1Adaptor::unregisterEndpoint)
+        asyncCall(this@Media1Adaptor::unregisterEndpoint)
       }
       method(MethodName("RegisterPlayer")) {
         inputParamNames = listOf("player", "properties")
-        acall(this@Media1Adaptor::registerPlayer)
+        asyncCall(this@Media1Adaptor::registerPlayer)
       }
       method(MethodName("UnregisterPlayer")) {
         inputParamNames = listOf("player")
-        acall(this@Media1Adaptor::unregisterPlayer)
+        asyncCall(this@Media1Adaptor::unregisterPlayer)
       }
     }
   }

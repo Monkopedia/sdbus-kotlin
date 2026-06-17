@@ -104,8 +104,17 @@ class Flags {
     }
 
     /** Returns whether the given general [flag] is currently set. */
-    fun test(flag: GeneralFlags): Boolean = flag.value in flags
+    fun has(flag: GeneralFlags): Boolean = flag.value in flags
 
     /** Returns whether the given property update behavior [flag] is currently selected. */
-    fun test(flag: PropertyUpdateBehaviorFlags): Boolean = flag.value in flags
+    fun has(flag: PropertyUpdateBehaviorFlags): Boolean = flag.value in flags
+
+    /** Returns whether the given general [flag] is currently set, enabling `flag in flags`. */
+    operator fun contains(flag: GeneralFlags): Boolean = flag.value in flags
+
+    /**
+     * Returns whether the given property update behavior [flag] is currently selected, enabling
+     * `flag in flags`.
+     */
+    operator fun contains(flag: PropertyUpdateBehaviorFlags): Boolean = flag.value in flags
 }

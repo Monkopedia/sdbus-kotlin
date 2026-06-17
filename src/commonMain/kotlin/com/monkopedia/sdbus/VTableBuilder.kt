@@ -45,7 +45,7 @@ package com.monkopedia.sdbus
  * obj.addVTable(InterfaceName("com.monkopedia.foo")) {
  *   method(MethodName("Multiply")) {
  *     inputParamNames = listOf("a", "b")
- *     implementedAs(acall(this@MyAdaptor::slowMultiply) withContext Dispatchers.IO)
+ *     implementedAs(asyncCall(this@MyAdaptor::slowMultiply) withContext Dispatchers.IO)
  *   }
  *   method(MethodName("Divide")) {
  *     call(this@MyAdaptor::divide)
@@ -62,7 +62,7 @@ package com.monkopedia.sdbus
  *   method(MethodName("Get")) {
  *     inputParamNames = listOf("interface_name", "property_name")
  *     outputParamNames = listOf("value")
- *     acall(this@PropertiesAdaptor::`get`)
+ *     asyncCall(this@PropertiesAdaptor::`get`)
  *   }
  *   signal(SignalName("PropertiesChanged")) {
  *     with<String>("interface_name")

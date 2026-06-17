@@ -209,14 +209,14 @@ class UnsignedRoundTripTest {
             listOf(ULong.MIN_VALUE, 9_000_000_000_000_000_000uL, ULong.MAX_VALUE)
 
         inline fun <reified T : Any> roundTrip(value: T): T {
-            val msg = PlainMessage.createPlainMessage()
+            val msg = createPlainMessage()
             msg.serialize(value)
             msg.seal()
             return msg.deserialize<T>()
         }
 
         inline fun <reified T : Any> roundTripVariant(value: T): T {
-            val msg = PlainMessage.createPlainMessage()
+            val msg = createPlainMessage()
             msg.serialize(Variant(value))
             msg.seal()
             return msg.deserialize<Variant>().get<T>()

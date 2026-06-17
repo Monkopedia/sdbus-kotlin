@@ -300,7 +300,7 @@ internal class JvmValueDecoder(
 
     private fun slotVariant(): Variant = when (val slot = next("Message.readVariant")) {
         is Variant -> slot
-        is Message.JvmVariantPayload -> PlainMessage.createPlainMessage().let { message ->
+        is Message.JvmVariantPayload -> createPlainMessage().let { message ->
             message.payload.add(slot)
             Variant().apply { deserializeFrom(message) }
         }

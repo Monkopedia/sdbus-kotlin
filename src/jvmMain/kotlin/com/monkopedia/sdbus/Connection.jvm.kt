@@ -24,12 +24,6 @@ internal class JvmConnection(
     override fun addMatch(match: String, callback: MessageHandler): Resource =
         backend.addMatch(match, callback)
 
-    override fun addMatchAsync(
-        match: String,
-        callback: MessageHandler,
-        installCallback: MessageHandler
-    ): Resource = backend.addMatchAsync(match, callback, installCallback)
-
     override val uniqueName: BusName get() = backend.uniqueName()
 
     override fun requestName(name: ServiceName): Unit = backend.requestName(name)

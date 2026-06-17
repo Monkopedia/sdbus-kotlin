@@ -13,11 +13,11 @@ public abstract class HealthManager1Adaptor(
       method(MethodName("CreateApplication")) {
         inputParamNames = listOf("config")
         outputParamNames = listOf("application")
-        acall(this@HealthManager1Adaptor::createApplication)
+        asyncCall(this@HealthManager1Adaptor::createApplication)
       }
       method(MethodName("DestroyApplication")) {
         inputParamNames = listOf("application")
-        acall(this@HealthManager1Adaptor::destroyApplication)
+        asyncCall(this@HealthManager1Adaptor::destroyApplication)
       }
     }
   }

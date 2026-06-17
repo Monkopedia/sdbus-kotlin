@@ -62,7 +62,7 @@ class SignalVTableItem @PublishedApi internal constructor(
 
     /** Whether this signal is marked deprecated. */
     var isDeprecated: Boolean
-        get() = flags.test(DEPRECATED)
+        get() = flags.has(DEPRECATED)
         set(value) {
             flags.set(DEPRECATED, value)
         }

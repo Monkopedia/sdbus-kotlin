@@ -49,7 +49,7 @@ inline fun Object.emitSignal(
 fun Object.emit(signal: SignalEmitter) {
     val m = createSignal(signal.interfaceName, signal.signalName)
     m.serialize(
-        signal.typedMethodArguments ?: buildArgs {
+        signal.arguments ?: buildArgs {
             call()
         }
     )
@@ -62,16 +62,16 @@ fun Object.emit(signal: SignalEmitter) {
  *
  * @property interfaceName Interface the signal belongs to
  * @property signalName Name of the signal
- * @property typedMethodArguments The serialized signal arguments, or `null` for none
+ * @property arguments The serialized signal arguments, or `null` for none
  */
 class SignalEmitter @PublishedApi internal constructor(
     var interfaceName: InterfaceName = InterfaceName(""),
     var signalName: SignalName = SignalName(""),
-    var typedMethodArguments: TypedArguments? = null
+    var arguments: TypedArguments? = null
 ) : TypedArgumentsBuilderContext() {
 
     override fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
         super.createCall(inputType, values).also {
-            typedMethodArguments = it
+            arguments = it
         }
 }

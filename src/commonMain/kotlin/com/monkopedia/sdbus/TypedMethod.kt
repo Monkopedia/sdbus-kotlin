@@ -41,7 +41,7 @@ internal inline fun <reified T : Any> typed() = Typed(T::class, serializer<T>())
 class Typed<T : Any> @PublishedApi internal constructor(
     internal val cls: KClass<T>,
     internal val type: KSerializer<T>,
-    internal val signature: SdbusSig = type.descriptor.asSignature
+    internal val signature: TypeSignature = type.descriptor.asSignature
 )
 
 internal typealias InputType = List<Typed<*>>
@@ -198,7 +198,7 @@ inline fun buildArgs(builder: TypedArgumentsBuilder): TypedArguments =
  * This is a builder context allowing for easy construction of a [TypedMethodCall].
  *
  * In many cases, the builder context will simply grab the result from the invocation of [call] or
- * [acall], however if something more complex is needed such as [TypedMethodCall.withContext] then
+ * [asyncCall], however if something more complex is needed such as [TypedMethodCall.withContext] then
  * the result may have to be set into the builder context.
  *
  * Example simple usage:
@@ -211,7 +211,7 @@ inline fun buildArgs(builder: TypedArgumentsBuilder): TypedArguments =
  * Custom context usage:
  * ```
  * method(MethodName("Multiply")) {
- *   implementedAs(acall(this::multiply) withContext Dispatchers.IO)
+ *   implementedAs(asyncCall(this::multiply) withContext Dispatchers.IO)
  * }
  * ```
  */
@@ -225,7 +225,7 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
     ): TypedMethodCall<*> = SyncMethodCall(method, handler, errorCall)
 
     @PublishedApi
-    internal open fun createACall(
+    internal open fun createAsyncCall(
         method: TypedMethod,
         handler: suspend (List<Any?>) -> Any?,
         errorCall: (suspend (Throwable?) -> Unit)? = null,
@@ -552,25 +552,26 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
      * @param handler The suspending function implementing the method body
      * @return A [TypedMethodCall] describing the bound handler
      */
-    inline fun <reified R : Any> acall(crossinline handler: suspend () -> R): TypedMethodCall<*> =
-        createACall(TypedMethod(args(), typed<R>()), handler = {
-            handler()
-        })
+    inline fun <reified R : Any> asyncCall(
+        crossinline handler: suspend () -> R
+    ): TypedMethodCall<*> = createAsyncCall(TypedMethod(args(), typed<R>()), handler = {
+        handler()
+    })
 
-    inline fun <reified R : Any, reified A : Any> acall(crossinline handler: suspend (A) -> R) =
-        createACall(TypedMethod(args1<A>(), typed<R>()), handler = { args ->
+    inline fun <reified R : Any, reified A : Any> asyncCall(crossinline handler: suspend (A) -> R) =
+        createAsyncCall(TypedMethod(args1<A>(), typed<R>()), handler = { args ->
             handler(args[0] as A)
         })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any> acall(
+    inline fun <reified R : Any, reified A : Any, reified B : Any> asyncCall(
         crossinline handler: suspend (A, B) -> R
-    ) = createACall(TypedMethod(args2<A, B>(), typed<R>()), handler = { args ->
+    ) = createAsyncCall(TypedMethod(args2<A, B>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B)
     })
 
-    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any> acall(
+    inline fun <reified R : Any, reified A : Any, reified B : Any, reified C : Any> asyncCall(
         crossinline handler: suspend (A, B, C) -> R
-    ) = createACall(TypedMethod(args3<A, B, C>(), typed<R>()), handler = { args ->
+    ) = createAsyncCall(TypedMethod(args3<A, B, C>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C)
     })
 
@@ -580,9 +581,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified B : Any,
         reified C : Any,
         reified D : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D) -> R
-    ) = createACall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
+    ) = createAsyncCall(TypedMethod(args4<A, B, C, D>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D)
     })
 
@@ -593,9 +594,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified C : Any,
         reified D : Any,
         reified E : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D, E) -> R
-    ) = createACall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
+    ) = createAsyncCall(TypedMethod(args5<A, B, C, D, E>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E)
     })
 
@@ -607,9 +608,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified D : Any,
         reified E : Any,
         reified F : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D, E, F) -> R
-    ) = createACall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
+    ) = createAsyncCall(TypedMethod(args6<A, B, C, D, E, F>(), typed<R>()), handler = { args ->
         handler(args[0] as A, args[1] as B, args[2] as C, args[3] as D, args[4] as E, args[5] as F)
     })
 
@@ -622,9 +623,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified E : Any,
         reified F : Any,
         reified G : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D, E, F, G) -> R
-    ) = createACall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
+    ) = createAsyncCall(TypedMethod(args7<A, B, C, D, E, F, G>(), typed<R>()), handler = { args ->
         handler(
             args[0] as A,
             args[1] as B,
@@ -646,9 +647,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified F : Any,
         reified G : Any,
         reified H : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H) -> R
-    ) = createACall(
+    ) = createAsyncCall(
         TypedMethod(args8<A, B, C, D, E, F, G, H>(), typed<R>()),
         handler = { args ->
             handler(
@@ -675,9 +676,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified G : Any,
         reified H : Any,
         reified I : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H, I) -> R
-    ) = createACall(
+    ) = createAsyncCall(
         TypedMethod(args9<A, B, C, D, E, F, G, H, I>(), typed<R>()),
         handler = { args ->
             handler(
@@ -706,9 +707,9 @@ open class TypedMethodBuilderContext @PublishedApi internal constructor() {
         reified H : Any,
         reified I : Any,
         reified J : Any
-        > acall(
+        > asyncCall(
         crossinline handler: suspend (A, B, C, D, E, F, G, H, I, J) -> R
-    ) = createACall(
+    ) = createAsyncCall(
         TypedMethod(args10<A, B, C, D, E, F, G, H, I, J>(), typed<R>()),
         handler = { args ->
             handler(

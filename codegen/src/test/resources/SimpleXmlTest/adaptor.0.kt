@@ -15,14 +15,14 @@ public abstract class BackgroundAdaptor(
   public override fun register() {
     obj.addVTable(Background.Companion.INTERFACE_NAME) {
       method(MethodName("refreshBackground")) {
-        acall(this@BackgroundAdaptor::refreshBackground)
+        asyncCall(this@BackgroundAdaptor::refreshBackground)
       }
       method(MethodName("currentBackground")) {
-        acall(this@BackgroundAdaptor::currentBackground)
+        asyncCall(this@BackgroundAdaptor::currentBackground)
       }
       method(MethodName("setBackground")) {
         inputParamNames = listOf("name")
-        acall(this@BackgroundAdaptor::setBackground)
+        asyncCall(this@BackgroundAdaptor::setBackground)
       }
       signal(SignalName("backgroundChanged")) {
       }

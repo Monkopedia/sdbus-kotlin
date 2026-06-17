@@ -201,7 +201,7 @@ class CommonApiIntegrationTest {
             val call = proxy.createMethodCall(ids.iface, MethodName("Ping"))
             assertEquals(ids.iface, call.interfaceName)
             assertEquals("Ping", call.memberName?.value)
-            assertEquals(ids.path, call.path)
+            assertEquals(ids.path, call.objectPath)
         } finally {
             proxy.release()
             connection.release()
@@ -474,7 +474,7 @@ class CommonApiIntegrationTest {
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
-                acall { a: Int, b: Int ->
+                asyncCall { a: Int, b: Int ->
                     delay(500)
                     a + b
                 }
@@ -519,7 +519,7 @@ class CommonApiIntegrationTest {
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
-                acall { a: Int, b: Int ->
+                asyncCall { a: Int, b: Int ->
                     delay(1_000)
                     a + b
                 }
@@ -567,7 +567,7 @@ class CommonApiIntegrationTest {
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
-                acall { a: Int, b: Int ->
+                asyncCall { a: Int, b: Int ->
                     delay(250)
                     a + b
                 }
@@ -609,7 +609,7 @@ class CommonApiIntegrationTest {
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("SlowAdd")) {
-                acall { a: Int, b: Int ->
+                asyncCall { a: Int, b: Int ->
                     delay(250)
                     a + b
                 }
@@ -687,7 +687,7 @@ class CommonApiIntegrationTest {
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("WaitAndEcho")) {
-                acall { value: Int ->
+                asyncCall { value: Int ->
                     delay(value.toLong())
                     value
                 }
@@ -725,7 +725,7 @@ class CommonApiIntegrationTest {
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             method(MethodName("Echo")) {
-                acall { value: Int -> value }
+                asyncCall { value: Int -> value }
             }
         }
         serverConnection.startEventLoop()
@@ -855,7 +855,7 @@ class CommonApiIntegrationTest {
         val signalRegistration = proxy.registerSignalHandler(ids.iface, SignalName("Changed")) {
             val current = proxy.currentlyProcessedMessage
             memberSeen.complete(current.memberName?.value.orEmpty())
-            pathSeen.complete(current.path?.value.orEmpty())
+            pathSeen.complete(current.objectPath?.value.orEmpty())
         }
 
         try {
@@ -1113,11 +1113,6 @@ class CommonApiIntegrationTest {
             assertTrue(connection.methodCallTimeout >= kotlin.time.Duration.ZERO)
             connection.requestName(ownName)
             connection.releaseName(ownName)
-            connection.addMatchAsync(
-                "type='signal',interface='${ids.iface.value}',member='Any'",
-                callback = {},
-                installCallback = {}
-            ).release()
         } finally {
             match.release()
             objectManager.release()
@@ -1143,7 +1138,7 @@ class CommonApiIntegrationTest {
         val match = proxyConnection.addMatch(
             "path='${ids.path.value}',interface='${ids.iface.value}',member='Changed'"
         ) { message ->
-            if (message.path == ids.path && message.memberName?.value == "Changed") {
+            if (message.objectPath == ids.path && message.memberName?.value == "Changed") {
                 callbackCount += 1
                 seen.complete(Unit)
             }
@@ -1163,44 +1158,6 @@ class CommonApiIntegrationTest {
             delay(200)
             assertEquals(1, callbackCount)
         } finally {
-            registration.release()
-            obj.release()
-            proxyConnection.stopEventLoop()
-            serverConnection.stopEventLoop()
-            proxyConnection.release()
-            serverConnection.release()
-        }
-    }
-
-    @Test
-    fun addMatchAsync_invokesInstallCallbackAndReceivesSignal() = runBlocking {
-        val ids = uniqueFixtureIds("matchAsync")
-        val serverConnection = createBusConnection(ids.service)
-        val proxyConnection = createBusConnection()
-        val obj = createObject(serverConnection, ids.path)
-        val registration = obj.addVTable(ids.iface) {
-            signal(SignalName("Changed")) {
-                with<String>("value")
-            }
-        }
-        serverConnection.startEventLoop()
-        proxyConnection.startEventLoop()
-        val installSeen = CompletableDeferred<Unit>()
-        val signalSeen = CompletableDeferred<Unit>()
-        val match = proxyConnection.addMatchAsync(
-            "path='${ids.path.value}',interface='${ids.iface.value}',member='Changed'",
-            callback = { signalSeen.complete(Unit) },
-            installCallback = { installSeen.complete(Unit) }
-        )
-
-        try {
-            withTimeout(2_000) { installSeen.await() }
-            obj.emitSignal(ids.iface, SignalName("Changed")) {
-                call("async")
-            }
-            withTimeout(2_000) { signalSeen.await() }
-        } finally {
-            match.release()
             registration.release()
             obj.release()
             proxyConnection.stopEventLoop()

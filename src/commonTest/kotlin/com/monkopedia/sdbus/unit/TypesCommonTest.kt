@@ -1,11 +1,11 @@
 package com.monkopedia.sdbus.unit
 
 import com.monkopedia.sdbus.ObjectPath
-import com.monkopedia.sdbus.PlainMessage.Companion.createPlainMessage
 import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.Signature
 import com.monkopedia.sdbus.Variant
 import com.monkopedia.sdbus.containsValueOfType
+import com.monkopedia.sdbus.createPlainMessage
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

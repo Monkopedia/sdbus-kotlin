@@ -55,7 +55,10 @@ internal fun Message.append(variant: Variant) {
     variant.serializeTo(this)
 }
 
-internal expect fun <T> Message.deserializeArrayFast(signature: SdbusSig, items: MutableList<T>)
+internal expect fun <T> Message.deserializeArrayFast(
+    signature: TypeSignature,
+    items: MutableList<T>
+)
 
 internal fun TypedArguments.module(): SerializersModule {
     @Suppress("UNCHECKED_CAST")

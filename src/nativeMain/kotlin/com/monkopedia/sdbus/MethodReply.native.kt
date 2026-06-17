@@ -37,7 +37,7 @@ actual class MethodReply internal constructor(
 
     internal constructor(sdbus: ISdBus) : this(null, sdbus)
 
-    constructor (o: MethodReply) : this(o.msg, o.sdbus)
+    internal constructor (o: MethodReply) : this(o.msg, o.sdbus)
 
     actual fun send() {
         val r = sdbus.sd_bus_send(null, msg, null)

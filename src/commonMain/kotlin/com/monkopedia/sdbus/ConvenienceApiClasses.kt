@@ -65,7 +65,7 @@ class AsyncPropertyGetter(private val proxy: Proxy, private val propertyName: Pr
     suspend fun <T : Any> get(
         serializer: DeserializationStrategy<T>,
         module: SerializersModule,
-        signature: SdbusSig
+        signature: TypeSignature
     ): T {
         require(interfaceName?.value?.isNotEmpty() == true)
         return proxy.callMethodAsync<Variant>(PropertiesProxy.INTERFACE_NAME, MethodName("Get")) {
