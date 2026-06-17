@@ -63,7 +63,7 @@ class Flags {
     }
 
     /** Internal marker carrying the total number of defined flags. */
-    enum class Count(val value: UByte) {
+    internal enum class Count(val value: UByte) {
         /** Sentinel value equal to the number of distinct flags. */
         FLAG_COUNT(7u)
     }
