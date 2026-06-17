@@ -151,10 +151,6 @@ open class PropertyDelegate<R, T : Any>(
     protected val module: SerializersModule,
     protected val signature: SdbusSig
 ) : ReadOnlyProperty<R, T> {
-    /** The property name as a plain string. */
-    val name: String
-        get() = propertyName.value
-
     override fun getValue(thisRef: R, property: KProperty<*>): T = get()
 
     /**

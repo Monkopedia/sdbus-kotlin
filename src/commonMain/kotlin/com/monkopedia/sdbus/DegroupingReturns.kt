@@ -41,7 +41,7 @@ import kotlinx.serialization.modules.SerializersModule
  * @param groupedReturn Whether the signature wraps grouped return values in a struct
  * @return The possibly-degrouped signature
  */
-fun Signature.maybeDegrouped(groupedReturn: Boolean): Signature {
+internal fun Signature.maybeDegrouped(groupedReturn: Boolean): Signature {
     if (groupedReturn) {
         require(value[0] == '(' && value.last() == ')') {
             "Value $value is not a struct and can't be degrouped"
@@ -56,7 +56,8 @@ fun Signature.maybeDegrouped(groupedReturn: Boolean): Signature {
  * to modify their serialization to not expect a struct to be wrapping them, degrouping does that
  * wrapping a trickery to avoid it.
  */
-fun <T> KSerializer<T>.maybeDegrouped(groupedReturn: Boolean): KSerializer<T> =
+@PublishedApi
+internal fun <T> KSerializer<T>.maybeDegrouped(groupedReturn: Boolean): KSerializer<T> =
     if (groupedReturn) this.degrouped() else this
 
 private fun <T> KSerializer<T>.degrouped(): KSerializer<T> {

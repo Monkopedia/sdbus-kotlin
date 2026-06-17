@@ -33,9 +33,16 @@ package com.monkopedia.sdbus
  * Calling [release] multiple times will have no effect. Once [release] is called on
  * an object, that object should no longer be interacted with.
  */
-interface Resource {
+interface Resource : AutoCloseable {
     /**
      * Releases this resource and any child resources it may have.
      */
     fun release()
+
+    /**
+     * Closes this resource by delegating to [release], enabling use with `use { }`.
+     */
+    override fun close() {
+        release()
+    }
 }

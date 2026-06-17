@@ -38,7 +38,7 @@ internal inline fun <reified T : Any> typed() = Typed(T::class, serializer<T>())
 /**
  * A reference to a type that can be serialized within a d-bus message.
  */
-data class Typed<T : Any> @PublishedApi internal constructor(
+class Typed<T : Any> @PublishedApi internal constructor(
     internal val cls: KClass<T>,
     internal val type: KSerializer<T>,
     internal val signature: SdbusSig = type.descriptor.asSignature
