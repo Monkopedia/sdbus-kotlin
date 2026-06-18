@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.5.0        </div>
+0.6.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -111,7 +111,7 @@
   <div class="cover ">
     <h1 class="cover"><span><span>values</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="values.html"><span class="token function">values</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><p class="paragraph">Produces a flow of all values of the property: the current value (from <a href="get.html">get</a>) is emitted first when collection starts, followed by every subsequent change (from <a href="changes.html">changes</a>).</p><p class="paragraph">Because the initial emission uses <a href="get.html">get</a>, collecting this flow throws <a href="../-error/index.html">com.monkopedia.sdbus.Error</a> if the property doesn't currently exist; use <a href="values-or-null.html">valuesOrNull</a> for a null-emitting variant. Use <a href="changes.html">changes</a> to observe change events only, without the initial value.</p></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="values.html"><span class="token function">values</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><p class="paragraph">Produces a flow of all values of the property: the current value (from <a href="get.html">get</a>) is emitted first when collection starts, followed by every subsequent change (from <a href="changes.html">changes</a>).</p><p class="paragraph">Because the initial emission uses <a href="get.html">get</a>, collecting this flow throws <a href="../-sdbus-exception/index.html">com.monkopedia.sdbus.SdbusException</a> if the property doesn't currently exist; use <a href="values-or-null.html">valuesOrNull</a> for a null-emitting variant. Use <a href="changes.html">changes</a> to observe change events only, without the initial value.</p></div></div>
 </div>
     <div class="footer">
         <div class="footer--container">

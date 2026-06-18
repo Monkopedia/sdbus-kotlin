@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.5.0        </div>
+0.6.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -110,14 +110,29 @@
   <div class="breadcrumbs"><a href="../../../index.html">sdbus-kotlin</a><span class="delimiter">/</span><a href="../index.html">com.monkopedia.sdbus</a><span class="delimiter">/</span><span class="current">Resource</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Resource</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Resource</a></div><p class="paragraph">A handle to resource that may be manually released.</p><p class="paragraph">While all resources/registrations will be managed automatically and cleaned up once GC'd, that is out of control of the callers. Most registration methods or similar return a <a href="index.html">Resource</a>. Calling <a href="release.html">release</a> will remove any registrations or temporary effects caused by the method that returned the <a href="index.html">Resource</a>.</p><p class="paragraph">Calling <a href="release.html">release</a> multiple times will have no effect. Once <a href="release.html">release</a> is called on an object, that object should no longer be interacted with.</p><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-connection/index.html">Connection</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-object/index.html">Object</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-proxy/index.html">Proxy</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-unix-fd/index.html">UnixFd</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Resource</a> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-auto-closeable/index.html">AutoCloseable</a></div><p class="paragraph">A handle to resource that may be manually released.</p><p class="paragraph">While all resources/registrations will be managed automatically and cleaned up once GC'd, that is out of control of the callers. Most registration methods or similar return a <a href="index.html">Resource</a>. Calling <a href="release.html">release</a> will remove any registrations or temporary effects caused by the method that returned the <a href="index.html">Resource</a>.</p><p class="paragraph">Calling <a href="release.html">release</a> multiple times will have no effect. Once <a href="release.html">release</a> is called on an object, that object should no longer be interacted with.</p><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-connection/index.html">Connection</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-object/index.html">Object</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-proxy/index.html">Proxy</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-unix-fd/index.html">UnixFd</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="FUNCTION">
         <h2 class="tableheader">Functions</h2>
-        <div class="table"><a data-name="-773404819%2FFunctions%2F1558683979" anchor-label="release" id="-773404819%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
+        <div class="table"><a data-name="2126806108%2FFunctions%2F1558683979" anchor-label="close" id="2126806108%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="close.html"><span><span>close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2126806108%2FFunctions%2F1558683979"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Closes this resource by delegating to <a href="release.html">release</a>, enabling use with <code class="lang-kotlin">use { }</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-773404819%2FFunctions%2F1558683979" anchor-label="release" id="-773404819%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
           <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">

@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.5.0        </div>
+0.6.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -110,95 +110,11 @@
   <div class="breadcrumbs"><a href="../../../index.html">sdbus-kotlin</a><span class="delimiter">/</span><a href="../index.html">com.monkopedia.sdbus</a><span class="delimiter">/</span><span class="current">Error</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Error</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Error</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>name<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>errorMessage<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator"> = </span><span class="token string">&quot;&quot;</span></span></span><span class="token punctuation">)</span> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-exception/index.html">Exception</a></div><p class="paragraph">Exception type representing a D-Bus or sdbus-kotlin error.</p><p class="paragraph">Thrown by virtually all sdbus-kotlin operations on failure, including when a remote method returns a D-Bus error reply. The <span data-unresolved-link="com.monkopedia.sdbus/Error//#kotlin.String#kotlin.String/PointingToCallableParameters(0)/">name</span> carries the D-Bus error name (e.g. <code class="lang-kotlin">org.freedesktop.DBus.Error.UnknownMethod</code>), which callers can match against to handle specific error conditions.</p><p class="paragraph">The inherited <a href="index.html#1824300659%2FProperties%2F1558683979">message</a> is deterministically derived from the two properties as <code class="lang-kotlin">&quot;$name: $errorMessage&quot;</code>; <span data-unresolved-link="com.monkopedia.sdbus/Error//#kotlin.String#kotlin.String/PointingToCallableParameters(1)/">errorMessage</span> alone carries the human-readable detail without the D-Bus error name prefix.</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">typealias </span><a href="index.html"><strike>Error</strike></a><span class="token operator"> = </span><a href="../-sdbus-exception/index.html">SdbusException</a></div><div class="deprecation-content"><h3 class="">Deprecated</h3><p class="paragraph">Renamed to SdbusException</p><h4 class="">Replace with</h4><div class="sample-container"><pre><code class="monospace block lang-kotlin" theme="idea">import com.monkopedia.sdbus.SdbusException<br></code></pre><span class="copy-tooltip"><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div><span class="copy-icon"></span></span></div><div class="sample-container"><pre><code class="monospace block lang-kotlin" theme="idea">SdbusException</code></pre><span class="copy-tooltip"><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div><span class="copy-icon"></span></span></div></div></div></div>
   </div>
   <div class="tabbedcontent">
-    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
-    <div class="tabs-section-body">
-      <div data-togglable="CONSTRUCTOR">
-        <h2 class="tableheader">Constructors</h2>
-        <div class="table"><a data-name="1378520355%2FConstructors%2F1558683979" anchor-label="Error" id="1378520355%2FConstructors%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-togglable="CONSTRUCTOR" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="-error.html"><span><span>Error</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1378520355%2FConstructors%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">errorMessage<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator"> = </span><span class="token string">&quot;&quot;</span></span></span><span class="token punctuation">)</span></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div data-togglable="PROPERTY">
-        <h2 class="tableheader">Properties</h2>
-        <div class="table"><a data-name="-654012527%2FProperties%2F1558683979" anchor-label="cause" id="-654012527%2FProperties%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="index.html#-654012527%2FProperties%2F1558683979"><span><span>cause</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-654012527%2FProperties%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">open </span><span class="token keyword">val </span><a href="index.html#-654012527%2FProperties%2F1558683979">cause</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a><span class="token operator">?</span></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="-1586211987%2FProperties%2F1558683979" anchor-label="errorMessage" id="-1586211987%2FProperties%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="error-message.html"><span>error</span><wbr></wbr><span><span>Message</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1586211987%2FProperties%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="error-message.html">errorMessage</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Human-readable detail describing the error</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1824300659%2FProperties%2F1558683979" anchor-label="message" id="1824300659%2FProperties%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="index.html#1824300659%2FProperties%2F1558683979"><span><span>message</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1824300659%2FProperties%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">open </span><span class="token keyword">val </span><a href="index.html#1824300659%2FProperties%2F1558683979">message</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1229938241%2FProperties%2F1558683979" anchor-label="name" id="1229938241%2FProperties%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="name.html"><span><span>name</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1229938241%2FProperties%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="name.html">name</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The D-Bus error name</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="tabs-section" tabs-section="tabs-section"></div>
+    <div class="tabs-section-body"></div>
   </div>
 </div>
     <div class="footer">

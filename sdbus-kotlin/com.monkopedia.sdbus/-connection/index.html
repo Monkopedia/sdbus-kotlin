@@ -46,7 +46,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-0.5.0        </div>
+0.6.0        </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
                 <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true"
@@ -110,7 +110,7 @@
   <div class="breadcrumbs"><a href="../../../index.html">sdbus-kotlin</a><span class="delimiter">/</span><a href="../index.html">com.monkopedia.sdbus</a><span class="delimiter">/</span><span class="current">Connection</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Connection</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Connection</a> : <a href="../-resource/index.html">Resource</a></div><p class="paragraph">An interface to D-Bus bus connection. Incorporates implementation of both synchronous and asynchronous D-Bus I/O event loop.</p><p class="paragraph">All methods throw <a href="../-error/index.html">com.monkopedia.sdbus.Error</a> in case of failure. All methods in this class are thread-aware, but not thread-safe.</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Connection</a> : <a href="../-resource/index.html">Resource</a></div><p class="paragraph">An interface to D-Bus bus connection. Incorporates implementation of both synchronous and asynchronous D-Bus I/O event loop.</p><p class="paragraph">All methods throw <a href="../-sdbus-exception/index.html">com.monkopedia.sdbus.SdbusException</a> in case of failure. All methods in this class are thread-aware, but not thread-safe.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button><button class="section-tab" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION,EXTENSION_PROPERTY,EXTENSION_FUNCTION">Members &amp; Extensions</button></div>
@@ -181,21 +181,6 @@
               </div>
             </div>
           </div>
-<a data-name="648395832%2FFunctions%2F1558683979" anchor-label="addMatchAsync" id="648395832%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
-          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="add-match-async.html"><span>add</span><wbr></wbr><span>Match</span><wbr></wbr><span><span>Async</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="648395832%2FFunctions%2F1558683979"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-match-async.html"><span class="token function">addMatchAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">match<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">callback<span class="token operator">: </span><a href="../-message-handler/index.html">MessageHandler</a><span class="token punctuation">, </span></span><span class="parameter ">installCallback<span class="token operator">: </span><a href="../-message-handler/index.html">MessageHandler</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-resource/index.html">Resource</a></div><div class="brief "><p class="paragraph">Asynchronously installs a match rule for messages received on this bus connection</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
 <a data-name="532267532%2FFunctions%2F1558683979" anchor-label="addObjectManager" id="532267532%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
           <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
             <div class="main-subrow keyValue ">
@@ -207,6 +192,21 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-object-manager.html"><span class="token function">addObjectManager</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">objectPath<span class="token operator">: </span><a href="../-object-path/index.html">ObjectPath</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-resource/index.html">Resource</a></div><div class="brief "><p class="paragraph">Adds an ObjectManager at the specified D-Bus object path</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2126806108%2FFunctions%2F1558683979" anchor-label="close" id="2126806108%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-resource/close.html"><span><span>close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2126806108%2FFunctions%2F1558683979"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="../-resource/close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Closes this resource by delegating to <a href="../-resource/release.html">release</a>, enabling use with <code class="lang-kotlin">use { }</code>.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -241,17 +241,17 @@
               </div>
             </div>
           </div>
-<a data-name="-243701816%2FFunctions%2F1558683979" anchor-label="requestName" id="-243701816%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
+<a data-name="-947935228%2FFunctions%2F1558683979" anchor-label="requestName" id="-947935228%2FFunctions%2F1558683979" data-filterable-set=":/commonMain"></a>
           <div class="table-row table-row_content" data-filterable-current=":/commonMain" data-filterable-set=":/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="request-name.html"><span>request</span><wbr></wbr><span><span>Name</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-243701816%2FFunctions%2F1558683979"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-947935228%2FFunctions%2F1558683979"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="request-name.html"><span class="token function">requestName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="../-service-name/index.html">ServiceName</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Requests a well-known D-Bus service name on a bus</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="request-name.html"><span class="token function">requestName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="../-service-name/index.html">ServiceName</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">vararg </span>flags<span class="token operator">: </span><a href="../-request-name-flag/index.html">RequestNameFlag</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-request-name-reply/index.html">RequestNameReply</a></div><div class="brief "><p class="paragraph">Requests a well-known D-Bus service name on a bus</p></div></div></div>
                 </div>
               </div>
             </div>
