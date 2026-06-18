@@ -25,8 +25,6 @@ package com.monkopedia.sdbus.internal
 import kotlin.time.Duration
 
 /**
- * @struct PollData
- *
  * Carries poll data needed for integration with external event loop implementations.
  *
  * See getEventLoopPollData() for more info.
@@ -58,7 +56,7 @@ internal data class PollData internal constructor(
     /**
      * Returns the timeout as relative value from now.
      *
-     * Returned value is std::chrono::microseconds::max() if the timeout is indefinite.
+     * Returned value is [Duration.INFINITE] if the timeout is indefinite.
      *
      * @return Relative timeout as a time duration
      */

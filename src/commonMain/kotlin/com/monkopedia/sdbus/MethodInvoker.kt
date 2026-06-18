@@ -47,7 +47,7 @@ import kotlinx.serialization.serializer
  * val a: Int = ...
  * val b: Int = ...
  * val multiply = MethodName("multiply")
- * val result = object.callMethodAsync(INTERFACE_NAME, multiply) {
+ * val result = proxy.callMethodAsync(INTERFACE_NAME, multiply) {
  *   call(a, b)
  * }
  * println("Got result of multiplying $a and $b: $result")
@@ -125,7 +125,7 @@ internal suspend fun <R : Any> Proxy.callMethodAsyncImpl(
  * val a: Int = ...
  * val b: Int = ...
  * val multiply = MethodName("multiply")
- * val result = object.callMethod(INTERFACE_NAME, multiply) {
+ * val result = proxy.callMethod(INTERFACE_NAME, multiply) {
  *   call(a, b)
  * }
  * println("Got result of multiplying $a and $b: $result")

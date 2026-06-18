@@ -180,13 +180,9 @@ class Variant constructor() {
     }
 }
 
-/********************************************/
 /**
- * @class ObjectPath
- *
  * Strong type representing the D-Bus object path
- *
- ***********************************************/
+ */
 @Serializable(ObjectPath.Companion::class)
 @kotlin.jvm.JvmInline
 value class ObjectPath(
@@ -208,13 +204,9 @@ value class ObjectPath(
     }
 }
 
-/********************************************/
 /**
- * @class BusName
- *
  * Strong type representing the D-Bus bus/service/connection name
- *
- ***********************************************/
+ */
 @Serializable(BusName.Companion::class)
 @kotlin.jvm.JvmInline
 value class BusName(

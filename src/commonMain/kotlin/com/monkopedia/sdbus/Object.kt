@@ -188,8 +188,8 @@ interface Object : Resource {
      * @return A signal message
      *
      * Serialize signal arguments into the returned message and emit the signal by passing
-     * the message with serialized arguments to the @c emitSignal function.
-     * Alternatively, use higher-level API @c emitSignal(signalName: String) defined below.
+     * the message with serialized arguments to the [emitSignal] function.
+     * Alternatively, use the higher-level API [emitSignal] convenience overloads defined below.
      *
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */

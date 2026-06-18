@@ -29,26 +29,27 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
 /**
- * Registers signal handler for a given signal of the D-Bus object
+ * Registers a signal handler for a given signal of the D-Bus object
  *
+ * @param interfaceName Name of the interface that the signal belongs to
  * @param signalName Name of the signal
- * @return A helper object for convenient registration of the signal handler
+ * @param builder Configures how the signal payload is decoded and handled via
+ * [SignalSubscriber.call]
+ * @return A [Resource] handle to the registration; release it to unsubscribe
  *
  * This is a high-level, convenience way of registering to D-Bus signals that abstracts
- * from the D-Bus message concept. Signal arguments are automatically serialized
- * in a message and D-Bus signatures automatically deduced from the parameters
- * of the provided native signal callback.
+ * from the D-Bus message concept. The signal arguments are automatically deserialized and
+ * passed to the handler bound inside the [builder] block.
  *
  * A signal can be subscribed to and unsubscribed from at any time during proxy
  * lifetime. The subscription is active immediately after the call.
  *
  * Example of use:
- * @code
- * object_.uponSignal("stateChanged").onInterface("com.kistler.foo").call([this](int arg1, double arg2){ this->onStateChanged(arg1, arg2); });
- * sdbus::InterfaceName foo{"com.kistler.foo"};
- * sdbus::SignalName levelChanged{"levelChanged"};
- * object_.uponSignal(levelChanged).onInterface(foo).call([this](uint16_t level){ this->onLevelChanged(level); });
- * @endcode
+ * ```
+ * val registration = proxy.onSignal(InterfaceName("com.kistler.foo"), SignalName("stateChanged")) {
+ *     call { arg1: Int, arg2: Double -> onStateChanged(arg1, arg2) }
+ * }
+ * ```
  *
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
  */
