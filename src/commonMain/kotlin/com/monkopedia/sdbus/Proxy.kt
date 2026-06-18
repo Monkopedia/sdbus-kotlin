@@ -24,21 +24,17 @@ package com.monkopedia.sdbus
 
 import kotlin.time.Duration
 
-/********************************************/
 /**
- * @class IProxy
- *
- * IProxy class represents a proxy object, which is a convenient local object created
+ * Represents a proxy object, which is a convenient local object created
  * to represent a remote D-Bus object in another process.
  * The proxy enables calling methods on remote objects, receiving signals from remote
  * objects, and getting/setting properties of remote objects.
  *
- * All IProxy member methods throw @c [com.monkopedia.sdbus.SdbusException] in case of D-Bus or sdbus-kotlin error.
- * The IProxy class has been designed as thread-aware. However, the operation of
- * creating and sending method calls (both synchronously and asynchronously) is
+ * All [Proxy] member methods throw [com.monkopedia.sdbus.SdbusException] in case of D-Bus or
+ * sdbus-kotlin error. The [Proxy] interface has been designed as thread-aware. However, the
+ * operation of creating and sending method calls (both synchronously and asynchronously) is
  * thread-safe by design.
- *
- ***********************************************/
+ */
 interface Proxy : Resource {
 
     /**
@@ -76,8 +72,8 @@ interface Proxy : Resource {
      * @return A method call message
      *
      * Serialize method arguments into the returned message and invoke the method by passing
-     * the message with serialized arguments to the @c callMethod function.
-     * Alternatively, use higher-level API @c callMethod(const & methodName: String) defined below.
+     * the message with serialized arguments to the [callMethod] function.
+     * Alternatively, use the higher-level API [callMethod] convenience overloads defined below.
      *
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
@@ -149,14 +145,13 @@ interface Proxy : Resource {
      * Calls method on the D-Bus object asynchronously
      *
      * @param message Message representing an async method call
-     * @param Tag denoting a std::future-based overload
-     * @return Future object providing access to the future method reply message
+     * @return The method reply message
      *
-     * This is a std::future-based way of asynchronously calling a remote D-Bus method.
+     * This is a suspending way of asynchronously calling a remote D-Bus method. The coroutine
+     * suspends until the reply arrives; it does not block the underlying bus connection.
      *
-     * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.SdbusException]
-     * in case the remote method threw an exception).
+     * Once the reply arrives, the call resumes with the reply message, or throws
+     * [com.monkopedia.sdbus.SdbusException] if the remote method returned an error.
      *
      * The default D-Bus method call timeout is used. See [Connection.methodCallTimeout].
      *
@@ -171,14 +166,14 @@ interface Proxy : Resource {
      *
      * @param message Message representing an async method call
      * @param timeout Method call timeout
-     * @param Tag denoting a std::future-based overload
-     * @return Future object providing access to the future method reply message
+     * @return The method reply message
      *
-     * This is a std::future-based way of asynchronously calling a remote D-Bus method.
+     * This is a suspending way of asynchronously calling a remote D-Bus method. The coroutine
+     * suspends until the reply arrives; it does not block the underlying bus connection.
      *
-     * The call itself is non-blocking. It doesn't wait for the reply. Once the reply arrives,
-     * the provided future object will be set to contain the reply (or [com.monkopedia.sdbus.SdbusException]
-     * in case the remote method threw an exception, or the call timed out).
+     * Once the reply arrives, the call resumes with the reply message, or throws
+     * [com.monkopedia.sdbus.SdbusException] if the remote method returned an error or the call
+     * timed out.
      *
      * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used.
      * See [Connection.methodCallTimeout].
@@ -378,7 +373,7 @@ fun Proxy.getAllProperties(): AllPropertiesGetter = AllPropertiesGetter(this)
  *
  * Example of use:
  * ```
- * val props = object.getAllPropertiesAsync().onInterface(InterfaceName("com.kistler.foo"))
+ * val props = proxy.getAllPropertiesAsync().onInterface(InterfaceName("com.kistler.foo"))
  *   getResult();
  * ```
  *
@@ -403,7 +398,7 @@ fun Proxy.getAllPropertiesAsync(): AsyncAllPropertiesGetter = AsyncAllProperties
  * separate, internally managed thread (the default). Pass false to create a light-weight
  * proxy for synchronous-only use, in which case the caller is responsible for running an
  * event loop on the connection if signals or async replies are to be received.
- * @return Pointer to the proxy object instance
+ * @return The proxy object instance
  *
  * The provided connection will be used by the proxy to issue calls against the object,
  * and signals, if any, will be subscribed to on this connection. The caller still
@@ -434,7 +429,7 @@ expect fun createProxy(
  * @param runEventLoopThread Whether the proxy starts its connection's I/O event loop in a
  * separate, internally managed thread (the default). Pass false to create a light-weight
  * proxy for synchronous-only use.
- * @return Pointer to the object proxy instance
+ * @return The object proxy instance
  *
  * No D-Bus connection is provided here, so the object proxy will create and manage
  * his own connection, and will automatically start an event loop upon that connection

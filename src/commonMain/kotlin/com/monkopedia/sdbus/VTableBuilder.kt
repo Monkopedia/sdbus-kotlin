@@ -25,14 +25,14 @@ package com.monkopedia.sdbus
 /**
  * Adds a declaration of methods, properties and signals of the object at a given interface
  *
- * @param vtable Individual instances of VTable item structures stored in a vector
+ * @param interfaceName Name of the interface the vtable is registered under
+ * @param builder Configures the vtable, declaring methods, properties, signals and flags
  * @return Resource handle to release registration
  *
  * This method is used to declare attributes for the object under the given interface.
- * Parameter `vtable' represents a vtable definition that may contain method declarations
- * (using MethodVTableItem struct), property declarations (using PropertyVTableItem
- * struct), signal declarations (using SignalVTableItem struct), or global interface
- * flags (using InterfaceFlagsVTableItem struct).
+ * The [builder] block defines a vtable that may contain method declarations (via [method]),
+ * property declarations (via [prop]), signal declarations (via [signal]), or global interface
+ * flags.
  *
  * An interface can have any number of vtables attached to it.
  *

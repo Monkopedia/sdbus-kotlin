@@ -22,4 +22,8 @@
  */
 package com.monkopedia.sdbus
 
+/**
+ * A [Message] from which a property's new value is deserialized when handling a `Set` request
+ * from the `org.freedesktop.DBus.Properties` interface.
+ */
 expect class PropertySetCall : Message

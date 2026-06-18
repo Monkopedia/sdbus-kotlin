@@ -114,20 +114,16 @@ private inline fun debugPrint(msg: () -> String) {
     if (false) println(msg())
 }
 
-/********************************************/
 /**
- * @class Message
- *
- * Message represents a D-Bus message, which can be either method call message,
+ * Represents a D-Bus message, which can be either method call message,
  * method reply message, signal message, or a plain message.
  *
  * Serialization and deserialization functions are provided for types supported
  * by D-Bus.
  *
  * You mostly don't need to work with this class directly if you use high-level
- * APIs of @c IObject and @c IProxy.
- *
- ***********************************************/
+ * APIs of [Object] and [Proxy].
+ */
 actual sealed class Message(
     internal val msg: CPointer<sd_bus_message>?,
     internal val sdbus: ISdBus,

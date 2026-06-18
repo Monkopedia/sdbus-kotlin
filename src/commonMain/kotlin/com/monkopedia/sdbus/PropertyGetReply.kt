@@ -23,4 +23,8 @@
 
 package com.monkopedia.sdbus
 
+/**
+ * A [Message] into which a property's value is serialized when answering a `Get` request
+ * from the `org.freedesktop.DBus.Properties` interface.
+ */
 expect class PropertyGetReply : Message

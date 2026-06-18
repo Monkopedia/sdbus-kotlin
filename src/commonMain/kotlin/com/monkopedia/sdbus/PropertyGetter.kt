@@ -41,16 +41,17 @@ import kotlinx.serialization.serializer
 /**
  * Gets value of a property of the D-Bus object
  *
+ * @param interfaceName Interface that declares the property
  * @param propertyName Name of the property
- * @return A helper object for convenient getting of property value
+ * @return The property value, deserialized into the reified type [T]
  *
  * This is a high-level, convenience way of reading D-Bus property values that abstracts
- * from the D-Bus message concept. sdbus::Variant is returned which shall then be converted
- * to the real property type (implicit conversion is supported).
+ * from the D-Bus message concept. The returned value is decoded directly into the reified
+ * type [T].
  *
  * Example of use:
  * ```
- * val state = object.getProperty(InterfaceName("com.kistler.foo"), PropertyName("state"))
+ * val state = proxy.getProperty<String>(InterfaceName("com.kistler.foo"), PropertyName("state"))
  * ```
  *
  * @throws [com.monkopedia.sdbus.SdbusException] in case of failure

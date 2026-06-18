@@ -29,17 +29,13 @@ import com.monkopedia.sdbus.internal.ProxyImpl
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 
-/********************************************/
 /**
- * @class PendingAsyncCall
- *
- * PendingAsyncCall represents a simple handle type to cancel the delivery
+ * Represents a simple handle type to cancel the delivery
  * of the asynchronous D-Bus call result to the application.
  *
  * The handle is lifetime-independent from the originating Proxy object.
  * It's safe to call its methods even after the Proxy has gone.
- *
- ***********************************************/
+ */
 internal actual class PendingAsyncCall internal constructor(
     private val target: WeakReference<AsyncCallInfo>
 ) : Resource {

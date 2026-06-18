@@ -37,16 +37,13 @@ import platform.posix.dup
 import platform.posix.errno
 
 /**
- * @struct UnixFd
- *
- * UnixFd is a representation of file descriptor D-Bus type that owns
+ * A representation of the file descriptor D-Bus type that owns
  * the underlying fd, provides access to it, and closes the fd when
- * the UnixFd goes out of scope.
+ * the UnixFd is released.
  *
  * UnixFd can be default constructed (owning invalid fd), or constructed from
  * an explicitly provided fd by either duplicating ([UnixFd] primary constructor)
  * or adopting that fd as-is ([UnixFd.adopt]).
- *
  */
 @OptIn(ExperimentalNativeApi::class)
 @Serializable(UnixFd.Companion::class)
