@@ -49,9 +49,10 @@ server-side example, see [`samples/demo-service`](https://github.com/Monkopedia/
 
 ## API stability
 
-The public API is frozen as of 0.5.0 and is the API that 1.0 will ship. Compatibility is
-enforced in CI with
+0.6.0 is the **1.0-polish** release — a post-0.5.0 review applied a final wave of renames and
+deprecations to the public surface; 1.0 will freeze it, dropping the names deprecated in 0.6.0.
+Compatibility is enforced in CI with
 [binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
 (JVM and klib API dumps are checked in under `api/`), so any change to the public surface is an
-explicit, reviewed event. The migration notes for the 0.5.0 freeze are in the
+explicit, reviewed event. The per-release migration notes are in the
 [CHANGELOG](https://github.com/Monkopedia/sdbus-kotlin/blob/main/CHANGELOG.md).

@@ -5,6 +5,98 @@ All notable changes to sdbus-kotlin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-18
+
+0.6.0 is the **1.0-polish** release. A post-0.5.0 review of the public surface (epic #108)
+produced a coordinated cleanup wave — renames, deprecations, and a few new first-class APIs —
+so that 1.0 can ship a final, well-named surface. It also lands several real bug fixes found
+along the way.
+
+Deprecations introduced here are kept as warnings for this release and **removed at 1.0**.
+(Note: the 0.5.0 changelog called itself the "1.0 API-freeze"; the post-0.5.0 review reopened a
+handful of names, so 0.6.0 is the last shaping pass and **1.0** is the actual freeze.)
+
+This entry is the migration guide. Most breaking changes are renames with identical behavior.
+
+### Bug fixes
+
+Memory leaks in served objects and connections (#119) — both backends:
+- Every served object leaked after `release()`: the native vtable teardown never dropped the
+  registered method/property/signal callbacks (which capture the adaptor), and on the JVM the
+  `Properties` dispatch handlers were never unregistered from the process-wide dispatch table.
+  A property-bearing served object (the common BlueZ case) leaked for the process lifetime.
+- Native connections leaked once objects/signal subscriptions were registered: several cleanup
+  closures captured the connection (`this@ConnectionImpl`) via member access and were retained
+  by their GC cleaner. Fixed at five sites. (The compiler's non-capturing-`createCleaner` check
+  cannot catch this because the capture launders through a `Reference` parameter.)
+
+Native event-loop thread starvation (#128) — connection event loops shared one bounded 8-thread
+pool, so more than 8 concurrently-running loops would starve (a served object whose loop never
+got a thread could not answer calls). Each connection now gets its own dedicated loop thread.
+
+### Breaking changes
+
+Naming sweep (#113) — behavior-identical renames, **no compatibility aliases** (update call sites):
+- `acall` → `asyncCall`, `createACall` → `createAsyncCall` (vtable method DSL; generated adaptors regenerated).
+- `SdbusSig` → `TypeSignature` (in `Variant.get`/`Typed`/`signatureOf`/property accessors).
+- `Message.path` → `Message.objectPath`.
+- `SignalEmitter.typedMethodArguments` → `arguments`; `SignalSubscriber.methodCall` → `handler`.
+- `PlainMessage.Companion.createPlainMessage()` → top-level `createPlainMessage()` (matches `createObject`/`createProxy`).
+- `Flags.test(flag)` → `Flags.has(flag)`; also adds an `in` operator (`flag in flags`).
+- `Connection.addMatchAsync(...)` — **removed** (had no users; the async match-install machinery is gone too). Use `addMatch`.
+- `MethodReply`'s accidentally-public constructors — now `internal`.
+
+`requestName` now reports its outcome and accepts flags (#112):
+- `fun requestName(name: ServiceName)` → `fun requestName(name: ServiceName, vararg flags: RequestNameFlag): RequestNameReply`.
+- New `enum RequestNameFlag { ALLOW_REPLACEMENT, REPLACE_EXISTING, DO_NOT_QUEUE }` and
+  `enum RequestNameReply { PRIMARY_OWNER, IN_QUEUE, EXISTS, ALREADY_OWNER }`.
+- Source-compatible: `requestName(name)` still compiles (the return is simply now ignorable). Behavior
+  note: requesting a name already owned by another peer now **queues** by default and returns `IN_QUEUE`
+  on both backends (the native and JVM flag handling were made consistent), rather than throwing — pass
+  `DO_NOT_QUEUE` to fail fast with `EXISTS`.
+
+fd-based connection factories are native-only (#111):
+- `createDirectBusConnection(fd: UnixFd)` and `createServerBusConnection(fd: UnixFd)` are removed from the
+  common (multiplatform) surface — they were `@Deprecated(level=ERROR)` JVM stubs — and are now plain
+  native-only functions. Address-based `createDirectBusConnection(String)` stays common.
+
+Mechanical reductions (#116):
+- `Resource` now extends `AutoCloseable` (usable in `use { }`; `close()` delegates to `release()`).
+- `Typed`, the VTable item types, etc. are no longer `data` classes (no `copy()`/`componentN()`).
+- `Flags.Count`, `maybeDegrouped`, and `PropertyDelegate.name` are removed/internalized.
+
+### Deprecations (removed at 1.0)
+
+- `Error` → renamed `SdbusException` (#109). `Error` remains as a deprecated `typealias` (source-compatible; warns).
+- The fluent property layer (#110) — `AsyncPropertyGetter`/`AsyncPropertySetter`/`AllPropertiesGetter` and their
+  `onInterface`/`toValue`/`getResult` chains are deprecated in favor of the new direct accessors below.
+
+### New API
+
+- `SdbusException` (the renamed exception type).
+- `RequestNameReply` / `RequestNameFlag` (see `requestName` above).
+- Direct typed property accessors (replacing the fluent layer): `suspend Proxy.getPropertyAsync<T>(iface, prop)`,
+  `suspend Proxy.setPropertyAsync<T>(iface, prop, value)`, `Proxy.getAllProperties(iface)`,
+  `suspend Proxy.getAllPropertiesAsync(iface)`.
+- `Object.notifying(iface, prop, initial): ReadWriteProperty` — a property delegate that emits
+  `PropertiesChanged` on change (skipping no-op sets).
+- `createObject(connection, objectPath, runEventLoopThread = true)` — server-side event-loop symmetry with
+  `createProxy`; `startEventLoop()` is now idempotent. Source-compatible (the parameter defaults).
+- `Flags.has(flag)` and the `flag in flags` operator.
+
+### Behavioral improvements
+
+- Generated adaptors now auto-emit `PropertiesChanged` (#115), honoring the
+  `org.freedesktop.DBus.Property.EmitsChangedSignal` annotation — a remote `Set` or a server-side set both emit,
+  so clients' property-change flows fire by default.
+- The JVM serve worker pool is now bounded and deadlock-free under nested same-connection calls (#101),
+  replacing the previously-unbounded cached thread pool.
+
+### Docs
+
+- KDoc cleanup (#117): removed stale sdbus-c++ doxygen (`@class`/`@c`/`std::future`/C++ examples) from the public
+  surface and fixed the public dokka "couldn't resolve link" warnings.
+
 ## [0.5.0] - 2026-06-13
 
 0.5.0 is the **1.0 API-freeze** release. It does two big things:

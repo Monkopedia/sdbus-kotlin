@@ -15,14 +15,16 @@ It is published for three targets, all sharing the same common API:
 
 | Target | Backend |
 | --- | --- |
-| `jvm` | [dbus-java](https://github.com/hypfvieh/dbus-java) — pure-Java transport, no native code |
+| `jvm` | own D-Bus connection over [junixsocket](https://github.com/kohlschutter/junixsocket) — pure-Kotlin marshaller + dispatch, no native code |
 | `linuxX64` | sd-bus via libsystemd (cinterop) |
 | `linuxArm64` | sd-bus via libsystemd (cinterop) |
 
 ## API stability
 
-The public API is frozen as of 0.5.0 and is the API that 1.0 will ship. Compatibility is
-enforced in CI with [binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
+0.6.0 is the **1.0-polish** release — a post-0.5.0 review applied a final wave of renames and
+deprecations to the public surface (see the [CHANGELOG](CHANGELOG.md) migration guide). 1.0 will
+freeze that surface, dropping the names deprecated in 0.6.0. Compatibility is enforced in CI with
+[binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
 (JVM and klib API dumps are checked in under `api/`), so any change to the public surface is an
 explicit, reviewed event.
 
@@ -30,10 +32,11 @@ explicit, reviewed event.
 
 Application code is the same on every target — the choice is about deployment:
 
-- **JVM**: backed by dbus-java; `dbus-java-core` and `dbus-java-transport-junixsocket` come in
-  transitively with the `jvm` artifact. No native toolchain and no linker flags — it works
-  anywhere a JVM and a D-Bus socket are available. Choose this when you are already on the JVM
-  (server-side services, desktop apps, existing JVM codebases).
+- **JVM**: owns its D-Bus connection over a [junixsocket](https://github.com/kohlschutter/junixsocket)
+  unix-socket transport, with a pure-Kotlin marshaller and dispatcher (mirroring the native sd-bus
+  backend); `junixsocket` comes in transitively with the `jvm` artifact. No native toolchain and no
+  linker flags — it works anywhere a JVM and a D-Bus socket are available. Choose this when you are
+  already on the JVM (server-side services, desktop apps, existing JVM codebases).
 - **Native** (`linuxX64`, `linuxArm64`): wraps sd-bus directly and links against libsystemd,
   producing self-contained binaries with no JVM requirement. Choose this for small CLI tools and
   daemons, or when you want sd-bus itself doing the I/O.
@@ -58,7 +61,7 @@ introspection XML files, conventionally placed in `src/dbusMain`.
 ```
 plugins {
     ...
-    id("com.monkopedia.sdbus.plugin") version "0.5.0"
+    id("com.monkopedia.sdbus.plugin") version "0.6.0"
 }
 
 sdbus {
@@ -92,7 +95,7 @@ module with implementations for `jvm`, `linuxX64`, and `linuxArm64`. Add the dep
 ```
 val nativeMain by getting {
     dependencies {
-       implementation("com.monkopedia:sdbus-kotlin:0.5.0")
+       implementation("com.monkopedia:sdbus-kotlin:0.6.0")
     }
 }
 ```
@@ -111,8 +114,8 @@ For a full example build file, see the [bluez-scan sample](samples/bluez-scan).
 
 ### Kotlin/JVM
 
-No further setup is needed on JVM. The `jvm` artifact pulls in the pure-Java dbus-java
-transport transitively and connects through the standard D-Bus unix sockets — no linker flags
+No further setup is needed on JVM. The `jvm` artifact pulls in the junixsocket transport
+transitively and connects through the standard D-Bus unix sockets — no linker flags
 and no native libraries involved. The [bluez-scan sample](samples/bluez-scan) runs on JVM with:
 
 ```

@@ -30,10 +30,10 @@ produce `DemoService1`, `DemoService1Adaptor`, and `DemoService1Proxy` into the 
 This sample is part of the sdbus-kotlin repository and must demonstrate the **current** API
 (post-0.5.0: `startEventLoop`/`stopEventLoop`, `withGetter`/`withSetter`, typed property flows,
 `Duration` timeouts, etc.). That API does **not** exist in the artifact published to Maven Central
-(0.5.0). So, exactly like `bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle
+(0.6.0). So, exactly like `bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle
 **composite build** (`includeBuild("../..")`). Gradle automatically substitutes the
 `com.monkopedia:sdbus-kotlin` dependency declared in `build.gradle.kts` with the local source tree,
-so the version coordinate there (`0.5.0`) is only a placeholder and the sample always compiles
+so the version coordinate there (`0.6.0`) is only a placeholder and the sample always compiles
 against the library checked out next to it. No `publishToMavenLocal` step is required.
 
 ## Running
