@@ -22,6 +22,12 @@
  */
 package com.monkopedia.sdbus
 
+import kotlin.concurrent.Volatile
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+
 /********************************************/
 /**
  * Object class represents a D-Bus object instance identified by a specific object path.
@@ -206,6 +212,10 @@ interface Object : Resource {
  *
  * @param connection D-Bus connection to be used by the object
  * @param objectPath Path of the D-Bus object
+ * @param runEventLoopThread Whether the object starts its connection's I/O event loop in a
+ *   background thread (default `true`). Mirrors [createProxy]: pass `false` only if you drive
+ *   the loop yourself. When `true`, [Connection.startEventLoop] is invoked, which is idempotent,
+ *   so combining this with an explicit `startEventLoop()` never spawns a second loop thread.
  * @return [Object] representation instance
  *
  * The provided connection will be used by the object to export methods,
@@ -214,9 +224,65 @@ interface Object : Resource {
  * Creating a D-Bus object instance is (thread-)safe even upon the connection
  * which is already running its I/O event loop.
  *
+ * Register the object's vtable (via [Object.addVTable]) before the object starts being served /
+ * advertised, so that callers never observe the object without its methods, properties and signals.
+ *
  * Code example:
  * ```
  * val proxy = createObject(connection, ObjectPath("/com/kistler/foo"))
  * ```
  */
-expect fun createObject(connection: Connection, objectPath: ObjectPath): Object
+expect fun createObject(
+    connection: Connection,
+    objectPath: ObjectPath,
+    runEventLoopThread: Boolean = true
+): Object
+
+/**
+ * A [ReadWriteProperty] backing field that auto-emits `PropertiesChanged` whenever the property is
+ * set to a new value.
+ *
+ * Bind a writable D-Bus property to one of these in an adaptor so that BOTH a remote
+ * `org.freedesktop.DBus.Properties.Set` AND a server-side assignment of the property emit the
+ * `PropertiesChanged` signal for that single property. The emit is skipped when the new value
+ * equals the current value, so re-setting an unchanged value is a no-op (no spurious signal).
+ *
+ * The generated adaptors use this delegate as the backing field for writable properties whose
+ * `org.freedesktop.DBus.Property.EmitsChangedSignal` annotation is not `false`/`const`.
+ *
+ * @param interfaceName Interface the property belongs to
+ * @param propertyName Name of the property
+ * @param initialValue Value returned until the property is first set
+ */
+fun <T> Object.notifying(
+    interfaceName: InterfaceName,
+    propertyName: PropertyName,
+    initialValue: T
+): ReadWriteProperty<Any?, T> = NotifyingProperty(this, interfaceName, propertyName, initialValue)
+
+private class NotifyingProperty<T>(
+    private val obj: Object,
+    private val interfaceName: InterfaceName,
+    private val propertyName: PropertyName,
+    initialValue: T
+) : ReadWriteProperty<Any?, T> {
+    private val lock = SynchronizedObject()
+
+    // A property can be assigned from the connection's serve/loop thread (a remote
+    // `Properties.Set`) and from an application thread concurrently. `current` is @Volatile so the
+    // unlocked read in getValue sees the latest write, and the check-and-set-and-emit in setValue
+    // runs under `lock` so two concurrent setters can't both pass the unchanged-guard and
+    // double-emit (or interleave the emit).
+    @Volatile
+    private var current: T = initialValue
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T = current
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+        synchronized(lock) {
+            if (current == value) return
+            current = value
+            obj.emitPropertiesChangedSignal(interfaceName, listOf(propertyName))
+        }
+    }
+}

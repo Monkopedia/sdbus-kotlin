@@ -5,11 +5,33 @@ import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.notifying
 import com.monkopedia.sdbus.prop
+import kotlin.Boolean
+import kotlin.String
+import kotlin.UInt
 
 public abstract class Adapter1Adaptor(
   public val obj: Object,
 ) : Adapter1 {
+  override var alias: String by
+      obj.notifying(Adapter1.Companion.INTERFACE_NAME, PropertyName("Alias"), "")
+
+  override var powered: Boolean by
+      obj.notifying(Adapter1.Companion.INTERFACE_NAME, PropertyName("Powered"), false)
+
+  override var discoverable: Boolean by
+      obj.notifying(Adapter1.Companion.INTERFACE_NAME, PropertyName("Discoverable"), false)
+
+  override var discoverableTimeout: UInt by
+      obj.notifying(Adapter1.Companion.INTERFACE_NAME, PropertyName("DiscoverableTimeout"), 0u)
+
+  override var pairable: Boolean by
+      obj.notifying(Adapter1.Companion.INTERFACE_NAME, PropertyName("Pairable"), false)
+
+  override var pairableTimeout: UInt by
+      obj.notifying(Adapter1.Companion.INTERFACE_NAME, PropertyName("PairableTimeout"), 0u)
+
   public override fun register() {
     obj.addVTable(Adapter1.Companion.INTERFACE_NAME) {
       method(MethodName("StartDiscovery")) {

@@ -5,11 +5,16 @@ import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.PropertyName
 import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.notifying
 import com.monkopedia.sdbus.prop
+import kotlin.Boolean
 
 public abstract class MediaPlayer2Adaptor(
   public val obj: Object,
 ) : MediaPlayer2 {
+  override var fullscreen: Boolean by
+      obj.notifying(MediaPlayer2.Companion.INTERFACE_NAME, PropertyName("Fullscreen"), false)
+
   public override fun register() {
     obj.addVTable(MediaPlayer2.Companion.INTERFACE_NAME) {
       method(MethodName("Raise")) {

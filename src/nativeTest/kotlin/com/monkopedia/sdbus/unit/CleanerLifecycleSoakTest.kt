@@ -65,7 +65,10 @@ class CleanerLifecycleSoakTest {
      * drop every one of those so the adaptor (and the object, and the connection) can be collected.
      */
     private class SoakAdaptor(connection: Connection, path: ObjectPath, iface: InterfaceName) {
-        private val obj: Object = createObject(connection, path)
+        // Lifecycle/GC soak: the caller drives the event loop explicitly when it needs one
+        // (setUpAndReleaseConnection), so opt out of createObject's default auto-start to keep the
+        // no-loop object paths leak-free.
+        private val obj: Object = createObject(connection, path, runEventLoopThread = false)
         private var vtable: Resource? = null
         private var objManager: Resource? = null
         private var value: ULong = 0u

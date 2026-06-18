@@ -25,7 +25,11 @@ package com.monkopedia.sdbus
 import com.monkopedia.sdbus.internal.ObjectImpl
 import platform.posix.EINVAL
 
-actual fun createObject(connection: Connection, objectPath: ObjectPath): Object {
+actual fun createObject(
+    connection: Connection,
+    objectPath: ObjectPath,
+    runEventLoopThread: Boolean
+): Object {
     val sdbusConnection = connection as? com.monkopedia.sdbus.internal.InternalConnection
     sdbusRequire(
         sdbusConnection == null,
@@ -33,5 +37,9 @@ actual fun createObject(connection: Connection, objectPath: ObjectPath): Object 
         EINVAL
     )
 
-    return ObjectImpl(sdbusConnection!!, objectPath)
+    val obj = ObjectImpl(sdbusConnection!!, objectPath)
+    if (runEventLoopThread) {
+        connection.startEventLoop()
+    }
+    return obj
 }

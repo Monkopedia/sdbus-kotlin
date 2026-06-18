@@ -22,6 +22,8 @@
  */
 package com.monkopedia.sdbus
 
+import com.monkopedia.sdbus.Access.READWRITE
+import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Direction.OUT
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -30,6 +32,7 @@ import com.squareup.kotlinpoet.KModifier.ABSTRACT
 import com.squareup.kotlinpoet.KModifier.OVERRIDE
 import com.squareup.kotlinpoet.KModifier.PUBLIC
 import com.squareup.kotlinpoet.KModifier.SUSPEND
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeSpec.Builder
@@ -61,7 +64,37 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder? = null
 
-    override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder? = null
+    /**
+     * Writable properties whose `org.freedesktop.DBus.Property.EmitsChangedSignal` annotation is not
+     * `false`/`const` get a concrete backing property delegated to [com.monkopedia.sdbus.notifying],
+     * so that BOTH a remote `Properties.Set` (routed through the vtable setter bound in [register])
+     * AND a server-side assignment auto-emit `PropertiesChanged`. Read-only properties, properties
+     * that opt out of the signal, and properties whose type has no representable default value are
+     * left abstract for the implementor to provide.
+     */
+    override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder? {
+        if (prop.access != READWRITE && prop.access != WRITE) return null
+        if (!prop.emitsChangedSignal(intf)) return null
+        val default = prop.defaultValue() ?: return null
+        return PropertySpec.builder(prop.name.decapitalCamelCase, namingManager[prop]).apply {
+            addModifiers(OVERRIDE)
+            mutable(true)
+            delegate(
+                CodeBlock.builder()
+                    .add(
+                        "%N.%M(%T, %T(%S), ",
+                        "obj",
+                        MemberName("com.monkopedia.sdbus", "notifying"),
+                        intfName(intf),
+                        ClassName("com.monkopedia.sdbus", "PropertyName"),
+                        prop.name
+                    )
+                    .add(default)
+                    .add(")")
+                    .build()
+            )
+        }
+    }
 
     override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder = FunSpec.builder(
         "on" + signal.signalName()
@@ -173,5 +206,44 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
             add("}\n")
         }.build()
         addCode(codeBlock)
+    }
+
+    private companion object {
+        private const val EMITS_CHANGED_SIGNAL =
+            "org.freedesktop.DBus.Property.EmitsChangedSignal"
+
+        /**
+         * Resolves the effective `EmitsChangedSignal` value for [this] property: a property-level
+         * annotation wins, otherwise the enclosing interface's annotation provides the default,
+         * otherwise the D-Bus default is `true`. Returns `true` unless the value is `false`/`const`
+         * (the two values for which the spec says no `PropertiesChanged` is emitted).
+         */
+        private fun Property.emitsChangedSignal(intf: Interface): Boolean {
+            val value = annotations.firstOrNull { it.name == EMITS_CHANGED_SIGNAL }?.value
+                ?: intf.annotations.firstOrNull { it.name == EMITS_CHANGED_SIGNAL }?.value
+                ?: "true"
+            return value != "false" && value != "const"
+        }
+
+        /**
+         * A representable initial value for the [notifying] delegate backing a writable property, or
+         * `null` for types with no obvious default (so the property is left abstract instead of
+         * generating uncompilable code).
+         */
+        private fun Property.defaultValue(): CodeBlock? = when (type) {
+            "b" -> CodeBlock.of("false")
+            "y" -> CodeBlock.of("0.toUByte()")
+            "n" -> CodeBlock.of("0.toShort()")
+            "q" -> CodeBlock.of("0.toUShort()")
+            "i" -> CodeBlock.of("0")
+            "u" -> CodeBlock.of("0u")
+            "x" -> CodeBlock.of("0L")
+            "t" -> CodeBlock.of("0uL")
+            "d" -> CodeBlock.of("0.0")
+            "s" -> CodeBlock.of("%S", "")
+            "o" -> CodeBlock.of("%T(%S)", ClassName("com.monkopedia.sdbus", "ObjectPath"), "/")
+            "g" -> CodeBlock.of("%T(%S)", ClassName("com.monkopedia.sdbus", "Signature"), "")
+            else -> null
+        }
     }
 }
