@@ -169,15 +169,6 @@ internal interface ISdBus {
         userdata: CValuesRef<*>?
     ): Int
 
-    fun sd_bus_add_match_async(
-        bus: CValuesRef<sd_bus>?,
-        slot: CValuesRef<CPointerVar<sd_bus_slot>>?,
-        match: String?,
-        callback: sd_bus_message_handler_t?,
-        install_callback: sd_bus_message_handler_t?,
-        userdata: CValuesRef<*>?
-    ): Int
-
     fun sd_bus_match_signal(
         bus: CValuesRef<sd_bus>?,
         ret: CValuesRef<CPointerVar<sd_bus_slot>>?,

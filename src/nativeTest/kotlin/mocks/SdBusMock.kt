@@ -212,16 +212,6 @@ internal class SdBusMock :
         userdata: CValuesRef<*>?
     ): Int = invoke("sd_bus_add_match", bus, slot, match, callback, userdata)
 
-    override fun sd_bus_add_match_async(
-        bus: CValuesRef<sd_bus>?,
-        slot: CValuesRef<CPointerVar<sd_bus_slot>>?,
-        match: String?,
-        callback: sd_bus_message_handler_t?,
-        install_callback: sd_bus_message_handler_t?,
-        userdata: CValuesRef<*>?
-    ): Int =
-        invoke("sd_bus_add_match_async", bus, slot, match, callback, install_callback, userdata)
-
     override fun sd_bus_match_signal(
         bus: CValuesRef<sd_bus>?,
         ret: CValuesRef<CPointerVar<sd_bus_slot>>?,
