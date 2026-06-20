@@ -5,6 +5,8 @@ import com.monkopedia.sdbus.UnixFd
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -396,6 +398,121 @@ class DBusWireConnectionTest {
                     "unbounded threads"
             )
         } finally {
+            client.close()
+            server.close()
+        }
+    }
+
+    /**
+     * Watchdog backstop for the case the same-thread nested compensation MISSES (issue #101
+     * follow-up): a served handler that blocks its worker on a dependency satisfied only by ANOTHER
+     * served call on this connection. Here `bound` "Gate" handlers each park their worker on a shared
+     * latch; the only thing that can open that latch is a separate "Open" call — which, once every
+     * worker is parked, has no worker to run on and sits in the queue. [beginNestedBlock] never fires
+     * (no worker is inside [DBusWireConnection.call]/[callBlocking]), so without the saturation
+     * watchdog this deadlocks: the pool is fully parked, the queue is non-empty, and NO task is making
+     * forward progress. The watchdog detects the forward-progress stall (queue non-empty + no task
+     * start/completion for the stall window) and spawns a bounded compensating worker, which runs
+     * "Open", releases the latch, and lets every "Gate" — and "Open" itself — complete. On the
+     * pre-watchdog code the client [withTimeout] fires first and the test FAILS FAST instead of
+     * hanging. One compensating worker suffices regardless of width: the single "Open" releases all
+     * waiters, so this stays bounded.
+     */
+    @Test
+    fun externalLatchDependency_underBoundedPool_isRescuedByWatchdog() = runBlocking {
+        val server = connectOrNull() ?: return@runBlocking
+        val client = connectOrNull() ?: run {
+            server.close()
+            return@runBlocking
+        }
+        val busName = "com.monkopedia.sdbus.wire.gate.s${System.nanoTime()}"
+        val path = "/com/monkopedia/sdbus/wire/gate"
+        val iface = "com.monkopedia.sdbus.wire.Gate"
+
+        val bound = server.serveBound
+        // Counts down as each Gate handler enters and is about to park: lets the test fire "Open"
+        // only once every worker is genuinely parked, making the starvation deterministic.
+        val allParked = CountDownLatch(bound)
+        // Opened solely by the "Open" handler — which itself needs a worker the parked pool lacks.
+        val gate = CountDownLatch(1)
+
+        server.setIncomingCallHandler { message ->
+            when (message.member) {
+                "Gate" -> {
+                    allParked.countDown()
+                    // Park this worker until "Open" releases the gate. A generous internal timeout so
+                    // that on BROKEN code the client-side withTimeout below fires first (fail fast),
+                    // not this await returning a spurious false.
+                    val released = gate.await(60, TimeUnit.SECONDS)
+                    server.send(
+                        WireMessage(
+                            type = WireMessageType.METHOD_RETURN,
+                            replySerial = message.serial,
+                            destination = message.sender,
+                            signature = "b",
+                            body = listOf(released)
+                        )
+                    )
+                }
+
+                "Open" -> {
+                    gate.countDown()
+                    server.send(
+                        WireMessage(
+                            type = WireMessageType.METHOD_RETURN,
+                            replySerial = message.serial,
+                            destination = message.sender,
+                            signature = "b",
+                            body = listOf(true)
+                        )
+                    )
+                }
+            }
+        }
+
+        try {
+            assertEquals(1, server.requestName(busName), "server should own $busName")
+            // Saturate every worker with a parked Gate handler.
+            val gateReplies = (1..bound).map {
+                async(Dispatchers.IO) {
+                    client.call(
+                        WireMessage(
+                            type = WireMessageType.METHOD_CALL,
+                            destination = busName,
+                            path = path,
+                            interfaceName = iface,
+                            member = "Gate"
+                        )
+                    )
+                }
+            }
+            // Only once every worker is parked is "Open" guaranteed to be queued with no free worker —
+            // the exact starvation the watchdog must rescue.
+            assertTrue(
+                allParked.await(10, TimeUnit.SECONDS),
+                "all $bound Gate handlers should park before Open is sent"
+            )
+            val openReply = async(Dispatchers.IO) {
+                client.call(
+                    WireMessage(
+                        type = WireMessageType.METHOD_CALL,
+                        destination = busName,
+                        path = path,
+                        interfaceName = iface,
+                        member = "Open"
+                    )
+                )
+            }
+
+            // On broken (pre-watchdog) code Open never runs, the gate never opens, and this times out.
+            val replies = withTimeout(15_000) { (gateReplies + openReply).awaitAll() }
+            assertEquals(bound + 1, replies.size)
+            assertTrue(
+                replies.all { it.body.firstOrNull() == true },
+                "every Gate must observe the gate opened, and Open must succeed"
+            )
+        } finally {
+            gate.countDown()
             client.close()
             server.close()
         }

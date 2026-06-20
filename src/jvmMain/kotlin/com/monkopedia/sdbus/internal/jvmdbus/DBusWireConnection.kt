@@ -42,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
 import kotlinx.coroutines.future.await
 import org.newsclub.net.unix.AFUNIXSocket
@@ -706,13 +707,33 @@ internal class DBusWireConnection private constructor(
  * Surplus compensating workers retire once idle (`allowCoreThreadTimeOut`), shrinking the pool back
  * to [bound] after a nested-dispatch storm subsides.
  *
- * SCOPE / CONSTRAINT on serve handlers: compensation only covers a worker that blocks *on its own
- * thread* inside [call]/[callBlocking] (where [beginNestedBlock] runs). A serve handler that instead
- * (a) offloads its nested same-connection call to a DIFFERENT thread/dispatcher (e.g.
- * `withContext(Dispatchers.IO) { connection.call(...) }`) while keeping the worker parked, or
- * (b) blocks on a non-same-connection dependency (a shared lock, another handler's result), is NOT
- * compensated and can starve the bounded pool. Serve handlers must perform any nested same-connection
- * call synchronously on the worker thread, and must not block the worker on unrelated work.
+ * SCOPE of same-thread compensation: [beginNestedBlock] only covers a worker that blocks *on its own
+ * thread* inside [call]/[callBlocking]. A serve handler that instead (a) offloads its nested
+ * same-connection call to a DIFFERENT thread/dispatcher (e.g. `withContext(Dispatchers.IO) {
+ * connection.call(...) }`) while keeping the worker parked, or (b) blocks the worker on a
+ * non-same-connection dependency (a shared lock, or a result that only ANOTHER served call on this
+ * connection can produce), runs off the marked worker thread, so [beginNestedBlock] returns false and
+ * no fast-path compensation fires. Handlers SHOULD still do nested same-connection calls synchronously
+ * on the worker thread; that remains the cheap, exact path.
+ *
+ * WATCHDOG backstop for the cases same-thread compensation misses (issue #101 follow-up). A single
+ * daemon thread periodically samples forward progress: if the queue is non-empty AND no task has
+ * *started or completed* for [STALL_THRESHOLD_NANOS] (a forward-progress stall), it spawns one
+ * compensating worker (raising `corePoolSize`, prestarting a thread), up to a hard cap of [maxExtra]
+ * extra workers, and retires them again once the queue drains. This rescues (a) and (b): the new
+ * worker runs a queued task that can release the parked workers (e.g. the lock holder, or the
+ * other-served-call the parked workers await), restoring progress.
+ *
+ * Why the watchdog cannot grow unbounded under a LEGITIMATE flood of independent slow handlers — the
+ * exact false-positive that a naive "all workers busy + queue non-empty" trigger would suffer: such a
+ * flood keeps making forward progress (handlers keep STARTING and COMPLETING as workers cycle), so the
+ * progress timestamp stays fresh and the stall test never trips. Only a genuine stall — where every
+ * worker is parked and not one task is starting or finishing — goes stale. And even if a pathological
+ * legitimately-slow flood (every handler individually slower than the threshold) did trip it, growth is
+ * clamped at [maxExtra]: the watchdog adds at most a bounded number of workers and then stops, never a
+ * thread-per-call. Deadlock-freedom is preserved trivially: the watchdog only ever ADDS runnable
+ * capacity (or removes idle capacity), and the queue/[execute] never block or reject, so more threads
+ * can never introduce a new deadlock.
  */
 private class ServeWorkerPool {
     /** Steady-state worker count: ~2x CPUs, clamped so it is neither starved nor wildly large. */
@@ -724,10 +745,27 @@ private class ServeWorkerPool {
     private val onWorkerThread = ThreadLocal.withInitial { false }
     private val threadCounter = AtomicInteger(0)
 
-    // Guards corePoolSize mutations and [parked]; the invariant corePoolSize == bound + parked is
-    // maintained only under this lock so concurrent nested blocks compose correctly.
+    // Guards corePoolSize mutations, [parked] and [watchdogExtra]; the invariant
+    // corePoolSize == bound + parked + watchdogExtra is maintained only under this lock so concurrent
+    // nested blocks and watchdog spawns compose correctly.
     private val poolLock = Any()
     private var parked = 0
+
+    // Extra workers the saturation watchdog has spawned (see [watchdogTick]); clamped at [maxExtra].
+    private var watchdogExtra = 0
+
+    // Hard cap on watchdog-spawned compensating workers: even a pathological legitimately-slow flood
+    // can grow the pool by at most this much, never a thread-per-call.
+    private val maxExtra = bound
+
+    // Last time a serve task STARTED or COMPLETED (nanos). The watchdog reads this to tell a genuine
+    // forward-progress stall (this goes stale while work is queued) from a busy-but-progressing flood
+    // (workers keep cycling, so it stays fresh). Seeded at construction so an idle pool is never
+    // mistaken for stalled.
+    private val lastProgressNanos = AtomicLong(System.nanoTime())
+
+    @Volatile
+    private var running = true
 
     private val executor = ThreadPoolExecutor(
         bound,
@@ -756,10 +794,38 @@ private class ServeWorkerPool {
         allowCoreThreadTimeOut(true)
     }
 
+    // Single daemon thread that samples forward progress and spawns bounded compensating workers when
+    // the pool is genuinely stalled; see [watchdogTick] and the class doc's WATCHDOG section.
+    private val watchdog = thread(
+        start = true,
+        isDaemon = true,
+        name = "sdbus-jvm-wire-serve-watchdog"
+    ) {
+        while (running) {
+            try {
+                Thread.sleep(WATCHDOG_INTERVAL_MILLIS)
+            } catch (_: InterruptedException) {
+                break
+            }
+            if (!running) break
+            runCatching { watchdogTick() }
+        }
+    }
+
     val largestPoolSize: Int get() = executor.largestPoolSize
 
     fun execute(task: () -> Unit) {
-        executor.execute(task)
+        // Bracket every task with progress timestamps: a task STARTING and COMPLETING are both
+        // forward progress, so a busy-but-progressing flood keeps [lastProgressNanos] fresh and is
+        // never mistaken by the watchdog for a stall (where neither happens).
+        executor.execute {
+            lastProgressNanos.set(System.nanoTime())
+            try {
+                task()
+            } finally {
+                lastProgressNanos.set(System.nanoTime())
+            }
+        }
     }
 
     /**
@@ -771,7 +837,7 @@ private class ServeWorkerPool {
         if (!onWorkerThread.get()) return false
         synchronized(poolLock) {
             parked++
-            executor.corePoolSize = bound + parked
+            recomputeCorePoolSize()
             // Make a replacement worker live now (even before the nested METHOD_CALL is queued) so
             // it is ready to pick the nested task up the instant the reader submits it.
             executor.prestartCoreThread()
@@ -783,11 +849,58 @@ private class ServeWorkerPool {
     fun endNestedBlock() {
         synchronized(poolLock) {
             parked--
-            executor.corePoolSize = bound + parked
+            recomputeCorePoolSize()
+        }
+    }
+
+    // Must hold [poolLock]. The single point that enforces corePoolSize == bound + parked +
+    // watchdogExtra so the nested-block and watchdog compensations compose without clobbering.
+    private fun recomputeCorePoolSize() {
+        executor.corePoolSize = bound + parked + watchdogExtra
+    }
+
+    /**
+     * One watchdog sample. Spawns at most one compensating worker per call (so growth ramps gently
+     * and re-checks real progress between additions) and only when:
+     *  - there is queued work (otherwise nothing is starved), AND
+     *  - every worker is busy (no idle worker would already be draining the queue), AND
+     *  - no task has started or completed for [STALL_THRESHOLD_NANOS] (a true forward-progress stall,
+     *    not a flood whose workers keep cycling).
+     * When the queue has drained it releases all watchdog compensation so the pool shrinks back toward
+     * [bound] (the surplus idle threads then time out via `allowCoreThreadTimeOut`).
+     */
+    private fun watchdogTick() {
+        if (executor.queue.isEmpty()) {
+            // No pending work: drop any compensation we added so we return to bound (+ nested parked).
+            if (watchdogExtra > 0) {
+                synchronized(poolLock) {
+                    if (watchdogExtra > 0) {
+                        watchdogExtra = 0
+                        recomputeCorePoolSize()
+                    }
+                }
+            }
+            return
+        }
+        val stale = System.nanoTime() - lastProgressNanos.get() >= STALL_THRESHOLD_NANOS
+        // Only intervene once the base pool is fully spun up (poolSize >= bound). Below that the
+        // executor can still grow on its own, and an idle connection (poolSize == 0) would otherwise
+        // read as "all busy" (0 >= 0) and spuriously add a worker on the first burst after idling.
+        val allBusy = executor.poolSize >= bound && executor.activeCount >= executor.poolSize
+        if (stale && allBusy) {
+            synchronized(poolLock) {
+                if (watchdogExtra < maxExtra) {
+                    watchdogExtra++
+                    recomputeCorePoolSize()
+                    executor.prestartCoreThread()
+                }
+            }
         }
     }
 
     fun shutdownNow() {
+        running = false
+        watchdog.interrupt()
         executor.shutdownNow()
     }
 
@@ -795,6 +908,13 @@ private class ServeWorkerPool {
         private const val MIN_BOUND = 4
         private const val MAX_BOUND = 64
         private const val WORKER_KEEPALIVE_SECONDS = 30L
+        private const val WATCHDOG_INTERVAL_MILLIS = 250L
+
+        // How long the pool must show NO task start/completion (while work is queued) before the
+        // watchdog treats it as stalled. Comfortably above any reasonable serve-handler burst cadence
+        // so an ordinary slow-but-progressing flood (which refreshes progress as workers cycle) never
+        // trips it; only a truly wedged pool goes this stale.
+        private val STALL_THRESHOLD_NANOS = TimeUnit.SECONDS.toNanos(1)
     }
 }
 
