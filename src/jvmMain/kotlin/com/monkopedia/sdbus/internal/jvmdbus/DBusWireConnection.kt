@@ -883,7 +883,10 @@ private class ServeWorkerPool {
             return
         }
         val stale = System.nanoTime() - lastProgressNanos.get() >= STALL_THRESHOLD_NANOS
-        val allBusy = executor.activeCount >= executor.poolSize
+        // Only intervene once the base pool is fully spun up (poolSize >= bound). Below that the
+        // executor can still grow on its own, and an idle connection (poolSize == 0) would otherwise
+        // read as "all busy" (0 >= 0) and spuriously add a worker on the first burst after idling.
+        val allBusy = executor.poolSize >= bound && executor.activeCount >= executor.poolSize
         if (stale && allBusy) {
             synchronized(poolLock) {
                 if (watchdogExtra < maxExtra) {
