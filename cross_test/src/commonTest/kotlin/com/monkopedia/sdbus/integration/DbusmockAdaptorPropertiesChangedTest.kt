@@ -31,14 +31,17 @@ import com.monkopedia.sdbus.addVTable
 import com.monkopedia.sdbus.createBusConnection
 import com.monkopedia.sdbus.createObject
 import com.monkopedia.sdbus.createProxy
+import com.monkopedia.sdbus.getProperty
 import com.monkopedia.sdbus.notifying
 import com.monkopedia.sdbus.prop
 import com.monkopedia.sdbus.setProperty
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * A minimal server-side property holder mirroring what the codegen emits for a writable
@@ -48,6 +51,16 @@ import kotlinx.coroutines.withTimeout
  */
 private class LevelService(obj: Object, iface: InterfaceName, property: PropertyName) {
     var level: Int by obj.notifying(iface, property, 0)
+}
+
+/**
+ * A plain server-side property holder mirroring what codegen emits for a writable property whose
+ * `org.freedesktop.DBus.Property.EmitsChangedSignal` annotation IS `false`/`const`: a plain backing
+ * field with NO [notifying] delegate, so neither a remote `Properties.Set` nor a server-side
+ * assignment emits `PropertiesChanged`.
+ */
+private class PlainLevelHolder {
+    var level: Int = 0
 }
 
 /**
@@ -121,4 +134,138 @@ class DbusmockAdaptorPropertiesChangedTest {
             serverConnection.release()
         }
     }
+
+    /**
+     * Focused coverage of the [notifying] delegate contract (issue #115): a change emits
+     * `PropertiesChanged` EXACTLY ONCE; re-setting the SAME value is a no-op (skip-on-unchanged, no
+     * spurious signal); and reading the delegate (server-side getter AND a remote `Properties.Get`)
+     * returns the stored value. Runs on both backends via commonTest.
+     */
+    @Test
+    fun notifyingDelegate_emitsOnceOnChange_skipsUnchanged_andReadsBack() =
+        withDbusmockPeer("NotifyingProp") {
+            val id = Random.nextInt(100_000, 999_999)
+            val serviceName = ServiceName("com.monkopedia.sdbus.notifyingprop$id")
+            val path = ObjectPath("/com/monkopedia/sdbus/notifyingprop$id")
+            val iface = InterfaceName("com.monkopedia.sdbus.NotifyingProp")
+            val property = PropertyName("Level")
+
+            val serverConnection = createBusConnection(serviceName)
+            val obj = createObject(serverConnection, path)
+            val service = LevelService(obj, iface, property)
+            val registration = obj.addVTable(iface) {
+                prop(property) {
+                    with(service::level)
+                }
+            }
+            serverConnection.startEventLoop()
+
+            val proxy = createProxy(connection, serviceName, path)
+            val events =
+                Channel<Pair<Map<PropertyName, Variant>, List<PropertyName>>>(Channel.UNLIMITED)
+            PropertiesProxy(proxy).registerPropertiesProxy {
+                    changedInterface,
+                    changed,
+                    invalidated
+                ->
+                if (changedInterface == iface) events.trySend(changed to invalidated)
+            }
+
+            try {
+                // A real change emits exactly once, carrying the new value...
+                service.level = 5
+                val first = withTimeout(10_000) { events.receive() }
+                assertEquals(5, first.first[property]?.get<Int>(), "change must emit the new value")
+                // ...and nothing more (exactly-once).
+                assertNull(
+                    withTimeoutOrNull(750) { events.receive() },
+                    "a single change must not emit twice"
+                )
+
+                // Re-setting the SAME value is skipped — no PropertiesChanged at all.
+                service.level = 5
+                assertNull(
+                    withTimeoutOrNull(750) { events.receive() },
+                    "re-setting an unchanged value must not emit"
+                )
+
+                // The delegate read returns the stored value, both server-side and via remote Get.
+                assertEquals(5, service.level, "server-side read returns the stored value")
+                assertEquals(
+                    5,
+                    proxy.getProperty<Int>(iface, property),
+                    "remote Get returns the stored value"
+                )
+
+                // A subsequent real change emits again (the delegate is still live after the skip).
+                service.level = 8
+                val second = withTimeout(10_000) { events.receive() }
+                assertEquals(8, second.first[property]?.get<Int>())
+            } finally {
+                proxy.release()
+                registration.release()
+                obj.release()
+                serverConnection.stopEventLoop()
+                serverConnection.release()
+            }
+        }
+
+    /**
+     * Coverage for the `EmitsChangedSignal=false`/`const` codegen path (issue #115): a writable
+     * property backed by a PLAIN field (no [notifying] delegate, exactly as codegen emits when the
+     * annotation is `false`/`const`) must NOT emit `PropertiesChanged` on a remote `Properties.Set`,
+     * even though the value really changes. Complements
+     * [propertiesChangedFires_onRemoteSet_andServerSideSet] (the default-emits case). Both backends.
+     */
+    @Test
+    fun plainProperty_withoutNotifyingDelegate_doesNotEmitOnRemoteSet() =
+        withDbusmockPeer("PlainProp") {
+            val id = Random.nextInt(100_000, 999_999)
+            val serviceName = ServiceName("com.monkopedia.sdbus.plainprop$id")
+            val path = ObjectPath("/com/monkopedia/sdbus/plainprop$id")
+            val iface = InterfaceName("com.monkopedia.sdbus.PlainProp")
+            val property = PropertyName("Level")
+
+            val serverConnection = createBusConnection(serviceName)
+            val obj = createObject(serverConnection, path)
+            val holder = PlainLevelHolder()
+            val registration = obj.addVTable(iface) {
+                prop(property) {
+                    with(holder::level)
+                }
+            }
+            serverConnection.startEventLoop()
+
+            val proxy = createProxy(connection, serviceName, path)
+            val events =
+                Channel<Pair<Map<PropertyName, Variant>, List<PropertyName>>>(Channel.UNLIMITED)
+            PropertiesProxy(proxy).registerPropertiesProxy {
+                    changedInterface,
+                    changed,
+                    invalidated
+                ->
+                if (changedInterface == iface) events.trySend(changed to invalidated)
+            }
+
+            try {
+                // Remote Set writes the plain backing field...
+                proxy.setProperty(iface, property, 7)
+                assertEquals(
+                    7,
+                    proxy.getProperty<Int>(iface, property),
+                    "the value must really change"
+                )
+                // ...but with no notifying delegate, no PropertiesChanged is ever emitted.
+                assertNull(
+                    withTimeoutOrNull(1_000) { events.receive() },
+                    "a plain (EmitsChangedSignal=false/const) property must not auto-emit"
+                )
+            } finally {
+                proxy.release()
+                registration.release()
+                obj.release()
+                serverConnection.stopEventLoop()
+                serverConnection.release()
+            }
+        }
 }

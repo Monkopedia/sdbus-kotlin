@@ -7,6 +7,8 @@ import com.monkopedia.sdbus.ObjectPath
 import com.monkopedia.sdbus.PendingAsyncCall
 import com.monkopedia.sdbus.PropertiesProxy
 import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.RequestNameFlag
+import com.monkopedia.sdbus.RequestNameReply
 import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.ServiceName
 import com.monkopedia.sdbus.SignalName
@@ -18,9 +20,14 @@ import com.monkopedia.sdbus.createBusConnection
 import com.monkopedia.sdbus.createObject
 import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.emitSignal
+import com.monkopedia.sdbus.getAllProperties
+import com.monkopedia.sdbus.getAllPropertiesAsync
+import com.monkopedia.sdbus.getProperty
+import com.monkopedia.sdbus.getPropertyAsync
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.onSignal
 import com.monkopedia.sdbus.prop
+import com.monkopedia.sdbus.setPropertyAsync
 import com.monkopedia.sdbus.signal
 import kotlin.random.Random
 import kotlin.test.Test
@@ -1117,6 +1124,98 @@ class CommonApiIntegrationTest {
             match.release()
             objectManager.release()
             connection.release()
+        }
+    }
+
+    // Coverage for #112: requestName now reports a RequestNameReply for each outcome. This lives in
+    // commonTest, so the IDENTICAL assertions run on BOTH backends — native sd-bus (linuxX64Test)
+    // and the JVM wire backend (jvmTest). Each platform asserting the same expected enum for every
+    // scenario IS the cross-backend-consistency regression guard for the 0.6.0 fix that made the two
+    // backends agree on these reply codes.
+    @Test
+    fun requestName_reportsConsistentReplyCodesAcrossBackends() {
+        val ids = uniqueFixtureIds("requestName")
+        val name = ServiceName("${ids.service.value}.Owned")
+        val owner = createBusConnection()
+        val queued = createBusConnection()
+        val rejected = createBusConnection()
+
+        try {
+            // A fresh, unowned name → the caller becomes the primary owner.
+            assertEquals(RequestNameReply.PRIMARY_OWNER, owner.requestName(name))
+
+            // The SAME connection re-requesting its own name → already the owner.
+            assertEquals(RequestNameReply.ALREADY_OWNER, owner.requestName(name))
+
+            // A SECOND connection, no flags → queued behind the current owner (default queueing).
+            assertEquals(RequestNameReply.IN_QUEUE, queued.requestName(name))
+
+            // A different connection with DO_NOT_QUEUE → refused outright rather than queued.
+            assertEquals(
+                RequestNameReply.EXISTS,
+                rejected.requestName(name, RequestNameFlag.DO_NOT_QUEUE)
+            )
+        } finally {
+            runCatching { owner.releaseName(name) }
+            runCatching { queued.releaseName(name) }
+            owner.release()
+            queued.release()
+            rejected.release()
+        }
+    }
+
+    // Coverage for #110: the direct two-arg property accessors on Proxy
+    // (getPropertyAsync / setPropertyAsync / getAllProperties / getAllPropertiesAsync). Confirms the
+    // async variants agree with the sync getProperty/setProperty results and that the Variant unwrap
+    // yields the typed value. Runs on both backends via commonTest.
+    @Test
+    fun directPropertyAccessors_matchSyncResultsAndUnwrapVariant() = runBlocking {
+        val ids = uniqueFixtureIds("directProps")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val levelProperty = PropertyName("level")
+        var level = 3
+        val obj = createObject(serverConnection, ids.path)
+        val registration = obj.addVTable(ids.iface) {
+            prop(levelProperty) {
+                withGetter { level }
+                withSetter<Int> { value -> level = value }
+            }
+        }
+        serverConnection.startEventLoop()
+        proxyConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path)
+
+        try {
+            // Async get matches sync get, and both unwrap the Variant to the typed value.
+            val sync = proxy.getProperty<Int>(ids.iface, levelProperty)
+            val async = proxy.getPropertyAsync<Int>(ids.iface, levelProperty)
+            assertEquals(3, sync)
+            assertEquals(sync, async)
+
+            // Async set round-trips; subsequent sync and async reads both reflect the new value.
+            proxy.setPropertyAsync(ids.iface, levelProperty, 11)
+            assertEquals(11, level)
+            assertEquals(11, proxy.getProperty<Int>(ids.iface, levelProperty))
+            assertEquals(11, proxy.getPropertyAsync<Int>(ids.iface, levelProperty))
+
+            // getAllProperties (sync) and getAllPropertiesAsync agree, with correct Variant unwrap.
+            val all = proxy.getAllProperties(ids.iface)
+            val allAsync = proxy.getAllPropertiesAsync(ids.iface)
+            assertEquals(11, all[levelProperty]?.get<Int>())
+            assertEquals(11, allAsync[levelProperty]?.get<Int>())
+            assertEquals(
+                all.mapValues { it.value.get<Int>() },
+                allAsync.mapValues { it.value.get<Int>() }
+            )
+        } finally {
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.stopEventLoop()
+            serverConnection.stopEventLoop()
+            proxyConnection.release()
+            serverConnection.release()
         }
     }
 
