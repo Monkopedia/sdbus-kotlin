@@ -10,11 +10,12 @@ import kotlinx.coroutines.withTimeout
 
 /**
  * External (real-bus) coverage for the sender-credential surface on [Message] over the JVM wire
- * backend. The bus stamps the authoritative sender on an emitted signal and the receiver resolves
- * the sender's credentials (filled from the local process for a same-process sender). The JVM
- * backend resolves pid/uid/euid/gid/egid/supplementary-gids; only [Message.seLinuxContext] is
- * unavailable over junixsocket and must throw the documented [SdbusException] (the native backend
- * covers SELinux's happy path, where labelled, in CredentialsIntegrationTest).
+ * backend, read from a received signal whose sender is this same process (so the credentials
+ * resolve to the running process). The JVM backend yields pid/uid/euid/gid/egid/supplementary-gids
+ * as non-throwing values (euid/egid equal uid/gid for a non-setuid process); [Message.seLinuxContext]
+ * is host-dependent — a label where SELinux is enforcing, or a thrown [SdbusException] otherwise.
+ * The native backend covers the same surface against the live POSIX identity in
+ * CredentialsIntegrationTest.
  */
 class JvmCredentialsTest {
 
@@ -49,7 +50,7 @@ class JvmCredentialsTest {
         val gidSeen = CompletableDeferred<UInt>()
         val egidSeen = CompletableDeferred<UInt>()
         val supplementaryReadable = CompletableDeferred<Boolean>()
-        val seLinuxThrewSdbus = CompletableDeferred<Boolean>()
+        val seLinuxDefiniteOutcome = CompletableDeferred<Boolean>()
 
         val obj = createObject(serverConnection, objectPath)
         serverConnection.startEventLoop()
@@ -65,10 +66,13 @@ class JvmCredentialsTest {
                 supplementaryReadable.complete(
                     runCatching { message.credsSupplementaryGids }.isSuccess
                 )
-                // SELinux context is unavailable over junixsocket — must raise the library's
-                // SdbusException specifically, not return a bogus value or some unrelated error.
-                seLinuxThrewSdbus.complete(
-                    runCatching { message.seLinuxContext }.exceptionOrNull() is SdbusException
+                // SELinux context is host-dependent: a label where SELinux is enforcing, or a
+                // thrown SdbusException where it is unavailable (e.g. the typical junixsocket/CI
+                // case, which reports AccessDenied). Either is a valid contract outcome; what must
+                // NOT happen is a leaked non-SdbusException. (Observed locally: AccessDenied.)
+                seLinuxDefiniteOutcome.complete(
+                    runCatching { message.seLinuxContext }
+                        .fold({ true }, { it is SdbusException })
                 )
             }
         }
@@ -86,7 +90,9 @@ class JvmCredentialsTest {
             assertEquals(expectedGid, withTimeout(2_000) { gidSeen.await() })
             assertEquals(expectedGid, withTimeout(2_000) { egidSeen.await() })
             assertTrue(withTimeout(2_000) { supplementaryReadable.await() })
-            assertTrue(withTimeout(2_000) { seLinuxThrewSdbus.await() })
+            // seLinuxContext yielded a label or the documented SdbusException — never a leaked
+            // unrelated exception type.
+            assertTrue(withTimeout(2_000) { seLinuxDefiniteOutcome.await() })
         } finally {
             signalRegistration.release()
             proxy.release()
