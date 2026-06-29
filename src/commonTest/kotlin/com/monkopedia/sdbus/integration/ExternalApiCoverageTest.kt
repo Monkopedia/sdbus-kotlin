@@ -21,13 +21,18 @@ import com.monkopedia.sdbus.signalFlow
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * External (real-bus) coverage for public surface that the larger [CommonApiIntegrationTest] does
@@ -219,22 +224,21 @@ class ExternalApiCoverageTest {
                 first.complete(value)
             }
 
-            // Give the flow's registration a moment to install before emitting.
-            withTimeout(2_000) {
-                while (!collector.isActive && !first.isCompleted) { /* spin until launched */ }
-            }
-            // Emit until the collector has observed one (covers the install race without sleeps).
+            // Emit until the collector has observed one. The retry loop (not a fixed sleep)
+            // absorbs the race between the flow installing its registration and the first emit.
             var emitted = 0
             while (!first.isCompleted && emitted < 50) {
                 val signal = obj.createSignal(ids.iface, signalName)
                 signal.append(11)
                 obj.emitSignal(signal)
                 emitted++
-                if (!first.isCompleted) kotlinx.coroutines.delay(20)
+                if (!first.isCompleted) delay(20)
             }
 
             assertEquals(11, withTimeout(2_000) { first.await() })
-            collector.cancel()
+            // Deterministic teardown: join the collector so its awaitClose{} releases the
+            // signal handler before we release the proxy/object below.
+            collector.cancelAndJoin()
         } finally {
             registration.release()
             proxy.release()
@@ -247,64 +251,80 @@ class ExternalApiCoverageTest {
     }
 
     @Test
-    fun directedSignal_carriesDestinationToTargetedProxy() = runBlocking {
+    fun directedSignal_isDeliveredOnlyToTargetedProxy() = runBlocking {
         val ids = uniqueFixtureIds("directed")
         val serverConnection = createBusConnection(ids.service)
-        val proxyConnection = createBusConnection()
+        val targetConnection = createBusConnection()
+        val otherConnection = createBusConnection()
         val signalName = SignalName("Pinged")
         val obj = createObject(serverConnection, ids.path)
         val registration = obj.addVTable(ids.iface) {
             signal(signalName) { with<Int>("value") }
         }
         serverConnection.startEventLoop()
-        proxyConnection.startEventLoop()
-        val proxy = createProxy(proxyConnection, ids.service, ids.path)
-        val target = proxyConnection.uniqueName
+        targetConnection.startEventLoop()
+        otherConnection.startEventLoop()
+        // Two proxies on two distinct connections, subscribed to the SAME signal. Only the
+        // first is the unicast destination — so a no-op setDestination would be caught by the
+        // second proxy also receiving, which is what makes this prove direction (not just delivery).
+        val targetProxy = createProxy(targetConnection, ids.service, ids.path)
+        val otherProxy = createProxy(otherConnection, ids.service, ids.path)
+        val target = targetConnection.uniqueName
+
+        val delivered = CompletableDeferred<String?>()
+        val otherReceived = CompletableDeferred<Unit>()
+        val targetRegistration = targetProxy.onSignal(ids.iface, signalName) {
+            call { _: Int ->
+                if (!delivered.isCompleted) {
+                    delivered.complete(targetProxy.currentlyProcessedMessage.destination?.value)
+                }
+            }
+        }
+        val otherRegistration = otherProxy.onSignal(ids.iface, signalName) {
+            call { _: Int -> if (!otherReceived.isCompleted) otherReceived.complete(Unit) }
+        }
 
         try {
-            // Completed with the destination header observed on the received message (nullable):
-            // sd-bus surfaces it on the recipient; the JVM wire backend delivers the unicast
-            // signal but does not re-expose the DESTINATION header to the handler. Completion of
-            // this deferred is itself the portable proof that setDestination routed delivery to
-            // the targeted proxy on both backends.
-            val delivered = CompletableDeferred<String?>()
-            val handlerRegistration = proxy.onSignal(ids.iface, signalName) {
-                call { _: Int ->
-                    if (!delivered.isCompleted) {
-                        delivered.complete(proxy.currentlyProcessedMessage.destination?.value)
-                    }
-                }
+            // Emit the unicast signal repeatedly until the targeted proxy observes it. Both
+            // proxies subscribed before any emit, so the non-targeted one had equal opportunity.
+            var emitted = 0
+            while (!delivered.isCompleted && emitted < 50) {
+                val signal = obj.createSignal(ids.iface, signalName)
+                signal.setDestination(target)
+                signal.append(5)
+                obj.emitSignal(signal)
+                emitted++
+                if (!delivered.isCompleted) delay(20)
             }
+            val destination = withTimeout(2_000) { delivered.await() }
+            val otherGotIt = withTimeoutOrNull(500) { otherReceived.await() } != null
 
-            try {
-                var emitted = 0
-                while (!delivered.isCompleted && emitted < 50) {
-                    val signal = obj.createSignal(ids.iface, signalName)
-                    // Restrict this signal to the proxy's unique name instead of broadcasting.
-                    signal.setDestination(target)
-                    signal.append(5)
-                    obj.emitSignal(signal)
-                    emitted++
-                    if (!delivered.isCompleted) kotlinx.coroutines.delay(20)
-                }
-
-                // Portable: the directed signal reached the targeted proxy.
-                val destination = withTimeout(2_000) { delivered.await() }
-                assertTrue(emitted >= 1)
-                // Where the backend surfaces it (native), the header must equal the target.
-                if (destination != null) {
-                    assertEquals(target.value, destination)
-                }
-            } finally {
-                handlerRegistration.release()
+            if (backendDeliversDirectedSignalsUnicast) {
+                // The core proof of direction: the non-targeted proxy must NOT receive it, and the
+                // recipient sees the destination header equal to the target name. Backend-keyed
+                // (not value-keyed) so a native regression to broadcast/null fails rather than skips.
+                assertFalse(otherGotIt)
+                assertEquals(target.value, destination)
+            } else {
+                // KNOWN LIMITATION (JVM wire backend): setDestination is accepted but the signal is
+                // still broadcast to every matching subscriber, and no destination header is exposed.
+                // Asserted explicitly so this test fails — prompting the flag flip — once the JVM
+                // backend honors unicast routing. See backendDeliversDirectedSignalsUnicast.
+                assertTrue(otherGotIt)
+                assertNull(destination)
             }
         } finally {
+            targetRegistration.release()
+            otherRegistration.release()
             registration.release()
-            proxy.release()
+            targetProxy.release()
+            otherProxy.release()
             obj.release()
-            proxyConnection.stopEventLoop()
+            targetConnection.stopEventLoop()
+            otherConnection.stopEventLoop()
             serverConnection.stopEventLoop()
-            proxyConnection.release()
+            targetConnection.release()
+            otherConnection.release()
             serverConnection.release()
         }
     }
