@@ -297,7 +297,7 @@ class ExternalApiCoverageTest {
                 if (!delivered.isCompleted) delay(20)
             }
             val destination = withTimeout(2_000) { delivered.await() }
-            val otherGotIt = withTimeoutOrNull(500) { otherReceived.await() } != null
+            val otherGotIt = withTimeoutOrNull(1_000) { otherReceived.await() } != null
 
             if (backendDeliversDirectedSignalsUnicast) {
                 // The core proof of direction: the non-targeted proxy must NOT receive it, and the
