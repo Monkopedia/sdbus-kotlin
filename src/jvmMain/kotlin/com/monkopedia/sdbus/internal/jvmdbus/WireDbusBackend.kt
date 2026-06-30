@@ -107,9 +107,10 @@ internal class WireDbusBackend : JvmDbusBackend {
         // way a receiver can resolve our sender credentials off the bus.
         val wire = ((connection as? JvmConnection)?.backend as? WireDbusConnection)?.wireConnection
             ?: throw createError(-1, "createObject failed: connection has no wire transport")
-        val emitter = WireSignalEmitter { path, interfaceName, member, signature, payload ->
-            emitWireSignal(wire, path, interfaceName, member, signature, payload)
-        }
+        val emitter =
+            WireSignalEmitter { path, interfaceName, member, signature, payload, destination ->
+                emitWireSignal(wire, path, interfaceName, member, signature, payload, destination)
+            }
         return WireDbusObject(
             objectPath,
             runCatching { connection.uniqueName.value }.getOrNull(),
@@ -120,9 +121,11 @@ internal class WireDbusBackend : JvmDbusBackend {
 
 /**
  * Marshals [payload] (converted from the high-level value model via [toWireBodyValue]) against
- * [signature] and sends it as a broadcast D-Bus SIGNAL on [wire]. The SENDER header is left unset:
- * the bus daemon stamps the authoritative sender (our unique name) and attaches our credentials.
- * An empty/blank signature means a no-argument signal (no body).
+ * [signature] and sends it as a D-Bus SIGNAL on [wire]. The SENDER header is left unset: the bus
+ * daemon stamps the authoritative sender (our unique name) and attaches our credentials. An
+ * empty/blank signature means a no-argument signal (no body). When [destination] is non-null the
+ * signal is unicast to that bus name (the daemon routes it to that peer alone, and the recipient
+ * sees it as [Message.destination]); null leaves it a broadcast.
  */
 private fun emitWireSignal(
     wire: DBusWireConnection,
@@ -130,7 +133,8 @@ private fun emitWireSignal(
     interfaceName: String,
     member: String,
     signature: String?,
-    payload: List<Any?>
+    payload: List<Any?>,
+    destination: String?
 ) {
     val effectiveSignature = signature?.takeUnless { it.isEmpty() }
     val body = if (effectiveSignature == null) emptyList() else payload.map(::toWireBodyValue)
@@ -141,6 +145,7 @@ private fun emitWireSignal(
                 path = path,
                 interfaceName = interfaceName,
                 member = member,
+                destination = destination?.takeUnless { it.isEmpty() },
                 signature = effectiveSignature,
                 body = body
             )

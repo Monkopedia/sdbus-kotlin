@@ -37,7 +37,8 @@ internal fun interface WireSignalEmitter {
         interfaceName: String,
         member: String,
         signature: String?,
-        payload: List<Any?>
+        payload: List<Any?>,
+        destination: String?
     )
 }
 
@@ -260,7 +261,9 @@ internal class WireDbusObject(
             interfaceName = propertiesInterfaceName,
             member = propertiesChangedMemberName,
             signature = propertiesChangedSignature,
-            payload = payload
+            payload = payload,
+            // Standard-interface notification: always broadcast.
+            destination = null
         )
     }
 
@@ -283,7 +286,8 @@ internal class WireDbusObject(
             interfaceName = objectManagerInterfaceName,
             member = interfacesAddedMemberName,
             signature = interfacesAddedSignature,
-            payload = payload
+            payload = payload,
+            destination = null
         )
     }
 
@@ -299,7 +303,8 @@ internal class WireDbusObject(
             interfaceName = objectManagerInterfaceName,
             member = interfacesRemovedMemberName,
             signature = interfacesRemovedSignature,
-            payload = payload
+            payload = payload,
+            destination = null
         )
     }
 
@@ -454,7 +459,9 @@ internal class WireDbusObject(
             interfaceName = interfaceName,
             member = signalName,
             signature = signature,
-            payload = message.payload
+            payload = message.payload,
+            // Honor a unicast destination set via Signal.setDestination; null = broadcast.
+            destination = message.destination?.value
         )
     }
 
