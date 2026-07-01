@@ -5,6 +5,22 @@ All notable changes to sdbus-kotlin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed (breaking) — the 0.6.0 deprecations
+
+The symbols deprecated in 0.6.0 (kept as warnings that release) are now removed. This is the
+final freeze cleanup targeted at 1.0.
+
+- **The fluent property layer** — `AsyncPropertyGetter`, `AsyncPropertySetter`, `AllPropertiesGetter`,
+  `AsyncAllPropertiesGetter`, and the single-argument `Proxy.getPropertyAsync(propertyName)` /
+  `setPropertyAsync(propertyName)` / `getAllProperties()` / `getAllPropertiesAsync()` factories that
+  returned them. Use the direct typed accessors instead:
+  `Proxy.getPropertyAsync<T>(interfaceName, propertyName)`,
+  `setPropertyAsync(interfaceName, propertyName, value)`, `getAllProperties(interfaceName)`,
+  `getAllPropertiesAsync(interfaceName)`.
+- **`typealias Error`** — use `SdbusException` directly.
+
 ## [0.6.0] - 2026-06-18
 
 0.6.0 is the **1.0-polish** release. A post-0.5.0 review of the public surface (epic #108)

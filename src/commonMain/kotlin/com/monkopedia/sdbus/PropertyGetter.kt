@@ -138,8 +138,7 @@ suspend inline fun <reified T : Any> Proxy.setPropertyAsync(
 /**
  * Gets the values of all properties declared on the given interface.
  *
- * This is the direct, blocking equivalent of the [AllPropertiesGetter] builder: it returns the map
- * of property values directly rather than a builder.
+ * This is a direct, blocking accessor: it returns the map of property values directly.
  *
  * @param interfaceName Interface whose properties will be read
  * @return A map of property name to its current value

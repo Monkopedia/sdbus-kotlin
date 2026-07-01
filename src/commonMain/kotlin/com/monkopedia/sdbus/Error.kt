@@ -40,13 +40,6 @@ package com.monkopedia.sdbus
 class SdbusException(val name: String, val errorMessage: String = "") :
     Exception("$name: $errorMessage")
 
-@Deprecated(
-    "Renamed to SdbusException",
-    ReplaceWith("SdbusException", "com.monkopedia.sdbus.SdbusException"),
-    DeprecationLevel.WARNING
-)
-typealias Error = SdbusException
-
 internal fun Throwable.toError() =
     (this as? SdbusException) ?: SdbusException(message ?: toString(), stackTraceToString())
 
