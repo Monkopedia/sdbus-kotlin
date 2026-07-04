@@ -342,6 +342,49 @@ class FailurePathParityTest {
         }
     }
 
+    // A call to an existing member with the WRONG NUMBER of arguments must surface as InvalidArgs
+    // on both backends (native dispatches by member name and fails arg deserialization → InvalidArgs;
+    // the JVM backend used to key dispatch on arg count and return UnknownMethod). A truly-absent
+    // member must still be UnknownMethod. Parity #141.
+    @Test
+    fun wrongArgumentCountIsInvalidArgsWhileMissingMemberIsUnknownMethod() = runBlocking {
+        val ids = uniqueFixtureIds("argCount")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("WantsInt")) { call { value: Int -> value } }
+        }
+        serverConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path, runEventLoopThread = false)
+
+        try {
+            val tooMany = assertFailsWith<SdbusException> {
+                val call = proxy.createMethodCall(ids.iface, MethodName("WantsInt"))
+                call.append(1)
+                call.append(2)
+                proxy.callMethod(call)
+            }
+            assertEquals("org.freedesktop.DBus.Error.InvalidArgs", tooMany.name)
+
+            val tooFew = assertFailsWith<SdbusException> {
+                proxy.callMethod(proxy.createMethodCall(ids.iface, MethodName("WantsInt")))
+            }
+            assertEquals("org.freedesktop.DBus.Error.InvalidArgs", tooFew.name)
+
+            val missing = assertFailsWith<SdbusException> {
+                proxy.callMethod<Int>(ids.iface, MethodName("NoSuchMethod")) { call(1) }
+            }
+            assertEquals("org.freedesktop.DBus.Error.UnknownMethod", missing.name)
+        } finally {
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
     // --- connection teardown behavior ------------------------------------------------------
 
     // Tearing down a live proxy connection (stopEventLoop + release) after a successful call

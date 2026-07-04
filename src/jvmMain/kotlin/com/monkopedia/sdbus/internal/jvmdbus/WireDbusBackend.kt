@@ -315,13 +315,18 @@ internal class WireDbusProxy(
             }
         }
         if (localOwner != null) {
-            // The destination is one of our own connections but nothing serves this member.
-            // We must NOT put the call on the wire: phase 3 does not serve incoming wire calls
-            // (phase 4), so our own peer would never reply and the caller would hang until
-            // timeout. Fail fast with UnknownMethod, the same outcome dbus-java produces by
-            // auto-replying for an unexported member.
+            // The destination is one of our own connections but no handler matched. We must NOT put
+            // the call on the wire (our own peer would never reply and the caller would hang).
+            // Distinguish a wrong-argument-COUNT call (the member exists at another arity → native
+            // returns InvalidArgs) from a truly-missing member (→ UnknownMethod). #141.
+            val memberExists =
+                JvmStaticDispatch.hasMember(path, interfaceName, methodName, dispatchDestination)
             throw com.monkopedia.sdbus.SdbusException(
-                "org.freedesktop.DBus.Error.UnknownMethod",
+                if (memberExists) {
+                    "org.freedesktop.DBus.Error.InvalidArgs"
+                } else {
+                    "org.freedesktop.DBus.Error.UnknownMethod"
+                },
                 "No handler for $path:$interfaceName.$methodName on local destination " +
                     destination.value
             )
