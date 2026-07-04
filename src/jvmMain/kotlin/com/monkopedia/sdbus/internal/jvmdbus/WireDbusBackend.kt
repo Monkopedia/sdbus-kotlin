@@ -315,8 +315,25 @@ internal class WireDbusProxy(
             }
         }
         if (localOwner != null) {
-            // The destination is one of our own connections but no handler matched. We must NOT put
-            // the call on the wire (our own peer would never reply and the caller would hang).
+            // Peer / Introspectable are served on the incoming-wire path (WireServe) but are not
+            // registered in local dispatch. Route them over the wire so a same-process caller gets
+            // the same answer native serves via sd-bus, instead of a spurious UnknownMethod. The
+            // wire serve (phase 4) always replies, so this cannot hang. #141.
+            if (interfaceName == WireServe.PEER_INTERFACE ||
+                interfaceName == WireServe.INTROSPECTABLE_INTERFACE
+            ) {
+                val standardWire = wire
+                    ?: throw createError(-1, "callMethod failed: connection has no wire transport")
+                return callRemote(
+                    standardWire,
+                    interfaceName,
+                    methodName,
+                    path,
+                    message,
+                    effectiveTimeout
+                )
+            }
+            // Otherwise the destination is one of our own connections but no user handler matched.
             // Distinguish a wrong-argument-COUNT call (the member exists at another arity → native
             // returns InvalidArgs) from a truly-missing member (→ UnknownMethod). #141.
             val memberExists =
