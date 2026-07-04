@@ -26,6 +26,7 @@ import com.monkopedia.sdbus.createPlainMessage
 import com.monkopedia.sdbus.methodReplyFrom
 import com.monkopedia.sdbus.signalFromMetadata
 import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 import kotlin.time.Duration
@@ -249,6 +250,9 @@ internal class WireDbusProxy(
     private val objectPath: ObjectPath
 ) : JvmDbusProxy {
     private val wire: DBusWireConnection? get() = connection?.wireConnection
+
+    // Signal handlers registered through this proxy, released together on release() (native parity).
+    private val signalRegistrations = CopyOnWriteArrayList<Resource>()
 
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
@@ -557,12 +561,23 @@ internal class WireDbusProxy(
             resolvedOwner = owner
         )
         val rule = buildMatchRule(spec)
-        return installSignalMatch(realWire, rule, spec) { message ->
+        val registration = installSignalMatch(realWire, rule, spec) { message ->
             signalHandler(message as com.monkopedia.sdbus.Signal)
+        }
+        signalRegistrations.add(registration)
+        // Parity with native ProxyImpl.release(): releasing the proxy tears down its signal
+        // handlers. Wrap so an explicit release() also removes it from the proxy's set; both the
+        // wrapper and the underlying resource are idempotent, so double-release is safe. #141.
+        return com.monkopedia.sdbus.ActionResource {
+            signalRegistrations.remove(registration)
+            registration.release()
         }
     }
 
-    override fun release(): Unit = Unit
+    override fun release() {
+        signalRegistrations.forEach { runCatching { it.release() } }
+        signalRegistrations.clear()
+    }
 }
 
 /** A parsed signal match used to filter incoming SIGNAL messages on the connection. */
