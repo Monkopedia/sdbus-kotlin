@@ -293,6 +293,36 @@ internal class WireDbusProxy(
         // wildcard ("") and single-candidate registrations resolve exactly as dbus-java's do.
         val localOwner = localDispatchOwnerOrNull()
         val dispatchDestination = localOwner ?: destination.value
+
+        if (message.dontExpectReply) {
+            // Fire-and-forget parity with native sd_bus_send(no-reply): deliver the call for its
+            // side effects but never wait for or surface a reply, and never throw for a missing
+            // target. Previously the JVM client ignored the flag and blocked ~30s on callBlocking
+            // (and threw UnknownMethod for a missing member). #141.
+            runCatching {
+                val handled = JvmStaticDispatch.hasHandler(
+                    path,
+                    interfaceName,
+                    methodName,
+                    message.payload,
+                    dispatchDestination
+                )
+                when {
+                    handled -> callLocalDispatch(
+                        message,
+                        interfaceName,
+                        methodName,
+                        path,
+                        dispatchDestination
+                    )
+                    localOwner == null ->
+                        wire?.let { sendNoReply(it, interfaceName, methodName, path, message) }
+                    // A same-process member that doesn't exist: a no-reply caller sees nothing.
+                }
+            }
+            return emptyReply()
+        }
+
         if (JvmStaticDispatch.hasHandler(
                 path,
                 interfaceName,
@@ -453,6 +483,36 @@ internal class WireDbusProxy(
                 empty = values.isEmpty()
             ),
             values
+        )
+    }
+
+    // A valid, empty reply for a fire-and-forget (dontExpectReply) call, which never surfaces a
+    // real reply to the caller.
+    private fun emptyReply(): MethodReply =
+        methodReplyFrom(Message.Metadata(valid = true, empty = true), emptyList())
+
+    // Sends a METHOD_CALL over the wire with NO_REPLY_EXPECTED and does not wait for a reply
+    // (native sd_bus_send parity).
+    private fun sendNoReply(
+        realWire: DBusWireConnection,
+        interfaceName: String,
+        methodName: String,
+        path: String,
+        message: MethodCall
+    ) {
+        val payload = message.payload.toList()
+        val signature = wireBodySignature(payload, message.declaredBodySignature.toString())
+        realWire.send(
+            WireMessage(
+                type = WireMessageType.METHOD_CALL,
+                flags = WireMessageFlags.NO_REPLY_EXPECTED,
+                destination = destination.value.ifEmpty { null },
+                path = path,
+                interfaceName = interfaceName,
+                member = methodName,
+                signature = signature,
+                body = if (signature == null) emptyList() else payload.map(::toWireBodyValue)
+            )
         )
     }
 
