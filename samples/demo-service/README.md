@@ -30,10 +30,10 @@ produce `DemoService1`, `DemoService1Adaptor`, and `DemoService1Proxy` into the 
 This sample is part of the sdbus-kotlin repository and must demonstrate the **current** API
 (post-0.5.0: `startEventLoop`/`stopEventLoop`, `withGetter`/`withSetter`, typed property flows,
 `Duration` timeouts, etc.). That API does **not** exist in the artifact published to Maven Central
-(0.6.0). So, exactly like `bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle
+(1.0.0). So, exactly like `bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle
 **composite build** (`includeBuild("../..")`). Gradle automatically substitutes the
 `com.monkopedia:sdbus-kotlin` dependency declared in `build.gradle.kts` with the local source tree,
-so the version coordinate there (`0.6.0`) is only a placeholder and the sample always compiles
+so the version coordinate there (`1.0.0`) is only a placeholder and the sample always compiles
 against the library checked out next to it. No `publishToMavenLocal` step is required.
 
 ## Running
@@ -117,9 +117,10 @@ busctl --user call $SVC /com/monkopedia/demo \
 - **linuxX64 (native)** is backed by `sd-bus` and runs as a fully-fledged D-Bus server: external
   processes (`busctl`, a separate `client` run, a JVM client) can introspect, call methods, read/
   write properties, and receive signals over the wire.
-- **JVM** is backed by dbus-java. It runs as a first-class **client** against any server (e.g.
-  `./gradlew runJvm --args="client"` against the native server works end-to-end, including
-  receiving `Tick` signals). The JVM `server` mode also runs — it claims the name, exports the
-  object, and emits signals — but the dbus-java backend routes exported objects through an
-  in-process dispatch table, so serving arbitrary method calls to *separate processes* is limited.
-  For a production D-Bus **service**, run the native target.
+- **JVM** is backed by an owned junixsocket connection with a pure-Kotlin marshaller and dispatcher
+  (no `dbus-java`, no native code). Since 0.5.0 the JVM `server` mode serves exported objects over
+  the wire — external processes (`busctl`, a separate `client` run, the native client) can
+  introspect, call methods, read/write properties, and receive signals from it, just like the
+  native target; `./gradlew runJvm --args="client"` against the native server also works end-to-end.
+  Both backends are interchangeable for serving; the remaining differences are
+  same-process/direct-connection edges documented in [docs/BACKENDS.md](../../docs/BACKENDS.md).

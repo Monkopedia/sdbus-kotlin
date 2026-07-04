@@ -49,9 +49,9 @@ server-side example, see [`samples/demo-service`](https://github.com/Monkopedia/
 
 ## API stability
 
-0.6.0 is the **1.0-polish** release — a post-0.5.0 review applied a final wave of renames and
-deprecations to the public surface; 1.0 will freeze it, dropping the names deprecated in 0.6.0.
-Compatibility is enforced in CI with
+**1.0 freezes the public API** — a post-0.5.0 review applied a final wave of renames and
+deprecations, and 1.0 removes the names that were deprecated in 0.6.0. Compatibility is enforced
+in CI with
 [binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
 (JVM and klib API dumps are checked in under `api/`), so any change to the public surface is an
 explicit, reviewed event. The per-release migration notes are in the
