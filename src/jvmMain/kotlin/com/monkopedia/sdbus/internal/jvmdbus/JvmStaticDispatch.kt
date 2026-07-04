@@ -1,6 +1,7 @@
 package com.monkopedia.sdbus.internal.jvmdbus
 
 import com.monkopedia.sdbus.MethodReply
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * JVM-side static dispatch table for method calls.
@@ -20,7 +21,11 @@ internal object JvmStaticDispatch {
         val argCount: Int
     )
 
-    private val handlers = mutableMapOf<MethodKey, (List<Any?>) -> Any?>()
+    // Concurrent: mutated on user threads (addVTable/release) while dispatch reads run on
+    // serve-worker/reader/caller threads. ConcurrentHashMap gives atomic put/remove and
+    // weakly-consistent iteration (the resolve/hasMember scans), matching the synchronized
+    // wrapping the sibling registries use. #141.
+    private val handlers = ConcurrentHashMap<MethodKey, (List<Any?>) -> Any?>()
 
     fun register(
         objectPath: String,
