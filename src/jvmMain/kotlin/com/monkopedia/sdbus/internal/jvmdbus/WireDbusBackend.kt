@@ -234,7 +234,8 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
 
     override fun addMatch(match: String, callback: MessageHandler): Resource {
         checkNotReleased()
-        return installSignalMatch(wire, match, parseMatchSpec(match), callback)
+        val spec = parseMatchSpec(match).withResolvedOwner(wire)
+        return installSignalMatch(wire, match, spec, callback)
     }
 
     override fun release() {
@@ -670,6 +671,15 @@ private data class MatchSpec(
     val member: String? = null,
     val resolvedOwner: String? = null
 )
+
+// Resolve a well-known sender= to its current unique owner (like registerSignalHandler does), so
+// matches() can compare it against the daemon-stamped unique sender on incoming frames — otherwise
+// a match rule with a well-known sender drops every signal. #141.
+private fun MatchSpec.withResolvedOwner(wire: DBusWireConnection): MatchSpec {
+    val name = sender
+    if (name.isNullOrEmpty() || name.startsWith(":")) return this
+    return copy(resolvedOwner = runCatching { wire.getNameOwner(name) }.getOrNull())
+}
 
 private fun parseMatchSpec(match: String): MatchSpec {
     val values = mutableMapOf<String, String>()
