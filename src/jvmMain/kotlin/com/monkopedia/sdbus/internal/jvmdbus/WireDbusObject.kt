@@ -268,7 +268,11 @@ internal class WireDbusObject(
     }
 
     override fun emitPropertiesChangedSignal(interfaceName: InterfaceName) {
-        emitPropertiesChangedSignal(interfaceName, emptyList())
+        // No-argument form mirrors sd_bus_emit_properties_changed_strv(..., names=null): emit ALL
+        // of the interface's properties (readable ones into changed_properties with their current
+        // value, write-only ones into invalidated_properties), not an empty payload.
+        val allProps = propertiesByInterface[interfaceName.value].orEmpty().keys.map(::PropertyName)
+        emitPropertiesChangedSignal(interfaceName, allProps)
     }
 
     override fun emitInterfacesAddedSignal() {
@@ -277,9 +281,12 @@ internal class WireDbusObject(
 
     override fun emitInterfacesAddedSignal(interfaces: List<InterfaceName>) {
         val signalPath = LocalObjectManagerRegistry.resolveFor(objectPath.value) ?: objectPath.value
+        // Each added interface must report its current property values (mirrors
+        // sd_bus_emit_interfaces_added), so an ObjectManager consumer reading initial state from
+        // this signal — the standard BlueZ pattern — sees them; previously this was an empty map.
         val payload = listOf(
             objectPath,
-            interfaces.associateWith { emptyMap<PropertyName, Variant>() }
+            interfaces.associateWith { snapshotInterfaceProperties(it.value) }
         )
         wireSignalEmitter.emitSignalOverWire(
             path = signalPath,
