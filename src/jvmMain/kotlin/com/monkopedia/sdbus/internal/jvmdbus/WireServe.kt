@@ -58,6 +58,7 @@ internal object WireServe {
     private const val ERROR_UNKNOWN_OBJECT = "org.freedesktop.DBus.Error.UnknownObject"
     private const val ERROR_UNKNOWN_INTERFACE = "org.freedesktop.DBus.Error.UnknownInterface"
     private const val ERROR_UNKNOWN_METHOD = "org.freedesktop.DBus.Error.UnknownMethod"
+    private const val ERROR_INVALID_ARGS = "org.freedesktop.DBus.Error.InvalidArgs"
     private const val ERROR_FAILED = "org.freedesktop.DBus.Error.Failed"
 
     private val standardInterfaces = setOf(
@@ -222,6 +223,10 @@ internal object WireServe {
             !servesPath -> errorReply(message, ERROR_UNKNOWN_OBJECT, "Unknown object $path")
             iface != null && iface !in standardInterfaces && iface !in interfaces.keys ->
                 errorReply(message, ERROR_UNKNOWN_INTERFACE, "Unknown interface $iface on $path")
+            // The member exists at another argument count → a wrong-arg-COUNT call, which native
+            // reports as InvalidArgs (not UnknownMethod). #141.
+            iface != null && JvmStaticDispatch.hasMember(path, iface, member, localUniqueName) ->
+                errorReply(message, ERROR_INVALID_ARGS, "Invalid arguments to $iface.$member")
             else -> errorReply(
                 message,
                 ERROR_UNKNOWN_METHOD,

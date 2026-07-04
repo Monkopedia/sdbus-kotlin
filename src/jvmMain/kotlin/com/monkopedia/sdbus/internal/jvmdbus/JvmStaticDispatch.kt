@@ -57,6 +57,22 @@ internal object JvmStaticDispatch {
         destination = destination
     )?.invoke(args)
 
+    // True if a member of this name is registered for the path/interface at ANY argument count
+    // reachable from [destination]. Used to distinguish a wrong-argument-COUNT call (member exists,
+    // no handler for this arity → InvalidArgs, matching native) from a truly-missing member
+    // (→ UnknownMethod). #141.
+    fun hasMember(
+        objectPath: String,
+        interfaceName: String,
+        methodName: String,
+        destination: String? = null
+    ): Boolean = handlers.keys.any { key ->
+        key.objectPath == objectPath &&
+            key.interfaceName == interfaceName &&
+            key.methodName == methodName &&
+            (destination.isNullOrEmpty() || key.destination == destination || key.destination == "")
+    }
+
     fun hasHandler(
         objectPath: String,
         interfaceName: String,
