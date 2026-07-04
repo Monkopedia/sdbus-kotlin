@@ -292,6 +292,22 @@ class FailurePathParityTest {
         }
     }
 
+    // Every public connection operation must reject use after release() the same way on both
+    // backends. Native guards each with checkNotReleased() (an IllegalArgumentException); the JVM
+    // backend used to leave most ops unguarded (e.g. uniqueName silently returned a value). #141.
+    @Test
+    fun connectionOperationsAfterReleaseThrowOnBothBackends() = runBlocking {
+        val connection = createBusConnection()
+        connection.release()
+
+        assertFailsWith<IllegalArgumentException> { connection.uniqueName }
+        assertFailsWith<IllegalArgumentException> { connection.startEventLoop() }
+        assertFailsWith<IllegalArgumentException> {
+            connection.methodCallTimeout = 100.milliseconds
+        }
+        Unit
+    }
+
     // --- malformed / signature-mismatch handling -------------------------------------------
 
     // Calling a method with the wrong argument types (server expects an Int, client sends a

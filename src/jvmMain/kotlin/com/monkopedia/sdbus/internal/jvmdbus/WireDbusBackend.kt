@@ -164,6 +164,12 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
     fun isReleased(): Boolean = released.get()
     fun defaultTimeoutMicros(): ULong = timeout.inWholeMicroseconds.coerceAtLeast(0L).toULong()
 
+    // Match the native backend (ConnectionImpl.checkNotReleased): every public connection op
+    // rejects use after release() with the SAME IllegalArgumentException, instead of silently
+    // succeeding (uniqueName / timeout) or throwing an unrelated closed-socket error. Parity #141.
+    private fun checkNotReleased() =
+        require(!released.get()) { "Connection has already been released" }
+
     init {
         LocalJvmServiceRegistry.registerLocalUniqueName(localUniqueName)
         // Serve incoming method calls (epic #93 phase 4 — closes #90): route every METHOD_CALL the
@@ -174,23 +180,35 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
         }
     }
 
-    override fun startEventLoop(): Unit = Unit
+    override fun startEventLoop() = checkNotReleased()
 
-    override suspend fun stopEventLoop(): Unit = Unit
+    override suspend fun stopEventLoop() = checkNotReleased()
 
     override fun currentlyProcessedMessage(): Message =
         JvmCurrentMessageContext.current() ?: createPlainMessage()
 
-    override fun setMethodCallTimeout(timeout: Duration): Unit = run { this.timeout = timeout }
+    override fun setMethodCallTimeout(timeout: Duration): Unit = run {
+        checkNotReleased()
+        this.timeout = timeout
+    }
 
-    override fun getMethodCallTimeout(): Duration = timeout
+    override fun getMethodCallTimeout(): Duration {
+        checkNotReleased()
+        return timeout
+    }
 
-    override fun addObjectManager(objectPath: ObjectPath): Resource =
-        LocalObjectManagerRegistry.register(objectPath.value, localUniqueName)
+    override fun addObjectManager(objectPath: ObjectPath): Resource {
+        checkNotReleased()
+        return LocalObjectManagerRegistry.register(objectPath.value, localUniqueName)
+    }
 
-    override fun uniqueName(): BusName = BusName(localUniqueName.ifEmpty { ":jvm-wire" })
+    override fun uniqueName(): BusName {
+        checkNotReleased()
+        return BusName(localUniqueName.ifEmpty { ":jvm-wire" })
+    }
 
     override fun requestName(name: ServiceName, flags: UInt): RequestNameReply {
+        checkNotReleased()
         val result = runCatching { wire.requestName(name.value, flags) }.getOrElse {
             throw createError(-1, "requestName failed: ${it.message}")
         }
@@ -206,14 +224,17 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
     }
 
     override fun releaseName(name: ServiceName) {
+        checkNotReleased()
         runCatching { wire.releaseName(name.value) }.getOrElse {
             throw createError(-1, "releaseName failed: ${it.message}")
         }
         LocalJvmServiceRegistry.removeAlias(localUniqueName, name.value)
     }
 
-    override fun addMatch(match: String, callback: MessageHandler): Resource =
-        installSignalMatch(wire, match, parseMatchSpec(match), callback)
+    override fun addMatch(match: String, callback: MessageHandler): Resource {
+        checkNotReleased()
+        return installSignalMatch(wire, match, parseMatchSpec(match), callback)
+    }
 
     override fun release() {
         if (!released.compareAndSet(false, true)) return
