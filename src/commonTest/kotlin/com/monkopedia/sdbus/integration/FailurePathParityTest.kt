@@ -55,6 +55,10 @@ class FailurePathParityTest {
         )
     }
 
+    // Always true; indirection keeps the throwing handler's inferred return type Int (a bare
+    // `throw` would infer Nothing, which has no serializer at vtable registration).
+    private val alwaysThrows = true
+
     // --- method-call timeout ---------------------------------------------------------------
 
     // A server method that deliberately sleeps far past the client's per-call timeout must
@@ -246,6 +250,39 @@ class FailurePathParityTest {
                 }
             }
             assertTrue(thrown.name.isNotBlank(), "error should carry a name")
+        } finally {
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
+    // A handler that throws a plain (non-SdbusException) exception must surface the SAME, valid
+    // D-Bus error name on both backends. Regression for the parity sweep (#141): toError() used to
+    // put the exception's *message* in the error-name slot ("boom"), which is not a valid D-Bus
+    // name — native then failed to send a proper error (client saw NoReply) while JVM passed the
+    // bogus name through. Both must now report org.freedesktop.DBus.Error.Failed.
+    @Test
+    fun handlerThrowingRawException_reportsFailedErrorNameOnBothBackends() = runBlocking {
+        val ids = uniqueFixtureIds("rawThrow")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("Boom")) {
+                call { _: Int -> if (alwaysThrows) throw RuntimeException("boom") else 0 }
+            }
+        }
+        serverConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path)
+
+        try {
+            val thrown = assertFailsWith<SdbusException> {
+                proxy.callMethod<Int>(ids.iface, MethodName("Boom")) { call(1) }
+            }
+            assertEquals("org.freedesktop.DBus.Error.Failed", thrown.name)
         } finally {
             registration.release()
             proxy.release()

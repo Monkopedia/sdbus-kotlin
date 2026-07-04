@@ -40,8 +40,14 @@ package com.monkopedia.sdbus
 class SdbusException(val name: String, val errorMessage: String = "") :
     Exception("$name: $errorMessage")
 
-internal fun Throwable.toError() =
-    (this as? SdbusException) ?: SdbusException(message ?: toString(), stackTraceToString())
+// The generic D-Bus error name for a failure with no more specific name. A non-SdbusException from
+// a handler maps to this VALID name so both backends report it identically; the former behavior put
+// the exception message in the name slot, producing an invalid name — native then failed to send a
+// proper error reply (client saw NoReply) while JVM passed the bogus name through. See #141.
+internal const val GENERIC_DBUS_ERROR_NAME = "org.freedesktop.DBus.Error.Failed"
+
+internal fun Throwable.toError(): SdbusException =
+    (this as? SdbusException) ?: SdbusException(GENERIC_DBUS_ERROR_NAME, message ?: toString())
 
 /**
  * Creates an [SdbusException] from a numeric error code and a custom message.
