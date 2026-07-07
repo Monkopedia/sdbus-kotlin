@@ -4,7 +4,7 @@ Guidance for agents working on sdbus-kotlin.
 
 ## What this is
 
-A Kotlin Multiplatform D-Bus client (a port of sdbus-c++), targeting **jvm + linuxX64 + linuxArm64**. The native targets wrap `sd-bus` via cinterop; the JVM target is backed by dbus-java. It also ships a code generator (`:codegen`, XML → Kotlin BlueZ proxies/adaptors) and a Gradle plugin (`:plugin`, id `com.monkopedia.sdbus.plugin`).
+A Kotlin Multiplatform D-Bus client (a port of sdbus-c++), targeting **jvm + linuxX64 + linuxArm64**. The native targets wrap `sd-bus` via cinterop; the JVM target is backed by an owned junixsocket connection with a pure-Kotlin marshaller and dispatcher (since 0.5.0 — no dbus-java, no native code). It also ships a code generator (`:codegen`, XML → Kotlin BlueZ proxies/adaptors) and a Gradle plugin (`:plugin`, id `com.monkopedia.sdbus.plugin`).
 
 Modules: root (the library), `:codegen`, `:plugin`, `:cross_test`, `:stress_test`, `samples/bluez-scan`.
 
@@ -18,7 +18,7 @@ Modules: root (the library), `:codegen`, `:plugin`, `:cross_test`, `:stress_test
 
 ## Releasing
 
-1. Bump the version in `gradle.properties`, the README install snippets, and `samples/bluez-scan/build.gradle.kts`.
+1. Bump the version everywhere it is hardcoded: `gradle.properties`, the README install snippets, `samples/bluez-scan/build.gradle.kts`, `samples/demo-service/build.gradle.kts`, and the API-stability prose in `README.md` + `dokka/moduledoc.md`. Move the `CHANGELOG.md` `[Unreleased]` heading to the new version + date and add its link ref at the bottom.
 2. Create a GitHub release `vX.Y.Z` → the `publish.yaml` workflow publishes to Maven Central via vanniktech with `automaticRelease = true` (no manual Sonatype Portal step). All 5 coordinates (root, `-jvm`, `-linuxx64`, `-linuxarm64`, `-codegen`) deploy as one atomic deployment.
 3. SNAPSHOT versions skip signing (for local `publishToMavenLocal` cross-repo testing); real releases are signed.
 

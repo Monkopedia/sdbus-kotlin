@@ -21,9 +21,9 @@ It is published for three targets, all sharing the same common API:
 
 ## API stability
 
-0.6.0 is the **1.0-polish** release — a post-0.5.0 review applied a final wave of renames and
-deprecations to the public surface (see the [CHANGELOG](CHANGELOG.md) migration guide). 1.0 will
-freeze that surface, dropping the names deprecated in 0.6.0. Compatibility is enforced in CI with
+**1.0 freezes the public API.** A post-0.5.0 review applied a final wave of renames and deprecations
+(see the [CHANGELOG](CHANGELOG.md) migration guide), and 1.0 removes the names that were deprecated
+in 0.6.0. From here the surface is stable. Compatibility is enforced in CI with
 [binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
 (JVM and klib API dumps are checked in under `api/`), so any change to the public surface is an
 explicit, reviewed event.
@@ -61,7 +61,7 @@ introspection XML files, conventionally placed in `src/dbusMain`.
 ```
 plugins {
     ...
-    id("com.monkopedia.sdbus.plugin") version "0.6.0"
+    id("com.monkopedia.sdbus.plugin") version "1.0.0"
 }
 
 sdbus {
@@ -95,7 +95,7 @@ module with implementations for `jvm`, `linuxX64`, and `linuxArm64`. Add the dep
 ```
 val nativeMain by getting {
     dependencies {
-       implementation("com.monkopedia:sdbus-kotlin:0.6.0")
+       implementation("com.monkopedia:sdbus-kotlin:1.0.0")
     }
 }
 ```

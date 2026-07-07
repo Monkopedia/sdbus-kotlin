@@ -5,12 +5,13 @@ All notable changes to sdbus-kotlin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-07-04
+
+1.0 **freezes the public API.** It removes the names deprecated in 0.6.0 and lands a wave of
+cross-backend behavioral parity fixes so the native (sd-bus) and JVM (junixsocket wire) backends
+agree on the consumer-facing surface. Every fix ships with a cross-backend regression test.
 
 ### Removed (breaking) — the 0.6.0 deprecations
-
-The symbols deprecated in 0.6.0 (kept as warnings that release) are now removed. This is the
-final freeze cleanup targeted at 1.0.
 
 - **The fluent property layer** — `AsyncPropertyGetter`, `AsyncPropertySetter`, `AllPropertiesGetter`,
   `AsyncAllPropertiesGetter`, and the single-argument `Proxy.getPropertyAsync(propertyName)` /
@@ -20,6 +21,39 @@ final freeze cleanup targeted at 1.0.
   `setPropertyAsync(interfaceName, propertyName, value)`, `getAllProperties(interfaceName)`,
   `getAllPropertiesAsync(interfaceName)`.
 - **`typealias Error`** — use `SdbusException` directly.
+
+### Fixed — cross-backend parity (JVM backend)
+
+- **Directed signals** now unicast-route on JVM; `Signal.setDestination` was broadcast. (#138)
+- **Error name**: a handler throwing a non-`SdbusException` now surfaces
+  `org.freedesktop.DBus.Error.Failed` on both backends — the JVM backend previously put the
+  exception message in the error-name slot, and native produced `NoReply`. This changes the
+  observable `SdbusException.name` for that case. (#142)
+- **ObjectManager `InterfacesAdded` and no-argument `PropertiesChanged`** now carry the object's
+  current property values on JVM (were emitted with empty maps). (#143)
+- **Use-after-release**: JVM connection operations now throw the same error as native after
+  `release()` instead of silently succeeding. (#144)
+- **`proxy.release()`** now tears down the proxy's signal handlers on JVM (was a no-op). (#145)
+- **Wrong argument count** → `org.freedesktop.DBus.Error.InvalidArgs` on JVM (was `UnknownMethod`);
+  a genuinely-missing member stays `UnknownMethod`. (#146)
+- **Same-process `Peer` (Ping/GetMachineId) and `Introspectable` (Introspect)** calls are now
+  served on JVM (the local short-circuit returned `UnknownMethod`). (#147)
+- **`JvmStaticDispatch`** dispatch table made thread-safe (data race between object
+  registration and concurrent dispatch). (#148)
+- **`dontExpectReply`** (fire-and-forget calls) honored on JVM — no ~30s wait for a reply, and no
+  error surfaced for a missing target. (#149)
+- **`Connection.addMatch`** with a well-known `sender=` now receives matching signals on JVM
+  (the local re-filter was dropping them). (#150)
+
+### Added
+
+- Serve-worker-pool saturation watchdog for non-compensated nested blocking. (#133)
+- Substantial external-integration test coverage of the 0.6.0 surface and the cross-backend
+  contracts, plus a coverage baseline at [`docs/TEST_COVERAGE.md`](docs/TEST_COVERAGE.md).
+  (#134–#136, #139)
+
+See [`docs/BACKENDS.md`](docs/BACKENDS.md) for the small set of same-process / direct-connection
+differences that remain documented rather than matched (none on the cross-process path).
 
 ## [0.6.0] - 2026-06-18
 
@@ -245,6 +279,8 @@ Platform-specific surface (#87, issue #82):
 - Add cross-runtime interop and stress test modules.
 - Codegen: package override support and stronger generation tests.
 
+[1.0.0]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v1.0.0
+[0.6.0]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v0.5.0
 [0.4.5]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v0.4.5
 [0.4.4]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v0.4.4

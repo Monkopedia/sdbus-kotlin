@@ -271,7 +271,8 @@ There are 11 `create*Connection` entry points — 10 declared in the common API
 - The two **fd-based factories** are native-only. The JVM actuals are marked
   `@Deprecated(level = ERROR)` (`src/jvmMain/.../Connection.jvm.kt`), so calling them from
   JVM-compiled code is a **compile-time error**; if invoked anyway (e.g. reflectively), the
-  JVM backend throws (`PureJavaDbusBackend.createConnection` rejects `DIRECT_FD`/`SERVER_FD`).
+  JVM backend rejects the fd-based bus types (`JvmBusType.DIRECT_FD`/`SERVER_FD`, in
+  `WireDbusBackend.createConnection`).
   On native they adopt the descriptor as documented in their KDoc.
 - `createRemoteSystemBusConnection(host)` is **native-only and not declared in the common
   or JVM API** (it lives in `src/nativeMain/.../Connection.native.kt`). It opens the system
@@ -292,7 +293,7 @@ that need connection plumbing without a real bus, but it is an **explicit intern
 implicitly by any factory.
 
 - Proven by: `src/jvmTest/.../JvmUnreachableBusTest.kt` (unreachable session/direct addresses
-  throw `Error`) and `PureJavaDbusBackendTest.createConnection_throwsWhenEndpointMissing`.
+  throw `SdbusException`).
 
 ## Event loop semantics
 
@@ -352,5 +353,24 @@ You can still call it explicitly after registering handlers on a bare connection
    `FailurePathParityTest.connectionMethodCallTimeout_appliesToCallsWithoutExplicitTimeout`
    and `JvmUnreachableBusTest`.
 
-Everything not listed above is contract-level parity, enforced by the commonTest and
-cross_test suites on every CI run.
+The **cross-process** surface (the real consumer path, e.g. talking to BlueZ) is contract-level
+parity, enforced by the commonTest and cross_test suites on every CI run — including the parity
+wave that closed the error-name contract, ObjectManager/PropertiesChanged payloads, use-after-release
+guards, `proxy.release()` teardown, wrong-argument-count classification, same-process standard
+interfaces, `dontExpectReply`, and `addMatch` well-known-sender resolution (#141, all pinned by
+cross-backend regression tests).
+
+A few **same-process / direct-connection** edges remain JVM-specific and are documented rather than
+matched (they don't affect cross-process usage):
+
+- Two brokerless **direct** connections in one JVM share a synthetic `uniqueName` (`":jvm-wire"`),
+  and objects they export at the same path can clobber each other in the local dispatch table.
+- `startEventLoop()` is a no-op on JVM (the reader thread auto-starts at connect), where native
+  requires it to receive — a JVM proxy can receive signals without it; native cannot.
+- `Properties.GetAll` on an interface the object doesn't implement returns an empty `a{sv}` on JVM,
+  where native returns an error.
+- A same-process `UnixFd` argument is passed by reference (not dup'd) on the local short-circuit,
+  where native dups the descriptor.
+- `currentlyProcessedMessage` is not guarded against use after `release()` on JVM (native is).
+
+These are tracked as post-1.0 items; none is on the cross-process path.
