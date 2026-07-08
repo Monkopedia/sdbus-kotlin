@@ -37,7 +37,7 @@ import kotlin.test.assertFailsWith
  * message preserved verbatim.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
- * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`) — the independent-peer
+ * (`linuxX64Test`) and the JVM wire backend (`jvmTest`) — the independent-peer
  * counterpart of the own-server error-mapping parity coverage. Skips cleanly when
  * python3-dbusmock is not installed (see [DbusmockHarness]).
  */

@@ -40,7 +40,7 @@ import kotlinx.coroutines.withTimeout
  * (Python/GDBus) stack, and the subscribe/unsubscribe lifecycle.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
- * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`). Skips cleanly when
+ * (`linuxX64Test`) and the JVM wire backend (`jvmTest`). Skips cleanly when
  * python3-dbusmock is not installed (see [DbusmockHarness]).
  */
 class DbusmockSignalTest {

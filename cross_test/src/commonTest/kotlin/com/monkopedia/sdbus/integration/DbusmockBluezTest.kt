@@ -108,7 +108,7 @@ import kotlinx.coroutines.withTimeout
  * the `assertFailsWith<SdbusException>` part always runs on both backends.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
- * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`). Skips cleanly when
+ * (`linuxX64Test`) and the JVM wire backend (`jvmTest`). Skips cleanly when
  * python3-dbusmock is not installed (see [DbusmockHarness]).
  */
 class DbusmockBluezTest {

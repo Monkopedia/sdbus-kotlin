@@ -26,7 +26,7 @@ import kotlinx.serialization.Serializable
  * Each test stands up a real bus connection with a server object exposing an `Echo` method that
  * returns its argument unchanged, then calls it through a proxy and asserts the returned value
  * equals the value sent. Because this lives in commonTest, the exact same assertions run against
- * BOTH the native sd-bus backend (linuxX64Test) and the JVM dbus-java backend (jvmTest), so any
+ * BOTH the native sd-bus backend (linuxX64Test) and the JVM wire backend (jvmTest), so any
  * marshalling divergence between the two backends shows up as a test failure on one of them.
  *
  * The values cross a real bus rather than short-circuiting in-process, so wire-serialization bugs

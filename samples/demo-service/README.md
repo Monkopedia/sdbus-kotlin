@@ -118,7 +118,7 @@ busctl --user call $SVC /com/monkopedia/demo \
   processes (`busctl`, a separate `client` run, a JVM client) can introspect, call methods, read/
   write properties, and receive signals over the wire.
 - **JVM** is backed by an owned junixsocket connection with a pure-Kotlin marshaller and dispatcher
-  (no `dbus-java`, no native code). Since 0.5.0 the JVM `server` mode serves exported objects over
+  (no native code). Since 0.5.0 the JVM `server` mode serves exported objects over
   the wire — external processes (`busctl`, a separate `client` run, the native client) can
   introspect, call methods, read/write properties, and receive signals from it, just like the
   native target; `./gradlew runJvm --args="client"` against the native server also works end-to-end.
