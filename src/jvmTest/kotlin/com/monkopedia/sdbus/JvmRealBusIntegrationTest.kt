@@ -235,7 +235,7 @@ class JvmRealBusIntegrationTest {
         // Exercised on BOTH backends now (epic #93 phase 3b): the wire backend emits the signal over
         // the wire, so the bus stamps the authoritative sender and the receiver resolves the
         // sender's credentials (filled from the local process for a same-process sender), just as
-        // the dbus-java backend does.
+        // the dbus-java backend did (before it was replaced).
         val suffix = "c${System.nanoTime()}"
         val service = ServiceName("com.monkopedia.sdbus.jvmreal.$suffix")
         val objectPath = ObjectPath("/com/monkopedia/sdbus/jvmreal$suffix/credentials")

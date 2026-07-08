@@ -38,7 +38,7 @@ import kotlinx.coroutines.runBlocking
 /**
  * Smoke test for the python-dbusmock independent-peer harness ([DbusmockHarness]).
  *
- * This proves the end-to-end loop on whichever backend the test compiles for (JVM dbus-java
+ * This proves the end-to-end loop on whichever backend the test compiles for (JVM wire
  * via `jvmTest`, native sd-bus via `linuxX64Test`): our client scripts a generic dbusmock
  * object, then calls a method and reads a property on it and asserts the results round-trip
  * through the foreign (Python/GDBus) serializer.

@@ -10,7 +10,7 @@ The same common API is published for three targets:
 
 | Target | Backend |
 | --- | --- |
-| `jvm` | An owned D-Bus connection — [junixsocket](https://github.com/kohlschutter/junixsocket) transport with a pure-Kotlin marshaller and dispatcher (as of 0.5.0; no `dbus-java`, no native code) |
+| `jvm` | An owned D-Bus connection — [junixsocket](https://github.com/kohlschutter/junixsocket) transport with a pure-Kotlin marshaller and dispatcher, no native code (since 0.5.0) |
 | `linuxX64` | sd-bus via libsystemd (cinterop) |
 | `linuxArm64` | sd-bus via libsystemd (cinterop) |
 

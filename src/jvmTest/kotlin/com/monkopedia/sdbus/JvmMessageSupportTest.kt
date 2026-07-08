@@ -170,7 +170,7 @@ class JvmMessageSupportTest {
         assertFailsWith<SdbusException> { message.seLinuxContext }
     }
 
-    // Regression: D-Bus `ay` (e.g. a GATT characteristic value) arrives from dbus-java as
+    // Regression: D-Bus `ay` (e.g. a GATT characteristic value) arrives as
     // signed java.lang.Byte values, but the declared type is List<UByte>. Deserialization
     // must box each element into UByte; otherwise reading it throws
     // "class java.lang.Byte cannot be cast to class kotlin.UByte".

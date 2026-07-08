@@ -48,7 +48,7 @@ import kotlinx.serialization.Serializable
  * stack to decode it and re-encode an equivalent reply.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
- * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`).
+ * (`linuxX64Test`) and the JVM wire backend (`jvmTest`).
  *
  * Skips cleanly when python3 / python3-dbusmock is not installed (e.g. the ARM CI job). See
  * [DbusmockHarness] for installation instructions.

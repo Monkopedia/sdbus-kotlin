@@ -65,7 +65,7 @@ import kotlinx.serialization.Serializable
  * Secret Service API.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
- * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`). Known JVM backend gaps are
+ * (`linuxX64Test`) and the JVM wire backend (`jvmTest`). Known JVM backend gaps are
  * gated, not re-tripped:
  * - issue #71 ([peerStructMarshallingSupported]): @Serializable structs cannot be marshalled
  *   to/from a real remote peer, which covers every `(oayays)` Secret transfer.

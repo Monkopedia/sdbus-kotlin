@@ -44,7 +44,7 @@ import kotlinx.coroutines.withTimeout
  * `PropertyDelegate.changes()`/`changesOrNull()`/`values()`/`valuesOrNull()` flows.
  *
  * Lives in commonTest so the exact same assertions run against BOTH the native sd-bus backend
- * (`linuxX64Test`) and the JVM dbus-java backend (`jvmTest`) — settling the JVM-vs-native
+ * (`linuxX64Test`) and the JVM wire backend (`jvmTest`) — settling the JVM-vs-native
  * parity question for changed-value payloads from an independent emitter. Skips cleanly when
  * python3-dbusmock is not installed (see [DbusmockHarness]).
  */

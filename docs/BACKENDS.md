@@ -3,8 +3,8 @@
 sdbus-kotlin ships one common API with two implementations: the **native** backend
 (`linuxX64`/`linuxArm64`, sd-bus via libsystemd) and the **JVM** backend, which owns its D-Bus
 connection over a [junixsocket](https://github.com/kohlschutter/junixsocket) transport with a
-pure-Kotlin marshaller and dispatcher (no `dbus-java`, no native code — junixsocket is the only
-transitive dependency). This document is the contract for what behaves identically on both
+pure-Kotlin marshaller and dispatcher (no native code — junixsocket is the only transitive
+dependency). This document is the contract for what behaves identically on both
 backends and where they differ, as of the frozen 1.0 API surface.
 
 Every row below is pinned by tests on current `main`, not by intention:
