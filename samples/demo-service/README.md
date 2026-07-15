@@ -33,7 +33,7 @@ This sample is part of the sdbus-kotlin repository and must demonstrate the **cu
 (1.0.0). So, exactly like `bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle
 **composite build** (`includeBuild("../..")`). Gradle automatically substitutes the
 `com.monkopedia:sdbus-kotlin` dependency declared in `build.gradle.kts` with the local source tree,
-so the version coordinate there (`1.0.0`) is only a placeholder and the sample always compiles
+so the version coordinate there (`1.0.1`) is only a placeholder and the sample always compiles
 against the library checked out next to it. No `publishToMavenLocal` step is required.
 
 ## Running
