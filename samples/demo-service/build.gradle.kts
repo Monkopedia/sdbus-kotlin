@@ -37,7 +37,6 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.datetime)
                 implementation(kotlin("stdlib"))
                 // Version is a placeholder: the composite build in settings.gradle.kts
                 // substitutes this with the local sdbus-kotlin source tree.

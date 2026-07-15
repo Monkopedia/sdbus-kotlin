@@ -34,7 +34,6 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.datetime)
                 implementation(kotlin("stdlib"))
                 implementation("com.monkopedia:sdbus-kotlin:1.0.1")
             }
