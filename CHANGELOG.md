@@ -5,6 +5,24 @@ All notable changes to sdbus-kotlin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-07-15
+
+A maintenance release: refreshed external dependencies to their latest stable versions. There are
+**no API or behavioral changes** — the public surface is byte-for-byte unchanged (both the JVM and
+klib binary-compatibility dumps are identical to 1.0.0), so this is a drop-in upgrade.
+
+### Changed — dependencies
+
+- **Kotlin** `2.4.0` → `2.4.10` (toolchain; no klib-ABI shift).
+- **kotlinx-coroutines** `1.10.2` → `1.11.0`.
+- **kotlinx-atomicfu** `0.32.1` → `0.33.0`.
+- **kotlinx-datetime** `0.7.1` → `0.8.0`.
+
+### Documentation
+
+- Describe the JVM backend by what it is (an owned junixsocket connection with a pure-Kotlin
+  marshaller and dispatcher) rather than by what it no longer uses. (#152)
+
 ## [1.0.0] - 2026-07-04
 
 1.0 **freezes the public API.** It removes the names deprecated in 0.6.0 and lands a wave of
@@ -279,6 +297,7 @@ Platform-specific surface (#87, issue #82):
 - Add cross-runtime interop and stress test modules.
 - Codegen: package override support and stronger generation tests.
 
+[1.0.1]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v1.0.0
 [0.6.0]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Monkopedia/sdbus-kotlin/releases/tag/v0.5.0
