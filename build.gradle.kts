@@ -97,7 +97,6 @@ kotlin {
                 // kotlinx-serialization types (KSerializer, the serializer companions) are part
                 // of the public API surface (e.g. Variant, UnixFd.Companion), so expose as api.
                 api(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.atomicfu)
             }
         }
@@ -105,7 +104,6 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.datetime)
                 // Owned D-Bus connection (epic #93): the JVM backend talks to the bus over a raw
                 // AF_UNIX socket via junixsocket and our own marshaller/dispatch — no dbus-java.
                 // junixsocket is a direct dependency so the owned connection can use AFUNIXSocket.
@@ -124,7 +122,6 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.datetime)
                 implementation(kotlin("stdlib"))
             }
         }

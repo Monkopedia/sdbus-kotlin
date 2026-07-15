@@ -16,7 +16,13 @@ klib binary-compatibility dumps are identical to 1.0.0), so this is a drop-in up
 - **Kotlin** `2.4.0` → `2.4.10` (toolchain; no klib-ABI shift).
 - **kotlinx-coroutines** `1.10.2` → `1.11.0`.
 - **kotlinx-atomicfu** `0.32.1` → `0.33.0`.
-- **kotlinx-datetime** `0.7.1` → `0.8.0`.
+
+### Removed — dependencies
+
+- **kotlinx-datetime** is no longer a dependency. It was declared but unused (the library uses
+  `kotlin.time` from the standard library), so it has been dropped from the published artifacts —
+  removing it from consumers' transitive runtime classpath. This is `implementation`-scoped and
+  absent from the public API, so it does not affect the binary-compatibility surface.
 
 ### Documentation
 
