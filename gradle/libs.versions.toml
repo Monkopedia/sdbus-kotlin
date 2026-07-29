@@ -10,11 +10,11 @@ kotlin-bcv = "0.18.1"
 pdvrieze-xmlutil = "0.91.3"
 kotlinpoet = "2.3.0"
 hierynomus = "0.16.1"
-ktlint = "14.0.1"
-buildconfig = "6.0.9"
-vannik = "0.36.0"
+ktlint = "14.2.0"
+buildconfig = "6.0.10"
+vannik = "0.37.0"
 junixsocket = "2.10.1"
-mockk = "1.14.9"
+mockk = "1.14.11"
 
 [libraries]
 dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "dokka" }
