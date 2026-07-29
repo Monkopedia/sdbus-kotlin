@@ -782,7 +782,7 @@ private val localProcessWireCredentials: WireSenderCredentials by lazy {
     val unix = runCatching { com.sun.security.auth.module.UnixSystem() }.getOrNull()
     val selinuxContext = runCatching {
         java.nio.file.Files.readString(java.nio.file.Paths.get("/proc/self/attr/current"))
-            .trim(' ', ' ')
+            .trim('\u0000', ' ')
             .ifEmpty { null }
     }.getOrNull()
     WireSenderCredentials(
