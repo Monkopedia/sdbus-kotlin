@@ -282,6 +282,11 @@ There are 11 `create*Connection` entry points — 10 declared in the common API
   JVM backend rejects the fd-based bus types (`JvmBusType.DIRECT_FD`/`SERVER_FD`, in
   `WireDbusBackend.createConnection`).
   On native they adopt the descriptor as documented in their KDoc.
+- A **brokerless direct connection** has no daemon to run `Hello` against, so neither backend gets
+  a bus-assigned unique name for it. The JVM backend synthesizes one **per connection**
+  (`":jvm-wire-<n>"`) — the in-process registries are keyed by it, so two direct connections in one
+  JVM keep separate identities and objects they export at the same path no longer clobber each
+  other (#141, pinned by `src/jvmTest/.../JvmDirectConnectionIdentityTest.kt`).
 - `createRemoteSystemBusConnection(host)` is **native-only and not declared in the common
   or JVM API** (it lives in `src/nativeMain/.../Connection.native.kt`). It opens the system
   bus of a remote host over ssh via sd-bus (`sd_bus_open_system_remote`, which spawns
@@ -378,8 +383,6 @@ cross-backend regression tests).
 A few **same-process / direct-connection** edges remain JVM-specific and are documented rather than
 matched (they don't affect cross-process usage):
 
-- Two brokerless **direct** connections in one JVM share a synthetic `uniqueName` (`":jvm-wire"`),
-  and objects they export at the same path can clobber each other in the local dispatch table.
 - `startEventLoop()` is a no-op on JVM (the reader thread auto-starts at connect), where native
   requires it to receive — a JVM proxy can receive signals without it; native cannot. Stated on
   `Connection.startEventLoop`/`stopEventLoop` so it reaches the API docs; see "Event loop
