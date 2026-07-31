@@ -24,9 +24,41 @@ package com.monkopedia.sdbus
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
+import nl.adaptivity.xmlutil.QName
+import nl.adaptivity.xmlutil.XmlReader
+import nl.adaptivity.xmlutil.serialization.DefaultXmlSerializationPolicy
+import nl.adaptivity.xmlutil.serialization.InputKind
+import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.serialization.XML.ParsedData
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
+import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
+
+/**
+ * The single parser for D-Bus introspection XML, shared by the [Xml2Kotlin] CLI and the tests so
+ * the golden fixtures assert against the configuration the tool actually ships. Unknown content
+ * is dropped rather than failing, so vendor extensions don't break generation.
+ *
+ * `XML.compat` is deprecated in xmlutil 1.0, but its replacements deliberately change the parsing
+ * defaults and xmlutil offers no non-deprecated route back to the old ones. Switching is a
+ * behaviour change needing its own review, so the compat defaults stay pinned here.
+ */
+@OptIn(ExperimentalXmlUtilApi::class)
+@Suppress("DEPRECATION")
+internal val introspectionXml: XML = XML.compat {
+    isUnchecked = true
+    policy = object : DefaultXmlSerializationPolicy(policy) {
+        override fun handleUnknownContentRecovering(
+            input: XmlReader,
+            inputKind: InputKind,
+            descriptor: XmlDescriptor,
+            name: QName?,
+            candidates: Collection<Any>
+        ): List<ParsedData<*>> = emptyList()
+    }
+}
 
 @Serializable
 @XmlSerialName("node")
