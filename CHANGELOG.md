@@ -5,6 +5,18 @@ All notable changes to sdbus-kotlin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed — dependencies
+
+- **xmlutil** is now `implementation`-scoped rather than `api`-scoped in `sdbus-kotlin-codegen`. It is
+  used only inside the introspection-XML parser and appears in zero public signatures, so it no longer
+  takes part in consumers' compile-classpath resolution — it stays on the runtime classpath, where the
+  tool actually needs it. The binary-compatibility surface is unchanged. This is a small source-breaking
+  change for anyone who relied on xmlutil being transitively available at compile time through
+  `sdbus-kotlin-codegen` or the `com.monkopedia.sdbus.plugin` Gradle plugin; declare it directly instead.
+  (#167)
+
 ## [1.0.1] - 2026-07-15
 
 A maintenance release: refreshed external dependencies to their latest stable versions. There are
