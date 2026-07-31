@@ -46,7 +46,7 @@ gradlePlugin {
     website = "https://github.com/monkopedia/sdbus-kotlin"
     vcsUrl = "https://github.com/monkopedia/sdbus-kotlin"
 
-    val sdbusPlugin by plugins.creating {
+    plugins.create("sdbusPlugin") {
         id = "com.monkopedia.sdbus.plugin"
         implementationClass = "com.monkopedia.sdbus.plugin.SdbusPlugin"
         displayName = "Sdbus-Kotlin Gradle Plugin"

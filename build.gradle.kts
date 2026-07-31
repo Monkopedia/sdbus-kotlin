@@ -91,7 +91,7 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
     sourceSets {
-        val commonMain by getting {
+        getByName("commonMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 // kotlinx-serialization types (KSerializer, the serializer companions) are part
@@ -100,7 +100,7 @@ kotlin {
                 implementation(libs.kotlinx.atomicfu)
             }
         }
-        val jvmMain by getting {
+        getByName("jvmMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
@@ -111,21 +111,21 @@ kotlin {
                 implementation(kotlin("stdlib"))
             }
         }
-        val jvmTest by getting {
+        getByName("jvmTest") {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.mockk)
             }
         }
-        val nativeMain by getting {
+        getByName("nativeMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
                 implementation(kotlin("stdlib"))
             }
         }
-        val nativeTest by getting {
+        getByName("nativeTest") {
             dependencies {
                 implementation(libs.kotlinx.coroutines.test)
             }
