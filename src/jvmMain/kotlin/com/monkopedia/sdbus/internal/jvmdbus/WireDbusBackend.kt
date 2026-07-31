@@ -28,6 +28,7 @@ import com.monkopedia.sdbus.signalFromMetadata
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
 import kotlin.time.Duration
 
@@ -158,8 +159,17 @@ private fun emitWireSignal(
     }
 }
 
+// A brokerless DIRECT connection is not told a unique name — there is no daemon to run Hello
+// against — but the in-process registries (JvmStaticDispatch, WireServeRegistry,
+// LocalObjectManagerRegistry, ...) are all keyed by it. Every such connection used to answer with
+// the same constant ":jvm-wire", so two of them in one JVM shared one identity and objects they
+// exported at the same path clobbered each other in the dispatch table. Give each its own name
+// instead. #141.
+private val directConnectionCounter = AtomicLong()
+
 internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbusConnection {
-    private val localUniqueName: String = wire.uniqueName.orEmpty()
+    private val localUniqueName: String =
+        wire.uniqueName ?: ":jvm-wire-${directConnectionCounter.incrementAndGet()}"
     private val released = AtomicBoolean(false)
     private var timeout: Duration = Duration.ZERO
 
@@ -209,7 +219,7 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
 
     override fun uniqueName(): BusName {
         checkNotReleased()
-        return BusName(localUniqueName.ifEmpty { ":jvm-wire" })
+        return BusName(localUniqueName)
     }
 
     override fun requestName(name: ServiceName, flags: UInt): RequestNameReply {
