@@ -41,7 +41,17 @@ interface Connection : Resource {
      *
      * The loop runs in a separate, internally managed thread, processing incoming
      * and outgoing D-Bus messages, so this call does not block. The loop runs until
-     * [stopEventLoop] is called or the connection is released.
+     * [stopEventLoop] is called or the connection is released. Repeated calls are idempotent —
+     * a connection never runs more than one loop.
+     *
+     * **Call it, even though only one backend needs it.** On the native (sd-bus) backend the loop
+     * *is* the dispatcher: a proxy on a connection whose loop was never started receives no
+     * signals and no async replies. On the JVM backend the owned wire connection reads and
+     * dispatches on its own threads from the moment it connects, so this call is a no-op and
+     * messages arrive whether or not it was made. Code that omits it therefore works on JVM and
+     * silently receives nothing on native — so start the loop (or leave `runEventLoopThread` at
+     * its `true` default on [createObject]/[createProxy], which starts it for you) in code meant
+     * to be portable. See `docs/BACKENDS.md` ("Event loop semantics").
      */
     fun startEventLoop()
 
@@ -50,6 +60,10 @@ interface Connection : Resource {
      *
      * This causes the loop started by [startEventLoop] to exit, and frees the
      * thread serving the loop
+     *
+     * The mirror image of the asymmetry described on [startEventLoop]: stopping the loop stops
+     * dispatch on native, while on JVM this is a no-op and dispatch continues until the
+     * connection is released.
      *
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
