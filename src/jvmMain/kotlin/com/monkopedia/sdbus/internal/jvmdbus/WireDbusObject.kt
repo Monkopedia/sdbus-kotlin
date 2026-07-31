@@ -276,8 +276,24 @@ internal class WireDbusObject(
         emitPropertiesChangedSignal(interfaceName, allProps)
     }
 
+    // The no-argument overloads map onto sd_bus_emit_object_added/_removed, which advertise the
+    // object's STANDARD interfaces alongside its vtables: Peer, Introspectable and Properties
+    // always, plus ObjectManager when one is installed at this very path. (The explicit-list
+    // overloads map onto sd_bus_emit_interfaces_added_strv and stay exactly what the caller named.)
+    // The standard ones carry no properties, which snapshotInterfaceProperties already reports as
+    // an empty map. #141.
+    private fun allInterfaceNames(): List<InterfaceName> = buildList {
+        add(InterfaceName(WireServe.PEER_INTERFACE))
+        add(InterfaceName(WireServe.INTROSPECTABLE_INTERFACE))
+        add(InterfaceName(propertiesInterfaceName))
+        if (LocalObjectManagerRegistry.resolveFor(objectPath.value) == objectPath.value) {
+            add(InterfaceName(objectManagerInterfaceName))
+        }
+        addAll(registeredInterfaces.keys.map(::InterfaceName))
+    }
+
     override fun emitInterfacesAddedSignal() {
-        emitInterfacesAddedSignal(registeredInterfaces.keys.map(::InterfaceName))
+        emitInterfacesAddedSignal(allInterfaceNames())
     }
 
     override fun emitInterfacesAddedSignal(interfaces: List<InterfaceName>) {
@@ -300,7 +316,7 @@ internal class WireDbusObject(
     }
 
     override fun emitInterfacesRemovedSignal() {
-        emitInterfacesRemovedSignal(registeredInterfaces.keys.map(::InterfaceName))
+        emitInterfacesRemovedSignal(allInterfaceNames())
     }
 
     override fun emitInterfacesRemovedSignal(interfaces: List<InterfaceName>) {
