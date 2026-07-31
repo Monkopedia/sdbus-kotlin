@@ -316,6 +316,13 @@ Consequence: explicit `startEventLoop()` is no longer a footgun — `createObjec
 auto-start it on native and it is a free no-op on JVM, while a redundant call is idempotent on
 both (`EventLoopStartIdempotencyTest.createObjectAutoStartsLoop_andRepeatedStartEventLoopIsIdempotent`).
 You can still call it explicitly after registering handlers on a bare connection.
+
+The asymmetry only bites in the *omitted* direction, and it is **documented rather than tested**
+(#141): a client that registers a signal handler on a bare connection and never starts the loop
+receives the signal on JVM and receives nothing on native. That makes the "loop required" contract
+untestable as a single cross-backend assertion — the same test is green on JVM and times out on
+native — so it is stated on `Connection.startEventLoop`'s KDoc instead, where a consumer reading
+the API docs will see it.
 `currentlyProcessedMessage` is valid inside handlers on both backends
 (`CommonApiIntegrationTest.signalHandler_exposesCurrentlyProcessedMessageOnProxy`,
 `propertySetter_exposesCurrentlyProcessedMessageOnObject`).
@@ -366,7 +373,9 @@ matched (they don't affect cross-process usage):
 - Two brokerless **direct** connections in one JVM share a synthetic `uniqueName` (`":jvm-wire"`),
   and objects they export at the same path can clobber each other in the local dispatch table.
 - `startEventLoop()` is a no-op on JVM (the reader thread auto-starts at connect), where native
-  requires it to receive — a JVM proxy can receive signals without it; native cannot.
+  requires it to receive — a JVM proxy can receive signals without it; native cannot. Stated on
+  `Connection.startEventLoop`/`stopEventLoop` so it reaches the API docs; see "Event loop
+  semantics" above for why it is not pinned by a test.
 - `Properties.GetAll` on an interface the object doesn't implement returns an empty `a{sv}` on JVM,
   where native returns an error.
 - A same-process `UnixFd` argument is passed by reference (not dup'd) on the local short-circuit,
