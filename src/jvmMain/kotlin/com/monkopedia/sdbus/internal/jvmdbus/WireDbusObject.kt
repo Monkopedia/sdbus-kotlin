@@ -51,6 +51,7 @@ internal fun interface WireSignalEmitter {
  * via [wireSignalEmitter], uniform with the native backend.
  */
 internal class WireDbusObject(
+    private val connection: WireDbusConnection,
     private val objectPath: ObjectPath,
     private val senderName: String?,
     private val wireSignalEmitter: WireSignalEmitter
@@ -332,8 +333,12 @@ internal class WireDbusObject(
         }
     }
 
-    override fun currentlyProcessedMessage(): Message =
-        JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
+    override fun currentlyProcessedMessage(): Message {
+        // Native's ObjectImpl reads through to the connection, which rejects use after release()
+        // (ConnectionImpl.checkNotReleased). Parity #141.
+        require(!connection.isReleased()) { "Connection has already been released" }
+        return JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
+    }
 
     override fun addVTable(interfaceName: InterfaceName, vtable: List<VTableItem>): Resource {
         registeredInterfaces[interfaceName.value] =

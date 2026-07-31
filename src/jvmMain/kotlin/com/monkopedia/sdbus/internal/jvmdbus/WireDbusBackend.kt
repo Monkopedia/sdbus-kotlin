@@ -106,13 +106,15 @@ internal class WireDbusBackend : JvmDbusBackend {
         // D-Bus SIGNAL the bus routes to all subscribers (external processes AND same-JVM
         // connections, each via its own AddMatch) -- uniform with the native backend, and the only
         // way a receiver can resolve our sender credentials off the bus.
-        val wire = ((connection as? JvmConnection)?.backend as? WireDbusConnection)?.wireConnection
+        val wireConnection = (connection as? JvmConnection)?.backend as? WireDbusConnection
             ?: throw createError(-1, "createObject failed: connection has no wire transport")
+        val wire = wireConnection.wireConnection
         val emitter =
             WireSignalEmitter { path, interfaceName, member, signature, payload, destination ->
                 emitWireSignal(wire, path, interfaceName, member, signature, payload, destination)
             }
         return WireDbusObject(
+            wireConnection,
             objectPath,
             runCatching { connection.uniqueName.value }.getOrNull(),
             emitter
@@ -185,8 +187,10 @@ internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbu
 
     override suspend fun stopEventLoop() = checkNotReleased()
 
-    override fun currentlyProcessedMessage(): Message =
-        JvmCurrentMessageContext.current() ?: createPlainMessage()
+    override fun currentlyProcessedMessage(): Message {
+        checkNotReleased()
+        return JvmCurrentMessageContext.current() ?: createPlainMessage()
+    }
 
     override fun setMethodCallTimeout(timeout: Duration): Unit = run {
         checkNotReleased()
@@ -255,8 +259,12 @@ internal class WireDbusProxy(
     // Signal handlers registered through this proxy, released together on release() (native parity).
     private val signalRegistrations = CopyOnWriteArrayList<Resource>()
 
-    override fun currentlyProcessedMessage(): Message =
-        JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
+    override fun currentlyProcessedMessage(): Message {
+        // Native's ProxyImpl reads through to the connection, which rejects use after release()
+        // (ConnectionImpl.checkNotReleased). Parity #141.
+        require(connection?.isReleased() != true) { "Connection has already been released" }
+        return JvmCurrentMessageContext.current() ?: signalFromMetadata(Message.Metadata())
+    }
 
     override fun createMethodCall(
         interfaceName: InterfaceName,

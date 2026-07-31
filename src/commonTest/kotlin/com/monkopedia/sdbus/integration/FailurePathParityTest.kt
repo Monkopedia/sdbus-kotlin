@@ -305,6 +305,29 @@ class FailurePathParityTest {
         assertFailsWith<IllegalArgumentException> {
             connection.methodCallTimeout = 100.milliseconds
         }
+        // currentlyProcessedMessage is the accessor #144 missed: native guards it like every
+        // other op, the JVM backend handed back a fresh empty message instead. #141.
+        assertFailsWith<IllegalArgumentException> { connection.currentlyProcessedMessage }
+        Unit
+    }
+
+    // The Object/Proxy currentlyProcessedMessage accessors both read through to the owning
+    // connection on native (ObjectImpl/ProxyImpl delegate to ConnectionImpl), so releasing the
+    // connection makes all three throw. On the JVM backend they answered from a thread-local
+    // dispatch context and fell back to a fresh empty message, so a released connection kept
+    // handing out messages. #141.
+    @Test
+    fun currentlyProcessedMessageAfterReleaseThrowsOnBothBackends() = runBlocking {
+        val ids = uniqueFixtureIds("currentMsg")
+        val connection = createBusConnection(ids.service)
+        val obj = createObject(connection, ids.path)
+        val proxy = createProxy(connection, ids.service, ids.path, runEventLoopThread = false)
+
+        connection.release()
+
+        assertFailsWith<IllegalArgumentException> { connection.currentlyProcessedMessage }
+        assertFailsWith<IllegalArgumentException> { obj.currentlyProcessedMessage }
+        assertFailsWith<IllegalArgumentException> { proxy.currentlyProcessedMessage }
         Unit
     }
 
