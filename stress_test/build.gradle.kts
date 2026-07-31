@@ -14,18 +14,18 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val commonMain by getting {
+        getByName("commonMain") {
             dependencies {
                 implementation(project(":"))
             }
         }
-        val commonTest by getting {
+        getByName("commonTest") {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
-        val jvmTest by getting {
+        getByName("jvmTest") {
             dependencies {
                 // dbus-java is an INDEPENDENT third-party D-Bus peer for the cross-runtime interop
                 // stress test — NOT sdbus-kotlin's backend (retired in epic #93 phase 6) and not a

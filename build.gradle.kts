@@ -91,7 +91,7 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
     sourceSets {
-        val commonMain by getting {
+        getByName("commonMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 // kotlinx-serialization types (KSerializer, the serializer companions) are part
@@ -100,7 +100,7 @@ kotlin {
                 implementation(libs.kotlinx.atomicfu)
             }
         }
-        val jvmMain by getting {
+        getByName("jvmMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
@@ -111,21 +111,21 @@ kotlin {
                 implementation(kotlin("stdlib"))
             }
         }
-        val jvmTest by getting {
+        getByName("jvmTest") {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.mockk)
             }
         }
-        val nativeMain by getting {
+        getByName("nativeMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
                 implementation(kotlin("stdlib"))
             }
         }
-        val nativeTest by getting {
+        getByName("nativeTest") {
             dependencies {
                 implementation(libs.kotlinx.coroutines.test)
             }
@@ -167,43 +167,47 @@ fun arm64RuntimeLibDirs(): List<String> = listOf(
     .filter { it.exists() }
     .map { it.absolutePath }
 
-afterEvaluate {
-    tasks.all {
-        val localSystemdLibDir = systemdLibDirForTask(name)
-        (this as? KotlinNativeLink)?.toolOptions {
-            freeCompilerArgs.addAll(overrides)
-            if (localSystemdLibDir != null) {
+// Configured lazily via withType/configureEach rather than an eager `tasks.all`: realizing every
+// task at configuration time also realizes the Kotlin plugin's `build` task, whose creation calls
+// the deprecated Configuration.getTaskDependencyFromProjectDependency (removed in Gradle 10).
+tasks.withType<KotlinNativeLink>().configureEach {
+    val localSystemdLibDir = systemdLibDirForTask(name)
+    toolOptions {
+        freeCompilerArgs.addAll(overrides)
+        if (localSystemdLibDir != null) {
+            freeCompilerArgs.addAll(
+                listOf(
+                    "-linker-option",
+                    "-L$localSystemdLibDir",
+                    "-linker-option",
+                    "-Wl,-rpath,$localSystemdLibDir"
+                )
+            )
+        }
+        if (name.contains("LinuxArm64", ignoreCase = true)) {
+            freeCompilerArgs.addAll(
+                listOf(
+                    "-linker-option",
+                    "-Wl,--allow-shlib-undefined"
+                )
+            )
+            arm64RuntimeLibDirs().forEach { armLibDir ->
                 freeCompilerArgs.addAll(
                     listOf(
                         "-linker-option",
-                        "-L$localSystemdLibDir",
+                        "-L$armLibDir",
                         "-linker-option",
-                        "-Wl,-rpath,$localSystemdLibDir"
+                        "-Wl,-rpath-link,$armLibDir"
                     )
                 )
             }
-            if (name.contains("LinuxArm64", ignoreCase = true)) {
-                freeCompilerArgs.addAll(
-                    listOf(
-                        "-linker-option",
-                        "-Wl,--allow-shlib-undefined"
-                    )
-                )
-                arm64RuntimeLibDirs().forEach { armLibDir ->
-                    freeCompilerArgs.addAll(
-                        listOf(
-                            "-linker-option",
-                            "-L$armLibDir",
-                            "-linker-option",
-                            "-Wl,-rpath-link,$armLibDir"
-                        )
-                    )
-                }
-            }
         }
-        (this as? KotlinNativeCompile)?.compilerOptions {
-            freeCompilerArgs.addAll(overrides)
-        }
+    }
+}
+
+tasks.withType<KotlinNativeCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.addAll(overrides)
     }
 }
 
@@ -321,23 +325,23 @@ license {
     ext["email"] = "monkopedia@gmail.com"
 }
 
-afterEvaluate {
-    tasks.findByName("licenseCheckForKotlin")?.let {
-        tasks.all {
-            if ((this.name.startsWith("ktlint") && this.name.endsWith("Check")) ||
-                (this.name.startsWith("transform") && this.name.endsWith("Metadata")) ||
-                (this.name.startsWith("compile") && this.name.contains("Kotlin")) ||
-                this.name.startsWith("link") ||
-                this.name == "copyLib" ||
-                this.name.endsWith("Test") ||
-                this.name.endsWith("Tests") ||
-                this.name == "processTestResources" ||
-                this.name == "test"
-            ) {
-                it.dependsOn(this)
-            }
+// `tasks.matching { }` is a live, lazily-realized view, so — unlike the eager `tasks.all { }` this
+// replaces — the task container is only walked when licenseCheckForKotlin is actually in the graph
+// instead of on every single invocation.
+tasks.named("licenseCheckForKotlin") {
+    dependsOn(
+        tasks.matching { task ->
+            (task.name.startsWith("ktlint") && task.name.endsWith("Check")) ||
+                (task.name.startsWith("transform") && task.name.endsWith("Metadata")) ||
+                (task.name.startsWith("compile") && task.name.contains("Kotlin")) ||
+                task.name.startsWith("link") ||
+                task.name == "copyLib" ||
+                task.name.endsWith("Test") ||
+                task.name.endsWith("Tests") ||
+                task.name == "processTestResources" ||
+                task.name == "test"
         }
-    }
+    )
 }
 allprojects {
     if (name == "compile_test") return@allprojects

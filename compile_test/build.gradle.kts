@@ -25,7 +25,7 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
     sourceSets {
-        val nativeMain by getting {
+        getByName("nativeMain") {
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)
@@ -34,7 +34,7 @@ kotlin {
                 implementation(project(":"))
             }
         }
-        val nativeTest by getting {
+        getByName("nativeTest") {
             dependencies {
                 implementation(libs.kotlinx.coroutines.test)
             }

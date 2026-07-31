@@ -17,18 +17,18 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val commonMain by getting {
+        getByName("commonMain") {
             dependencies {
                 implementation(project(":"))
             }
         }
-        val commonTest by getting {
+        getByName("commonTest") {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
-        val jvmTest by getting {
+        getByName("jvmTest") {
             dependencies {
                 // dbus-java here is an INDEPENDENT third-party D-Bus peer used by
                 // CrossRuntimeInteropSmokeTest to prove sdbus-kotlin interoperates with another
