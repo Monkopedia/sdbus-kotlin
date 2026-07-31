@@ -183,7 +183,15 @@ unsubscribe/re-subscribe lifecycle, and sender filtering behave identically.
 the deeply nested `a{oa{sa{sv}}}` shape, `InterfacesAdded`/`InterfacesRemoved` emission and
 consumption, and the `ObjectManagerProxy` reactive state flows behave identically.
 
+The **no-argument** `emitInterfacesAddedSignal()`/`emitInterfacesRemovedSignal()` map onto
+`sd_bus_emit_object_added`/`_removed`, so on both backends they enumerate the object's *standard*
+interfaces alongside its vtables — `org.freedesktop.DBus.Peer`, `.Introspectable` and `.Properties`
+always (with empty property maps), plus `.ObjectManager` when one is installed at that path
+(#141). The explicit-list overloads map onto `sd_bus_emit_interfaces_added_strv` and emit exactly
+what the caller named.
+
 - Proven by: `CommonApiIntegrationTest.interfacesAddedAndRemovedSignals_roundTripForExplicitList`,
+  `SignalPayloadParityTest` (payload property values + standard-interface enumeration),
   `cross_test/.../DbusmockObjectManagerTest.kt` (foreign-emitted lifecycle + `GetManagedObjects`
   round-trip + proxy flow convergence), and `cross_test/.../DbusmockBluezTest.kt`
   (ObjectManager discovery over the dbusmock `bluez5` template).

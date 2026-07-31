@@ -88,6 +88,182 @@ class SignalPayloadParityTest {
     }
 
     @Test
+    fun noArgInterfacesAddedEnumeratesStandardInterfaces() = runBlocking {
+        val id = Random.nextInt(100_000, 999_999)
+        val service = ServiceName("com.monkopedia.sdbus.iastd$id")
+        val managerPath = ObjectPath("/com/monkopedia/sdbus/iastd$id")
+        val childPath = ObjectPath("/com/monkopedia/sdbus/iastd$id/child")
+        val iface = InterfaceName("com.monkopedia.sdbus.iastd$id.Iface")
+        val levelProp = PropertyName("Level")
+        val holder = Holder(42)
+
+        val server = createBusConnection(service)
+        val client = createBusConnection()
+        val managerObj = createObject(server, managerPath)
+        val manager = managerObj.addObjectManager()
+        val obj = createObject(server, childPath)
+        val reg = obj.addVTable(iface) {
+            method(MethodName("Ping")) { call<Unit> { } }
+            prop(levelProp) { with(holder::value) }
+        }
+        server.startEventLoop()
+        client.startEventLoop()
+        val proxy = createProxy(client, service, managerPath)
+
+        val seen = CompletableDeferred<Map<InterfaceName, Map<PropertyName, Variant>>>()
+        val sigReg = proxy.onSignal(
+            ObjectManagerProxy.INTERFACE_NAME,
+            SignalName("InterfacesAdded")
+        ) {
+            call { _: ObjectPath, ifaces: Map<InterfaceName, Map<PropertyName, Variant>> ->
+                if (!seen.isCompleted) seen.complete(ifaces)
+            }
+        }
+
+        try {
+            // The no-argument form maps onto sd_bus_emit_object_added, which advertises the
+            // object's standard interfaces alongside its vtables. The object is not itself an
+            // ObjectManager, so that one must NOT appear.
+            obj.emitInterfacesAddedSignal()
+            val ifaces = withTimeout(2_000) { seen.await() }
+            assertEquals(
+                setOf(
+                    InterfaceName("org.freedesktop.DBus.Peer"),
+                    InterfaceName("org.freedesktop.DBus.Introspectable"),
+                    InterfaceName("org.freedesktop.DBus.Properties"),
+                    iface
+                ),
+                ifaces.keys
+            )
+            // The standard interfaces carry no properties; the vtable interface still carries its
+            // current values (#143).
+            assertEquals(emptyMap(), ifaces[InterfaceName("org.freedesktop.DBus.Peer")])
+            assertEquals(42, ifaces[iface]?.get(levelProp)?.get<Int>())
+        } finally {
+            sigReg.release()
+            reg.release()
+            manager.release()
+            managerObj.release()
+            proxy.release()
+            obj.release()
+            client.stopEventLoop()
+            server.stopEventLoop()
+            client.release()
+            server.release()
+        }
+    }
+
+    @Test
+    fun noArgInterfacesAddedEnumeratesObjectManagerWhenPresent() = runBlocking {
+        val id = Random.nextInt(100_000, 999_999)
+        val service = ServiceName("com.monkopedia.sdbus.iaom$id")
+        val path = ObjectPath("/com/monkopedia/sdbus/iaom$id")
+        val iface = InterfaceName("com.monkopedia.sdbus.iaom$id.Iface")
+
+        val server = createBusConnection(service)
+        val client = createBusConnection()
+        val obj = createObject(server, path)
+        val reg = obj.addVTable(iface) {
+            method(MethodName("Ping")) { call<Unit> { } }
+        }
+        val manager = obj.addObjectManager()
+        server.startEventLoop()
+        client.startEventLoop()
+        val proxy = createProxy(client, service, path)
+
+        val seen = CompletableDeferred<Set<InterfaceName>>()
+        val sigReg = proxy.onSignal(
+            ObjectManagerProxy.INTERFACE_NAME,
+            SignalName("InterfacesAdded")
+        ) {
+            call { _: ObjectPath, ifaces: Map<InterfaceName, Map<PropertyName, Variant>> ->
+                if (!seen.isCompleted) seen.complete(ifaces.keys)
+            }
+        }
+
+        try {
+            obj.emitInterfacesAddedSignal()
+            assertEquals(
+                setOf(
+                    InterfaceName("org.freedesktop.DBus.Peer"),
+                    InterfaceName("org.freedesktop.DBus.Introspectable"),
+                    InterfaceName("org.freedesktop.DBus.Properties"),
+                    ObjectManagerProxy.INTERFACE_NAME,
+                    iface
+                ),
+                withTimeout(2_000) { seen.await() }
+            )
+        } finally {
+            sigReg.release()
+            manager.release()
+            reg.release()
+            proxy.release()
+            obj.release()
+            client.stopEventLoop()
+            server.stopEventLoop()
+            client.release()
+            server.release()
+        }
+    }
+
+    @Test
+    fun noArgInterfacesRemovedEnumeratesStandardInterfaces() = runBlocking {
+        val id = Random.nextInt(100_000, 999_999)
+        val service = ServiceName("com.monkopedia.sdbus.irstd$id")
+        val managerPath = ObjectPath("/com/monkopedia/sdbus/irstd$id")
+        val childPath = ObjectPath("/com/monkopedia/sdbus/irstd$id/child")
+        val iface = InterfaceName("com.monkopedia.sdbus.irstd$id.Iface")
+
+        val server = createBusConnection(service)
+        val client = createBusConnection()
+        val managerObj = createObject(server, managerPath)
+        val manager = managerObj.addObjectManager()
+        val obj = createObject(server, childPath)
+        val reg = obj.addVTable(iface) {
+            method(MethodName("Ping")) { call<Unit> { } }
+        }
+        server.startEventLoop()
+        client.startEventLoop()
+        val proxy = createProxy(client, service, managerPath)
+
+        val seen = CompletableDeferred<List<InterfaceName>>()
+        val sigReg = proxy.onSignal(
+            ObjectManagerProxy.INTERFACE_NAME,
+            SignalName("InterfacesRemoved")
+        ) {
+            call { _: ObjectPath, ifaces: List<InterfaceName> ->
+                if (!seen.isCompleted) seen.complete(ifaces)
+            }
+        }
+
+        try {
+            // sd_bus_emit_object_removed withdraws exactly what sd_bus_emit_object_added
+            // advertised, so the removal must name the standard interfaces too.
+            obj.emitInterfacesRemovedSignal()
+            assertEquals(
+                setOf(
+                    InterfaceName("org.freedesktop.DBus.Peer"),
+                    InterfaceName("org.freedesktop.DBus.Introspectable"),
+                    InterfaceName("org.freedesktop.DBus.Properties"),
+                    iface
+                ),
+                withTimeout(2_000) { seen.await() }.toSet()
+            )
+        } finally {
+            sigReg.release()
+            reg.release()
+            manager.release()
+            managerObj.release()
+            proxy.release()
+            obj.release()
+            client.stopEventLoop()
+            server.stopEventLoop()
+            client.release()
+            server.release()
+        }
+    }
+
+    @Test
     fun noArgPropertiesChangedCarriesAllInterfaceProperties() = runBlocking {
         val id = Random.nextInt(100_000, 999_999)
         val service = ServiceName("com.monkopedia.sdbus.pcall$id")
