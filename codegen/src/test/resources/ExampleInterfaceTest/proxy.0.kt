@@ -12,6 +12,13 @@ public class InterestingInterfaceProxy(
   public override fun register() {
   }
 
+  /**
+   * Adds a new contact to the address book with their name and e-mail address.
+   *
+   * @param name Name of new contact
+   * @param email E-mail address of new contact
+   * @return ID of newly added contact
+   */
   override suspend fun addContact(name: String, email: String): UInt = proxy.callMethodAsync(InterestingInterface.Companion.INTERFACE_NAME, MethodName("AddContact")) {
     call(name, email)
   }
