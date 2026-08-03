@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    api(libs.xmlutil)
+    implementation(libs.xmlutil)
     api(libs.clikt)
     api(libs.kotlinpoet)
     testImplementation(project(":"))
