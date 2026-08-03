@@ -24,17 +24,24 @@ package com.monkopedia.sdbus.internal
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
-import platform.posix.UINT64_MAX
 
 /**
  * Converts an absolute sd-bus timeout, expressed in microseconds of CLOCK_MONOTONIC, into the
  * [Duration] carried by [PollData.timeout].
+ *
+ * Anything that does not fit in a signed 64-bit integer is indefinite. That covers sd-bus'
+ * `UINT64_MAX` "no timeout" sentinel, and also the deadline a call left at the default timeout
+ * produces: it asks sd-bus for `Long.MAX_VALUE` microseconds, which sd-bus stores as an absolute
+ * `now + Long.MAX_VALUE` with bit 63 set. A real deadline cannot set bit 63 — that is over 292,000
+ * years of uptime — so there is no value to lose, and comparing unsigned leaves no signed
+ * conversion that could overflow into a negative (and therefore already-expired) timeout.
  */
-internal fun absoluteTimeoutOf(timeoutUsec: ULong): Duration = if (timeoutUsec == UINT64_MAX) {
-    Duration.INFINITE
-} else {
-    timeoutUsec.toLong().microseconds
-}
+internal fun absoluteTimeoutOf(timeoutUsec: ULong): Duration =
+    if (timeoutUsec > Long.MAX_VALUE.toULong()) {
+        Duration.INFINITE
+    } else {
+        timeoutUsec.toLong().microseconds
+    }
 
 /**
  * Carries poll data needed for integration with external event loop implementations.
