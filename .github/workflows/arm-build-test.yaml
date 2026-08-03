@@ -71,7 +71,10 @@ jobs:
             export DBUS_STARTER_BUS_TYPE=session
             export DBUS_STARTER_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
             export DBUS_SYSTEM_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
-            timeout 1800 ./gradlew --no-daemon allTests test crossRuntimeInteropTests --stacktrace
+            # -Dkdbus.crossRuntimeInterop.reverse.enabled selects the native-client -> JVM-peer
+            # half of CrossRuntimeInteropSmokeTest; without it those 7 cases never execute.
+            timeout 1800 ./gradlew --no-daemon allTests test crossRuntimeInteropTests \
+              -Dkdbus.crossRuntimeInterop.reverse.enabled=true --stacktrace
           '
 
       - name: Upload Failure Reports
