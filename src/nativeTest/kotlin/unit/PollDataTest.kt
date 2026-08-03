@@ -25,6 +25,7 @@
 package com.monkopedia.sdbus.unit
 
 import com.monkopedia.sdbus.internal.PollData
+import com.monkopedia.sdbus.internal.absoluteTimeoutOf
 import com.monkopedia.sdbus.internal.now
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,6 +35,7 @@ import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.posix.UINT64_MAX
 
 class PollDataTest {
 
@@ -111,5 +113,37 @@ class PollDataTest {
         val pollTimeout = pd.getPollTimeout()
 
         assertTrue(pollTimeout in 900..1100)
+    }
+
+    @Test
+    fun `PollData ConvertsUint64MaxSentinelToInfiniteTimeout`() {
+        assertEquals(Duration.INFINITE, absoluteTimeoutOf(UINT64_MAX))
+    }
+
+    @Test
+    fun `PollData ConvertsDefaultTimeoutDeadlineToInfiniteTimeout`() {
+        // A call left at the default timeout sends sd-bus Long.MAX_VALUE microseconds, so sd-bus
+        // stores an absolute deadline of now + Long.MAX_VALUE. That has bit 63 set but is not
+        // UINT64_MAX.
+        val deadline = now().inWholeMicroseconds.toULong() + Long.MAX_VALUE.toULong()
+
+        assertEquals(Duration.INFINITE, absoluteTimeoutOf(deadline))
+    }
+
+    @Test
+    fun `PollData ReturnsNegativePollTimeoutForDefaultTimeoutDeadline`() {
+        // The whole point: poll(2) must block rather than return immediately, or the event loop
+        // busy-spins for the entire duration of the call.
+        val deadline = now().inWholeMicroseconds.toULong() + Long.MAX_VALUE.toULong()
+        val pd = PollData(timeout = absoluteTimeoutOf(deadline))
+
+        assertEquals(-1, pd.getPollTimeout())
+    }
+
+    @Test
+    fun `PollData ConvertsRepresentableDeadlinesExactly`() {
+        assertEquals(1_500_000.microseconds, absoluteTimeoutOf(1_500_000uL))
+        // The largest deadline that still fits in a signed 64-bit integer stays finite.
+        assertEquals(Long.MAX_VALUE.microseconds, absoluteTimeoutOf(Long.MAX_VALUE.toULong()))
     }
 }

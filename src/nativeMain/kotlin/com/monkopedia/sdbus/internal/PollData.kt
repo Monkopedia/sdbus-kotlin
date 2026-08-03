@@ -23,6 +23,18 @@
 package com.monkopedia.sdbus.internal
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
+import platform.posix.UINT64_MAX
+
+/**
+ * Converts an absolute sd-bus timeout, expressed in microseconds of CLOCK_MONOTONIC, into the
+ * [Duration] carried by [PollData.timeout].
+ */
+internal fun absoluteTimeoutOf(timeoutUsec: ULong): Duration = if (timeoutUsec == UINT64_MAX) {
+    Duration.INFINITE
+} else {
+    timeoutUsec.toLong().microseconds
+}
 
 /**
  * Carries poll data needed for integration with external event loop implementations.

@@ -91,7 +91,6 @@ import platform.posix.EEXIST
 import platform.posix.EINTR
 import platform.posix.EINVAL
 import platform.posix.POLLIN
-import platform.posix.UINT64_MAX
 import platform.posix.close
 import platform.posix.errno
 import platform.posix.poll
@@ -872,11 +871,7 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
 
             require(eventFd.fd >= 0)
 
-            val timeout = if (pollData.timeout_usec == UINT64_MAX) {
-                Duration.INFINITE
-            } else {
-                pollData.timeout_usec.toLong().microseconds
-            }
+            val timeout = absoluteTimeoutOf(pollData.timeout_usec)
 
             return PollData(pollData.fd, pollData.events, timeout, 0) // eventFd_.fd)
         }
