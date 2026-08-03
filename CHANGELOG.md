@@ -7,6 +7,27 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
+### Changed — codegen
+
+- **Standard D-Bus annotations are now mapped onto the runtime vtable/proxy flags.** The generated
+  adaptor carries `org.freedesktop.DBus.Deprecated` (on the interface, methods, signals and
+  properties) and `org.freedesktop.DBus.Property.EmitsChangedSignal` into its `addVTable` block, and
+  both generators honor `org.freedesktop.DBus.Method.NoReply` — the adaptor registers the method with
+  `hasNoReply = true` and the proxy calls it with `dontExpectReply = true`. Previously all three
+  annotations were parsed and then dropped, so the introspection a running adaptor served could
+  disagree with the XML it was generated from. (#159)
+- `Deprecated` is advisory: it changes only the introspection metadata the adaptor publishes.
+  `EmitsChangedSignal` is declarative property-update behavior — values other than the D-Bus default
+  (`invalidates`, `const`, `false`) now register the matching `Flags.PropertyUpdateBehaviorFlags`
+  entry. It previously reached the generator only to decide whether a *writable* property got a
+  `notifying` delegate, so read-only properties dropped it entirely. Neither annotation changes how
+  a method is called. (#159)
+- **`Method.NoReply` is a behavior change for consumers who regenerate from unchanged XML.** If your
+  XML already declares it on a method, regenerating switches that method to fire-and-forget on both
+  sides: the adaptor sends no reply and the proxy awaits none, so failures no longer propagate back
+  to the caller. Before this change the annotation was silently ignored and both sides used ordinary
+  request/reply semantics. Drop the annotation from the XML if you were relying on that. (#159)
+
 ### Changed — dependencies
 
 - **xmlutil** is now `implementation`-scoped rather than `api`-scoped in `sdbus-kotlin-codegen`. It is
