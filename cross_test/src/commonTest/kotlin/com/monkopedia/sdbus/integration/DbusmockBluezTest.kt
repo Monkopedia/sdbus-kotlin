@@ -534,8 +534,8 @@ private typealias IfacesAndProps = Map<InterfaceName, Map<PropertyName, Variant>
 /**
  * Launches the dbusmock `bluez5` template (claiming the well-known `org.bluez` name on the
  * session bus — see the class KDoc for the `--session` override), waits until the template's
- * `/org/bluez` manager object is up, runs [block], and tears everything down. Skips cleanly
- * (runs no assertions) when python-dbusmock is unavailable.
+ * `/org/bluez` manager object is up, runs [block], and tears everything down. Skips (see
+ * [skipTest]) when python-dbusmock is unavailable, unless [DBUSMOCK_REQUIRED_ENV] is set.
  */
 private fun withBluezMock(block: suspend BluezMock.() -> Unit) = runBlocking {
     val handle = launchDbusmock(
@@ -545,11 +545,7 @@ private fun withBluezMock(block: suspend BluezMock.() -> Unit) = runBlocking {
         template = "bluez5"
     )
     if (handle == null) {
-        println(
-            "[withBluezMock] SKIP: python-dbusmock unavailable. " +
-                "Install via 'apt install python3-dbusmock' / 'pip install python-dbusmock' " +
-                "(see DbusmockHarness KDoc)."
-        )
+        skipTest(DBUSMOCK_UNAVAILABLE_SKIP)
         return@runBlocking
     }
 

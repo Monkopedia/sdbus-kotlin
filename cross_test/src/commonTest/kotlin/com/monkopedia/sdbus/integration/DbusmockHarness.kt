@@ -46,13 +46,56 @@ package com.monkopedia.sdbus.integration
  * If a custom interpreter is needed (e.g. a venv), point the `DBUSMOCK_PYTHON` environment
  * variable at it; otherwise `python3` on `PATH` is used.
  *
- * ## Graceful skip
+ * ## Graceful skip, and `DBUSMOCK_REQUIRED`
  *
  * If python3 / python3-dbusmock is not present, or no D-Bus session bus is reachable,
- * [launchDbusmock] returns `null` and the smoke test SKIPs cleanly (asserts nothing) rather
- * than failing — so CI without dbusmock still passes.
+ * [launchDbusmock] returns `null` and the caller SKIPs (see [skipTest]) rather than failing —
+ * so a contributor laptop without dbusmock still passes.
+ *
+ * That default is wrong for a CI job that installs python3-dbusmock deliberately: there, a
+ * vanished package would silently turn the whole foreign-peer layer into no-ops while the build
+ * stayed green. Setting the [DBUSMOCK_REQUIRED_ENV] environment variable inverts it — every
+ * skip path fails instead, naming the underlying reason.
  */
 internal expect fun dbusmockGetenv(name: String): String?
+
+/**
+ * Environment variable that turns a "dbusmock could not be started" skip into a hard failure.
+ * Set by the CI job that installs python3-dbusmock on purpose.
+ */
+internal const val DBUSMOCK_REQUIRED_ENV = "DBUSMOCK_REQUIRED"
+
+/** Message reported by every suite that skips because no dbusmock peer could be started. */
+internal const val DBUSMOCK_UNAVAILABLE_SKIP =
+    "python-dbusmock unavailable. Install via 'apt install python3-dbusmock' / " +
+        "'pip install python-dbusmock' (see DbusmockHarness KDoc), or set " +
+        "$DBUSMOCK_REQUIRED_ENV=1 to fail instead of skipping."
+
+/**
+ * Handles a dbusmock peer that could not be started, [reason] saying why (no session bus, python
+ * missing, module missing, …).
+ *
+ * Returns `null` — the caller then skips — unless [DBUSMOCK_REQUIRED_ENV] is set, in which case
+ * it fails loudly with [reason] instead.
+ */
+internal fun dbusmockUnavailable(reason: String): DbusmockHandle? {
+    if (dbusmockGetenv(DBUSMOCK_REQUIRED_ENV) == null) return null
+    error("$DBUSMOCK_REQUIRED_ENV is set but no dbusmock peer could be started: $reason")
+}
+
+/**
+ * Reports the running test as skipped with [reason], so the test report says "skipped" instead of
+ * claiming a pass for a case that asserted nothing.
+ *
+ * On the JVM this raises a JUnit assumption failure, which Gradle records as `skipped`. Kotlin/
+ * Native's test runner has no runtime-skip primitive — an early return is indistinguishable from a
+ * pass, and a TeamCity `testIgnored` emitted from inside a running test is rejected by the Gradle
+ * parser — so the native actual can only write [reason] to the captured test output. CI does not
+ * depend on that: [DBUSMOCK_REQUIRED_ENV] makes the harness fail rather than skip.
+ *
+ * Callers must still `return` afterwards; only the JVM actual aborts the test by throwing.
+ */
+internal expect fun skipTest(reason: String)
 
 /**
  * A running python-dbusmock process. [stop] terminates it and reaps the child.
@@ -76,7 +119,8 @@ internal expect class DbusmockHandle {
  *   private system bus is needed. [busName]/[objectPath]/[interfaceName] are ignored in this
  *   mode (callers should pass the template's well-known values for readability).
  * @return a [DbusmockHandle] if the process started, or `null` if dbusmock / python is not
- *   available (the caller should then SKIP).
+ *   available (the caller should then SKIP). Throws instead of returning `null` when
+ *   [DBUSMOCK_REQUIRED_ENV] is set — see [dbusmockUnavailable].
  */
 internal expect fun launchDbusmock(
     busName: String,
