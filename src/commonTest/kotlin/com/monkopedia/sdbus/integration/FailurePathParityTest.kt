@@ -17,6 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -94,16 +95,7 @@ class FailurePathParityTest {
                     }
                 }
             }
-            // The backends differ on whether the daemon reports Timeout or NoReply, and on the
-            // exact human-readable string, so assert membership rather than an exact value -- but
-            // require that it is recognizably a timeout, never a generic/unrelated error.
-            assertTrue(
-                thrown.name.contains("Timeout") ||
-                    thrown.name.contains("NoReply") ||
-                    thrown.errorMessage.contains("timed out", ignoreCase = true),
-                "expected a timeout-shaped error, got name='${thrown.name}' " +
-                    "message='${thrown.errorMessage}'"
-            )
+            assertIsTimeout(thrown)
             // Let the slow handler finish and flush its late reply while loops are still alive.
             delay(serverDelayMs + 400)
         } finally {
@@ -155,13 +147,7 @@ class FailurePathParityTest {
                 call.append(1)
                 proxy.callMethod(call)
             }
-            assertTrue(
-                thrown.name.contains("Timeout") ||
-                    thrown.name.contains("NoReply") ||
-                    thrown.errorMessage.contains("timed out", ignoreCase = true),
-                "expected a timeout-shaped error, got name='${thrown.name}' " +
-                    "message='${thrown.errorMessage}'"
-            )
+            assertIsTimeout(thrown)
 
             // An explicit per-call timeout always wins over the connection default: with a
             // generous per-call timeout the same slow method completes successfully.
@@ -186,6 +172,108 @@ class FailurePathParityTest {
             serverConnection.release()
         }
     }
+
+    // [Duration.ZERO] is the API's "use the connection default" sentinel for a per-call timeout.
+    // It is documented on Proxy.callMethod/callMethodAsync, MethodCall.send and -- since #179 --
+    // MethodInvoker.timeout, whose own default of Duration.INFINITE means the opposite (no
+    // per-call timeout at all). The sentinel is implemented explicitly only on the JVM backend
+    // (WireDbusBackend resolves a 0 per-call timeout through the connection's stored default);
+    // native gets it implicitly because 0 is sd-bus's own sentinel inside sd_bus_call. So it needs
+    // a cross-backend guard before the docs actively point people at it.
+    //
+    // Two phases pin the behavior from both sides: with a generous connection default a
+    // ZERO-timeout call to a slow method must SUCCEED (so ZERO is not an immediate/zero timeout),
+    // and with a short connection default the same call must EXPIRE (so ZERO is not "no timeout"
+    // either). Both the blocking and the async call path are checked -- they reach the timeout
+    // differently on the JVM backend.
+    @Test
+    fun explicitZeroPerCallTimeout_selectsConnectionDefault() = runBlocking {
+        val ids = uniqueFixtureIds("zeroTimeout")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        // Same slow-method fixture as the tests above: the handler sleeps past the short
+        // connection default, then completes while both loops are still up so its late reply
+        // doesn't hit a torn-down native connection.
+        val serverDelayMs = 600L
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("Slow")) {
+                asyncCall { value: Int ->
+                    delay(serverDelayMs)
+                    value
+                }
+            }
+        }
+        serverConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path)
+
+        try {
+            // Phase 1: connection default is generous, so a ZERO per-call timeout must let the
+            // slow method run to completion. A ZERO taken literally would fail here immediately.
+            proxyConnection.methodCallTimeout = 5_000.milliseconds
+            assertEquals(
+                1,
+                proxy.callMethod<Int>(ids.iface, MethodName("Slow")) {
+                    call(1)
+                    timeout = Duration.ZERO
+                }
+            )
+            assertEquals(
+                2,
+                proxy.callMethodAsync<Int>(ids.iface, MethodName("Slow")) {
+                    call(2)
+                    timeout = Duration.ZERO
+                }
+            )
+
+            // Phase 2: connection default is shorter than the handler's delay, so the same
+            // ZERO per-call timeout must now expire the call. A ZERO meaning "no timeout" (or
+            // INFINITE leaking through) would instead return 3 after ~600 ms.
+            proxyConnection.methodCallTimeout = 100.milliseconds
+            val blockingFailure = assertFailsWith<SdbusException> {
+                proxy.callMethod<Int>(ids.iface, MethodName("Slow")) {
+                    call(3)
+                    timeout = Duration.ZERO
+                }
+            }
+            assertIsTimeout(blockingFailure)
+
+            val asyncFailure = withTimeout(3_000) {
+                assertFailsWith<SdbusException> {
+                    proxy.callMethodAsync<Int>(ids.iface, MethodName("Slow")) {
+                        call(4)
+                        timeout = Duration.ZERO
+                    }
+                }
+            }
+            assertIsTimeout(asyncFailure)
+
+            // Let the timed-out handler invocations flush their late replies while the loops
+            // are still alive.
+            delay(serverDelayMs + 400)
+        } finally {
+            withTimeout(5_000) {
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
+            }
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
+    // The backends differ on whether the daemon reports Timeout or NoReply, and on the exact
+    // human-readable string, so assert membership rather than an exact value -- but require that
+    // it is recognizably a timeout, never a generic/unrelated error.
+    private fun assertIsTimeout(thrown: SdbusException) = assertTrue(
+        thrown.name.contains("Timeout") ||
+            thrown.name.contains("NoReply") ||
+            thrown.errorMessage.contains("timed out", ignoreCase = true),
+        "expected a timeout-shaped error, got name='${thrown.name}' " +
+            "message='${thrown.errorMessage}'"
+    )
 
     // --- remote D-Bus error propagation ----------------------------------------------------
 
