@@ -26,7 +26,7 @@ Every row below is pinned by tests on current `main`, not by intention:
 | Struct (`@Serializable`) marshalling to/from remote peers | ✅ | ✅ | JVM fixed in #71 |
 | Multi-out (grouped) replies (`isGroupedReturn`) | ✅ | ✅ | JVM fixed in #74 |
 | Per-call timeout (`timeout = …` in the invoker block) | ✅ | ✅ | Timeout *error name* may differ, see below |
-| Connection-level `Connection.methodCallTimeout` | ✅ | ✅ | Applied as the default for calls without an explicit timeout; JVM fixed in #80 |
+| Connection-level `Connection.methodCallTimeout` | ✅ | ✅ | Selected by a `Duration.ZERO` per-call timeout; JVM fixed in #80 |
 | Error propagation: named D-Bus errors round-trip name + message verbatim | ✅ | ✅ | Incl. foreign (non-sdbus) peers; JVM fixed in #72 |
 | errno → D-Bus error-name mapping for locally created errors | ✅ | ✅ | JVM pinned to native output |
 | Call-after-release fails with `IllegalArgumentException("Connection has already been released")` | ✅ | ✅ | |
@@ -89,17 +89,27 @@ timeout-shaped `com.monkopedia.sdbus.Error` — never a hang.
   (`methodCallTimeout_surfacesTimeoutError`) and the `callbackAsyncMethodCall_timeout*` tests
   in `CommonApiIntegrationTest.kt`.
 
-The **connection-level default** (`Connection.methodCallTimeout`) applies on both backends to
-calls made *without* an explicit per-call timeout: on native it maps to
+The **connection-level default** (`Connection.methodCallTimeout`) is selected by a per-call
+timeout of `Duration.ZERO` — the sentinel the raw-message overloads (`Proxy.callMethod(message)`,
+`Proxy.callMethodAsync(message)`) send. On native it maps to
 `sd_bus_set/get_method_call_timeout` (sd_bus resolves a 0 per-call timeout through the
 connection default inside `sd_bus_call`); the JVM call paths consult the stored value the same
-way (issue #80). An explicit per-call timeout always wins over the connection default; if
-neither is set, each backend's own default reply timeout applies (sd-bus's 25 s default / the
-JVM wire backend's own default reply timeout).
+way (issue #80). Any other explicit per-call timeout wins over the connection default; if the
+connection default is never set either, each backend's own default reply timeout applies
+(sd-bus's 25 s default / the JVM wire backend's own default reply timeout).
+
+Note that the high-level invoker block defaults `timeout` to `Duration.INFINITE` — *no* per-call
+timeout, **not** the connection default — so `callMethod { call(…) }` with no `timeout =` line
+waits for as long as the peer takes. Write `timeout = Duration.ZERO` to select the connection
+default from an invoker block (issue #179).
 
 - Proven by: `FailurePathParityTest.connectionMethodCallTimeout_appliesToCallsWithoutExplicitTimeout`
   (both backends: connection default expires a slow call made with no per-call timeout, and an
-  explicit per-call timeout overrides the connection default).
+  explicit per-call timeout overrides the connection default) and
+  `FailurePathParityTest.explicitZeroPerCallTimeout_selectsConnectionDefault` (both backends, both
+  the blocking and the async path: a `Duration.ZERO` per-call timeout succeeds under a generous
+  connection default and expires under a short one, so it is neither an immediate timeout nor
+  "no timeout").
 
 One honest caveat, visible in the tests:
 

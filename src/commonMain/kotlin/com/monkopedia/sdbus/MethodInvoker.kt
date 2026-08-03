@@ -179,7 +179,13 @@ class MethodInvoker @PublishedApi internal constructor(private val method: Metho
     /** Whether to send the call without waiting for a reply. */
     var dontExpectReply by method::dontExpectReply
 
-    /** The per-call timeout. Defaults to [Duration.INFINITE], meaning the connection default. */
+    /**
+     * The per-call timeout.
+     *
+     * Defaults to [Duration.INFINITE], meaning no per-call timeout is applied and the call waits
+     * for as long as the remote peer takes to answer. Set it to [Duration.ZERO] to use the
+     * connection default instead — see [Connection.methodCallTimeout].
+     */
     var timeout: Duration = INFINITE
 
     override fun createCall(inputType: InputType, values: List<Any>): TypedArguments =
