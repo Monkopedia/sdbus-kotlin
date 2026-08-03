@@ -1,0 +1,63 @@
+<!-- Exercises the standard D-Bus annotations that map onto runtime vtable flags. No other
+     checked-in fixture declares Deprecated or Method.NoReply, so this is the only golden file
+     covering them. -->
+<node>
+  <interface name="org.example.flags.Legacy">
+    <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+
+    <method name="Ping">
+      <arg type="s" name="message" direction="in"/>
+      <arg type="s" name="reply" direction="out"/>
+    </method>
+
+    <method name="OldPing">
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+      <arg type="s" name="message" direction="in"/>
+      <arg type="s" name="reply" direction="out"/>
+    </method>
+
+    <method name="FireAndForget">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg type="i" name="value" direction="in"/>
+    </method>
+
+    <signal name="Changed">
+      <arg type="s" name="reason"/>
+    </signal>
+
+    <signal name="OldChanged">
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+      <arg type="s" name="reason"/>
+    </signal>
+
+    <property name="Name" type="s" access="read"/>
+
+    <property name="OldName" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+    </property>
+
+    <property name="MachineId" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+
+    <property name="Counter" type="u" access="readwrite">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="invalidates"/>
+    </property>
+
+    <property name="Silent" type="b" access="readwrite">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+  </interface>
+
+  <!-- The interface-level EmitsChangedSignal supplies the default for properties that do not
+       declare their own, per the D-Bus spec. -->
+  <interface name="org.example.flags.Quiet">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+
+    <property name="Inherited" type="s" access="read"/>
+
+    <property name="Overridden" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+  </interface>
+</node>

@@ -174,6 +174,20 @@ data class Property(
 @XmlSerialName("annotation")
 data class Annotation(val name: String, val value: String, val doc: Doc? = null)
 
+/** Names of the standard D-Bus annotations the generators act on. See the table below. */
+internal object Annotations {
+    const val DEPRECATED = "org.freedesktop.DBus.Deprecated"
+    const val METHOD_NO_REPLY = "org.freedesktop.DBus.Method.NoReply"
+    const val EMITS_CHANGED_SIGNAL = "org.freedesktop.DBus.Property.EmitsChangedSignal"
+}
+
+/**
+ * Whether the boolean annotation [name] is present on [this] and set. Both `Deprecated` and
+ * `Method.NoReply` default to `false` when absent, so anything other than `true` means unset.
+ */
+internal fun List<Annotation>.isSet(name: String): Boolean =
+    firstOrNull { it.name == name }?.value == "true"
+
 /**
  * Name	Values (separated by ,)	Description
  * org.freedesktop.DBus.Deprecated	true,false	Whether or not the entity is deprecated; defaults to false

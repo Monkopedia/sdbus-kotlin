@@ -1,5 +1,6 @@
 package org.mpris.mediaplayer2
 
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_NO_SIGNAL
 import com.monkopedia.sdbus.MethodName
 import com.monkopedia.sdbus.Object
 import com.monkopedia.sdbus.PropertyName
@@ -86,6 +87,7 @@ public abstract class PlayerAdaptor(
       }
       prop(PropertyName("Position")) {
         with(this@PlayerAdaptor::position)
+        +EMITS_NO_SIGNAL
       }
       prop(PropertyName("MinimumRate")) {
         with(this@PlayerAdaptor::minimumRate)
@@ -110,6 +112,7 @@ public abstract class PlayerAdaptor(
       }
       prop(PropertyName("CanControl")) {
         with(this@PlayerAdaptor::canControl)
+        +EMITS_NO_SIGNAL
       }
     }
   }
