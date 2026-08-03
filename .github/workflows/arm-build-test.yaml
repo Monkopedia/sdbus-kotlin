@@ -50,8 +50,9 @@ jobs:
       - name: Install Test Dependencies
         run: |
           sudo apt-get update
-          # python3-dbusmock powers the independent-peer harness (DbusmockSmokeTest); if it is
-          # ever unavailable the smoke test skips cleanly rather than failing the build.
+          # python3-dbusmock powers the independent-peer harness (the Dbusmock* suites). Because
+          # this job installs it deliberately, the test step sets DBUSMOCK_REQUIRED so a missing
+          # package fails loudly instead of turning the whole foreign-peer layer into no-ops.
           sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus python3-dbusmock
 
       - name: Run Full Test Suite on x64
@@ -59,6 +60,10 @@ jobs:
         # dbus-java) — so there is no separate wire-parity matrix; this runs that one backend. A
         # hard `timeout` guard ensures a hung call/signal fails fast instead of stalling (a prior
         # run hung for 21 hours).
+        env:
+          # This job installs python3-dbusmock above, so the harness must fail — not skip — when
+          # it cannot start a dbusmock peer.
+          DBUSMOCK_REQUIRED: "1"
         run: |
           set -euo pipefail
           X64_SYSTEMD_LIB="$(find "${GITHUB_WORKSPACE}/libs/x86_64" -maxdepth 2 -type d -name lib | head -n 1 || true)"

@@ -21,8 +21,13 @@
 package com.monkopedia.sdbus.integration
 
 import java.util.concurrent.TimeUnit
+import org.junit.Assume.assumeTrue
 
 internal actual fun dbusmockGetenv(name: String): String? = System.getenv(name)
+
+// A failed JUnit assumption aborts the test and Gradle records it as skipped (JUnit 4 is what
+// kotlin("test") resolves to for this module; org.junit.Assume is its Assumptions equivalent).
+internal actual fun skipTest(reason: String) = assumeTrue(reason, false)
 
 internal actual class DbusmockHandle(private val process: Process) {
     actual fun stop() {
@@ -41,7 +46,9 @@ internal actual fun launchDbusmock(
     template: String?
 ): DbusmockHandle? {
     // No session bus -> nothing to launch dbusmock on; skip.
-    if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) return null
+    if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) {
+        return dbusmockUnavailable("no D-Bus session bus (DBUS_SESSION_BUS_ADDRESS is unset)")
+    }
 
     val python = dbusmockGetenv("DBUSMOCK_PYTHON") ?: "python3"
     val command = buildList {
@@ -60,21 +67,23 @@ internal actual fun launchDbusmock(
             add(interfaceName)
         }
     }
-    return try {
-        val process = ProcessBuilder(command).redirectErrorStream(true)
+    val process = try {
+        ProcessBuilder(command).redirectErrorStream(true)
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .start()
-
-        // python3 exists but dbusmock module is missing -> process exits ~immediately non-zero.
-        if (process.waitFor(500, TimeUnit.MILLISECONDS)) {
-            // Exited already: dbusmock not installed / failed to start. Skip.
-            return null
-        }
-        DbusmockHandle(process)
-    } catch (_: Exception) {
-        // python3 not on PATH, etc. Skip.
-        null
+    } catch (e: Exception) {
+        // python3 not on PATH, etc.
+        return dbusmockUnavailable("could not start '$python' ($e)")
     }
+
+    // python3 exists but dbusmock module is missing -> process exits ~immediately non-zero.
+    if (process.waitFor(500, TimeUnit.MILLISECONDS)) {
+        return dbusmockUnavailable(
+            "'$python -m dbusmock' exited immediately with status ${process.exitValue()}; " +
+                "the dbusmock module is probably not installed"
+        )
+    }
+    return DbusmockHandle(process)
 }
 
 internal actual fun busyWait(millis: Long) {
