@@ -54,9 +54,14 @@ abstract class BaseGenerator(private val packageOverride: String? = null) {
 
     protected fun kotlinPackage(intf: Interface): String = packageOverride ?: intf.name.pkg
 
+    /**
+     * The documentation the introspection XML carries is emitted as KDoc here rather than in each
+     * generator, so the interface, the proxy and the adaptor all describe a member the same way.
+     */
     private fun FileSpec.Builder.buildInterface(intf: Interface): FileSpec.Builder = apply {
         addType(
             classBuilder(intf).apply {
+                intf.kdoc()?.let { addKdoc(it) }
                 constructorBuilder(intf)?.let { primaryConstructor(it.build()) }
 
                 addFunction(
@@ -65,17 +70,27 @@ abstract class BaseGenerator(private val packageOverride: String? = null) {
                     }.build()
                 )
                 for (method in intf.methods) {
-                    methodBuilder(intf, method)?.build()?.let { addFunction(it) }
+                    val builder = methodBuilder(intf, method) ?: continue
+                    method.kdoc()?.let { builder.addKdoc(it) }
+                    addFunction(builder.build())
                 }
                 for (property in intf.properties) {
                     extraPropertyBuilder(intf, property)?.build()?.let { addProperty(it) }
                 }
                 for (property in intf.properties) {
-                    propertyBuilder(intf, property)?.build()?.let { addProperty(it) }
+                    val builder = propertyBuilder(intf, property) ?: continue
+                    property.kdoc()?.let { builder.addKdoc(it) }
+                    addProperty(builder.build())
                 }
                 for (signal in intf.signals) {
-                    signalBuilder(intf, signal)?.build()?.let { addFunction(it) }
-                    signalValBuilder(intf, signal)?.build()?.let { addProperty(it) }
+                    signalBuilder(intf, signal)?.let { builder ->
+                        signal.kdoc(includeParams = true)?.let { builder.addKdoc(it) }
+                        addFunction(builder.build())
+                    }
+                    signalValBuilder(intf, signal)?.let { builder ->
+                        signal.kdoc(includeParams = false)?.let { builder.addKdoc(it) }
+                        addProperty(builder.build())
+                    }
                 }
             }.build()
         )

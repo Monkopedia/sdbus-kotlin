@@ -7,6 +7,16 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
+### Added — codegen
+
+- **Generated code now carries KDoc taken from the introspection XML.** Documentation reaches the
+  generated interface, proxy and adaptor from both carriers the parser already understood and
+  previously discarded: `org.gtk.GDBus.DocString` / `DocString.Short` annotations, and `<doc:doc>`
+  elements of the freedesktop doc DTD. Argument documentation becomes `@param`/`@return` tags.
+  Regenerating from unchanged XML adds comments and nothing else — no signature, type name or
+  emitted statement changes — so this is additive documentation rather than a behavior change.
+  XML that documents nothing generates exactly what it did before. (#160)
+
 ### Changed — codegen
 
 - **Standard D-Bus annotations are now mapped onto the runtime vtable/proxy flags.** The generated

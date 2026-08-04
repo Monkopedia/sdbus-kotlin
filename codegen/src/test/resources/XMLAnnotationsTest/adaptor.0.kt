@@ -13,6 +13,12 @@ import kotlin.Unit
 import kotlin.collections.List
 import kotlin.collections.Map
 
+/**
+ * Standard property getter/setter interface
+ *
+ * Interface for all objects which expose properties on the bus, allowing those properties to be
+ * got, set, and signals emitted to notify of changes to the property values.
+ */
 public abstract class PropertiesAdaptor(
   public val obj: Object,
 ) : Properties {
@@ -31,6 +37,17 @@ public abstract class PropertiesAdaptor(
     }
   }
 
+  /**
+   * Emitted when one or more properties change values on @interface_name. A property may be listed
+   * in @changed_properties or @invalidated_properties depending on whether the service wants to
+   * broadcast the property’s new value. If a value is large or infrequently used, the service might
+   * not want to broadcast it, and will wait for clients to request it instead.
+   *
+   * @param interfaceName Name of the interface the properties changed on.
+   * @param changedProperties Map of property name to updated value for the changed properties.
+   * @param invalidatedProperties List of names of other properties which have changed, but whose
+   * updated values are not notified.
+   */
   public suspend fun onPropertiesChanged(
     interfaceName: String,
     changedProperties: Map<String, Variant>,
