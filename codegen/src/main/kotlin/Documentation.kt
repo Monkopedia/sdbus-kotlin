@@ -116,25 +116,27 @@ private fun String.paragraphs(): List<String> = split(BLANK_LINE)
     .filter { it.isNotEmpty() }
 
 /**
- * Replaces a GDBus reference sigil that opens a paragraph with its HTML numeric character
- * reference. [tokens] keeps every other sigil off the start of a line by gluing it to the word
- * before it, but the first word of a paragraph has no preceding word to glue to, and a paragraph
- * always starts a line. The entity does not literally start with `@` or `#`, so KDoc no longer
- * reads the paragraph as a block tag or a heading, and Dokka decodes it back to the original
- * character when rendering. This is the same mechanism KotlinPoet already uses on this output to
- * neutralize a comment terminator (`&#42;/`); a Markdown backslash escape is not an option because
- * Dokka emits the backslash literally instead of consuming it.
+ * Replaces a GDBus argument reference (`@name`) that opens a paragraph with its HTML numeric
+ * character reference. [tokens] keeps every other sigil off the start of a line by gluing it to the
+ * word before it, but the first word of a paragraph has no preceding word to glue to, and a
+ * paragraph always starts a line. The entity does not literally start with `@`, so KDoc no longer
+ * reads the paragraph as a block tag, and Dokka decodes it back to `@` when rendering. This is the
+ * same mechanism KotlinPoet already uses on this output to neutralize a comment terminator
+ * (`&#42;/`); a Markdown backslash escape is not an option because Dokka emits the backslash
+ * literally instead of consuming it.
+ *
+ * Deliberately narrower than [tokens], which guards `#` as well: a paragraph-initial `#Some.Type`
+ * renders fine, because CommonMark only reads `#` as a heading when a space follows it, and
+ * `DocEdgeCasesTest` pins it unescaped so a future regression fails there instead of degrading
+ * silently. A paragraph-initial `@name` is dropped from the rendered HTML outright, so only it
+ * needs escaping.
  */
-private fun String.escapedLeadingSigil(): String = when {
-    startsWith('@') -> "&#64;" + drop(1)
-    startsWith('#') -> "&#35;" + drop(1)
-    else -> this
-}
+private fun String.escapedLeadingSigil(): String = if (startsWith('@')) "&#64;" + drop(1) else this
 
 /**
  * Splits into wrappable tokens, gluing every GDBus reference sigil (`@argument`, `#Some.Type`) to
  * the word before it. KDoc reads a line-leading `@` as a block tag and a line-leading `#` as a
- * heading, and DocString bodies are full of both, so neither may end up starting a line. A sigil
+ * heading, and DocString bodies are full of both, so neither may end up starting a line. An `@`
  * that opens a paragraph has no word to glue to and is replaced by [escapedLeadingSigil] instead.
  */
 private fun String.tokens(): List<String> =

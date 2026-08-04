@@ -14,15 +14,15 @@ public interface EdgeCases {
   /**
    * The mode currently in effect.
    *
-   * &#35;org.example.doc.EdgeCases.Mode opens this second paragraph, which the doc DTD carrier
-   * splits out on the blank line above.
+   * #org.example.doc.EdgeCases.Mode opens this second paragraph, which the doc DTD carrier splits
+   * out on the blank line above.
    */
   public val mode: String
 
   public fun register()
 
   /**
-   * &#35;org.example.Type opens the very first paragraph of this method
+   * #org.example.Type opens the very first paragraph of this method
    *
    * A comment terminator &#42;/ in the middle of a sentence must not close the KDoc block early.
    *
