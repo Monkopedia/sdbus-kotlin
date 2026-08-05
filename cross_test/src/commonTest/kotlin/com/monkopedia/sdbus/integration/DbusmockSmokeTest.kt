@@ -46,8 +46,8 @@ import kotlinx.coroutines.runBlocking
  * Deeper coverage (signals, property writes, richer payloads, real templates such as BlueZ /
  * Secret Service) lands in the follow-up tickets that this harness unblocks.
  *
- * Skips cleanly when python3 / python3-dbusmock is not installed. See [DbusmockHarness] for
- * installation instructions.
+ * Skips when python3 / python3-dbusmock is not installed, unless [DBUSMOCK_REQUIRED_ENV] is set.
+ * See [DbusmockHarness] for installation instructions.
  */
 class DbusmockSmokeTest {
     @Test
@@ -59,12 +59,8 @@ class DbusmockSmokeTest {
 
         val handle = launchDbusmock(busName, objectPath, interfaceName)
         if (handle == null) {
-            // python3 / python3-dbusmock not available, or no session bus — skip cleanly.
-            println(
-                "[DbusmockSmokeTest] SKIP: python-dbusmock unavailable. " +
-                    "Install via 'apt install python3-dbusmock' / 'pip install python-dbusmock' " +
-                    "(see DbusmockHarness KDoc)."
-            )
+            // python3 / python3-dbusmock not available, or no session bus — skip.
+            skipTest(DBUSMOCK_UNAVAILABLE_SKIP)
             return@runBlocking
         }
 

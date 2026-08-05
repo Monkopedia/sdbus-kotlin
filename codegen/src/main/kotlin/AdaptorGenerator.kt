@@ -24,6 +24,9 @@ package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
+import com.monkopedia.sdbus.Annotations.DEPRECATED
+import com.monkopedia.sdbus.Annotations.EMITS_CHANGED_SIGNAL
+import com.monkopedia.sdbus.Annotations.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Direction.OUT
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -130,12 +133,27 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
         )
     }
 
+    /**
+     * Emits the `addVTable` block, carrying the standard D-Bus annotations through to the vtable
+     * flags so the introspection the running adaptor serves matches the XML it was generated from:
+     * `org.freedesktop.DBus.Deprecated` on the interface/method/signal/property, and
+     * `org.freedesktop.DBus.Method.NoReply` on the method. Only non-default flags are emitted --
+     * `EmitsChangedSignal` resolves to a [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags]
+     * entry only when it is not the D-Bus default of `true`, which the runtime already applies.
+     */
     override fun FunSpec.Builder.buildRegistration(intf: Interface) {
         addModifiers(PUBLIC)
         addModifiers(OVERRIDE)
         val codeBlock = CodeBlock.builder().apply {
             add("obj.%T(%T) {\n", ClassName("com.monkopedia.sdbus", "addVTable"), intfName(intf))
             withIndent {
+                if (intf.annotations.isSet(DEPRECATED)) {
+                    add("%T {\n", ClassName("com.monkopedia.sdbus", "interfaceFlags"))
+                    withIndent {
+                        add("isDeprecated = true\n")
+                    }
+                    add("}\n")
+                }
                 intf.methods.forEach {
                     add(
                         "%T(%T(%S)) {\n",
@@ -160,6 +178,12 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
                                 *outs.map { it.name }.toTypedArray()
                             )
                         }
+                        if (it.annotations.isSet(DEPRECATED)) {
+                            add("isDeprecated = true\n")
+                        }
+                        if (it.annotations.isSet(METHOD_NO_REPLY)) {
+                            add("hasNoReply = true\n")
+                        }
                         add(
                             "asyncCall(this@%N::%N)\n",
                             intf.name.simpleName + "Adaptor",
@@ -183,6 +207,9 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
                                 arg.name ?: "arg$index"
                             )
                         }
+                        if (it.annotations.isSet(DEPRECATED)) {
+                            add("isDeprecated = true\n")
+                        }
                     }
                     add("}\n")
                 }
@@ -199,6 +226,10 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
                             intf.name.simpleName + "Adaptor",
                             it.name.decapitalCamelCase
                         )
+                        if (it.annotations.isSet(DEPRECATED)) {
+                            add("isDeprecated = true\n")
+                        }
+                        it.updateBehavior(intf)?.let { flag -> add("+%M\n", flag) }
                     }
                     add("}\n")
                 }
@@ -209,21 +240,42 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
     }
 
     private companion object {
-        private const val EMITS_CHANGED_SIGNAL =
-            "org.freedesktop.DBus.Property.EmitsChangedSignal"
+        private val propertyUpdateBehaviorFlags =
+            ClassName("com.monkopedia.sdbus", "Flags", "PropertyUpdateBehaviorFlags")
 
         /**
          * Resolves the effective `EmitsChangedSignal` value for [this] property: a property-level
          * annotation wins, otherwise the enclosing interface's annotation provides the default,
-         * otherwise the D-Bus default is `true`. Returns `true` unless the value is `false`/`const`
-         * (the two values for which the spec says no `PropertiesChanged` is emitted).
+         * otherwise the D-Bus default is `true`.
          */
-        private fun Property.emitsChangedSignal(intf: Interface): Boolean {
-            val value = annotations.firstOrNull { it.name == EMITS_CHANGED_SIGNAL }?.value
+        private fun Property.emitsChangedSignalValue(intf: Interface): String =
+            annotations.firstOrNull { it.name == EMITS_CHANGED_SIGNAL }?.value
                 ?: intf.annotations.firstOrNull { it.name == EMITS_CHANGED_SIGNAL }?.value
                 ?: "true"
-            return value != "false" && value != "const"
-        }
+
+        /**
+         * Whether `PropertiesChanged` is emitted for [this] property, i.e. the resolved
+         * `EmitsChangedSignal` value is neither `false` nor `const` (the two values for which the
+         * spec says no signal is emitted).
+         */
+        private fun Property.emitsChangedSignal(intf: Interface): Boolean =
+            emitsChangedSignalValue(intf).let { it != "false" && it != "const" }
+
+        /**
+         * The [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags] entry matching [this]
+         * property's resolved `EmitsChangedSignal` value, or `null` for the D-Bus default (`true`)
+         * which the runtime already applies.
+         */
+        private fun Property.updateBehavior(intf: Interface): MemberName? =
+            when (emitsChangedSignalValue(intf)) {
+                "invalidates" -> MemberName(
+                    propertyUpdateBehaviorFlags,
+                    "EMITS_INVALIDATION_SIGNAL"
+                )
+                "const" -> MemberName(propertyUpdateBehaviorFlags, "CONST_PROPERTY_VALUE")
+                "false" -> MemberName(propertyUpdateBehaviorFlags, "EMITS_NO_SIGNAL")
+                else -> null
+            }
 
         /**
          * A representable initial value for the [notifying] delegate backing a writable property, or

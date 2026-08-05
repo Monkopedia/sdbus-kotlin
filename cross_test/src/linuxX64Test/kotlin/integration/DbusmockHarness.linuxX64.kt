@@ -30,6 +30,7 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.value
 import platform.posix.SIGTERM
 import platform.posix.WNOHANG
 import platform.posix._exit
@@ -41,6 +42,10 @@ import platform.posix.usleep
 import platform.posix.waitpid
 
 internal actual fun dbusmockGetenv(name: String): String? = getenv(name)?.toKString()
+
+// Kotlin/Native's test runner cannot record a skip at runtime (see the expect declaration), so the
+// reason only reaches the captured test output.
+internal actual fun skipTest(reason: String) = println("SKIP: $reason")
 
 internal actual class DbusmockHandle(private val pid: Int) {
     actual fun stop() {
@@ -64,7 +69,9 @@ internal actual fun launchDbusmock(
     template: String?
 ): DbusmockHandle? {
     // No session bus -> nothing to launch dbusmock on; skip.
-    if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) return null
+    if (dbusmockGetenv("DBUS_SESSION_BUS_ADDRESS") == null) {
+        return dbusmockUnavailable("no D-Bus session bus (DBUS_SESSION_BUS_ADDRESS is unset)")
+    }
 
     val python = dbusmockGetenv("DBUSMOCK_PYTHON") ?: "python3"
     val args = buildList {
@@ -85,7 +92,7 @@ internal actual fun launchDbusmock(
     }
 
     val pid = fork()
-    if (pid < 0) return null
+    if (pid < 0) return dbusmockUnavailable("fork() failed while starting '$python -m dbusmock'")
     if (pid == 0) {
         // Child: exec python3 -m dbusmock. On any failure, exit non-zero.
         memScoped {
@@ -101,8 +108,17 @@ internal actual fun launchDbusmock(
         val status = alloc<IntVar>()
         repeat(50) {
             if (waitpid(pid, status.ptr, WNOHANG) == pid) {
-                // Child already exited: dbusmock not installed / failed to start. Skip.
-                return null
+                // Child already exited: dbusmock not installed / failed to start.
+                // 127 is the exit code the child uses when execvp itself failed.
+                val exitStatus = (status.value shr 8) and 0xFF
+                return dbusmockUnavailable(
+                    if (exitStatus == 127) {
+                        "'$python' could not be executed (not on PATH?)"
+                    } else {
+                        "'$python -m dbusmock' exited immediately with status $exitStatus; " +
+                            "the dbusmock module is probably not installed"
+                    }
+                )
             }
             usleep(10_000u)
         }

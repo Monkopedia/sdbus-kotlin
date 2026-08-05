@@ -24,6 +24,7 @@ package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
+import com.monkopedia.sdbus.Annotations.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Direction.OUT
 import com.monkopedia.sdbus.NamingManager.SimpleType
 import com.squareup.kotlinpoet.ClassName
@@ -63,6 +64,11 @@ class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOve
             addParameter("proxy", proxy)
         }
 
+    /**
+     * `org.freedesktop.DBus.Method.NoReply` is the one annotation that changes call semantics, so
+     * it has to be honored on both sides: the adaptor registers the method with `hasNoReply`, and
+     * the proxy must therefore not wait for a reply that will never be sent.
+     */
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder =
         FunSpec.builder(method.name.decapitalCamelCase).apply {
             addModifiers(OVERRIDE)
@@ -86,6 +92,9 @@ class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOve
                         method.name
                     )
                     withIndent {
+                        if (method.annotations.isSet(METHOD_NO_REPLY)) {
+                            add("dontExpectReply = true\n")
+                        }
                         if (outputs.size > 1) {
                             add("isGroupedReturn = true\n")
                         }

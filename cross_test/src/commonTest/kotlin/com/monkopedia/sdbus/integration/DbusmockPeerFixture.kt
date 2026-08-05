@@ -138,7 +138,8 @@ internal suspend fun <T> pumpUntilSubscribed(received: ReceiveChannel<T>, poke: 
 /**
  * Launches a fresh dbusmock peer (unique bus name / path / interface), waits for it to claim
  * its name, runs [block] against it, and tears everything down. If python-dbusmock is not
- * available the test SKIPs cleanly (runs no assertions).
+ * available the test SKIPs (see [skipTest]) — unless [DBUSMOCK_REQUIRED_ENV] is set, in which
+ * case it fails.
  *
  * @param suffix Distinguishes the peer's bus name / object path between tests.
  * @param objectManager When `true`, the peer also implements
@@ -163,11 +164,7 @@ internal fun withDbusmockPeer(
 
     val handle = launchDbusmock(busName, objectPath, interfaceName, objectManager)
     if (handle == null) {
-        println(
-            "[withDbusmockPeer] SKIP: python-dbusmock unavailable. " +
-                "Install via 'apt install python3-dbusmock' / 'pip install python-dbusmock' " +
-                "(see DbusmockHarness KDoc)."
-        )
+        skipTest(DBUSMOCK_UNAVAILABLE_SKIP)
         return@runBlocking
     }
 
