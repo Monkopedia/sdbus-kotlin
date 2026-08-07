@@ -42,7 +42,7 @@ Every row below is pinned by tests on current `main`, not by intention:
 | Behavior when the bus is unreachable | ✅ throws `Error` | ✅ throws `Error` | JVM fixed in #81; the in-process stub backend is an explicit internal test opt-in only |
 | Event loop (`startEventLoop`/`stopEventLoop`) | no-op (always running) | required for dispatch; `createObject`/`createProxy` auto-start it | Same calling pattern works on both; `startEventLoop` is idempotent (#114), and each native connection gets its own loop thread (#128) |
 | Strict deserialization (signature mismatch rejected) | ✅ | ✅ | Same `System.Error.ENXIO` error |
-| Vtable-flag annotations in **served** `Introspect` XML | ⚠️ partial | ⚠️ partial | Member-level `Deprecated` served on both; interface-level `Deprecated` and `EmitsChangedSignal` (`const`/`invalidates`/`false`) **native only**; `org.freedesktop.DBus.Method.NoReply` served by **neither**. Affects what an adaptor *advertises*, not how it behaves — see #193 |
+| Vtable-flag annotations in **served** `Introspect` XML | ⚠️ partial | ⚠️ partial | Member-level `Deprecated` served on both; interface-level `Deprecated`, `EmitsChangedSignal` (`const`/`invalidates`/`false`) and `org.freedesktop.DBus.Method.NoReply` are **native only**. `Method.NoReply` was served by *neither* backend until #216 bound `SD_BUS_VTABLE_METHOD_NO_REPLY` on native. Affects what an adaptor *advertises*, not how it behaves — see #193 |
 
 ✅ = identical observable behavior, asserted on both backends.
 
