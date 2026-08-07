@@ -108,6 +108,9 @@ internal data class WireMessage(
 internal object WireMessageCodec {
     private const val PROTOCOL_VERSION = 1
 
+    // Fixed header (12 bytes) + the header-fields array length prefix (4 bytes).
+    private const val PREFIX_BYTES = 16
+
     // The full header up to (but excluding) the trailing pad+body, expressed as one signature so
     // the marshaller produces correct absolute alignment counted from the message start.
     private const val HEADER_SIGNATURE = "yyyyuua(yv)"
@@ -178,17 +181,28 @@ internal object WireMessageCodec {
     fun read(input: InputStream): WireMessage {
         // The fixed header (12 bytes) plus the header-fields array length prefix (4 bytes) are
         // always present, so we can safely read 16 bytes to learn the remaining sizes.
-        val prefix = readFully(input, 16)
+        val prefix = readFully(input, PREFIX_BYTES)
         val endian = Endian.fromCode(prefix[0])
         val pre = DBusReader(prefix, 0, endian)
         // "yyyyuuu": endian, type, flags, version, bodyLength, serial, then the a(yv) length.
         val header = pre.unmarshal(DBusSignatureParser.parse("yyyyuuu"))
-        val bodyLength = (header[4] as UInt).toInt()
-        val fieldsLength = (header[6] as UInt).toInt()
+        // Both lengths are peer-supplied and go straight into a ByteArray allocation, so they are
+        // validated while still UNSIGNED: narrowing first would turn anything >= 2^31 into a
+        // negative Int, which every downstream size check happily accepts (issue #190).
+        val bodyLength = checkedLength(header[4] as UInt, DBusLimits.MAX_MESSAGE_LENGTH, "body")
+        val fieldsLength =
+            checkedLength(header[6] as UInt, DBusLimits.MAX_ARRAY_LENGTH, "header fields")
 
-        val headerEnd = 16 + fieldsLength
-        val paddedHeaderEnd = align8(headerEnd)
-        val remaining = readFully(input, (paddedHeaderEnd - 16) + bodyLength)
+        val paddedHeaderEnd = align8(PREFIX_BYTES + fieldsLength)
+        // The spec's maximum covers the WHOLE message, not each part, so check the total too.
+        val totalLength = paddedHeaderEnd.toLong() + bodyLength
+        if (totalLength > DBusLimits.MAX_MESSAGE_LENGTH) {
+            throw DBusMarshallingException(
+                "Message length $totalLength exceeds the D-Bus maximum of " +
+                    "${DBusLimits.MAX_MESSAGE_LENGTH} bytes"
+            )
+        }
+        val remaining = readFully(input, (paddedHeaderEnd - PREFIX_BYTES) + bodyLength)
 
         val full = ByteArray(prefix.size + remaining.size)
         System.arraycopy(prefix, 0, full, 0, prefix.size)
@@ -218,15 +232,15 @@ internal object WireMessageCodec {
             val code = (field.fields[0] as UByte).toInt()
             val variant = field.fields[1] as Message.JvmVariantPayload
             when (code) {
-                WireHeaderField.PATH -> path = variant.value as String
-                WireHeaderField.INTERFACE -> interfaceName = variant.value as String
-                WireHeaderField.MEMBER -> member = variant.value as String
-                WireHeaderField.ERROR_NAME -> errorName = variant.value as String
-                WireHeaderField.REPLY_SERIAL -> replySerial = (variant.value as UInt).toInt()
-                WireHeaderField.DESTINATION -> destination = variant.value as String
-                WireHeaderField.SENDER -> sender = variant.value as String
-                WireHeaderField.SIGNATURE -> signature = variant.value as String
-                WireHeaderField.UNIX_FDS -> unixFds = (variant.value as UInt).toInt()
+                WireHeaderField.PATH -> path = variant.asString("PATH")
+                WireHeaderField.INTERFACE -> interfaceName = variant.asString("INTERFACE")
+                WireHeaderField.MEMBER -> member = variant.asString("MEMBER")
+                WireHeaderField.ERROR_NAME -> errorName = variant.asString("ERROR_NAME")
+                WireHeaderField.REPLY_SERIAL -> replySerial = variant.asUInt("REPLY_SERIAL")
+                WireHeaderField.DESTINATION -> destination = variant.asString("DESTINATION")
+                WireHeaderField.SENDER -> sender = variant.asString("SENDER")
+                WireHeaderField.SIGNATURE -> signature = variant.asString("SIGNATURE")
+                WireHeaderField.UNIX_FDS -> unixFds = variant.asUInt("UNIX_FDS")
             }
         }
 
@@ -253,6 +267,33 @@ internal object WireMessageCodec {
             body = body
         )
     }
+
+    /**
+     * Validates a peer-supplied 32-bit length against [limit] while it is still UNSIGNED, so the
+     * [Int] it returns is provably in `0..limit` and no later size comparison can be fooled by a
+     * value that went negative on the way in.
+     */
+    private fun checkedLength(length: UInt, limit: Int, what: String): Int {
+        if (length > limit.toUInt()) {
+            throw DBusMarshallingException(
+                "Declared $what length $length exceeds the D-Bus maximum of $limit bytes"
+            )
+        }
+        return length.toInt()
+    }
+
+    // The spec fixes the type of every header field, so a variant carrying anything else is a
+    // malformed message -- report it as one instead of letting an unchecked cast raise a
+    // ClassCastException that no caller (nor the reader thread) is prepared for.
+    private fun Message.JvmVariantPayload.asString(field: String): String = value as? String
+        ?: throw DBusMarshallingException(
+            "Header field $field must be a string, got variant of type '$signature'"
+        )
+
+    private fun Message.JvmVariantPayload.asUInt(field: String): Int = (value as? UInt)?.toInt()
+        ?: throw DBusMarshallingException(
+            "Header field $field must be a uint32, got variant of type '$signature'"
+        )
 
     private fun align8(value: Int): Int {
         val rem = value % 8
