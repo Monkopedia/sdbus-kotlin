@@ -31,11 +31,35 @@ import org.freedesktop.dbus.connections.transports.TransportBuilder
 import org.freedesktop.dbus.exceptions.DBusExecutionException
 import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.messages.DBusSignal
+import org.junit.Assume.assumeTrue
 
 class CrossRuntimeInteropSmokeTest {
+    /**
+     * These cases drive a real cross-runtime peer, so they only run under
+     * `:cross_test:jvmInteropTest`, which is the task that sets [CROSS_RUNTIME_ENABLED_PROP] and
+     * points [nativeTestBinaryPath] at a linked `test.kexe`. Failing an assumption (rather than
+     * returning early) makes an unselected case report SKIPPED instead of claiming a pass it never
+     * earned.
+     */
+    private fun assumeCrossRuntimeInteropSelected() = assumeTrue(
+        "$CROSS_RUNTIME_ENABLED_PROP is not \"true\": cross-runtime interop cases run only in " +
+            "the :cross_test:jvmInteropTest task.",
+        System.getProperty(CROSS_RUNTIME_ENABLED_PROP) == "true"
+    )
+
+    /**
+     * As [assumeCrossRuntimeInteropSelected], for the native-client -> JVM-peer direction, which is
+     * selected separately by [CROSS_RUNTIME_REVERSE_ENABLED_PROP].
+     */
+    private fun assumeReverseDirectionSelected() = assumeTrue(
+        "$CROSS_RUNTIME_REVERSE_ENABLED_PROP is not \"true\": the reverse (native client -> JVM " +
+            "peer) direction is selected separately.",
+        System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) == "true"
+    )
+
     @Test
     fun jvmClientInvokesNativePeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -112,7 +136,7 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun jvmClientObservesNativeSignalOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -194,7 +218,7 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun jvmClientObservesNativePropertiesChangedOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -279,7 +303,7 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun jvmClientRoundTripsUnixFdWithNativePeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -392,7 +416,7 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun jvmClientRoundTripsLargeMapWithNativePeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -468,7 +492,7 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun jvmClientRoundTripsNestedVariantWithNativePeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -547,7 +571,7 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun jvmClientRoundTripsMixedPayloadWithNativePeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -623,8 +647,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientInvokesJvmPeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -723,8 +747,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientObservesJvmSignalOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -815,8 +839,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientObservesJvmPropertiesChangedOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -903,8 +927,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientRoundTripsUnixFdWithJvmPeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -991,8 +1015,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientRoundTripsLargeMapWithJvmPeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -1087,8 +1111,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientRoundTripsNestedVariantWithJvmPeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")
@@ -1183,8 +1207,8 @@ class CrossRuntimeInteropSmokeTest {
 
     @Test
     fun nativeClientRoundTripsMixedPayloadWithJvmPeerOverDirectBus() {
-        if (System.getProperty(CROSS_RUNTIME_ENABLED_PROP) != "true") return
-        if (System.getProperty(CROSS_RUNTIME_REVERSE_ENABLED_PROP) != "true") return
+        assumeCrossRuntimeInteropSelected()
+        assumeReverseDirectionSelected()
 
         val kexe = nativeTestBinaryPath()
         assertTrue(Files.isExecutable(kexe), "Native test binary not found: $kexe")

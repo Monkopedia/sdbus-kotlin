@@ -50,6 +50,14 @@ val reverseInteropEnabled = providers
     .systemProperty("kdbus.crossRuntimeInterop.reverse.enabled")
     .orElse(providers.gradleProperty("kdbus.crossRuntimeInterop.reverse.enabled"))
 
+// CrossRuntimeInteropSmokeTest only does anything under `jvmInteropTest` below, which is the task
+// that selects it and hands it a linked native test binary. Keep it out of the plain `jvmTest`
+// task (which `allTests` runs on every CI job) so it is reported exactly once, by the task that
+// actually configures it — mirroring the gcSoak gate in the root build.
+tasks.named<Test>("jvmTest") {
+    filter.excludeTestsMatching("com.monkopedia.sdbus.integration.CrossRuntimeInteropSmokeTest")
+}
+
 tasks.register<Test>("jvmInteropTest") {
     group = "verification"
     description = "Runs JVM<->native direct-bus interop smoke tests in cross_test."
