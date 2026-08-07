@@ -19,22 +19,25 @@ produce `DemoService1`, `DemoService1Adaptor`, and `DemoService1Proxy` into the 
 `createObject()` -> register the vtable -> emit ticks -> clean shutdown
 (`stopEventLoop()` + releasing every resource).
 
-> **Note on the vtable.** The sample subclasses the generated `DemoService1Adaptor` but overrides
-> `register()` to bind the property with the explicit `prop { withGetter { ... }; withSetter { ... } }`
-> DSL instead of the generated `with(::prefix)` property-reference binding. Binding the callbacks
-> directly is what lets the setter emit `PropertiesChanged`, and it keeps value serialization
-> explicit on both targets. The method and signal use the generated wiring shape unchanged.
+> **Note on the vtable.** The sample subclasses the generated `DemoService1Adaptor` and uses its
+> generated `register()` unchanged. `Prefix` is delegated to `Object.notifying(...)`, so every
+> assignment — remote `Properties.Set` or server-side — emits `PropertiesChanged` on its own; no
+> `register()` override and no manual emit are needed. The method and signal use the generated
+> wiring shape unchanged.
 
 ## Dependency on the library: composite build
 
-This sample is part of the sdbus-kotlin repository and must demonstrate the **current** API
-(post-0.5.0: `startEventLoop`/`stopEventLoop`, `withGetter`/`withSetter`, typed property flows,
-`Duration` timeouts, etc.). That API does **not** exist in the artifact published to Maven Central
-(1.0.0). So, exactly like `bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle
-**composite build** (`includeBuild("../..")`). Gradle automatically substitutes the
-`com.monkopedia:sdbus-kotlin` dependency declared in `build.gradle.kts` with the local source tree,
-so the version coordinate there (`1.0.1`) is only a placeholder and the sample always compiles
-against the library checked out next to it. No `publishToMavenLocal` step is required.
+This sample is part of the sdbus-kotlin repository and must demonstrate the API of the library it
+is checked out next to, not whatever happens to be on Maven Central at the time. So, exactly like
+`bluez-scan`, [`settings.gradle.kts`](settings.gradle.kts) uses a Gradle **composite build**
+(`includeBuild("../..")`). Gradle substitutes the `com.monkopedia:sdbus-kotlin` dependency declared
+in `build.gradle.kts` with the local source tree — substitution matches on `group:name` and ignores
+the version — so the version coordinate there (`1.0.1`) is only a placeholder, and the sample always
+compiles against the source tree. No `publishToMavenLocal` step is required.
+
+The version literal still matters for the documented way to *use* this sample: copy the directory
+out of the repository. `includeBuild("../..")` then no longer resolves and the coordinate becomes
+real, which is why the release checklist keeps it in step with the published version.
 
 ## Running
 
