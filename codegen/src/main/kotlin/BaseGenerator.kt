@@ -29,7 +29,10 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import java.util.*
 
-abstract class BaseGenerator(private val packageOverride: String? = null) {
+abstract class BaseGenerator(
+    private val packageOverride: String? = null,
+    private val honorNamingAnnotations: Boolean = false
+) {
 
     protected lateinit var namingManager: NamingManager
     protected abstract val fileSuffix: String
@@ -39,7 +42,7 @@ abstract class BaseGenerator(private val packageOverride: String? = null) {
         }
 
     open fun transformXmlToFile(doc: XmlRootNode): List<FileSpec> {
-        namingManager = NamingManager(doc, packageOverride)
+        namingManager = NamingManager(doc, packageOverride, honorNamingAnnotations)
         return fileSpecs(doc) + doc.nodes.flatMap { fileSpecs(it) }
     }
 

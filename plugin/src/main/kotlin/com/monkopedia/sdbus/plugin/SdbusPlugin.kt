@@ -32,6 +32,7 @@ class SdbusPlugin : Plugin<Project> {
                     it.generateProxies = ext.generateProxies
                     it.generateAdapters = ext.generateAdapters
                     it.outputPackage = ext.outputPackage
+                    it.honorNamingAnnotations = ext.honorNamingAnnotations
                 }
                 rootTask.dependsOn(task)
             }

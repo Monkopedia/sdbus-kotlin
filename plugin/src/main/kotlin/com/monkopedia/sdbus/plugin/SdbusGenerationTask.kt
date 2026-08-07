@@ -33,6 +33,9 @@ open class SdbusGenerationTask : DefaultTask() {
     @get:Optional
     open var outputPackage: String? = null
 
+    @Input
+    open var honorNamingAnnotations: Boolean = false
+
     @TaskAction
     fun execute() {
         inputXmlFile.collection().forEach {
@@ -44,6 +47,9 @@ open class SdbusGenerationTask : DefaultTask() {
             }
             if (generateAdapters) {
                 args.add("--adaptor")
+            }
+            if (honorNamingAnnotations) {
+                args.add("--honor-naming-annotations")
             }
             outputPackage?.takeUnless(String::isBlank)?.let { packageName ->
                 args.add("--output-package")
