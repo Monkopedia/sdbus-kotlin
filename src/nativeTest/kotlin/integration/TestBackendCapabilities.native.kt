@@ -10,6 +10,6 @@ internal actual val backendServesInterfaceLevelDeprecated: Boolean = true
 // is deliberately left implicit).
 internal actual val backendServesEmitsChangedSignal: Boolean = true
 
-// Not served: Flags.toSdBusMethodFlags ORs METHOD_NO_REPLY with a literal 0u instead of
-// SD_BUS_VTABLE_METHOD_NO_REPLY, so the bit never reaches sd-bus. Defect, not capability -- #197.
-internal actual val backendServesMethodNoReply: Boolean = false
+// sd-bus writes org.freedesktop.DBus.Method.NoReply for SD_BUS_VTABLE_METHOD_NO_REPLY. Until #197
+// that bit never reached it: Flags.toSdBusMethodFlags OR-ed the branch with a literal 0u.
+internal actual val backendServesMethodNoReply: Boolean = true
