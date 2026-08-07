@@ -13,3 +13,30 @@ package com.monkopedia.sdbus.integration
  * weaken the assertion).
  */
 internal expect val backendDeliversDirectedSignalsUnicast: Boolean
+
+/**
+ * Whether a served object advertises `org.freedesktop.DBus.Deprecated` for an interface marked
+ * deprecated via [com.monkopedia.sdbus.interfaceFlags].
+ *
+ * The same annotation on a *member* is served by both backends, so only the interface-level case
+ * needs a lever. Measured by [VtableFlagIntrospectionTest]; tracked in #193.
+ */
+internal expect val backendServesInterfaceLevelDeprecated: Boolean
+
+/**
+ * Whether a served object advertises `org.freedesktop.DBus.Property.EmitsChangedSignal` for a
+ * property registered with a non-default
+ * [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags].
+ *
+ * Measured by [VtableFlagIntrospectionTest]; tracked in #193.
+ */
+internal expect val backendServesEmitsChangedSignal: Boolean
+
+/**
+ * Whether a served object advertises `org.freedesktop.DBus.Method.NoReply` for a method registered
+ * with `hasNoReply = true`.
+ *
+ * Unlike the two above this is not a backend capability but a defect on whichever backend reports
+ * `false` -- both did until #197. Measured by [VtableFlagIntrospectionTest].
+ */
+internal expect val backendServesMethodNoReply: Boolean
