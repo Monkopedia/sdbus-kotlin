@@ -57,6 +57,18 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   `sdbus-kotlin-codegen` or the `com.monkopedia.sdbus.plugin` Gradle plugin; declare it directly instead.
   (#167)
 
+### Fixed
+
+- **A method registered with `hasNoReply = true` now advertises
+  `org.freedesktop.DBus.Method.NoReply` in the introspection the native backend serves.** The vtable
+  translation tested the flag and then OR-ed the result with a literal `0u` — the constant named in
+  the adjacent comment, `SD_BUS_VTABLE_METHOD_NO_REPLY`, was never bound — so the branch was a
+  no-op and the bit never reached sd-bus. Behavior is unchanged: the fire-and-forget half already
+  worked on both backends, and this only corrects what the adaptor tells an external introspector
+  (`busctl`, d-feet, other language bindings), which previously described a fire-and-forget method
+  as ordinary request/reply. The JVM backend still does not serve this annotation; that is part of
+  #193. (#197)
+
 ## [1.0.1] - 2026-07-15
 
 A maintenance release: refreshed external dependencies to their latest stable versions. There are
