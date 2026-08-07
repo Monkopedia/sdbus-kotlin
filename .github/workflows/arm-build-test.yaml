@@ -174,19 +174,65 @@ jobs:
           chmod +x "${TEST_BINARY}"
           dbus-run-session --version
 
+          # #219: this job is the only instrument pointed at the published linuxArm64
+          # coordinate, and a `--gtest_filter` that matches nothing still exits 0 with
+          # "[  PASSED  ] 0 tests." — so if this package is ever renamed, no YAML changes and
+          # the suite silently becomes a no-op while the job stays green. Rather than commit a
+          # second magic number that drifts the same way the package name would, derive the
+          # expected counts from the binary itself: `--gtest_list_tests` ignores
+          # `--gtest_filter` and always prints every test as an indented line beneath its
+          # unindented class line.
+          ARM_INTEGRATION_PACKAGE="com.monkopedia.sdbus.integration."
+          "${TEST_BINARY}" --gtest_list_tests > arm-all-tests.txt
+          TOTAL_TESTS="$(awk '/^[ ]/ { n++ } END { print n + 0 }' arm-all-tests.txt)"
+          EXPECTED_INTEGRATION="$(awk -v pkg="${ARM_INTEGRATION_PACKAGE}" '
+            /^[^ ]/ { cls = $0; next }
+            /^[ ]/ && index(cls, pkg) == 1 { n++ }
+            END { print n + 0 }
+          ' arm-all-tests.txt)"
+          EXPECTED_NON_INTEGRATION=$((TOTAL_TESTS - EXPECTED_INTEGRATION))
+          if [ "${EXPECTED_INTEGRATION}" -eq 0 ] || [ "${EXPECTED_NON_INTEGRATION}" -eq 0 ]; then
+            echo "TEST-COUNT GUARD FAILED (#219): the binary lists ${TOTAL_TESTS} tests, of which"
+            echo "${EXPECTED_INTEGRATION} are under '${ARM_INTEGRATION_PACKAGE}' and ${EXPECTED_NON_INTEGRATION} are not."
+            echo "Both filters below would therefore measure nothing on one side while still exiting 0."
+            echo "If that package moved, update ARM_INTEGRATION_PACKAGE in this workflow to match."
+            exit 1
+          fi
+          echo "Expecting ${EXPECTED_INTEGRATION} integration and ${EXPECTED_NON_INTEGRATION} non-integration tests (${TOTAL_TESTS} listed)."
+
+          # Fails the step unless the runner's own summary reports exactly the count derived
+          # above. Deliberately parsed with `sed -n ...p` rather than `grep`: a grep that
+          # matches nothing exits 1 under `pipefail`, which would fail the job with a
+          # misleading message instead of this one.
+          assert_tests_ran() {
+            local label="$1" expected="$2" log="$3" ran
+            ran="$(sed -n 's/^\[=*\] \([0-9][0-9]*\) tests from [0-9][0-9]* test cases ran\..*$/\1/p' "${log}" | tail -n 1)"
+            if [ -z "${ran}" ]; then
+              echo "TEST-COUNT GUARD FAILED (#219): ${label}: the runner printed no 'N tests from M test cases ran.' summary, so there is no evidence it measured anything."
+              exit 1
+            fi
+            if [ "${ran}" -ne "${expected}" ]; then
+              echo "TEST-COUNT GUARD FAILED (#219): ${label}: ${ran} tests ran, expected ${expected} (derived from --gtest_list_tests)."
+              exit 1
+            fi
+            echo "Test-count guard OK (#219): ${label}: ${ran} tests ran."
+          }
+
           echo "Running non-integration suites directly on ARM"
-          "${TEST_BINARY}" '--gtest_filter=*-com.monkopedia.sdbus.integration.*'
+          "${TEST_BINARY}" "--gtest_filter=*-${ARM_INTEGRATION_PACKAGE}*" | tee arm-non-integration.log
+          assert_tests_ran "non-integration suites" "${EXPECTED_NON_INTEGRATION}" arm-non-integration.log
 
           echo "Running integration suites on ARM inside dbus-run-session"
           export TEST_BINARY
-          export ARM_INTEGRATION_FILTER="com.monkopedia.sdbus.integration.*"
+          export ARM_INTEGRATION_FILTER="${ARM_INTEGRATION_PACKAGE}*"
           dbus-run-session -- bash -lc '
             set -euo pipefail
             export DBUS_STARTER_BUS_TYPE=session
             export DBUS_STARTER_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
             export DBUS_SYSTEM_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}"
             "${TEST_BINARY}" "--gtest_filter=${ARM_INTEGRATION_FILTER}"
-          '
+          ' | tee arm-integration.log
+          assert_tests_ran "integration suites" "${EXPECTED_INTEGRATION}" arm-integration.log
 
       - name: Upload Failure Reports
         if: failure()
