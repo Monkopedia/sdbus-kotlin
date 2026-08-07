@@ -21,6 +21,11 @@
 package com.monkopedia.sdbus.internal.jvmdbus
 
 import com.monkopedia.sdbus.ActionResource
+import com.monkopedia.sdbus.Flags
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.CONST_PROPERTY_VALUE
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_CHANGE_SIGNAL
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
+import com.monkopedia.sdbus.InterfaceFlagsVTableItem
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodCall
 import com.monkopedia.sdbus.MethodVTableItem
@@ -278,6 +283,7 @@ internal object WireServe {
 
     private fun StringBuilder.appendInterface(name: String, meta: WireServeRegistry.InterfaceMeta) {
         append("  <interface name=\"").append(name).append("\">\n")
+        if (meta.deprecated) appendAnnotation("    ", DEPRECATED_ANNOTATION, "true")
         meta.methods.values.sortedBy { it.name }.forEach { method ->
             append("    <method name=\"").append(method.name).append("\">\n")
             splitTypes(method.inputSignature).forEachIndexed { i, type ->
@@ -286,7 +292,7 @@ internal object WireServe {
             splitTypes(method.outputSignature).forEachIndexed { i, type ->
                 appendArg(type, method.outputNames.getOrNull(i), "out")
             }
-            if (method.deprecated) append(DEPRECATED_ANNOTATION)
+            if (method.deprecated) appendAnnotation("      ", DEPRECATED_ANNOTATION, "true")
             append("    </method>\n")
         }
         meta.signals.values.sortedBy { it.name }.forEach { signal ->
@@ -294,7 +300,7 @@ internal object WireServe {
             splitTypes(signal.signature).forEachIndexed { i, type ->
                 appendArg(type, signal.paramNames.getOrNull(i), null)
             }
-            if (signal.deprecated) append(DEPRECATED_ANNOTATION)
+            if (signal.deprecated) appendAnnotation("      ", DEPRECATED_ANNOTATION, "true")
             append("    </signal>\n")
         }
         meta.properties.values.sortedBy { it.name }.forEach { property ->
@@ -306,14 +312,24 @@ internal object WireServe {
             append("    <property name=\"").append(property.name)
                 .append("\" type=\"").append(property.signature)
                 .append("\" access=\"").append(access).append("\"")
-            if (property.deprecated) {
-                append(">\n").append("      ").append(DEPRECATED_ANNOTATION.trim()).append("\n")
-                    .append("    </property>\n")
-            } else {
+            val annotations = buildString {
+                if (property.deprecated) appendAnnotation("      ", DEPRECATED_ANNOTATION, "true")
+                property.emitsChangedSignal?.let {
+                    appendAnnotation("      ", EMITS_CHANGED_SIGNAL_ANNOTATION, it)
+                }
+            }
+            if (annotations.isEmpty()) {
                 append("/>\n")
+            } else {
+                append(">\n").append(annotations).append("    </property>\n")
             }
         }
         append("  </interface>\n")
+    }
+
+    private fun StringBuilder.appendAnnotation(indent: String, name: String, value: String) {
+        append(indent).append("<annotation name=\"").append(name)
+            .append("\" value=\"").append(value).append("\"/>\n")
     }
 
     // Splits a signature into its top-level complete types (e.g. "ia{sv}" -> [i, a{sv}]); empty
@@ -355,8 +371,10 @@ internal object WireServe {
         append("/>\n")
     }
 
-    private val DEPRECATED_ANNOTATION =
-        "      <annotation name=\"org.freedesktop.DBus.Deprecated\" value=\"true\"/>\n"
+    private const val DEPRECATED_ANNOTATION = "org.freedesktop.DBus.Deprecated"
+
+    private const val EMITS_CHANGED_SIGNAL_ANNOTATION =
+        "org.freedesktop.DBus.Property.EmitsChangedSignal"
 
     private val STANDARD_INTROSPECTION =
         "  <interface name=\"org.freedesktop.DBus.Peer\">\n" +
@@ -429,7 +447,12 @@ internal object WireServeRegistry {
         val signature: String,
         val readable: Boolean,
         val writable: Boolean,
-        val deprecated: Boolean
+        val deprecated: Boolean,
+        /**
+         * The `org.freedesktop.DBus.Property.EmitsChangedSignal` value to advertise, or `null` for
+         * the D-Bus default (`"true"`), which sd-bus leaves implicit and so is omitted here too.
+         */
+        val emitsChangedSignal: String? = null
     )
 
     data class SignalMeta(
@@ -443,7 +466,9 @@ internal object WireServeRegistry {
         val methods: Map<String, MethodMeta>,
         val properties: Map<String, PropertyMeta>,
         val signals: Map<String, SignalMeta>,
-        val objectManager: Boolean = false
+        val objectManager: Boolean = false,
+        /** Whether the interface itself was flagged deprecated via `interfaceFlags`. */
+        val deprecated: Boolean = false
     )
 
     private data class ObjectKey(val destination: String, val path: String)
@@ -535,6 +560,7 @@ internal object WireServeRegistry {
         val methods = mutableMapOf<String, MethodMeta>()
         val properties = mutableMapOf<String, PropertyMeta>()
         val signals = mutableMapOf<String, SignalMeta>()
+        var interfaceDeprecated = false
         vtable.forEach { item ->
             when (item) {
                 is MethodVTableItem -> methods[item.name.value] = MethodMeta(
@@ -551,7 +577,8 @@ internal object WireServeRegistry {
                     signature = item.signature?.value.orEmpty(),
                     readable = item.getter != null,
                     writable = item.setter != null,
-                    deprecated = item.isDeprecated
+                    deprecated = item.isDeprecated,
+                    emitsChangedSignal = item.flags.emitsChangedSignalValue()
                 )
 
                 is SignalVTableItem -> signals[item.name.value] = SignalMeta(
@@ -561,9 +588,26 @@ internal object WireServeRegistry {
                     deprecated = item.isDeprecated
                 )
 
-                else -> Unit
+                is InterfaceFlagsVTableItem ->
+                    interfaceDeprecated = interfaceDeprecated || item.isDeprecated
             }
         }
-        return InterfaceMeta(methods, properties, signals)
+        return InterfaceMeta(methods, properties, signals, deprecated = interfaceDeprecated)
+    }
+
+    /**
+     * The `org.freedesktop.DBus.Property.EmitsChangedSignal` value these flags advertise, or `null`
+     * for the D-Bus default (`"true"`), which sd-bus leaves implicit.
+     *
+     * The cascade mirrors sd-bus's `introspect_write_flags` exactly, including its final `else`:
+     * anything that is neither const, nor invalidating, nor explicitly emitting is advertised as
+     * `"false"`. [Flags.set] makes the four behaviors mutually exclusive, so only clearing the
+     * default without selecting a replacement reaches that branch.
+     */
+    private fun Flags.emitsChangedSignalValue(): String? = when {
+        has(CONST_PROPERTY_VALUE) -> "const"
+        has(EMITS_INVALIDATION_SIGNAL) -> "invalidates"
+        has(EMITS_CHANGE_SIGNAL) -> null
+        else -> "false"
     }
 }
