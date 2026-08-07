@@ -24,14 +24,23 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   properties) and `org.freedesktop.DBus.Property.EmitsChangedSignal` into its `addVTable` block, and
   both generators honor `org.freedesktop.DBus.Method.NoReply` — the adaptor registers the method with
   `hasNoReply = true` and the proxy calls it with `dontExpectReply = true`. Previously all three
-  annotations were parsed and then dropped, so the introspection a running adaptor served could
-  disagree with the XML it was generated from. (#159)
-- `Deprecated` is advisory: it changes only the introspection metadata the adaptor publishes.
-  `EmitsChangedSignal` is declarative property-update behavior — values other than the D-Bus default
-  (`invalidates`, `const`, `false`) now register the matching `Flags.PropertyUpdateBehaviorFlags`
-  entry. It previously reached the generator only to decide whether a *writable* property got a
-  `notifying` delegate, so read-only properties dropped it entirely. Neither annotation changes how
-  a method is called. (#159)
+  annotations were parsed and then dropped, so nothing in the generated code carried them at all.
+  (#159)
+- **How much of that reaches the introspection a running adaptor *serves* depends on the backend, and
+  it is not yet a full round-trip of the source XML.** Measured against a live adaptor on both
+  backends via `org.freedesktop.DBus.Introspectable.Introspect`:
+  `Deprecated` on a **method, signal or property** is served on **both** backends; `Deprecated` on the
+  **interface** and `EmitsChangedSignal` (`const` / `invalidates` / `false`) are served on **native
+  only** — the JVM backend reads no vtable flags beyond the per-member deprecated bit; and
+  `org.freedesktop.DBus.Method.NoReply` is served by **neither** backend. This affects only what an
+  adaptor advertises to external introspectors (`busctl`, d-feet, other language bindings), not how it
+  behaves. Tracked in #193. (#159)
+- `Deprecated` is advisory: where it is served, it changes only the introspection metadata the
+  adaptor publishes. `EmitsChangedSignal` is declarative property-update behavior — values other
+  than the D-Bus default (`invalidates`, `const`, `false`) now register the matching
+  `Flags.PropertyUpdateBehaviorFlags` entry. It previously reached the generator only to decide
+  whether a *writable* property got a `notifying` delegate, so read-only properties dropped it
+  entirely. Neither annotation changes how a method is called. (#159)
 - **`Method.NoReply` is a behavior change for consumers who regenerate from unchanged XML.** If your
   XML already declares it on a method, regenerating switches that method to fire-and-forget on both
   sides: the adaptor sends no reply and the proxy awaits none, so failures no longer propagate back

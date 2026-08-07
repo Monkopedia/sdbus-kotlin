@@ -135,11 +135,16 @@ class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageO
 
     /**
      * Emits the `addVTable` block, carrying the standard D-Bus annotations through to the vtable
-     * flags so the introspection the running adaptor serves matches the XML it was generated from:
-     * `org.freedesktop.DBus.Deprecated` on the interface/method/signal/property, and
+     * flags: `org.freedesktop.DBus.Deprecated` on the interface/method/signal/property, and
      * `org.freedesktop.DBus.Method.NoReply` on the method. Only non-default flags are emitted --
      * `EmitsChangedSignal` resolves to a [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags]
      * entry only when it is not the D-Bus default of `true`, which the runtime already applies.
+     *
+     * Setting a vtable flag is not the same as advertising it. What the running adaptor then serves
+     * from `org.freedesktop.DBus.Introspectable.Introspect` is a subset of the source XML:
+     * member-level `Deprecated` is served on both backends, interface-level `Deprecated` and
+     * `EmitsChangedSignal` on the native backend only, and `Method.NoReply` on neither. Tracked in
+     * https://github.com/Monkopedia/sdbus-kotlin/issues/193.
      */
     override fun FunSpec.Builder.buildRegistration(intf: Interface) {
         addModifiers(PUBLIC)
