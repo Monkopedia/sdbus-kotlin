@@ -92,10 +92,26 @@ class SdbusPluginTest {
         )
     }
 
+    @Test
+    fun honorsNamingAnnotationsWhenEnabled() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        honorNamingAnnotations = true,
+        xml = HINTED_XML
+    ) { dir ->
+        runTask(dir, "generateSdbusWrappers")
+
+        val generatedRoot = File(dir, "build/generated/sdbus/sample/sampleOut/org/foo")
+        assertTrue(File(generatedRoot, "QPoint.kt").exists())
+        assertFalse(File(generatedRoot, "Corner.kt").exists())
+    }
+
     private fun withProject(
         generateProxies: Boolean,
         generateAdapters: Boolean,
         outputPackage: String? = null,
+        honorNamingAnnotations: Boolean = false,
+        xml: String = SAMPLE_XML,
         compileTargetJvm: Boolean = false,
         includeCompileFixture: Boolean = false,
         applyMavenPublish: Boolean = false,
@@ -135,24 +151,14 @@ class SdbusPluginTest {
                     sdbus {
                       generateProxies = $generateProxies
                       generateAdapters = $generateAdapters
+                      honorNamingAnnotations = $honorNamingAnnotations
                       ${outputPackage?.let { "outputPackage = \"$it\"" } ?: ""}
                       outputs.add("${if (compileTargetJvm) "jvmMain" else "linuxMain"}")
                       sources.srcDir("src/sdbus")
                     }
                 """
             )
-            writeFile(
-                File(root, "src/sdbus/sample.xml"),
-                """
-                    <node>
-                      <interface name="org.foo.Background">
-                        <method name="currentBackground">
-                          <arg type="s" direction="out"/>
-                        </method>
-                      </interface>
-                    </node>
-                """
-            )
+            writeFile(File(root, "src/sdbus/sample.xml"), xml)
             if (includeCompileFixture) {
                 val sourceSetDir = if (compileTargetJvm) "jvmMain" else "linuxMain"
                 writeFile(
@@ -212,5 +218,27 @@ class SdbusPluginTest {
     private fun writeFile(file: File, content: String) {
         file.parentFile.mkdirs()
         file.writeText(content.trimIndent())
+    }
+
+    private companion object {
+        private val SAMPLE_XML = """
+            <node>
+              <interface name="org.foo.Background">
+                <method name="currentBackground">
+                  <arg type="s" direction="out"/>
+                </method>
+              </interface>
+            </node>
+        """
+
+        private val HINTED_XML = """
+            <node>
+              <interface name="org.foo.Hinted">
+                <property name="Corner" type="(ii)" access="read">
+                  <annotation name="org.qtproject.QtDBus.QtTypeName" value="QPoint"/>
+                </property>
+              </interface>
+            </node>
+        """
     }
 }

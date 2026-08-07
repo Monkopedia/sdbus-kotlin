@@ -1,0 +1,47 @@
+<!--
+  Exercises every placement of org.qtproject.QtDBus.QtTypeName the generator understands.
+  The interface.*.kt / adaptor.*.kt / proxy.*.kt goldens are the default (flag off) output and must
+  not react to any of these annotations; the hinted-*.kt goldens are the same XML generated with
+  naming annotations honored.
+-->
+<node>
+  <interface name="org.example.Naming">
+
+    <!-- Struct property: the hint replaces the name derived from the member name. -->
+    <property name="Geometry" type="(iiii)" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QRect"/>
+    </property>
+
+    <!-- Map property: nothing is generated for a{sv}, so the hint becomes a typealias for it. -->
+    <property name="Metadata" type="a{sv}" access="read">
+      <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+    </property>
+
+    <!-- Indexed hints on the method, which is where qdbusxml2cpp writes them. -->
+    <method name="Transform">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QPointF"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QPolygonF"/>
+      <arg name="origin" type="(dd)" direction="in"/>
+      <arg name="path" type="a(dd)" direction="out"/>
+    </method>
+
+    <!-- A hint written directly on the arg it names. -->
+    <method name="Describe">
+      <arg name="spec" type="(sss)" direction="in">
+        <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVersionSpec"/>
+      </arg>
+      <arg name="text" type="s" direction="out"/>
+    </method>
+
+    <!-- No hint anywhere: the name stays derived from the member name either way. -->
+    <method name="Bounds">
+      <arg name="extent" type="(uu)" direction="out"/>
+    </method>
+
+    <signal name="Resized">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QSize"/>
+      <arg name="size" type="(nn)"/>
+    </signal>
+
+  </interface>
+</node>

@@ -40,7 +40,8 @@ import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.joinToCode
 import com.squareup.kotlinpoet.withIndent
 
-class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
+class ProxyGenerator(packageOverride: String? = null, honorNamingAnnotations: Boolean = false) :
+    BaseGenerator(packageOverride, honorNamingAnnotations) {
 
     private val proxy = ClassName.bestGuess("com.monkopedia.sdbus.Proxy")
     override val fileSuffix: String

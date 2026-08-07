@@ -78,8 +78,22 @@ class Xml2KotlinOptionsTest {
         }
     }
 
+    @Test
+    fun namingAnnotationsAreIgnoredWithoutTheFlag() = withGeneratedOutput(xml = HINTED_XML) {
+        assertEquals(setOf("org/foo/Hinted.kt", "org/foo/Corner.kt"), generatedFileNames(it))
+    }
+
+    @Test
+    fun namingAnnotationsNameGeneratedTypesWithTheFlag() = withGeneratedOutput(
+        "--honor-naming-annotations",
+        xml = HINTED_XML
+    ) {
+        assertEquals(setOf("org/foo/Hinted.kt", "org/foo/QPoint.kt"), generatedFileNames(it))
+    }
+
     private fun withGeneratedOutput(
         vararg flags: String,
+        xml: String = SIMPLE_XML,
         prepopulate: (File) -> Unit = {},
         block: (File) -> Unit
     ) {
@@ -88,7 +102,7 @@ class Xml2KotlinOptionsTest {
         val output = File(root, "out")
         output.mkdirs()
         prepopulate(output)
-        input.writeText(SIMPLE_XML)
+        input.writeText(xml)
 
         try {
             Xml2Kotlin().main(
@@ -116,6 +130,16 @@ class Xml2KotlinOptionsTest {
                 <method name="currentBackground">
                   <arg type="s" direction="out"/>
                 </method>
+              </interface>
+            </node>
+        """.trimIndent()
+
+        private val HINTED_XML = """
+            <node>
+              <interface name="org.foo.Hinted">
+                <property name="Corner" type="(ii)" access="read">
+                  <annotation name="org.qtproject.QtDBus.QtTypeName" value="QPoint"/>
+                </property>
               </interface>
             </node>
         """.trimIndent()

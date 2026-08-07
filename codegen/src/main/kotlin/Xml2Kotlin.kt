@@ -99,6 +99,10 @@ class Xml2Kotlin : CliktCommand() {
         "--output-package",
         help = "Override Kotlin package for generated files"
     )
+    val honorNamingAnnotations by option(
+        "--honor-naming-annotations",
+        help = "Name generated types from org.qtproject.QtDBus.QtTypeName annotations in the XML"
+    ).flag()
 
     override fun run() {
         val packageOverride = outputPackage?.trim()?.takeUnless { it.isEmpty() }
@@ -107,18 +111,13 @@ class Xml2Kotlin : CliktCommand() {
             output.deleteRecursively()
         }
         output.mkdirs()
-        InterfaceGenerator(packageOverride).transformXmlToFile(xml).forEach {
-            it.writeTo(output)
+        val generators = buildList {
+            add(InterfaceGenerator(packageOverride, honorNamingAnnotations))
+            if (adaptor) add(AdaptorGenerator(packageOverride, honorNamingAnnotations))
+            if (proxy) add(ProxyGenerator(packageOverride, honorNamingAnnotations))
         }
-        if (adaptor) {
-            AdaptorGenerator(packageOverride).transformXmlToFile(xml).forEach {
-                it.writeTo(output)
-            }
-        }
-        if (proxy) {
-            ProxyGenerator(packageOverride).transformXmlToFile(xml).forEach {
-                it.writeTo(output)
-            }
+        generators.forEach { generator ->
+            generator.transformXmlToFile(xml).forEach { it.writeTo(output) }
         }
     }
 }

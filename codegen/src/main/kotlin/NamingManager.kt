@@ -24,6 +24,7 @@ package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.Direction.IN
 import com.monkopedia.sdbus.Direction.OUT
+import com.monkopedia.sdbus.NamingManager.AliasType
 import com.monkopedia.sdbus.NamingManager.GeneratedType
 import com.monkopedia.sdbus.NamingManager.LazyType
 import com.monkopedia.sdbus.NamingManager.NamingType
@@ -51,7 +52,20 @@ import com.squareup.kotlinpoet.U_LONG
 import com.squareup.kotlinpoet.U_SHORT
 import com.squareup.kotlinpoet.WildcardTypeName
 
-class NamingManager(doc: XmlRootNode, packageOverride: String? = null) {
+/**
+ * Resolves every D-Bus signature in [doc] to the Kotlin type that represents it, generating a name
+ * for the ones that need a class of their own.
+ *
+ * When [honorNamingAnnotations] is set the naming annotations the XML carries are applied on top of
+ * the derived names; see [applyNamingHints]. It is opt-in because a hint can only ever *replace* a
+ * name the generator would otherwise derive, which would be a source break for anyone already
+ * compiling against generated output. With it unset nothing on that path runs.
+ */
+class NamingManager(
+    doc: XmlRootNode,
+    packageOverride: String? = null,
+    honorNamingAnnotations: Boolean = false
+) {
 
     sealed class NamingType {
         abstract val type: String
@@ -71,6 +85,12 @@ class NamingManager(doc: XmlRootNode, packageOverride: String? = null) {
         lateinit var args: List<Pair<String, TypeName>>
             private set
 
+        /**
+         * Name taken from a naming annotation, replacing whatever [nameReferences] would derive.
+         * Only ever set when the generator was asked to honor naming annotations.
+         */
+        var nameHint: String? = null
+
         fun suggestNames(list: List<Arg>) {
             nameSuggestions.add(list)
         }
@@ -87,7 +107,10 @@ class NamingManager(doc: XmlRootNode, packageOverride: String? = null) {
             val pkg = pkgs.groupBy { it }.values.maxByOrNull { it.single() }?.firstOrNull()
                 ?.lowercase()
                 ?: "sdbus.generated"
-            if (nameReferences.size == 1) {
+            val hint = nameHint
+            if (hint != null) {
+                reference = ClassName(pkg, hint.capitalCamelCase)
+            } else if (nameReferences.size == 1) {
                 val selectedName = nameReferences.single().capitalCamelCase
                 reference = ClassName(pkg, selectedName)
             } else if (nameReferences.size == 0) {
@@ -143,15 +166,33 @@ class NamingManager(doc: XmlRootNode, packageOverride: String? = null) {
         }
     }
 
+    /**
+     * A signature a naming annotation named but that generates no class of its own — a map, a list
+     * or a primitive. The name is emitted as a `typealias` for [aliased] so that it can be used
+     * without changing the type it stands for.
+     */
+    data class AliasType(
+        override val type: String,
+        override val reference: ClassName,
+        val aliased: NamingType
+    ) : NamingType()
+
     val typeMap: Map<String, NamingType> = buildMap {
         buildRootTypes(doc, packageOverride)
+        if (honorNamingAnnotations) {
+            applyNamingHints(doc, packageOverride)
+        }
     }
 
     val extraFiles: List<FileSpec>
-        get() = typeMap.values.filterIsInstance<GeneratedType>().map { it.generateType() }
+        get() = typeMap.values.filterIsInstance<GeneratedType>().map { it.generateType() } +
+            typeMap.values.filterIsInstance<AliasType>().map { it.generateAlias() }
 
     init {
-        val usedNames = mutableListOf<String>()
+        // Empty unless a naming annotation introduced an alias, so a derived name only ever has to
+        // dodge a collision on the opt-in path.
+        val usedNames = typeMap.values.filterIsInstance<AliasType>()
+            .mapTo(mutableListOf()) { it.reference.toString() }
         typeMap.values.filterIsInstance<GeneratedType>()
             .sortedByDescending { it.nameReferences.size }
             .forEach { it.generateName(usedNames) }
@@ -205,16 +246,6 @@ private fun MutableMap<String, NamingType>.buildInterfaceTypes(
     buildSignalsTypes(pkg, intf.signals)
     buildMethodsTypes(pkg, intf.methods)
     buildPropertiesTypes(pkg, intf.properties)
-    buildAnnotationsTypes(pkg, intf.annotations)
-}
-
-private fun MutableMap<String, NamingType>.buildAnnotationsTypes(
-    pkg: String,
-    annotations: List<Annotation>
-) {
-    annotations.forEach {
-        buildAnnotationTypes(pkg, it)
-    }
 }
 
 private fun MutableMap<String, NamingType>.buildPropertiesTypes(
@@ -238,15 +269,8 @@ private fun MutableMap<String, NamingType>.buildSignalsTypes(pkg: String, signal
     }
 }
 
-private fun MutableMap<String, NamingType>.buildAnnotationTypes(
-    pkg: String,
-    annotation: Annotation
-) {
-}
-
 private fun MutableMap<String, NamingType>.buildPropertyTypes(pkg: String, property: Property) {
     buildType(pkg, property.name, property.type)
-    buildAnnotationsTypes(pkg, property.annotations)
 }
 
 private fun MutableMap<String, NamingType>.buildMethodTypes(pkg: String, method: Method) {
@@ -254,17 +278,14 @@ private fun MutableMap<String, NamingType>.buildMethodTypes(pkg: String, method:
         buildArgTypes(pkg, index, arg)
     }
     buildSingleType(pkg, method.name, method.args.filter { it.direction == OUT })
-    buildAnnotationsTypes(pkg, method.annotations)
 }
 
 private fun MutableMap<String, NamingType>.buildSignalTypes(pkg: String, signal: Signal) {
     buildSingleType(pkg, signal.name, signal.args)
-    buildAnnotationsTypes(pkg, signal.annotations)
 }
 
 private fun MutableMap<String, NamingType>.buildArgTypes(pkg: String, index: Int, arg: Arg) {
     buildType(pkg, arg.name ?: "arg$index", arg.type)
-    buildAnnotationsTypes(pkg, arg.annotations)
 }
 
 private fun MutableMap<String, NamingType>.buildSingleType(
@@ -397,3 +418,88 @@ private fun MutableMap<String, NamingType>.generatedType(
 }
 
 private fun structKey(types: List<NamingType>) = "(${types.joinToString("") { it.type }})"
+
+/**
+ * The naming annotation the generator understands. `qdbusxml2cpp` writes it plain on a `<property>`
+ * or an `<arg>`, and suffixed `.In<n>` / `.Out<n>` on a `<method>` or `<signal>` to name the n-th
+ * argument in that direction.
+ *
+ * Note this is the only kind of hint that can reach here: the `tp:type` /
+ * `tp:name-for-bindings` attributes some introspection XML carries are XML *attributes* rather than
+ * `<annotation>` elements, and the parser drops them.
+ */
+private const val NAMING_ANNOTATION = "org.qtproject.QtDBus.QtTypeName"
+
+private val KOTLIN_SIMPLE_NAME = Regex("[A-Za-z_][A-Za-z0-9_]*")
+
+/**
+ * Applies the naming annotations in [node] on top of the already-derived names.
+ *
+ * Hints are keyed by D-Bus signature like everything else in the type map, so a hint names every
+ * member whose own type is that signature rather than the single member it was written on. A
+ * signature nested inside a generated struct keeps its structural rendering.
+ */
+private fun MutableMap<String, NamingType>.applyNamingHints(
+    node: XmlRootNode,
+    packageOverride: String?
+) {
+    node.nodes.forEach { applyNamingHints(it, packageOverride) }
+    for (intf in node.interfaces) {
+        val pkg = packageOverride ?: intf.name.pkg
+        for ((signature, name) in intf.namingHints()) {
+            applyNamingHint(pkg, signature, name)
+        }
+    }
+}
+
+private fun MutableMap<String, NamingType>.applyNamingHint(
+    pkg: String,
+    signature: String,
+    name: String
+) {
+    require(KOTLIN_SIMPLE_NAME.matches(name)) {
+        "$NAMING_ANNOTATION value \"$name\" on signature $signature is not a usable Kotlin name"
+    }
+    val existing = this[signature] ?: error("Naming hint for unknown signature $signature")
+    if (existing is GeneratedType) {
+        // A struct already generates a class of its own, so the hint just renames it.
+        existing.nameHint = name
+    } else {
+        // Anything else is a map, a list or a primitive; the hint becomes a typealias for it, so
+        // the name is usable without changing the type it stands for.
+        val aliased = (existing as? AliasType)?.aliased ?: existing
+        this[signature] = AliasType(signature, ClassName(pkg, name.capitalCamelCase), aliased)
+    }
+}
+
+/** Every `signature to hinted-name` pair the annotations of this interface carry. */
+private fun Interface.namingHints(): List<Pair<String, String>> = buildList {
+    for (property in properties) {
+        property.annotations.namingHint()?.let { add(property.type to it) }
+    }
+    for (method in methods) {
+        addAll(argHints(method.annotations, method.args.filter { it.direction == IN }, "In"))
+        addAll(argHints(method.annotations, method.args.filter { it.direction == OUT }, "Out"))
+        addAll(method.args.ownHints())
+    }
+    for (signal in signals) {
+        addAll(argHints(signal.annotations, signal.args, "Out"))
+        addAll(signal.args.ownHints())
+    }
+}
+
+private fun argHints(
+    annotations: List<Annotation>,
+    args: List<Arg>,
+    direction: String
+): List<Pair<String, String>> = args.mapIndexedNotNull { index, arg ->
+    annotations.hintValue("$NAMING_ANNOTATION.$direction$index")?.let { arg.type to it }
+}
+
+private fun List<Arg>.ownHints(): List<Pair<String, String>> =
+    mapNotNull { arg -> arg.annotations.namingHint()?.let { arg.type to it } }
+
+private fun List<Annotation>.namingHint(): String? = hintValue(NAMING_ANNOTATION)
+
+private fun List<Annotation>.hintValue(name: String): String? =
+    firstOrNull { it.name == name }?.value?.trim()?.takeUnless(String::isEmpty)

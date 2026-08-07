@@ -42,7 +42,8 @@ import com.squareup.kotlinpoet.TypeSpec.Builder
 import com.squareup.kotlinpoet.joinToCode
 import com.squareup.kotlinpoet.withIndent
 
-class AdaptorGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
+class AdaptorGenerator(packageOverride: String? = null, honorNamingAnnotations: Boolean = false) :
+    BaseGenerator(packageOverride, honorNamingAnnotations) {
 
     private val obj = ClassName.bestGuess("com.monkopedia.sdbus.Object")
     override val fileSuffix: String
