@@ -182,25 +182,63 @@ expect sealed class Message {
      */
     fun rewind(complete: Boolean)
 
-    /** The PID of the sending process, if credentials are available. */
+    /**
+     * The PID of the sending process.
+     *
+     * **This accessor throws rather than returning a fallback.** Credentials are not attached to
+     * every message, and when they are missing the read fails with [SdbusException] instead of
+     * yielding a null or a sentinel. Availability is not a guaranteed property of a message: it
+     * depends on the backend and on the transport the message arrived over, so a caller that can
+     * see messages without credentials has to guard the read.
+     *
+     * **Credentials are only as trustworthy as whatever attached them.** On a brokered bus the
+     * daemon stamps the `sender` field authoritatively, so credentials resolved through it
+     * describe the peer it names. A [direct connection][createDirectBusConnection] is brokerless:
+     * nothing stamps `sender`, the single peer on the other end supplies it, and anything derived
+     * from it is peer-asserted rather than verified. Credentials read over that transport are
+     * therefore not authoritative and must not be used to make an authorization decision. What
+     * they report there is currently backend-dependent and is an open question — see
+     * [issue #199](https://github.com/Monkopedia/sdbus-kotlin/issues/199) — so treat it as
+     * unspecified rather than as a contract.
+     *
+     * @throws SdbusException if credentials are unavailable for this message
+     */
     val credsPid: Int
 
-    /** The real UID of the sender, if credentials are available. */
+    /**
+     * The real UID of the sender. Carries the same availability and trust caveats as [credsPid],
+     * including throwing [SdbusException] when credentials are unavailable.
+     */
     val credsUid: UInt
 
-    /** The effective UID of the sender, if credentials are available. */
+    /**
+     * The effective UID of the sender. Carries the same availability and trust caveats as
+     * [credsPid], including throwing [SdbusException] when credentials are unavailable.
+     */
     val credsEuid: UInt
 
-    /** The real GID of the sender, if credentials are available. */
+    /**
+     * The real GID of the sender. Carries the same availability and trust caveats as [credsPid],
+     * including throwing [SdbusException] when credentials are unavailable.
+     */
     val credsGid: UInt
 
-    /** The effective GID of the sender, if credentials are available. */
+    /**
+     * The effective GID of the sender. Carries the same availability and trust caveats as
+     * [credsPid], including throwing [SdbusException] when credentials are unavailable.
+     */
     val credsEgid: UInt
 
-    /** The supplementary GIDs of the sender, if credentials are available. */
+    /**
+     * The supplementary GIDs of the sender. Carries the same availability and trust caveats as
+     * [credsPid], including throwing [SdbusException] when credentials are unavailable.
+     */
     val credsSupplementaryGids: List<UInt>
 
-    /** The SELinux security context of the sender. */
+    /**
+     * The SELinux security context of the sender. Carries the same availability and trust caveats
+     * as [credsPid], including throwing [SdbusException] when it is unavailable.
+     */
     val seLinuxContext: String
 }
 
