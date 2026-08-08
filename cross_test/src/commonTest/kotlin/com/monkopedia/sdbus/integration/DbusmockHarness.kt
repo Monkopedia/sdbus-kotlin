@@ -90,8 +90,10 @@ internal fun dbusmockUnavailable(reason: String): DbusmockHandle? {
  * On the JVM this raises a JUnit assumption failure, which Gradle records as `skipped`. Kotlin/
  * Native's test runner has no runtime-skip primitive — an early return is indistinguishable from a
  * pass, and a TeamCity `testIgnored` emitted from inside a running test is rejected by the Gradle
- * parser — so the native actual can only write [reason] to the captured test output. CI does not
- * depend on that: [DBUSMOCK_REQUIRED_ENV] makes the harness fail rather than skip.
+ * parser — so the native actual can only write [reason] to the captured test output. Because a
+ * printed reason does not stop the report claiming a pass (#186), `:cross_test:linuxX64Test` does not
+ * run these suites at all when the harness cannot start: see the exclusion in
+ * `cross_test/build.gradle.kts`, which reads [DBUSMOCK_REQUIRED_ENV] as its override.
  *
  * Callers must still `return` afterwards; only the JVM actual aborts the test by throwing.
  */
