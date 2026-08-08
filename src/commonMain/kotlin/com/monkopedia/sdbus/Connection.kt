@@ -284,6 +284,12 @@ expect fun createSessionBusConnection(address: String): Connection
 /**
  * Opens direct D-Bus connection at a custom address
  *
+ * A direct connection is **brokerless**: there is no `dbus-daemon` behind it, so nothing stamps
+ * the `sender` field of an incoming message — the single peer on the other end writes whatever it
+ * likes there. Treat the sender of anything received over a direct connection as unverified, and
+ * do not base an authorization decision on it or on [Message]'s `creds*` accessors, which report
+ * no credentials on this transport.
+ *
  * @param address ";"-separated list of addresses of bus brokers to try to connect to
  * @return [Connection] instance
  *

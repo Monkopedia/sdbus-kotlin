@@ -182,25 +182,34 @@ expect sealed class Message {
      */
     fun rewind(complete: Boolean)
 
-    /** The PID of the sending process, if credentials are available. */
+    /**
+     * The PID of the sending process.
+     *
+     * Sender credentials are only meaningful when something authoritative attached them. On a
+     * brokered bus the daemon stamps the sender and the credentials describe it; on a **brokerless
+     * direct connection there is no daemon**, the `sender` field is chosen by the peer, and no
+     * credentials are reported at all. Reading this — or any other `creds*` accessor — throws when
+     * credentials are unavailable, so an authorization check must be prepared for that rather than
+     * assume a value is always there.
+     */
     val credsPid: Int
 
-    /** The real UID of the sender, if credentials are available. */
+    /** The real UID of the sender. Unavailable in the same cases as [credsPid]. */
     val credsUid: UInt
 
-    /** The effective UID of the sender, if credentials are available. */
+    /** The effective UID of the sender. Unavailable in the same cases as [credsPid]. */
     val credsEuid: UInt
 
-    /** The real GID of the sender, if credentials are available. */
+    /** The real GID of the sender. Unavailable in the same cases as [credsPid]. */
     val credsGid: UInt
 
-    /** The effective GID of the sender, if credentials are available. */
+    /** The effective GID of the sender. Unavailable in the same cases as [credsPid]. */
     val credsEgid: UInt
 
-    /** The supplementary GIDs of the sender, if credentials are available. */
+    /** The supplementary GIDs of the sender. Unavailable in the same cases as [credsPid]. */
     val credsSupplementaryGids: List<UInt>
 
-    /** The SELinux security context of the sender. */
+    /** The SELinux security context of the sender. Unavailable in the same cases as [credsPid]. */
     val seLinuxContext: String
 }
 

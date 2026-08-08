@@ -98,8 +98,12 @@ internal class DBusWireConnection private constructor(
      * unique name), no `RequestName`/`ReleaseName`, no `AddMatch`/`RemoveMatch`/`GetNameOwner`.
      * Method calls, replies and signals flow straight to/from the single peer on the other end of
      * the socket. Mirrors sd-bus direct mode and dbus-java's DirectConnection (epic #93 phase 6).
+     *
+     * Consequence for identity: with no daemon, NOTHING stamps the `sender` field of an incoming
+     * frame — the peer writes whatever it likes there. Anything that derives an identity from
+     * `sender` must therefore treat it as unverified on a direct connection (#199).
      */
-    private val direct: Boolean = false
+    internal val direct: Boolean = false
 ) : Closeable {
 
     private val input: InputStream = BufferedInputStream(socket.inputStream)
