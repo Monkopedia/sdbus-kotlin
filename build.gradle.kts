@@ -235,12 +235,19 @@ tasks.register("crossRuntimeStressTests") {
 // stress-matrix.yaml). Driving the selection from this gate — rather than a command-line `--tests`
 // filter — is deliberate: `--tests` across multiple test tasks (`:linuxX64Test :jvmTest`) is applied
 // to only one task and silently runs the other unfiltered, which ran the full integration suite in CI.
+//
+// Every test task this gate touches owns soak suites (2 in nativeTest, 1 in jvmTest), so an include
+// pattern that matches nothing means the suites were renamed or moved, never a legitimate absence —
+// hence `failOnNoMatchingTests` is left at its default of `true`. It used to be forced to `false`,
+// which turned exactly that mistake into a green nightly (#196). Note it only covers the JVM half:
+// the Kotlin/Native test task does not honour the flag and stays green on an empty selection, so the
+// cleaner-soak job additionally asserts against the JUnit XML both halves write.
+val gcSoakSuites = "com.monkopedia.sdbus.unit.Cleaner*SoakTest"
 tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
     if (project.hasProperty("gcSoak")) {
-        filter.isFailOnNoMatchingTests = false
-        filter.includeTestsMatching("com.monkopedia.sdbus.unit.Cleaner*SoakTest")
+        filter.includeTestsMatching(gcSoakSuites)
     } else {
-        filter.excludeTestsMatching("com.monkopedia.sdbus.unit.Cleaner*SoakTest")
+        filter.excludeTestsMatching(gcSoakSuites)
     }
 }
 
