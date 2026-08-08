@@ -40,3 +40,23 @@ internal expect val backendServesEmitsChangedSignal: Boolean
  * `false` -- both did until #197. Measured by [VtableFlagIntrospectionTest].
  */
 internal expect val backendServesMethodNoReply: Boolean
+
+/**
+ * Whether the active backend applies a property's
+ * [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags] when it builds the `PropertiesChanged`
+ * payload -- skipping properties that announce no change, putting `invalidates` properties in the
+ * name-only array, and rejecting an explicitly named property that announces neither.
+ *
+ * **This flag records an OPEN DECISION on #193, not an accepted limitation.** Unlike the
+ * `backendServes*` flags above -- introspection metadata, where each backend's answer is simply
+ * what it is -- this is the signal payload a client consumes, and the two backends give different
+ * answers to the same question. Which one is right has not been decided: matching native would
+ * silently stop broadcasts for `const`/`false` properties and make an ordinary assignment through
+ * the `Object.notifying` delegate throw, on a released artifact, so PR #231 priced that change and
+ * did not merge it. #193 stays open until the owner rules.
+ *
+ * So do not read `false` as "fine on JVM" or `true` as "settled in native's favour". Whoever
+ * closes #193 flips an `actual` or deletes the flag; until then [PropertiesChangedFlagParityTest]
+ * pins both sides so neither can move unobserved.
+ */
+internal expect val backendHonoursEmitsChangedSignalOnEmit: Boolean
