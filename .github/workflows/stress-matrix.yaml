@@ -256,6 +256,39 @@ jobs:
           dbus-run-session -- ./gradlew :linuxX64Test :jvmTest -PgcSoak \
             --rerun-tasks --stacktrace | tee cleaner-soak.log
 
+      - name: Assert Both Soak Halves Ran
+        # #196: `-PgcSoak` selects the suites with an include pattern, so a rename or a package move
+        # makes it match nothing. Gradle fails `:jvmTest` on that, but the Kotlin/Native test task
+        # ignores `failOnNoMatchingTests` and reports `:linuxX64Test` green while writing no results
+        # at all — and neither guard covers a task that is dropped from the command line above. The
+        # JUnit XML is the only artefact that records what actually executed, so assert on it: each
+        # half must have run at least one test, and every suite it ran must be a soak suite (that
+        # second half is what #120 needed, when a stray filter ran the whole integration suite here).
+        run: |
+          set -euo pipefail
+          status=0
+          for task in linuxX64Test jvmTest; do
+            xml=$(find "build/test-results/${task}" -maxdepth 1 -name '*.xml' 2>/dev/null | sort || true)
+            if [ -z "${xml}" ]; then
+              echo "SOAK GUARD FAILED (#196): ${task} wrote no JUnit XML — it selected no tests, or never ran."
+              status=1
+              continue
+            fi
+            cases=$(grep -ho '<testcase ' ${xml} | wc -l)
+            suites=$(sed -n 's/.*<testsuite name="\([^"]*\)".*/\1/p' ${xml} | sort -u)
+            echo "${task}: ${cases} test(s) in: $(echo ${suites})"
+            if [ "${cases}" -eq 0 ]; then
+              echo "SOAK GUARD FAILED (#196): ${task} recorded 0 tests."
+              status=1
+            fi
+            foreign=$(echo "${suites}" | grep -v 'Cleaner.*SoakTest' || true)
+            if [ -n "${foreign}" ]; then
+              echo "SOAK GUARD FAILED (#196): ${task} ran non-soak suites: $(echo ${foreign})"
+              status=1
+            fi
+          done
+          exit "${status}"
+
       - name: Upload Failure Artifacts
         if: failure()
         uses: actions/upload-artifact@v4
