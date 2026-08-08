@@ -51,6 +51,17 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// Rewrites the checked-in golden files GeneratorTest compares against, for use after an
+// intentional generator change. Kept separate from the test task on purpose: the test only reads
+// goldens, this only writes them, so neither can pass itself off as the other.
+tasks.register<JavaExec>("regenerateGoldens") {
+    group = "build"
+    description = "Regenerates the codegen golden fixtures from their test.xml inputs."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.monkopedia.sdbus.RegenerateGoldensKt")
+    args(layout.projectDirectory.dir("src/test/resources").asFile.absolutePath)
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_1_8)

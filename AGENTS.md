@@ -34,6 +34,9 @@ Needs no D-Bus session bus:
   validator; if you intentionally change public API, regenerate with `./gradlew apiDump` and commit
   the `api/*.api` diff.
 - `./gradlew codegen:fatJar`: build the standalone codegen JAR used in releases.
+- `./gradlew :codegen:regenerateGoldens`: rewrite the checked-in codegen golden fixtures from their
+  `test.xml` inputs after an intentional generator change, then review the `git diff` before
+  committing it. `:codegen:test` only compares the goldens; it never writes them.
 - `./gradlew :dokkaGeneratePublicationHtml`: generate docs into `build/dokka` (this is what
   `pages.yaml` runs; the older `dokkaHtml` task still exists but is not what CI publishes).
 
