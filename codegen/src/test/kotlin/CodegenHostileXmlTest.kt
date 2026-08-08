@@ -72,6 +72,59 @@ class CodegenHostileXmlTest {
         assertRefusedAsInternalSubset(BOM + SELF_REFERENTIAL_ENTITY)
     }
 
+    /**
+     * A second `<!DOCTYPE` after the one a real service sends. Two of them is not well-formed XML,
+     * but the parser honours the second and declares its entities, so the scan has to keep reading
+     * to the root element rather than stopping at the first declaration's `>`.
+     */
+    @Test
+    fun secondDoctypeBehindARealIntrospectReplyDoctype_isStillRefused() {
+        assertRefusedAsInternalSubset(
+            REAL_INTROSPECT_DOCTYPE + "\n" + TEN_FOLD_ENTITIES_FOUR_LEVELS
+        )
+    }
+
+    @Test
+    fun selfReferentialEntityInASecondDoctype_isStillRefused() {
+        assertRefusedAsInternalSubset(REAL_INTROSPECT_DOCTYPE + "\n" + SELF_REFERENTIAL_ENTITY)
+    }
+
+    /**
+     * The scan resumes after a doctype rather than after the next declaration in particular, so a
+     * comment or processing instruction between the two does not hide the second one either.
+     */
+    @Test
+    fun secondDoctypeBehindACommentAndAProcessingInstruction_isStillRefused() {
+        assertRefusedAsInternalSubset(
+            "<!DOCTYPE node>\n<!-- a comment -->\n<?vendor data?>\n" + TEN_FOLD_ENTITIES_FOUR_LEVELS
+        )
+    }
+
+    /**
+     * Why the root element may end the scan when the first doctype's `>` may not: the parser does
+     * not apply a declaration that follows the root element, so there is nothing left to refuse
+     * once the root is reached. This is the parser behaviour [parseIntrospectionXml] relies on.
+     */
+    @Test
+    fun entityDeclaredAfterTheRootElement_isNotHonouredByTheParser() {
+        val failure = parseWithin(
+            """
+            <node>
+              <interface name="org.example.Late">
+                <method name="Get">
+                  <annotation name="org.gtk.GDBus.DocString" value="&a;"/>
+                </method>
+              </interface>
+            </node>
+            <!DOCTYPE node [ <!ENTITY a "&a;"> ]>
+            """
+        ) ?: fail("expected the entity reference to fail, but the document parsed")
+        assertTrue(
+            failure.message.orEmpty().contains("Unknown entity"),
+            "expected the parser not to honour the late declaration, got: ${failure.message}"
+        )
+    }
+
     @Test
     fun documentBehindAByteOrderMark_stillParses() {
         val xml = BOM + """
@@ -89,25 +142,35 @@ class CodegenHostileXmlTest {
     /**
      * The prolog scan decides whether a document may declare entities, so what it does with a
      * prolog it cannot read is the whole question: assuming such a document safe is how the byte
-     * order mark got past it.
+     * order mark got past it. Each shape below is one the scan does not model, and none of them may
+     * be waved through on the grounds that no `<!DOCTYPE` was recognised.
      */
     @Test
     fun prologTheScanCannotRead_isRefusedRatherThanAssumedToDeclareNothing() {
-        val failure = parseWithin("stray text <node/>")
-            ?: fail("expected the unreadable prolog to be refused, but the document parsed")
-        assertTrue(
-            failure.message.orEmpty().contains("prolog"),
-            "expected the failure to say the prolog could not be read, got: ${failure.message}"
+        val unreadablePrologs = mapOf(
+            "text before the root element" to "stray text ",
+            "a space inside the declaration name" to """<! DOCTYPE node [ <!ENTITY a "x"> ]>""",
+            "a lower-case declaration name" to """<!doctype node [ <!ENTITY a "x"> ]>""",
+            "a CDATA section, which a prolog cannot contain" to "<![CDATA[ <!DOCTYPE node [ ]]>",
+            "a second byte order mark" to BOM + BOM,
+            "the bytes of a UTF-16 byte order mark read as UTF-8" to "\uFFFE"
         )
+
+        for ((shape, prolog) in unreadablePrologs) {
+            val failure = parseWithin(prolog + "<node/>")
+                ?: fail("expected $shape to be refused, but the document parsed")
+            assertTrue(
+                failure.message.orEmpty().contains("prolog"),
+                "expected $shape to say the prolog could not be read, got: ${failure.message}"
+            )
+        }
     }
 
     /** The doctype a real `dbus-daemon` puts on every `Introspect` reply. */
     @Test
     fun externalDoctypeOfARealIntrospectReply_stillParses() {
-        val xml = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-             "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+        val xml = REAL_INTROSPECT_DOCTYPE + "\n" + """
+            <?vendor data?>
             <!-- a comment mentioning <!DOCTYPE node [ to prove only the prolog is scanned -->
             <node>
               <interface name="org.example.Real">
@@ -187,6 +250,13 @@ class CodegenHostileXmlTest {
 
         /** Spelled out rather than written literally, since the character itself is invisible. */
         private const val BOM = "\uFEFF"
+
+        /** What a real `dbus-daemon` puts in front of every `Introspect` reply, and nothing else. */
+        private val REAL_INTROSPECT_DOCTYPE = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+             "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+        """.trimIndent()
 
         private val TEN_FOLD_ENTITIES_FOUR_LEVELS = """
             <!DOCTYPE node [
