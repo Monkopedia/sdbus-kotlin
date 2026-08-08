@@ -1,6 +1,8 @@
 package com.monkopedia.sdbus.internal.jvmdbus
 
 import com.monkopedia.sdbus.ActionResource
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_CHANGE_SIGNAL
+import com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags.EMITS_INVALIDATION_SIGNAL
 import com.monkopedia.sdbus.InterfaceName
 import com.monkopedia.sdbus.Message
 import com.monkopedia.sdbus.MethodCall
@@ -23,6 +25,10 @@ import java.util.concurrent.atomic.AtomicLong
 
 private const val OBJECT_MANAGER_INTERFACE_NAME = "org.freedesktop.DBus.ObjectManager"
 private const val OBJECT_MANAGER_GET_MANAGED_OBJECTS = "GetManagedObjects"
+
+// EDOM, the errno sd-bus assert_returns when PropertiesChanged is asked to announce a property
+// whose vtable flags say it announces nothing (bus-objects.c, emit_properties_changed_on_interface).
+private const val EDOM = 33
 
 /**
  * Sends a signal OVER THE WIRE on the self-owned connection (epic #93). Supplied to
@@ -226,9 +232,12 @@ internal class WireDbusObject(
         return propertyToVariant(value)
     }
 
-    // Mirrors native's sd_bus_emit_properties_changed_strv: each named property whose vtable
-    // getter can be read goes into changed_properties with its current value; names without a
-    // readable getter (write-only / value unavailable) fall back to invalidated_properties.
+    // Mirrors the explicit-names branch of sd-bus's emit_properties_changed_on_interface
+    // (bus-objects.c): a named property carrying EMITS_INVALIDATION contributes its NAME ONLY to
+    // invalidated_properties, one carrying EMITS_CHANGE contributes its current value to
+    // changed_properties, and one carrying NEITHER (const / no-signal) is a caller error that
+    // sd-bus rejects with -EDOM before sending anything at all. Names with no readable getter
+    // (write-only / value unavailable) still fall back to invalidated_properties.
     private fun resolveChangedProperties(
         interfaceName: String,
         propNames: List<PropertyName>
@@ -238,8 +247,15 @@ internal class WireDbusObject(
         val invalidated = mutableListOf<PropertyName>()
         propNames.forEach { propName ->
             val property = properties[propName.value]
+            if (property != null && !property.emitsAnyChange) {
+                throw createError(
+                    EDOM,
+                    "PropertiesChanged failed: $interfaceName.${propName.value} is registered " +
+                        "as not emitting a change signal"
+                )
+            }
             val value = property
-                ?.takeIf { it.getter != null }
+                ?.takeIf { !it.emitsInvalidationOnly && it.getter != null }
                 ?.let { runCatching { readPropertyValue(it) }.getOrNull() }
             if (value != null) {
                 changed[propName] = value
@@ -249,6 +265,14 @@ internal class WireDbusObject(
         }
         return changed to invalidated
     }
+
+    /** Whether this property announces its changes at all, in either form. */
+    private val PropertyVTableItem.emitsAnyChange: Boolean
+        get() = flags.has(EMITS_CHANGE_SIGNAL) || flags.has(EMITS_INVALIDATION_SIGNAL)
+
+    /** Whether this property announces changes by name only, withholding the value. */
+    private val PropertyVTableItem.emitsInvalidationOnly: Boolean
+        get() = flags.has(EMITS_INVALIDATION_SIGNAL)
 
     override fun emitPropertiesChangedSignal(
         interfaceName: InterfaceName,
@@ -269,11 +293,15 @@ internal class WireDbusObject(
     }
 
     override fun emitPropertiesChangedSignal(interfaceName: InterfaceName) {
-        // No-argument form mirrors sd_bus_emit_properties_changed_strv(..., names=null): emit ALL
-        // of the interface's properties (readable ones into changed_properties with their current
-        // value, write-only ones into invalidated_properties), not an empty payload.
-        val allProps = propertiesByInterface[interfaceName.value].orEmpty().keys.map(::PropertyName)
-        emitPropertiesChangedSignal(interfaceName, allProps)
+        // No-argument form mirrors sd_bus_emit_properties_changed_strv(..., names=null), whose
+        // rule differs from the explicit-names one above: properties that announce nothing are
+        // SKIPPED here rather than rejected, and when that leaves nothing to say sd-bus sends no
+        // signal at all ("if (!has_invalidating && !has_changing) return 0").
+        val announcing = propertiesByInterface[interfaceName.value].orEmpty()
+            .filterValues { it.emitsAnyChange }
+            .keys.map(::PropertyName)
+        if (announcing.isEmpty()) return
+        emitPropertiesChangedSignal(interfaceName, announcing)
     }
 
     // The no-argument overloads map onto sd_bus_emit_object_added/_removed, which advertise the
