@@ -319,11 +319,32 @@ value class Signature(
 /**
  * UnixFd is a representation of file descriptor D-Bus type that owns
  * the underlying fd, provides access to it, and closes the fd when
- * the UnixFd goes out of scope.
+ * the UnixFd is released.
+ *
+ * **Nothing closes the fd at scope exit.** Release is either explicit — [release], or a
+ * `use { }` block, since [UnixFd] is a [Resource] — or it happens at some later, unpredictable
+ * garbage collection, which both backends use only as a backstop (a `kotlin.native.ref.Cleaner`
+ * on native, a `java.lang.ref.Cleaner` on JVM). Dropping the last reference to a `UnixFd` and
+ * letting the variable fall out of scope therefore returns the descriptor at no defined time, so
+ * code that acquires fds in a loop must release them deterministically or it can exhaust the
+ * process fd table. (This paragraph corrects the class documentation published up to and
+ * including 1.0.1, which said the fd is closed "when the UnixFd goes out of scope"; that was
+ * never true of either backend.)
  *
  * UnixFd can be default constructed (owning invalid fd), or constructed from
  * an explicitly provided fd by either duplicating ([UnixFd] primary constructor)
  * or adopting that fd as-is ([UnixFd.adopt]).
+ *
+ * **Duplicating and closing are backend-dependent on JVM.** The native backend always `dup(2)`s
+ * in the primary constructor — throwing if the syscall fails — and always `close(2)`s on release.
+ * The JVM backend reaches the descriptor through junixsocket's *optional* native support; when
+ * that support is absent (no native binary for the platform, or a consumer where the reflective
+ * access it needs is denied, e.g. a JPMS-modular application) the primary constructor returns the
+ * caller's fd **unchanged**, so the instance aliases the caller's descriptor instead of owning a
+ * duplicate, and [release] then closes nothing. Both degradations are silent: no exception, no
+ * log, and no public way to ask which mode is in effect. On JVM, consequently, do not assume the
+ * fd you passed in is still exclusively yours after `UnixFd(fd)`, and do not treat a completed
+ * `release()` as proof that a descriptor was closed.
  */
 expect class UnixFd internal constructor(fd: Int, adoptFd: Unit) : Resource {
 
@@ -343,6 +364,10 @@ expect class UnixFd internal constructor(fd: Int, adoptFd: Unit) : Resource {
          * close [fd] afterwards. Contrast with the primary `UnixFd(fd)`
          * constructor, which duplicates the descriptor and leaves the
          * caller's fd untouched.
+         *
+         * Both halves of that contrast are unconditional only on the native backend; on JVM the
+         * duplication, and the close on release, depend on junixsocket's optional native support.
+         * See the [UnixFd] class documentation.
          */
         fun adopt(fd: Int): UnixFd
     }
