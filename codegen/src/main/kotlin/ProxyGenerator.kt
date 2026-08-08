@@ -26,7 +26,6 @@ import com.monkopedia.sdbus.Access.READWRITE
 import com.monkopedia.sdbus.Access.WRITE
 import com.monkopedia.sdbus.Annotations.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Direction.OUT
-import com.monkopedia.sdbus.NamingManager.SimpleType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -36,7 +35,6 @@ import com.squareup.kotlinpoet.KModifier.SUSPEND
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.joinToCode
 import com.squareup.kotlinpoet.withIndent
 
@@ -150,6 +148,18 @@ class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOve
 
     override fun signalBuilder(intf: Interface, signal: Signal): FunSpec.Builder? = null
 
+    /**
+     * The decoder bound into `signalFlow` takes one lambda parameter per *top-level* signal
+     * argument, so the binding is chosen by how many arguments the signal declares -- not by what
+     * kind of type they map to. Only a multi-argument signal gets the constructor reference, and
+     * only because the generated aggregate's constructor happens to have exactly that arity; a
+     * single argument is decoded as itself, whatever its type.
+     *
+     * Keying this off the type instead used to emit `call(::List<String>)` for a single argument of
+     * a parameterized type (which is not valid Kotlin) and `call(::Entry)` for a single argument of
+     * a struct type (which decodes two top-level arguments where the adaptor registers one). See
+     * https://github.com/Monkopedia/sdbus-kotlin/issues/218.
+     */
     override fun signalValBuilder(intf: Interface, signal: Signal): PropertySpec.Builder? {
         val type = namingManager[signal.args]
         return PropertySpec.builder(
@@ -167,12 +177,10 @@ class ProxyGenerator(packageOverride: String? = null) : BaseGenerator(packageOve
                         signal.name
                     )
                     withIndent {
-                        if (type.reference == UNIT) {
-                            add("call { -> Unit }\n")
-                        } else if (type is SimpleType) {
-                            add("call { a: %T -> a }\n", type.reference)
-                        } else {
-                            add("call(::%T)\n", type.reference)
+                        when (signal.args.size) {
+                            0 -> add("call { -> Unit }\n")
+                            1 -> add("call { a: %T -> a }\n", type.reference)
+                            else -> add("call(::%T)\n", type.reference)
                         }
                     }
                     add("}\n")

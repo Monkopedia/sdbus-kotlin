@@ -57,6 +57,19 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   `sdbus-kotlin-codegen` or the `com.monkopedia.sdbus.plugin` Gradle plugin; declare it directly instead.
   (#167)
 
+### Fixed — codegen
+
+- **A signal with exactly one argument of a parameterized type no longer generates code that fails
+  to compile.** The proxy's signal decoder was selected from the *kind* of the mapped Kotlin type
+  rather than from how many arguments the signal declares, so a single argument of an array or dict
+  type (`as`, `ai`, `a{sv}` — ordinary shapes in real interfaces) fell through to the
+  constructor-reference branch and emitted `call(::List<String>)`, which is not valid Kotlin. The
+  same fall-through gave a single argument of a *struct* type `call(::Entry)`, which compiled but
+  decoded two top-level arguments where the adaptor registers one; that is corrected too. Signals
+  with no arguments and with several arguments are unaffected, and regenerating XML that declares
+  neither shape produces byte-identical output. A `SignalArgShapesTest` fixture now covers every
+  signal argument shape, so `compile_test` guards this permanently. (#218)
+
 ### Fixed
 
 - **A method registered with `hasNoReply = true` now advertises
