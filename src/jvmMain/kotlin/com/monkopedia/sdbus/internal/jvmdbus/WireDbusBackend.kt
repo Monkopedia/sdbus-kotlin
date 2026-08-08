@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The JVM D-Bus backend (epic #93): the one and only backend, routing everything through the
@@ -167,11 +168,18 @@ private fun emitWireSignal(
 // instead. #141.
 private val directConnectionCounter = AtomicLong()
 
+// sd-bus's BUS_DEFAULT_TIMEOUT_USEC, the value a native connection reports when nothing called
+// sd_bus_set_method_call_timeout. Every "use the connection default" path -- the raw-message
+// callMethod(message) overloads and MethodCall.send(Duration.ZERO) -- resolves to this, so a
+// connection that reported Duration.ZERO here was reporting "no timeout" and left those calls
+// unbounded. #184.
+private val DEFAULT_METHOD_CALL_TIMEOUT: Duration = 25.seconds
+
 internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbusConnection {
     private val localUniqueName: String =
         wire.uniqueName ?: ":jvm-wire-${directConnectionCounter.incrementAndGet()}"
     private val released = AtomicBoolean(false)
-    private var timeout: Duration = Duration.ZERO
+    private var timeout: Duration = DEFAULT_METHOD_CALL_TIMEOUT
 
     val wireConnection: DBusWireConnection get() = wire
     fun isReleased(): Boolean = released.get()
