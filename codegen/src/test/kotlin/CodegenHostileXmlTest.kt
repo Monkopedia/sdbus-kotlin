@@ -46,23 +46,58 @@ class CodegenHostileXmlTest {
         // limit; the shape is what matters, not the size. Levels are a multiplier, so the same
         // document with three more of them is 10MB and with a few more it exhausts the heap of
         // whatever build ran it.
-        val failure = parseWithin(TEN_FOLD_ENTITIES_FOUR_LEVELS)
-            ?: fail("expected the entity declaration to be refused, but the document parsed")
-        assertTrue(
-            failure.message.orEmpty().contains("DTD internal subset"),
-            "expected the failure to name the declaration it refused, got: ${failure.message}"
-        )
+        assertRefusedAsInternalSubset(TEN_FOLD_ENTITIES_FOUR_LEVELS)
     }
 
     @Test
     fun entityThatReferencesItself_isRefusedRatherThanNeverTerminating() {
         // Before the limit this document did not fail, and did not succeed either: the parser
         // re-injected the entity into its own replacement text indefinitely.
-        val failure = parseWithin(SELF_REFERENTIAL_ENTITY)
-            ?: fail("expected the entity declaration to be refused, but the document parsed")
+        assertRefusedAsInternalSubset(SELF_REFERENTIAL_ENTITY)
+    }
+
+    /**
+     * A byte order mark is what `File.readText()` leaves at the front of a UTF-8 document that has
+     * one, and the parser accepts it, so the prolog has to be read past it rather than given up on.
+     * Both entity cases get their own case behind one, since they fail differently without it: this
+     * one parses, and the self-referential one below does not come back at all.
+     */
+    @Test
+    fun entityDeclarationBehindAByteOrderMark_isStillRefused() {
+        assertRefusedAsInternalSubset(BOM + TEN_FOLD_ENTITIES_FOUR_LEVELS)
+    }
+
+    @Test
+    fun selfReferentialEntityBehindAByteOrderMark_isStillRefused() {
+        assertRefusedAsInternalSubset(BOM + SELF_REFERENTIAL_ENTITY)
+    }
+
+    @Test
+    fun documentBehindAByteOrderMark_stillParses() {
+        val xml = BOM + """
+            <node>
+              <interface name="org.example.Marked">
+                <method name="Ping"/>
+              </interface>
+            </node>
+        """.trimIndent()
+
+        assertEquals(null, parseWithin(xml))
+        assertEquals("org.example.Marked", TestXmlSupport.parse(xml).interfaces.single().name)
+    }
+
+    /**
+     * The prolog scan decides whether a document may declare entities, so what it does with a
+     * prolog it cannot read is the whole question: assuming such a document safe is how the byte
+     * order mark got past it.
+     */
+    @Test
+    fun prologTheScanCannotRead_isRefusedRatherThanAssumedToDeclareNothing() {
+        val failure = parseWithin("stray text <node/>")
+            ?: fail("expected the unreadable prolog to be refused, but the document parsed")
         assertTrue(
-            failure.message.orEmpty().contains("DTD internal subset"),
-            "expected the failure to name the declaration it refused, got: ${failure.message}"
+            failure.message.orEmpty().contains("prolog"),
+            "expected the failure to say the prolog could not be read, got: ${failure.message}"
         )
     }
 
@@ -106,6 +141,15 @@ class CodegenHostileXmlTest {
         assertEquals(null, namingManagerFailureFor("a".repeat(254) + "s"))
     }
 
+    private fun assertRefusedAsInternalSubset(xml: String) {
+        val failure = parseWithin(xml)
+            ?: fail("expected the entity declaration to be refused, but the document parsed")
+        assertTrue(
+            failure.message.orEmpty().contains("DTD internal subset"),
+            "expected the failure to name the declaration it refused, got: ${failure.message}"
+        )
+    }
+
     private fun namingManagerFailureFor(signature: String): Throwable? = runCatching {
         NamingManager(
             TestXmlSupport.parse(
@@ -138,7 +182,11 @@ class CodegenHostileXmlTest {
     }
 
     companion object {
-        private const val PARSE_TIMEOUT_MS = 30_000L
+        /** Two orders of magnitude over the green path, which answers in under a hundredth. */
+        private const val PARSE_TIMEOUT_MS = 5_000L
+
+        /** Spelled out rather than written literally, since the character itself is invisible. */
+        private const val BOM = "\uFEFF"
 
         private val TEN_FOLD_ENTITIES_FOUR_LEVELS = """
             <!DOCTYPE node [
