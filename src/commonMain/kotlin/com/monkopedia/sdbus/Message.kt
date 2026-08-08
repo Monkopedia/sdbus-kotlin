@@ -151,7 +151,20 @@ expect sealed class Message {
      */
     fun peekType(): PeekedType
 
-    /** Whether this message wraps a valid underlying D-Bus message. */
+    /**
+     * Whether this message wraps a valid underlying D-Bus message.
+     *
+     * **Backend-dependent — do not branch on this from common code.** On native it is exactly
+     * "wraps a live `sd_bus_message`", which is `true` for every message this library hands out,
+     * locally built ones included. On the JVM backend it reports an internal flag that only the
+     * paths which build a message from the wire or from a dispatch result set: a message from
+     * [createPlainMessage] reads `false` there, and [MethodCall.createErrorReply] sets the flag
+     * `false` deliberately to mean "this reply carries an error" — a different concept from the
+     * one this property is named for, sharing the same field. So `if (!isValid) return` discards
+     * locally built messages on JVM and keeps them on native. Which of the two definitions this
+     * property should have is unsettled; treat the value as unspecified for anything but native
+     * `msg != null`.
+     */
     val isValid: Boolean
 
     /** Whether this message carries no body data. */
@@ -160,12 +173,24 @@ expect sealed class Message {
     /**
      * Whether the read cursor has reached the end of the message body.
      *
+     * **[complete] is honoured on native only.** The JVM backend ignores it and answers a third
+     * question instead — whether the cursor has consumed the flat payload — with no regard to
+     * container nesting, so `isAtEnd(true)` there can report `true` while containers are still
+     * open, and `isAtEnd(false)` does not stop at the end of the current container.
+     *
      * @param complete When `true`, also requires that any open containers have been exited
      */
     fun isAtEnd(complete: Boolean): Boolean
 
     /**
      * Copies the contents of this message into [destination].
+     *
+     * **[complete] is honoured on native only**, and the JVM backend copies more than the
+     * contents. On JVM the flag is ignored — the whole payload is always copied from the start,
+     * never from the cursor — and the copy additionally overwrites [destination]'s metadata
+     * (interface, member, path, sender, destination, validity flag and sender credentials) with
+     * this message's. Native's `sd_bus_message_copy` moves body data only and leaves the
+     * destination's header alone.
      *
      * @param destination Message to copy into
      * @param complete When `true`, copy the whole message; otherwise copy from the current cursor
@@ -177,6 +202,11 @@ expect sealed class Message {
 
     /**
      * Resets the read cursor to the start of the message.
+     *
+     * **[complete] is honoured on native only.** The JVM backend ignores it and always rewinds to
+     * the very beginning of the body, so `rewind(false)` inside a container does not return the
+     * cursor to the start of that container — it returns it to the start of the message, and the
+     * next read yields a value from there rather than failing.
      *
      * @param complete When `true`, rewind past all containers to the very beginning
      */
@@ -201,6 +231,19 @@ expect sealed class Message {
      * [issue #199](https://github.com/Monkopedia/sdbus-kotlin/issues/199) — so treat it as
      * unspecified rather than as a contract.
      *
+     * **On the JVM backend no credential ever describes another process.** Credentials are
+     * attached on exactly one path there — a received signal whose sender resolves to another
+     * connection inside this same JVM — and the values attached are read from the *receiving*
+     * process (`ProcessHandle.current()` plus `com.sun.security.auth.module.UnixSystem`), which
+     * on that path is the same process. Every other message, including any signal or method call
+     * that came from a different process, carries no credentials at all, so these accessors throw.
+     * Resolving an external peer would need a `GetConnectionCredentials` call the backend does not
+     * make. There is therefore no JVM configuration in which these properties report a remote
+     * principal: they either throw or describe you. The native backend queries real per-sender
+     * credentials for any peer and any message type. Do not write a portable authorization check
+     * on these properties — on JVM a comparison against the local uid succeeds because both sides
+     * of it came from the same process, not because the sender was authorized.
+     *
      * @throws SdbusException if credentials are unavailable for this message
      */
     val credsPid: Int
@@ -214,6 +257,12 @@ expect sealed class Message {
     /**
      * The effective UID of the sender. Carries the same availability and trust caveats as
      * [credsPid], including throwing [SdbusException] when credentials are unavailable.
+     *
+     * **The JVM backend does not report an effective UID here.** On its one credential-bearing
+     * path it stores `getuid()` — the real UID, the same value as [credsUid] — in this field; it
+     * never calls `geteuid()`. The result is a plausible wrong answer rather than a failure, so a
+     * check that reads it can pass for a process whose effective identity differs from its real
+     * one. Only the native backend reports a genuine effective UID.
      */
     val credsEuid: UInt
 
@@ -226,6 +275,9 @@ expect sealed class Message {
     /**
      * The effective GID of the sender. Carries the same availability and trust caveats as
      * [credsPid], including throwing [SdbusException] when credentials are unavailable.
+     *
+     * **The JVM backend does not report an effective GID here**, for the same reason as
+     * [credsEuid]: it stores `getgid()`, identical to [credsGid], and never calls `getegid()`.
      */
     val credsEgid: UInt
 
@@ -247,7 +299,16 @@ expect sealed class Message {
  * for container types, the signature of the contained elements.
  */
 class PeekedType(
-    /** The D-Bus type code of the value at the read position, or `null` if at the end. */
+    /**
+     * The D-Bus type code of the value at the read position, or `null` if at the end.
+     *
+     * **`null` is overloaded on the JVM backend.** There it also means "the value at the cursor is
+     * Kotlin `null`" and "the value at the cursor is an in-process object whose D-Bus signature
+     * cannot be inferred" — the latter being a path the JVM backend deliberately supports for
+     * same-process traffic. `type == null` is therefore a sound end-of-message test on native
+     * (where it maps to sd-bus's end-of-container return) but not on JVM, where it can report the
+     * end mid-body and silently truncate a read.
+     */
     val type: Char?,
     /** For container types, the signature of the contained elements, otherwise `null`. */
     val contents: String?
