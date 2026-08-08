@@ -29,4 +29,4 @@ Modules: root (the library), `:codegen`, `:plugin`, `:cross_test`, `:stress_test
   - The **Kotlin version** badge is hardcoded — bump it manually when the Kotlin version changes.
   - The **Build** badge tracks `.github/workflows/arm-build-test.yaml`; keep the workflow path correct if CI is renamed.
   - Maven Central has no public *download* count, so there is no downloads badge (only the namespace owner can see download stats in the Central Portal).
-- Generated BlueZ proxy fixtures and the BCV `api/*.api` dumps are checked in — regenerate (`apiDump`) and commit them when the public surface changes.
+- Generated BlueZ proxy fixtures and the BCV `api/*.api` dumps are checked in. Regenerate the codegen goldens with `./gradlew :codegen:regenerateGoldens` after an intentional generator change, and the `api/*.api` dumps with `./gradlew apiDump` when the public surface changes; review the diff and commit it. `:codegen:test` only ever *compares* the goldens — it can never write them.

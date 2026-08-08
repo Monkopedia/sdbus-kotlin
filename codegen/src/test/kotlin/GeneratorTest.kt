@@ -22,51 +22,47 @@
  */
 package com.monkopedia.sdbus
 
-import com.squareup.kotlinpoet.FileSpec
 import java.io.File
-import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
+/**
+ * Verifies the generators against the golden files checked in beside each fixture's `test.xml`.
+ *
+ * This test only ever reads the goldens. Rewriting them after an intentional generator change is
+ * `./gradlew :codegen:regenerateGoldens` (see `RegenerateGoldens.kt`), so that no run of this suite
+ * can produce the output it is about to compare against.
+ */
 class GeneratorTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testInterface(testRoot: File) {
-        val xmlStr = File(testRoot, "test.xml").readText()
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(xmlStr)
-        val gen = InterfaceGenerator().transformXmlToFile(xml).sortedBy { it.name }
-        assertFiles(testRoot, "interface", gen)
+        assertGoldens(testRoot, GoldenFixture.INTERFACE)
     }
 
     @ParameterizedTest
     @MethodSource("data")
     fun testAdaptor(testRoot: File) {
-        val xmlStr = File(testRoot, "test.xml").readText()
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(xmlStr)
-        val gen = AdaptorGenerator().transformXmlToFile(xml).sortedBy { it.name }
-        assertFiles(testRoot, "adaptor", gen)
+        assertGoldens(testRoot, GoldenFixture.ADAPTOR)
     }
 
     @ParameterizedTest
     @MethodSource("data")
     fun testProxy(testRoot: File) {
-        val xmlStr = File(testRoot, "test.xml").readText()
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(xmlStr)
-        val gen = ProxyGenerator().transformXmlToFile(xml).sortedBy { it.name }
-        assertFiles(testRoot, "proxy", gen)
+        assertGoldens(testRoot, GoldenFixture.PROXY)
     }
 
-    private fun assertFiles(root: File, prefix: String, actual: List<FileSpec>) {
-        if (WRITE_FILES) {
-            val writeRoot = File("src/test/resources/${root.name}")
-            actual.forEachIndexed { index, fileSpec ->
-                File(writeRoot, "$prefix.$index.kt").writeText(fileSpec.toString())
-            }
-        }
-        val expected = root.listFiles().orEmpty()
-            .filter { it.name.startsWith("$prefix.") && it.name.endsWith(".kt") }
-            .sortedBy { it.name }
+    private fun assertGoldens(testRoot: File, fixture: GoldenFixture) {
+        val expected = fixture.goldenFiles(testRoot)
+        // Without this, a fixture with no goldens of this kind would compare nothing and pass.
+        assertTrue(
+            expected.isNotEmpty(),
+            "No ${fixture.prefix}.*.kt golden files in ${testRoot.name}; " +
+                "run :codegen:regenerateGoldens and commit them"
+        )
+        val actual = fixture.generate(testRoot)
         assertEquals(expected.size, actual.size)
         expected.zip(actual).forEach { (expected, actual) ->
             val expectedContent = expected.readText()
@@ -84,7 +80,5 @@ class GeneratorTest {
                     File(it).parentFile.listFiles()
                 }.orEmpty()
                 .map { arrayOf(it) }
-
-        private const val WRITE_FILES = false
     }
 }
