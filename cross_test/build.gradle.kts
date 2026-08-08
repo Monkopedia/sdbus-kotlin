@@ -69,10 +69,18 @@ tasks.named<Test>("jvmTest") {
 //  * `DBUSMOCK_REQUIRED` set — the `full-tests-x64` job, which apt-installs python3-dbusmock on
 //    purpose — the suites always run, and the harness itself fails loudly when it cannot start a
 //    peer. So CI can never lose this coverage to the exclusion below.
-//  * otherwise the harness is probed exactly as the native `launchDbusmock` probes it (a session bus
-//    plus an importable `dbusmock` module under `DBUSMOCK_PYTHON` / `python3`), and the suites are
-//    excluded only when it genuinely cannot run — a contributor who *has* dbusmock still runs them
-//    with no configuration.
+//  * otherwise the harness is probed — a session bus plus an importable `dbusmock` module under
+//    `DBUSMOCK_PYTHON` / `python3` — and the suites are excluded only when it cannot run, so a
+//    contributor who *has* dbusmock still runs them with no configuration.
+//
+// Two limits, stated because both fail *open* (back to the phantom passes, not to something worse):
+//  * The probe is weaker than the launch. `launchDbusmock` forks `python3 -m dbusmock --session
+//    [-t <template>] …` and gives it a liveness window; this only checks the module imports. On a
+//    box where `dbusmock` imports but a peer cannot actually start — an older dbusmock missing a
+//    template like `bluez5`, a bus-name claim failure — the suites still run and native still
+//    reports passes that asserted nothing.
+//  * If the class names below drift, the exclusions silently stop matching. Gradle's filter API
+//    offers no "this exclusion matched nothing" signal to guard that with.
 val dbusmockRequired = providers.environmentVariable("DBUSMOCK_REQUIRED").isPresent
 val dbusmockPython = providers.environmentVariable("DBUSMOCK_PYTHON").getOrElse("python3")
 val sessionBusPresent = providers.environmentVariable("DBUS_SESSION_BUS_ADDRESS").isPresent
