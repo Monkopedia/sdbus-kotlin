@@ -335,8 +335,9 @@ value class Signature(
  * an explicitly provided fd by either duplicating ([UnixFd] primary constructor)
  * or adopting that fd as-is ([UnixFd.adopt]).
  *
- * **Duplicating and closing are backend-dependent on JVM.** The native backend always `dup(2)`s
- * in the primary constructor — throwing if the syscall fails — and always `close(2)`s on release.
+ * **Duplicating and closing are backend-dependent on JVM.** For any valid (non-negative) fd, the
+ * native backend `dup(2)`s in the primary constructor — throwing if the syscall fails — and
+ * `close(2)`s on release; a negative fd is passed through and never closed on either backend.
  * The JVM backend reaches the descriptor through junixsocket's *optional* native support; when
  * that support is absent (no native binary for the platform, or a consumer where the reflective
  * access it needs is denied, e.g. a JPMS-modular application) the primary constructor returns the
