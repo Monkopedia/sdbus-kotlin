@@ -44,7 +44,8 @@ import platform.posix.waitpid
 internal actual fun dbusmockGetenv(name: String): String? = getenv(name)?.toKString()
 
 // Kotlin/Native's test runner cannot record a skip at runtime (see the expect declaration), so the
-// reason only reaches the captured test output.
+// reason only reaches the captured test output — which is why `:cross_test:linuxX64Test` excludes
+// these suites outright rather than relying on this print (#186; see cross_test/build.gradle.kts).
 internal actual fun skipTest(reason: String) = println("SKIP: $reason")
 
 internal actual class DbusmockHandle(private val pid: Int) {

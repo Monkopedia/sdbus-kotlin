@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
@@ -56,6 +57,55 @@ val reverseInteropEnabled = providers
 // actually configures it — mirroring the gcSoak gate in the root build.
 tasks.named<Test>("jvmTest") {
     filter.excludeTestsMatching("com.monkopedia.sdbus.integration.CrossRuntimeInteropSmokeTest")
+}
+
+// Kotlin/Native's test runner has no runtime-skip primitive, so `DbusmockHarness.skipTest`'s native
+// actual can only print its reason: a Dbusmock* case that asserted nothing because python-dbusmock
+// is missing is reported as a PASS, and `:cross_test:linuxX64Test` claimed 44 of them (#186). The
+// JVM half of that was fixed in c5f874c (#182) with `org.junit.Assume`; native has no equivalent, so
+// the only honest lever left is to not run the suites at all — absent beats a phantom pass.
+//
+// The decision follows c5f874c rather than adding a second convention:
+//  * `DBUSMOCK_REQUIRED` set — the `full-tests-x64` job, which apt-installs python3-dbusmock on
+//    purpose — the suites always run, and the harness itself fails loudly when it cannot start a
+//    peer. So CI can never lose this coverage to the exclusion below.
+//  * otherwise the harness is probed exactly as the native `launchDbusmock` probes it (a session bus
+//    plus an importable `dbusmock` module under `DBUSMOCK_PYTHON` / `python3`), and the suites are
+//    excluded only when it genuinely cannot run — a contributor who *has* dbusmock still runs them
+//    with no configuration.
+val dbusmockRequired = providers.environmentVariable("DBUSMOCK_REQUIRED").isPresent
+val dbusmockPython = providers.environmentVariable("DBUSMOCK_PYTHON").getOrElse("python3")
+val sessionBusPresent = providers.environmentVariable("DBUS_SESSION_BUS_ADDRESS").isPresent
+
+fun dbusmockCanRun(): Boolean {
+    if (dbusmockRequired) return true
+    if (!sessionBusPresent) return false
+    return runCatching {
+        ProcessBuilder(dbusmockPython, "-c", "import dbusmock")
+            .redirectErrorStream(true)
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .start()
+            .waitFor() == 0
+    }.getOrDefault(false)
+}
+
+tasks.named<AbstractTestTask>("linuxX64Test") {
+    // NativeInteropPeerTest's cases are the *peer half* of a two-process case: each one returns
+    // immediately unless KDBUS_NATIVE_INTEROP_ROLE names its role, which only the JVM side sets when
+    // it spawns this binary (see CrossRuntimeInteropSmokeTest). `linuxX64Test` never sets it, so
+    // every one of them runs to completion having asserted nothing — and, per #186, native reports
+    // that as a pass. They are covered where they are actually driven: `jvmInteropTest`, which now
+    // fails unless the spawned peer really ran its case and reported it passing (#183).
+    filter.excludeTestsMatching("com.monkopedia.sdbus.integration.NativeInteropPeerTest")
+    if (!dbusmockCanRun()) {
+        logger.lifecycle(
+            "cross_test: excluding the Dbusmock* suites from linuxX64Test — '$dbusmockPython -m " +
+                "dbusmock' cannot run here. Kotlin/Native cannot report these as skipped (#186), " +
+                "so running them would report passes that asserted nothing. Set " +
+                "DBUSMOCK_REQUIRED=1 to run them anyway and fail loudly instead."
+        )
+        filter.excludeTestsMatching("com.monkopedia.sdbus.integration.Dbusmock*")
+    }
 }
 
 tasks.register<Test>("jvmInteropTest") {
