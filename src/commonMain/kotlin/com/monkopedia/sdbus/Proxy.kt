@@ -91,15 +91,23 @@ interface Proxy : Resource {
      * The call blocks otherwise, waiting for the remote peer to send back a reply or an error,
      * or until the call times out.
      *
-     * While blocking, other concurrent operations (in other threads) on the underlying bus
-     * connection are stalled until the call returns. This is not an issue in vast majority of
-     * (simple, single-threaded) applications. In asynchronous, multi-threaded designs involving
+     * **On the native backend**, other concurrent operations (in other threads) on the underlying
+     * bus connection are stalled while this call blocks. This is not an issue in the vast majority
+     * of (simple, single-threaded) applications. In asynchronous, multi-threaded designs involving
      * shared bus connections, this may be an issue. It is advised to instead use an asynchronous
      * callMethod() function overload, which does not block the bus connection, or do the synchronous
      * call from another Proxy instance created just before the call and then destroyed (which is
      * anyway quite a typical approach in D-Bus implementations). Such proxy instance must have
      * its own bus connection. So-called light-weight proxies (ones created with
      * `runEventLoopThread = false`) are designed for exactly that purpose.
+     *
+     * **On the JVM backend the connection is not stalled:** only the calling thread parks, and the
+     * reader thread keeps dispatching throughout — it must, since it is what completes the pending
+     * reply. The write lock is held for the duration of the codec write and released before the
+     * wait begins. The mitigations above are therefore unnecessary on JVM, though harmless.
+     *
+     * This paragraph was stated unconditionally until #202. It was inherited from sdbus-c++ and
+     * describes that implementation's threading model, not the JVM backend's.
      *
      * The default D-Bus method call timeout is used. See [Connection.methodCallTimeout].
      *
@@ -122,15 +130,23 @@ interface Proxy : Resource {
      * The call blocks otherwise, waiting for the remote peer to send back a reply or an error,
      * or until the call times out.
      *
-     * While blocking, other concurrent operations (in other threads) on the underlying bus
-     * connection are stalled until the call returns. This is not an issue in vast majority of
-     * (simple, single-threaded) applications. In asynchronous, multi-threaded designs involving
+     * **On the native backend**, other concurrent operations (in other threads) on the underlying
+     * bus connection are stalled while this call blocks. This is not an issue in the vast majority
+     * of (simple, single-threaded) applications. In asynchronous, multi-threaded designs involving
      * shared bus connections, this may be an issue. It is advised to instead use an asynchronous
      * callMethod() function overload, which does not block the bus connection, or do the synchronous
      * call from another Proxy instance created just before the call and then destroyed (which is
      * anyway quite a typical approach in D-Bus implementations). Such proxy instance must have
      * its own bus connection. So-called light-weight proxies (ones created with
      * `runEventLoopThread = false`) are designed for exactly that purpose.
+     *
+     * **On the JVM backend the connection is not stalled:** only the calling thread parks, and the
+     * reader thread keeps dispatching throughout — it must, since it is what completes the pending
+     * reply. The write lock is held for the duration of the codec write and released before the
+     * wait begins. The mitigations above are therefore unnecessary on JVM, though harmless.
+     *
+     * This paragraph was stated unconditionally until #202. It was inherited from sdbus-c++ and
+     * describes that implementation's threading model, not the JVM backend's.
      *
      * If timeout is [Duration.ZERO], the default D-Bus method call timeout is used.
      * See [Connection.methodCallTimeout].
