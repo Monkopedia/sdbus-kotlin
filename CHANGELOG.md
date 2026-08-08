@@ -25,9 +25,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   never terminated at all), and a type signature with thousands of array type codes (unbounded
   recursion, `StackOverflowError`). An internal subset is now refused outright — introspection XML
   has no use for one, and the external `introspect.dtd` doctype a real `dbus-daemon` sends still
-  parses — and a signature is held to the D-Bus specification's own 255-character maximum, which
-  bounds the recursion by construction. Both report which limit they hit. Generated output for
-  valid XML is unchanged. (#194)
+  parses, byte order mark and all — and a signature is held to the D-Bus specification's own
+  255-character maximum, which bounds the recursion by construction. A document whose prolog cannot
+  be read as far as its root element is refused too, rather than assumed to declare nothing. All
+  three report what they refused. Generated output for valid XML is unchanged. (#194)
 
 ### Changed — codegen
 
