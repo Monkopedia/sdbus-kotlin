@@ -72,66 +72,79 @@ internal val introspectionXml: XML = XML.compat {
  * availability rather than anything at runtime.
  */
 internal fun parseIntrospectionXml(xml: String): XmlRootNode {
-    require(!declaresDtdInternalSubset(xml)) {
-        "Introspection XML declares a DTD internal subset (<!DOCTYPE ... [ ... ]>). " +
-            "Introspection XML has no use for one, and the entities it can declare are expanded " +
-            "without any limit, so the declaration is refused rather than parsed."
-    }
+    prologRefusal(xml)?.let { throw IllegalArgumentException(it) }
     return introspectionXml.decodeFromString(xml)
 }
 
 /**
- * Whether [xml] opens a DTD internal subset in its prolog, i.e. `<!DOCTYPE node [ ... ]>`.
+ * Why [xml]'s prolog must not be handed to the parser, or null to go ahead.
  *
- * The subset is the only place introspection XML can declare XML entities, and xmlutil's parser
- * expands them with no limit of any kind: measured against xmlutil 1.0.1, a 421-byte document
- * nesting six ten-fold entities decodes to a 1,000,000-character attribute value in 30ms — each
- * further level multiplies by ten — and `<!ENTITY a "&a;">` never terminates at all. There is no
- * configuration knob for that (the JVM path is xmlutil's own `KtXmlReader`, not JAXP, so the
- * `jdk.xml.entityExpansionLimit` default does not apply), and `expandEntities = false` would not
- * help either because attribute values are expanded unconditionally.
+ * A `<!DOCTYPE ... [ ... ]>` internal subset is the only place introspection XML can declare XML
+ * entities, and xmlutil's parser expands them with no limit of any kind: measured against xmlutil
+ * 1.0.1, a 421-byte document nesting six ten-fold entities decodes to a 1,000,000-character
+ * attribute value in 30ms — each further level multiplies by ten — and `<!ENTITY a "&a;">` never
+ * terminates at all. There is no configuration knob for that (the JVM path is xmlutil's own
+ * `KtXmlReader`, not JAXP, so the `jdk.xml.entityExpansionLimit` default does not apply), and
+ * `expandEntities = false` would not help either because attribute values are expanded
+ * unconditionally.
  *
  * Refusing the subset outright is both the complete fix and the narrowest one: it is the only route
  * to a declared entity, external entities the parser already rejects on its own, and what a real
  * service emits is at most the external `introspect.dtd` doctype, which still parses.
  *
- * Only the prolog is scanned — the XML declaration, comments and processing instructions that may
- * precede the doctype are skipped over — so a literal `<!DOCTYPE` in a comment or in element
- * content is not mistaken for a declaration.
+ * Only the prolog is read — the byte order mark, XML declaration, comments and processing
+ * instructions that may precede the doctype are stepped over — so a literal `<!DOCTYPE` in a
+ * comment or in element content is not mistaken for a declaration. **A prolog this cannot read is
+ * refused rather than assumed to declare nothing**: the scan is what decides whether entities are
+ * possible, so treating what it does not model as safe is how a leading byte order mark got past an
+ * earlier version of it. The only thing that legitimately ends the scan is the root element, which
+ * is a `<` opening neither a markup declaration nor a processing instruction.
  */
-private fun declaresDtdInternalSubset(xml: String): Boolean {
-    var i = 0
+private fun prologRefusal(xml: String): String? {
+    var i = if (xml.startsWith(BYTE_ORDER_MARK)) 1 else 0
     while (i < xml.length) {
         when {
             xml[i].isWhitespace() -> i++
-            xml.startsWith("<!--", i) -> i = xml.endOf("-->", i + 4) ?: return false
-            xml.startsWith("<?", i) -> i = xml.endOf("?>", i + 2) ?: return false
-            xml.startsWith("<!DOCTYPE", i) -> return doctypeOpensSubset(xml, i + "<!DOCTYPE".length)
-            // The root element, or something the parser will reject on its own.
-            else -> return false
+            xml.startsWith("<!--", i) -> i = xml.endOf("-->", i + 4) ?: return UNREADABLE_PROLOG
+            xml.startsWith("<?", i) -> i = xml.endOf("?>", i + 2) ?: return UNREADABLE_PROLOG
+            xml.startsWith("<!DOCTYPE", i) -> return doctypeRefusal(xml, i + "<!DOCTYPE".length)
+            xml[i] == '<' && !xml.startsWith("<!", i) -> return null // The root element.
+            else -> return UNREADABLE_PROLOG
         }
     }
-    return false
+    return UNREADABLE_PROLOG
 }
 
-/** Whether the doctype declaration running from [start] in [xml] opens an internal subset. */
-private fun doctypeOpensSubset(xml: String, start: Int): Boolean {
+/** [prologRefusal] for the doctype declaration running from [start] in [xml]. */
+private fun doctypeRefusal(xml: String, start: Int): String? {
     var i = start
     while (i < xml.length) {
         when (val c = xml[i]) {
-            '[' -> return true
-            '>' -> return false
+            '[' -> return INTERNAL_SUBSET
+            '>' -> return null
             // A quoted public or system literal; '[' and '>' inside it mean neither of the above.
-            '\'', '"' -> i = xml.endOf(c.toString(), i + 1) ?: return false
+            '\'', '"' -> i = xml.endOf(c.toString(), i + 1) ?: return UNREADABLE_PROLOG
             else -> i++
         }
     }
-    return false
+    return UNREADABLE_PROLOG
 }
 
 /** The index just past the next [token] at or after [from], or null if there isn't one. */
 private fun String.endOf(token: String, from: Int): Int? =
     indexOf(token, from).takeIf { it >= 0 }?.plus(token.length)
+
+private const val BYTE_ORDER_MARK = '\uFEFF'
+
+private const val INTERNAL_SUBSET =
+    "Introspection XML declares a DTD internal subset (<!DOCTYPE ... [ ... ]>). Introspection " +
+        "XML has no use for one, and the entities it can declare are expanded without any limit, " +
+        "so the declaration is refused rather than parsed."
+
+private const val UNREADABLE_PROLOG =
+    "The XML prolog of the introspection XML could not be read as far as the root element, so " +
+        "whether it may declare entities is unknown. It is refused rather than guessed at; the " +
+        "parser would reject it in any case."
 
 @Serializable
 @XmlSerialName("node")
