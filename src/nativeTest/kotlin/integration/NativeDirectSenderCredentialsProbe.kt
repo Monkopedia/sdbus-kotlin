@@ -15,8 +15,8 @@ import com.monkopedia.sdbus.createServerBusConnection
 import com.monkopedia.sdbus.method
 import kotlin.test.Test
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.convert
 import kotlinx.cinterop.cValue
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
@@ -123,7 +123,8 @@ class NativeDirectSenderCredentialsProbe {
         snprintf(sa[0].sun_path, size.convert(), "%s", socketPath.cstr)
         unlink(socketPath)
         umask(0u)
-        require(bind(sock, sa.reinterpret(), sizeOf<sockaddr_un>().convert()) >= 0) { "Bind failed" }
+        val bound = bind(sock, sa.reinterpret(), sizeOf<sockaddr_un>().convert())
+        require(bound >= 0) { "Bind failed" }
         require(listen(sock, 5) >= 0) { "Listen failed" }
         return sock
     }
