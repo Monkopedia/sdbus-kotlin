@@ -274,11 +274,18 @@ jobs:
               status=1
               continue
             fi
-            cases=$(grep -ho '<testcase ' ${xml} | wc -l)
+            # Everything below parses with `sed -n …p`, never `grep`, for the reason
+            # arm-build-test.yaml already records: a grep that matches nothing exits 1 under
+            # `pipefail`, which would kill this step with an empty log instead of the message below —
+            # the exact silence this guard exists to end. `awk` prints 0 on empty input.
+            recorded=$(sed -n 's/.*<testsuite [^>]*tests="\([0-9]*\)".*/\1/p' ${xml} | awk '{ n += $1 } END { print n + 0 }')
+            skipped=$(sed -n 's/.*<testsuite [^>]*skipped="\([0-9]*\)".*/\1/p' ${xml} | awk '{ n += $1 } END { print n + 0 }')
             suites=$(sed -n 's/.*<testsuite name="\([^"]*\)".*/\1/p' ${xml} | sort -u)
-            echo "${task}: ${cases} test(s) in: $(echo ${suites})"
-            if [ "${cases}" -eq 0 ]; then
-              echo "SOAK GUARD FAILED (#196): ${task} recorded 0 tests."
+            echo "${task}: ${recorded} test(s), ${skipped} skipped, in: $(echo ${suites})"
+            # A soak suite has no legitimate skip — #228 made a missing bus fail rather than skip — so
+            # an all-skipped half measured nothing just as surely as an empty one.
+            if [ "$((recorded - skipped))" -le 0 ]; then
+              echo "SOAK GUARD FAILED (#196): ${task} executed no tests (${recorded} recorded, ${skipped} skipped)."
               status=1
             fi
             foreign=$(echo "${suites}" | grep -v 'Cleaner.*SoakTest' || true)
