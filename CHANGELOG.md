@@ -9,6 +9,20 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Added — codegen
 
+- **New opt-in option `honorNamingAnnotations` (`--honor-naming-annotations`) names generated types
+  from `org.qtproject.QtDBus.QtTypeName` annotations in the XML.** The annotation is read plain from
+  a `<property>` or an `<arg>` and suffixed `.In<n>` / `.Out<n>` from a `<method>` or `<signal>` —
+  the three placements `qdbusxml2cpp` uses. A signature that already generates a class of its own is
+  renamed; one that does not (a map, a list, a primitive) gets a `typealias`, so e.g. a `Metadata`
+  property annotated `QVariantMap` is typed `QVariantMap` and is still a `Map<String, Variant>` at
+  the call site. Only `<annotation>` elements can be seen — the `tp:type` / `tp:name-for-bindings`
+  *attributes* some XML carries are not retained by the parser and are not hints.
+
+  This is a new option rather than a behavior change: a hint can only ever *replace* a name the
+  generator would otherwise derive, so applying hints unconditionally would rename types that
+  already-compiled consumer code refers to. It is therefore off by default, and with it off the
+  generator emits exactly what it emitted before whatever annotations the XML carries — the
+  checked-in fixtures are asserted byte-for-byte on both sides of the flag from the same XML. (#158)
 - **Generated code now carries KDoc taken from the introspection XML.** Documentation reaches the
   generated interface, proxy and adaptor from both carriers the parser already understood and
   previously discarded: `org.gtk.GDBus.DocString` / `DocString.Short` annotations, and `<doc:doc>`
