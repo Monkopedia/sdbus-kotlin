@@ -13,3 +13,8 @@ internal actual val backendServesEmitsChangedSignal: Boolean = false
 
 // Same reason: hasNoReply drives the reply-suppression path only, never the introspection XML.
 internal actual val backendServesMethodNoReply: Boolean = false
+
+// KNOWN JVM/NATIVE DIVERGENCE, #193 -- OPEN, not an accepted limitation (see the expect
+// declaration). WireDbusObject reads no PropertyUpdateBehaviorFlags, so every property is emitted
+// with its current value whichever flags it carries, and nothing is ever rejected.
+internal actual val backendHonoursEmitsChangedSignalOnEmit: Boolean = false

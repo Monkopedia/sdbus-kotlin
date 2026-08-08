@@ -13,3 +13,9 @@ internal actual val backendServesEmitsChangedSignal: Boolean = true
 // sd-bus writes org.freedesktop.DBus.Method.NoReply for SD_BUS_VTABLE_METHOD_NO_REPLY. Until #197
 // that bit never reached it: Flags.toSdBusMethodFlags OR-ed the branch with a literal 0u.
 internal actual val backendServesMethodNoReply: Boolean = true
+
+// sd-bus applies the emit bits in emit_properties_changed_on_interface (bus-objects.c): the
+// names==NULL path skips anything without EMITS_CHANGE and sends nothing when that empties the
+// message, and the explicit-name path assert_returns -EDOM instead of skipping. Refs #193 (OPEN --
+// see the expect declaration; this is sd-bus's contract, not a ruling on which backend is right).
+internal actual val backendHonoursEmitsChangedSignalOnEmit: Boolean = true
