@@ -264,6 +264,84 @@ class FailurePathParityTest {
         }
     }
 
+    // Item 1 of #184. [com.monkopedia.sdbus.MethodCall.send] documents "[Duration.ZERO] uses the
+    // connection default". Native gets that for free -- 0 is sd-bus's own sentinel inside
+    // sd_bus_call -- but the JVM MethodCall never consulted a connection at all, so ZERO reached
+    // the dispatch as "no timeout". Same two-phase shape as
+    // explicitZeroPerCallTimeout_selectsConnectionDefault, one level lower: the raw-message
+    // send() path rather than the high-level invoker.
+    @Test
+    fun rawMessageSendWithZeroTimeout_selectsConnectionDefault() = runBlocking {
+        val ids = uniqueFixtureIds("zeroSend")
+        val serverConnection = createBusConnection(ids.service)
+        val proxyConnection = createBusConnection()
+        val obj = createObject(serverConnection, ids.path)
+        val serverDelayMs = 600L
+        val registration = obj.addVTable(ids.iface) {
+            method(MethodName("Slow")) {
+                asyncCall { value: Int ->
+                    delay(serverDelayMs)
+                    value
+                }
+            }
+        }
+        serverConnection.startEventLoop()
+        val proxy = createProxy(proxyConnection, ids.service, ids.path)
+
+        try {
+            // Phase 1: a generous connection default means the ZERO send must let the slow
+            // method run to completion. A ZERO taken literally would fail here immediately.
+            proxyConnection.methodCallTimeout = 5_000.milliseconds
+            val generous = proxy.createMethodCall(ids.iface, MethodName("Slow"))
+            generous.append(1)
+            val reply = generous.send(Duration.ZERO)
+            reply.rewind(false)
+            assertEquals(1, reply.readInt())
+
+            // Phase 2: a connection default shorter than the handler's delay must now expire the
+            // same ZERO send. A ZERO meaning "no timeout" returns 2 after ~600 ms instead.
+            proxyConnection.methodCallTimeout = 100.milliseconds
+            val stingy = proxy.createMethodCall(ids.iface, MethodName("Slow"))
+            stingy.append(2)
+            val thrown = assertFailsWith<SdbusException> { stingy.send(Duration.ZERO) }
+            assertIsTimeout(thrown)
+
+            delay(serverDelayMs + 400)
+        } finally {
+            withTimeout(5_000) {
+                proxyConnection.stopEventLoop()
+                serverConnection.stopEventLoop()
+            }
+            registration.release()
+            proxy.release()
+            obj.release()
+            proxyConnection.release()
+            serverConnection.release()
+        }
+    }
+
+    // Item 2 of #184. A connection whose methodCallTimeout was never set must still report a
+    // real default, because that value is what every "use the connection default" path resolves
+    // to: the raw-message callMethod(message)/callMethodAsync(message) overloads, and (item 1) a
+    // Duration.ZERO send. Native inherits sd-bus's BUS_DEFAULT_TIMEOUT_USEC (25 s); the JVM
+    // backend initialised its stored timeout to Duration.ZERO, which means "no timeout" one layer
+    // down, so the sentinel resolved to itself and nothing bounded the call.
+    @Test
+    fun freshConnection_reportsANonZeroDefaultMethodCallTimeout() {
+        val connection = createBusConnection()
+        try {
+            val default = connection.methodCallTimeout
+            assertTrue(
+                default > Duration.ZERO,
+                "a fresh connection must report a real default method-call timeout, " +
+                    "otherwise every Duration.ZERO 'use the connection default' path resolves " +
+                    "to no timeout at all; got $default"
+            )
+        } finally {
+            connection.release()
+        }
+    }
+
     // The backends differ on whether the daemon reports Timeout or NoReply, and on the exact
     // human-readable string, so assert membership rather than an exact value -- but require that
     // it is recognizably a timeout, never a generic/unrelated error.
