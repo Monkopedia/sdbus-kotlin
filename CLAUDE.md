@@ -6,7 +6,9 @@ Guidance for agents working on sdbus-kotlin.
 
 A Kotlin Multiplatform D-Bus client (a port of sdbus-c++), targeting **jvm + linuxX64 + linuxArm64**. The native targets wrap `sd-bus` via cinterop; the JVM target is backed by an owned junixsocket connection with a pure-Kotlin marshaller and dispatcher (since 0.5.0 — no dbus-java, no native code). It also ships a code generator (`:codegen`, XML → Kotlin BlueZ proxies/adaptors) and a Gradle plugin (`:plugin`, id `com.monkopedia.sdbus.plugin`).
 
-Modules: root (the library), `:codegen`, `:plugin`, `:cross_test`, `:stress_test`, `samples/bluez-scan`.
+Modules (subprojects of the root build, per `settings.gradle.kts`): root (the library), `:codegen`, `:compile_test`, `:cross_test`, `:plugin`, `:stress_test`. Plus two **separate** Gradle builds that are not subprojects — `samples/bluez-scan` and `samples/demo-service` — each composing the library in with `includeBuild("../..")`.
+
+`:compile_test` is easy to miss and is the guard that the generated code actually compiles: its source directory is a **symlink** (`compile_test/src/nativeMain/kotlin/TestFiles` → `codegen/src/test/resources`), so a linuxX64 compile of that module type-checks every checked-in codegen golden against the real library — this is what caught the malformed signal decoder in #237, which `:codegen`'s own in-process `CompilationIntegrationTest` had missed. CI covers it because the root `allTests` reaches `:compile_test:compileKotlinLinuxX64`; run it directly with `./gradlew :compile_test:compileKotlinLinuxX64`. It is deliberately excluded from `ktlintCheck` and `apiCheck` (see `build.gradle.kts`).
 
 ## Building & verifying
 
@@ -29,4 +31,5 @@ Modules: root (the library), `:codegen`, `:plugin`, `:cross_test`, `:stress_test
   - The **Kotlin version** badge is hardcoded — bump it manually when the Kotlin version changes.
   - The **Build** badge tracks `.github/workflows/arm-build-test.yaml`; keep the workflow path correct if CI is renamed.
   - Maven Central has no public *download* count, so there is no downloads badge (only the namespace owner can see download stats in the Central Portal).
+- **Module list:** the `Modules:` paragraph under "What this is" must enumerate every `include(...)` in `settings.gradle.kts` plus the composite-build samples. When a module is added, removed or renamed, update it there **and** the matching list in `AGENTS.md` ("Project Structure & Module Organization") — nothing else prompts it, and `:compile_test` sat unlisted here for exactly that reason (#202).
 - Generated BlueZ proxy fixtures and the BCV `api/*.api` dumps are checked in. Regenerate the codegen goldens with `./gradlew :codegen:regenerateGoldens` after an intentional generator change, and the `api/*.api` dumps with `./gradlew apiDump` when the public surface changes; review the diff and commit it. `:codegen:test` only ever *compares* the goldens — it can never write them.

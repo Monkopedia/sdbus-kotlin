@@ -38,7 +38,7 @@ Every row below is pinned by tests on current `main`, not by intention:
 | **Serving exported objects to external processes** (incoming method calls, `Properties.Get`/`Set`/`GetAll`, `GetManagedObjects`) | ✅ | ✅ | **#90 closed (0.5.0):** the JVM backend serves incoming calls over its owned wire connection (`WireServe`), so an external client (busctl, another process) reaches a JVM-exported object exactly as on native — see "Server-side object export". Same-JVM calls still take an in-process shortcut (`JvmStaticDispatch`) |
 | `UnixFd` type semantics (dup constructor vs `adopt`, `release` closes) | ✅* | ✅ | *JVM dup needs junixsocket native support |
 | Unix FD passing over the wire | ⚠️ untested | ✅ | JVM has the conversion path but no independent-peer test |
-| Connection factories (11 total) | 9 of 11 | 11 of 11 | fd-based factories are native-only |
+| Connection factories (11 total) | 8 of 11 | 11 of 11 | the two fd-based factories and `createRemoteSystemBusConnection` are native-only; counted from the checked-in `api/*.api` dumps |
 | Behavior when the bus is unreachable | ✅ throws `Error` | ✅ throws `Error` | JVM fixed in #81; the in-process stub backend is an explicit internal test opt-in only |
 | Event loop (`startEventLoop`/`stopEventLoop`) | no-op (always running) | required for dispatch; `createObject`/`createProxy` auto-start it | Same calling pattern works on both; `startEventLoop` is idempotent (#114), and each native connection gets its own loop thread (#128) |
 | Strict deserialization (signature mismatch rejected) | ✅ | ✅ | Same `System.Error.ENXIO` error |
@@ -273,9 +273,9 @@ Backend differences:
 
 ## Connection factories
 
-There are 11 `create*Connection` entry points — 10 declared in the common API
-(`src/commonMain/.../Connection.kt`) plus one declared only in the native source set
-(`src/nativeMain/.../Connection.native.kt`):
+There are 11 `create*Connection` entry points — 8 declared in the common API
+(`src/commonMain/.../Connection.kt`, hence available on both backends) plus 3 declared only in
+the native source set (`src/nativeMain/.../Connection.native.kt`):
 
 | Factory | JVM | Native |
 | --- | --- | --- |
@@ -284,15 +284,18 @@ There are 11 `create*Connection` entry points — 10 declared in the common API
 | `createSessionBusConnection()` / `(name)` / `(address)` | ✅ | ✅ |
 | `createRemoteSystemBusConnection(host)` | ❌ native-only (not declared) | ✅ |
 | `createDirectBusConnection(address)` | ✅ | ✅ |
-| `createDirectBusConnection(fd: UnixFd)` | ❌ native-only | ✅ |
-| `createServerBusConnection(fd: UnixFd)` | ❌ native-only | ✅ |
+| `createDirectBusConnection(fd: UnixFd)` | ❌ native-only (not declared) | ✅ |
+| `createServerBusConnection(fd: UnixFd)` | ❌ native-only (not declared) | ✅ |
 
-- The two **fd-based factories** are native-only. The JVM actuals are marked
-  `@Deprecated(level = ERROR)` (`src/jvmMain/.../Connection.jvm.kt`), so calling them from
-  JVM-compiled code is a **compile-time error**; if invoked anyway (e.g. reflectively), the
-  JVM backend rejects the fd-based bus types (`JvmBusType.DIRECT_FD`/`SERVER_FD`, in
-  `WireDbusBackend.createConnection`).
+- The two **fd-based factories** are native-only: since #126 they are plain top-level funs in
+  `Connection.native.kt` with no `expect` declaration in commonMain and no JVM actual, so naming
+  them from JVM-compiled code is an **unresolved reference**. (They were briefly
+  `@Deprecated(level = ERROR)` JVM stubs before #126; that is no longer how they are guarded.)
   On native they adopt the descriptor as documented in their KDoc.
+  `WireDbusBackend.createConnection` still rejects `JvmBusType.DIRECT_FD`/`SERVER_FD`, but that
+  is a **defensive remnant with no reachable caller** — nothing constructs either enum value now
+  that the JVM symbols are gone, so treat the missing declaration, not the runtime check, as the
+  thing that stops you.
 - A **brokerless direct connection** has no daemon to run `Hello` against, so neither backend gets
   a bus-assigned unique name for it. The JVM backend synthesizes one **per connection**
   (`":jvm-wire-<n>"`) — the in-process registries are keyed by it, so two direct connections in one
@@ -370,7 +373,8 @@ the API docs will see it.
 ## JVM limitations at a glance
 
 1. **No fd-based connections**: `createDirectBusConnection(fd)` / `createServerBusConnection(fd)`
-   are compile-time errors on JVM (`@Deprecated(ERROR)` stubs).
+   are not declared in the JVM API at all (native-only funs since #126), so a JVM-compiled call is
+   an unresolved reference — see "Connection factories".
 2. **Raw-fd semantics depend on junixsocket native support**: without it, `UnixFd`
    duplication/closing degrade (no dup, no close). Wire fd passing is implemented but not
    CI-verified against an independent peer.
@@ -402,6 +406,10 @@ matched (they don't affect cross-process usage):
   where native returns an error.
 - A same-process `UnixFd` argument is passed by reference (not dup'd) on the local short-circuit,
   where native dups the descriptor.
-- `currentlyProcessedMessage` is not guarded against use after `release()` on JVM (native is).
+
+(`currentlyProcessedMessage` used to be listed here as unguarded against use after `release()` on
+JVM. That was closed in #172 — `WireDbusObject.currentlyProcessedMessage` now reads through to
+`connection.isReleased()` — and is pinned cross-backend by
+`FailurePathParityTest.currentlyProcessedMessageAfterReleaseThrowsOnBothBackends`.)
 
 These are tracked as post-1.0 items; none is on the cross-process path.
