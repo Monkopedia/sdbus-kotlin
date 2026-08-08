@@ -283,7 +283,33 @@ private fun MutableMap<String, NamingType>.buildSingleType(
     this[type.type] = type
 }
 
+/**
+ * The D-Bus specification's own maximum length for a type signature. It is what bounds the
+ * recursion in [buildValidatedType]: every level consumes at least one character of the signature,
+ * so a signature within the limit cannot nest more than 255 deep. `dbus-daemon` enforces the same
+ * number on every message it relays, so nothing a conforming service can describe is refused —
+ * the longest signature in the checked-in fixtures is 15 characters.
+ */
+private const val MAX_SIGNATURE_LENGTH = 255
+
 fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: String): NamingType {
+    require(type.length <= MAX_SIGNATURE_LENGTH) {
+        "Type signature for '$name' is ${type.length} characters, over the D-Bus maximum of " +
+            "$MAX_SIGNATURE_LENGTH"
+    }
+    return buildValidatedType(pkg, name, type)
+}
+
+/**
+ * [buildType] once its signature is known to be within [MAX_SIGNATURE_LENGTH]. The recursive calls
+ * are all to this rather than back to [buildType]: they descend into suffixes of an already
+ * validated signature, so re-checking each one would be re-asserting the same fact.
+ */
+private fun MutableMap<String, NamingType>.buildValidatedType(
+    pkg: String,
+    name: String,
+    type: String
+): NamingType {
     (this[type] as? SimpleType)?.let { return it }
     if (type.isEmpty()) {
         return this.getOrPut(type) {
@@ -320,12 +346,12 @@ fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: St
             if (type[1] == '{') {
                 // Map
                 val keyTypeStr = type.substring(2)
-                val keyType = buildType(pkg, name + "Key", keyTypeStr)
+                val keyType = buildValidatedType(pkg, name + "Key", keyTypeStr)
                 require(keyTypeStr.startsWith(keyType.type)) {
                     "Invalid type parsed out, expected $keyTypeStr but got ${keyType.type}"
                 }
                 val valueTypeStr = keyTypeStr.substring(keyType.type.length)
-                val valueType = buildType(pkg, name + "Value", valueTypeStr)
+                val valueType = buildValidatedType(pkg, name + "Value", valueTypeStr)
                 require(valueTypeStr.startsWith(valueType.type)) {
                     "Invalid type parsed out, expected $valueTypeStr but got ${valueType.type}"
                 }
@@ -344,7 +370,7 @@ fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: St
             } else {
                 // List
                 val valueTypeStr = type.substring(1)
-                val valueType = buildType(pkg, name + "Value", valueTypeStr)
+                val valueType = buildValidatedType(pkg, name + "Value", valueTypeStr)
                 require(valueTypeStr.startsWith(valueType.type)) {
                     "Invalid type parsed out, expected $valueTypeStr but got ${valueType.type}"
                 }
@@ -359,7 +385,7 @@ fun MutableMap<String, NamingType>.buildType(pkg: String, name: String, type: St
             val types = sequence {
                 var currentType = type.substring(1)
                 while (currentType.isNotEmpty() && currentType[0] != ')') {
-                    val nextType = buildType(pkg, name + "${index++}", currentType)
+                    val nextType = buildValidatedType(pkg, name + "${index++}", currentType)
                     require(currentType.startsWith(nextType.type)) {
                         "Invalid type parsed out, expected $currentType but got ${nextType.type}"
                     }

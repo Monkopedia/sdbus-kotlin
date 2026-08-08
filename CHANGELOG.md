@@ -17,6 +17,18 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   emitted statement changes — so this is additive documentation rather than a behavior change.
   XML that documents nothing generates exactly what it did before. (#160)
 
+### Fixed — codegen
+
+- **Introspection XML can no longer make the generator do unbounded work.** Two inputs used to cost
+  build availability rather than failing: a `<!DOCTYPE>` internal subset declaring XML entities (the
+  parser expanded them with no limit — ten-fold per nesting level, and an entity referencing itself
+  never terminated at all), and a type signature with thousands of array type codes (unbounded
+  recursion, `StackOverflowError`). An internal subset is now refused outright — introspection XML
+  has no use for one, and the external `introspect.dtd` doctype a real `dbus-daemon` sends still
+  parses — and a signature is held to the D-Bus specification's own 255-character maximum, which
+  bounds the recursion by construction. Both report which limit they hit. Generated output for
+  valid XML is unchanged. (#194)
+
 ### Changed — codegen
 
 - **Standard D-Bus annotations are now mapped onto the runtime vtable/proxy flags.** The generated

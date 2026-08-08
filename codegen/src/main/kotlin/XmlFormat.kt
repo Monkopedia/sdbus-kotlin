@@ -24,6 +24,7 @@ package com.monkopedia.sdbus
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -37,9 +38,10 @@ import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 
 /**
- * The single parser for D-Bus introspection XML, shared by the [Xml2Kotlin] CLI and the tests so
- * the golden fixtures assert against the configuration the tool actually ships. Unknown content
- * is dropped rather than failing, so vendor extensions don't break generation.
+ * The serialization format the [Xml2Kotlin] CLI and the tests share, so the golden fixtures assert
+ * against the configuration the tool actually ships. Unknown content is dropped rather than
+ * failing, so vendor extensions don't break generation. Call [parseIntrospectionXml] rather than
+ * this directly — it is what applies the limits hostile XML is held to.
  *
  * `XML.compat` is deprecated in xmlutil 1.0, but its replacements deliberately change the parsing
  * defaults and xmlutil offers no non-deprecated route back to the old ones. Switching is a
@@ -59,6 +61,77 @@ internal val introspectionXml: XML = XML.compat {
         ): List<ParsedData<*>> = emptyList()
     }
 }
+
+/**
+ * Parses D-Bus introspection XML into the model the generators consume. The one entry point the CLI
+ * and the tests both use, so what the golden fixtures assert against and what the tool ships are
+ * held to the same limit.
+ *
+ * Introspection XML is supplied by the service being introspected, and `:codegen` runs inside a
+ * developer's build (the Gradle plugin calls it in-process), so a hostile document costs build
+ * availability rather than anything at runtime.
+ */
+internal fun parseIntrospectionXml(xml: String): XmlRootNode {
+    require(!declaresDtdInternalSubset(xml)) {
+        "Introspection XML declares a DTD internal subset (<!DOCTYPE ... [ ... ]>). " +
+            "Introspection XML has no use for one, and the entities it can declare are expanded " +
+            "without any limit, so the declaration is refused rather than parsed."
+    }
+    return introspectionXml.decodeFromString(xml)
+}
+
+/**
+ * Whether [xml] opens a DTD internal subset in its prolog, i.e. `<!DOCTYPE node [ ... ]>`.
+ *
+ * The subset is the only place introspection XML can declare XML entities, and xmlutil's parser
+ * expands them with no limit of any kind: measured against xmlutil 1.0.1, a 421-byte document
+ * nesting six ten-fold entities decodes to a 1,000,000-character attribute value in 30ms — each
+ * further level multiplies by ten — and `<!ENTITY a "&a;">` never terminates at all. There is no
+ * configuration knob for that (the JVM path is xmlutil's own `KtXmlReader`, not JAXP, so the
+ * `jdk.xml.entityExpansionLimit` default does not apply), and `expandEntities = false` would not
+ * help either because attribute values are expanded unconditionally.
+ *
+ * Refusing the subset outright is both the complete fix and the narrowest one: it is the only route
+ * to a declared entity, external entities the parser already rejects on its own, and what a real
+ * service emits is at most the external `introspect.dtd` doctype, which still parses.
+ *
+ * Only the prolog is scanned — the XML declaration, comments and processing instructions that may
+ * precede the doctype are skipped over — so a literal `<!DOCTYPE` in a comment or in element
+ * content is not mistaken for a declaration.
+ */
+private fun declaresDtdInternalSubset(xml: String): Boolean {
+    var i = 0
+    while (i < xml.length) {
+        when {
+            xml[i].isWhitespace() -> i++
+            xml.startsWith("<!--", i) -> i = xml.endOf("-->", i + 4) ?: return false
+            xml.startsWith("<?", i) -> i = xml.endOf("?>", i + 2) ?: return false
+            xml.startsWith("<!DOCTYPE", i) -> return doctypeOpensSubset(xml, i + "<!DOCTYPE".length)
+            // The root element, or something the parser will reject on its own.
+            else -> return false
+        }
+    }
+    return false
+}
+
+/** Whether the doctype declaration running from [start] in [xml] opens an internal subset. */
+private fun doctypeOpensSubset(xml: String, start: Int): Boolean {
+    var i = start
+    while (i < xml.length) {
+        when (val c = xml[i]) {
+            '[' -> return true
+            '>' -> return false
+            // A quoted public or system literal; '[' and '>' inside it mean neither of the above.
+            '\'', '"' -> i = xml.endOf(c.toString(), i + 1) ?: return false
+            else -> i++
+        }
+    }
+    return false
+}
+
+/** The index just past the next [token] at or after [from], or null if there isn't one. */
+private fun String.endOf(token: String, from: Int): Int? =
+    indexOf(token, from).takeIf { it >= 0 }?.plus(token.length)
 
 @Serializable
 @XmlSerialName("node")

@@ -66,8 +66,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with sdbus-kotlin. If not, see <http://www.gnu.org/licenses/>.
  */
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package com.monkopedia.sdbus
 
 import com.github.ajalt.clikt.core.CliktCommand
@@ -78,8 +76,6 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import java.io.File
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 
 fun main(args: Array<String>) = Xml2Kotlin().main(args)
 
@@ -102,7 +98,7 @@ class Xml2Kotlin : CliktCommand() {
 
     override fun run() {
         val packageOverride = outputPackage?.trim()?.takeUnless { it.isEmpty() }
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(input.readText())
+        val xml = parseIntrospectionXml(input.readText())
         if (!keep) {
             output.deleteRecursively()
         }
