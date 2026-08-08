@@ -162,8 +162,9 @@ expect sealed class Message {
      * `false` deliberately to mean "this reply carries an error" — a different concept from the
      * one this property is named for, sharing the same field. So `if (!isValid) return` discards
      * locally built messages on JVM and keeps them on native. Which of the two definitions this
-     * property should have is unsettled; treat the value as unspecified for anything but native
-     * `msg != null`.
+     * property should have is unsettled — see
+     * [issue #246](https://github.com/Monkopedia/sdbus-kotlin/issues/246) — so treat the value as
+     * unspecified for anything but native's `msg != null`.
      */
     val isValid: Boolean
 
