@@ -279,15 +279,25 @@ internal class WireDbusProxy(
     override fun createMethodCall(
         interfaceName: InterfaceName,
         methodName: MethodName
-    ): MethodCall = MethodCall().also {
-        it.metadata = Message.Metadata(
-            interfaceName = interfaceName.value,
-            memberName = methodName.value,
-            destination = destination.value,
-            path = objectPath.value,
-            valid = true,
-            empty = true
-        )
+    ): MethodCall {
+        // Local capture so the timeout hook below holds the connection alone, not this proxy.
+        val owningConnection = connection
+        return MethodCall().also {
+            it.metadata = Message.Metadata(
+                interfaceName = interfaceName.value,
+                memberName = methodName.value,
+                destination = destination.value,
+                path = objectPath.value,
+                valid = true,
+                empty = true
+            )
+            // MethodCall.send(Duration.ZERO) documents "uses the connection default"; read it at
+            // send time rather than here, so a methodCallTimeout set after the call was created
+            // still applies -- the same order Proxy.callMethod(message) resolves it in. #184.
+            it.connectionDefaultTimeoutMicros = {
+                owningConnection?.defaultTimeoutMicros() ?: 0uL
+            }
+        }
     }
 
     override fun callMethod(message: MethodCall): MethodReply = callMethod(message, 0uL)
