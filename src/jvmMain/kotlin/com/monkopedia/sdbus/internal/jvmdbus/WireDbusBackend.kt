@@ -50,7 +50,8 @@ import kotlin.time.Duration
  *   [installSignalMatch] over its own socket, so each signal is delivered exactly once. The
  *   in-process [LocalJvmSignalBus]/[LocalJvmMatchBus] is NOT used on this backend -- it stays the
  *   dbus-java backend's same-process mechanism. Sender credentials of a signal from one of our own
- *   connections are filled from the local process ([withLocalSenderCredentials]);
+ *   connections are filled from the local process ([withLocalSenderCredentials]) -- on BROKERED
+ *   connections only, since a brokerless peer picks its own `sender` (#199);
  * - what stays DEFERRED is incoming method-call SERVING over the wire (phase 4).
  */
 internal class WireDbusBackend : JvmDbusBackend {
@@ -765,7 +766,7 @@ private fun installSignalMatch(
                 destination = wireMessage.destination,
                 valid = true,
                 empty = wireMessage.body.isEmpty()
-            ).withLocalSenderCredentials(wireMessage.sender)
+            ).withLocalSenderCredentials(wire, wireMessage.sender)
         )
         signal.payload.addAll(fromWireReplyValues(wireMessage.body, wireMessage.signature))
         JvmCurrentMessageContext.withMessage(signal) { callback(signal) }
@@ -789,9 +790,10 @@ private data class WireSenderCredentials(
 )
 
 // Credentials of THIS process, used for senders that are one of our own connections (resolved via
-// LocalJvmServiceRegistry). A signal that traversed the bus carries the authoritative sender (the
-// bus stamps it), and for a same-process sender that is this very process -- so reporting the local
-// process credentials is correct and matches the dbus-java backend's local short-circuit
+// LocalJvmServiceRegistry) on a BROKERED connection. A signal that traversed the bus carries the
+// authoritative sender (the bus stamps it), and for a same-process sender that is this very
+// process -- so reporting the local process credentials is correct and matches the dbus-java
+// backend's local short-circuit
 // (resolveSenderCredentials -> localProcessCredentialsOrNull). Credentials of an EXTERNAL sender
 // would require a GetConnectionCredentials bus call, which cannot run on the reader thread that
 // delivers signals without deadlocking; no test needs it, so it is intentionally left out here.
@@ -812,7 +814,15 @@ private val localProcessWireCredentials: WireSenderCredentials by lazy {
     )
 }
 
-private fun Message.Metadata.withLocalSenderCredentials(sender: String?): Message.Metadata {
+private fun Message.Metadata.withLocalSenderCredentials(
+    wire: DBusWireConnection,
+    sender: String?
+): Message.Metadata {
+    // On a brokerless DIRECT connection no daemon stamps `sender`: it is an attribute the peer
+    // chooses, so "this name resolves to one of our connections" says nothing about who sent the
+    // frame. Report no credentials rather than this process's. Absent is honest; wrong is not
+    // (#199).
+    if (wire.direct) return this
     val senderName = sender?.takeIf { it.isNotBlank() } ?: return this
     if (LocalJvmServiceRegistry.resolveLocalUniqueName(senderName) == null) return this
     val creds = localProcessWireCredentials
