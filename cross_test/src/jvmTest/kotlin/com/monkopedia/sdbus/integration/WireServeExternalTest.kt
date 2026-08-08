@@ -37,6 +37,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.junit.Assume.assumeTrue
 
 /**
  * Proves an object exported by a JVM sdbus-kotlin service on the OWNED wire backend is reachable by
@@ -51,20 +52,25 @@ import kotlinx.coroutines.runBlocking
  *    busctl gets correct results.
  *
  * The owned wire connection is now the only JVM backend (epic #93 phase 6 retired dbus-java), so
- * this always runs. Skips cleanly when no session bus or no `busctl` is available.
+ * this always runs. `busctl` is genuinely optional, so its absence is a real skip; a missing
+ * session bus is not — every job that runs this wraps the build in `dbus-run-session` — so that
+ * FAILS. Neither is an early return, which JUnit records as a pass (issue #227).
  */
 class WireServeExternalTest {
 
     @Test
     fun externalBusctl_reachesServedObject() = runBlocking {
-        val sessionBus = System.getenv("DBUS_SESSION_BUS_ADDRESS")
-        if (sessionBus == null) {
-            println("[WireServeExternalTest] SKIP: no DBUS_SESSION_BUS_ADDRESS.")
-            return@runBlocking
+        val sessionBus = checkNotNull(System.getenv("DBUS_SESSION_BUS_ADDRESS")) {
+            "DBUS_SESSION_BUS_ADDRESS is unset: this test serves an object on the session bus " +
+                "and hands its address to busctl. Run the suite under " +
+                "`dbus-run-session -- ./gradlew …`."
         }
         val busctl = findExecutable("busctl")
         if (busctl == null) {
-            println("[WireServeExternalTest] SKIP: busctl not on PATH.")
+            assumeTrue(
+                "busctl is not on PATH, so no external peer can call the served object.",
+                false
+            )
             return@runBlocking
         }
 

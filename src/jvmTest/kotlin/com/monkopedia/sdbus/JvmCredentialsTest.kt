@@ -16,14 +16,12 @@ import kotlinx.coroutines.withTimeout
  * is host-dependent — a label where SELinux is enforcing, or a thrown [SdbusException] otherwise.
  * The native backend covers the same surface against the live POSIX identity in
  * CredentialsIntegrationTest.
+ *
+ * Needs a real session bus, and every job that runs it wraps the build in `dbus-run-session`, so an
+ * unreachable bus is a broken environment: the factory's throw is left to FAIL the test rather than
+ * swallowed into an early return that JUnit would record as a pass (issue #227).
  */
 class JvmCredentialsTest {
-
-    private fun connectOrNull(connect: () -> Connection): Connection? = try {
-        connect()
-    } catch (e: Exception) {
-        null
-    }
 
     @Test
     fun receivedSignalResolvesSupportedCredentialsAndRejectsUnsupported() = runBlocking {
@@ -37,12 +35,8 @@ class JvmCredentialsTest {
         val expectedUid = unix.uid.toUInt()
         val expectedGid = unix.gid.toUInt()
 
-        val serverConnection = connectOrNull { createSessionBusConnection(service) }
-            ?: return@runBlocking
-        val proxyConnection = connectOrNull { createSessionBusConnection() } ?: run {
-            serverConnection.release()
-            return@runBlocking
-        }
+        val serverConnection = createSessionBusConnection(service)
+        val proxyConnection = createSessionBusConnection()
 
         val pidSeen = CompletableDeferred<Int>()
         val uidSeen = CompletableDeferred<UInt>()

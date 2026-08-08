@@ -19,8 +19,8 @@ This backlog is intentionally ordered by priority and should be worked top-to-bo
   - [x] Added JVM session-bus coverage for distinct real connections and connection-level ObjectManager signal routing (`JvmRealBusIntegrationTest`).
   - [x] Added JVM session-bus coverage for `GetManagedObjects` returning child interface/property data (`JvmRealBusIntegrationTest`).
   - [x] Added JVM session-bus coverage for signal callback sender credential resolution (`JvmRealBusIntegrationTest`).
-  - [x] Added JVM system-bus coverage for distinct real connections (`createSystemBusConnection`) with graceful skip when unavailable (`JvmRealBusIntegrationTest`).
-  - [x] Added JVM system-bus ObjectManager `GetManagedObjects` coverage using unique-name routing with graceful skip when unavailable (`JvmRealBusIntegrationTest`).
+  - [x] Added JVM system-bus coverage for distinct real connections (`createSystemBusConnection`), failing when the bus is unavailable (#227) (`JvmRealBusIntegrationTest`).
+  - [x] Added JVM system-bus ObjectManager `GetManagedObjects` coverage using unique-name routing, failing when the bus is unavailable (#227) (`JvmRealBusIntegrationTest`).
 - Done when:
   - [x] `:jvmTest` is green,
   - [x] `:cross_test:jvmTest` is green,

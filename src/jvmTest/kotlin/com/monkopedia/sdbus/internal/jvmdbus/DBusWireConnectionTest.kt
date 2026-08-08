@@ -18,23 +18,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.Assume.assumeTrue
 
 /**
  * End-to-end tests for the owned low-level D-Bus connection (epic #93, phase 2) against a real
- * session bus. When no bus is reachable the connection factory throws [IOException]; we treat that
- * as a skip so the suite stays green outside `dbus-run-session`.
+ * session bus. Every job that runs them wraps the build in `dbus-run-session`, so an unreachable
+ * bus is a broken environment: [DBusWireConnection.connectSession]'s [IOException] is left to FAIL
+ * the test rather than swallowed into an early return that JUnit records as a pass (issue #227).
  */
 class DBusWireConnectionTest {
 
-    private fun connectOrNull(): DBusWireConnection? = try {
-        DBusWireConnection.connectSession()
-    } catch (_: IOException) {
-        null
-    }
-
     @Test
     fun connect_completesSaslAndHello_assignsUniqueName() {
-        val connection = connectOrNull() ?: return
+        val connection = DBusWireConnection.connectSession()
         try {
             val unique = connection.uniqueName
             assertNotNull(unique, "Hello should assign a unique name")
@@ -50,7 +46,7 @@ class DBusWireConnectionTest {
 
     @Test
     fun call_listNames_parsesReplyContainingDbusDaemon() = runBlocking {
-        val connection = connectOrNull() ?: return@runBlocking
+        val connection = DBusWireConnection.connectSession()
         try {
             val reply = withTimeout(5_000) {
                 connection.call(
@@ -81,7 +77,7 @@ class DBusWireConnectionTest {
 
     @Test
     fun call_getId_returnsBusId() = runBlocking {
-        val connection = connectOrNull() ?: return@runBlocking
+        val connection = DBusWireConnection.connectSession()
         try {
             val reply = withTimeout(5_000) {
                 connection.call(
@@ -104,7 +100,7 @@ class DBusWireConnectionTest {
 
     @Test
     fun addMatch_thenRequestName_deliversNameOwnerChangedSignal() = runBlocking {
-        val connection = connectOrNull() ?: return@runBlocking
+        val connection = DBusWireConnection.connectSession()
         val busName = "com.monkopedia.sdbus.wire.test.s${System.nanoTime()}"
         val signalSeen = CompletableDeferred<WireMessage>()
         val subscription = connection.onSignal { message ->
@@ -142,23 +138,20 @@ class DBusWireConnectionTest {
      */
     @Test
     fun unixFd_roundTripsAcrossConnections_throughDaemon_asLiveDuplicate() = runBlocking {
-        if (!JvmUnixFdSupport.supportsFdDuplicationSemantics) return@runBlocking
-        val server = connectOrNull() ?: return@runBlocking
-        val client = connectOrNull() ?: run {
-            server.close()
-            return@runBlocking
-        }
-        if (!server.unixFdNegotiated || !client.unixFdNegotiated) {
-            client.close()
-            server.close()
-            return@runBlocking
-        }
-        val pipe = JvmUnixFdSupport.createPipePair() ?: run {
-            client.close()
-            server.close()
-            return@runBlocking
-        }
-        val (readFd, writeFd) = pipe
+        // junixsocket's native support is genuinely optional (it ships binaries per platform), so
+        // its absence is a real skip. Everything below it — a pipe, and fd negotiation with the
+        // daemon — must then hold, and is asserted rather than returned from (#227).
+        assumeTrue(
+            "junixsocket's native fd support is unavailable on this platform, so SCM_RIGHTS " +
+                "cannot be exercised.",
+            JvmUnixFdSupport.supportsFdDuplicationSemantics
+        )
+        val (readFd, writeFd) = assertNotNull(
+            JvmUnixFdSupport.createPipePair(),
+            "could not create a pipe pair despite junixsocket native support"
+        )
+        val server = DBusWireConnection.connectSession()
+        val client = DBusWireConnection.connectSession()
         val busName = "com.monkopedia.sdbus.wire.fdtest.s${System.nanoTime()}"
         val path = "/com/monkopedia/sdbus/wire/fdtest"
         val iface = "com.monkopedia.sdbus.wire.FdTest"
@@ -193,6 +186,10 @@ class DBusWireConnectionTest {
         }
 
         try {
+            assertTrue(
+                server.unixFdNegotiated && client.unixFdNegotiated,
+                "both connections must negotiate UNIX-fd passing with the daemon"
+            )
             assertEquals(1, server.requestName(busName), "server should own $busName")
             // Buffer the known bytes in the pipe before sending the read-end, so the server can
             // read them straight out of the received duplicate.
@@ -259,11 +256,8 @@ class DBusWireConnectionTest {
      */
     @Test
     fun nestedSameConnectionDispatch_underBoundedPool_completesWithoutDeadlock() = runBlocking {
-        val server = connectOrNull() ?: return@runBlocking
-        val client = connectOrNull() ?: run {
-            server.close()
-            return@runBlocking
-        }
+        val server = DBusWireConnection.connectSession()
+        val client = DBusWireConnection.connectSession()
         val busName = "com.monkopedia.sdbus.wire.nest.s${System.nanoTime()}"
         val path = "/com/monkopedia/sdbus/wire/nest"
         val iface = "com.monkopedia.sdbus.wire.Nest"
@@ -346,11 +340,8 @@ class DBusWireConnectionTest {
      */
     @Test
     fun serveWorkerPool_underFloodOfSlowHandlers_staysBounded() = runBlocking {
-        val server = connectOrNull() ?: return@runBlocking
-        val client = connectOrNull() ?: run {
-            server.close()
-            return@runBlocking
-        }
+        val server = DBusWireConnection.connectSession()
+        val client = DBusWireConnection.connectSession()
         val busName = "com.monkopedia.sdbus.wire.flood.s${System.nanoTime()}"
         val path = "/com/monkopedia/sdbus/wire/flood"
         val iface = "com.monkopedia.sdbus.wire.Flood"
@@ -420,11 +411,8 @@ class DBusWireConnectionTest {
      */
     @Test
     fun externalLatchDependency_underBoundedPool_isRescuedByWatchdog() = runBlocking {
-        val server = connectOrNull() ?: return@runBlocking
-        val client = connectOrNull() ?: run {
-            server.close()
-            return@runBlocking
-        }
+        val server = DBusWireConnection.connectSession()
+        val client = DBusWireConnection.connectSession()
         val busName = "com.monkopedia.sdbus.wire.gate.s${System.nanoTime()}"
         val path = "/com/monkopedia/sdbus/wire/gate"
         val iface = "com.monkopedia.sdbus.wire.Gate"
@@ -520,7 +508,7 @@ class DBusWireConnectionTest {
 
     @Test
     fun close_stopsReaderThreadAndClosesSocket() {
-        val connection = connectOrNull() ?: return
+        val connection = DBusWireConnection.connectSession()
         assertTrue(connection.isReaderRunning, "Reader should run while open")
 
         connection.close()

@@ -55,8 +55,10 @@ session bus while running none of the marshaller, wire-backend, sd-bus interop, 
 Confirm any test command with `--dry-run` before trusting it.
 
 The real suites fail loudly rather than silently when the bus is missing — measured on `main` with
-`DBUS_SESSION_BUS_ADDRESS` unset, `:jvmTest` failed 135 of 331 tests and `:linuxX64Test` failed 180
+`DBUS_SESSION_BUS_ADDRESS` unset, `:jvmTest` failed 150 of 331 tests and `:linuxX64Test` failed 180
 of 301. A green run of those tasks is therefore real evidence; a green bare `./gradlew test` is not.
+(`:jvmTest` was 135 of 331 before #227 removed the suites that returned early — and so reported a
+pass — instead of failing when they could not reach a bus.)
 
 The `samples/bluez-scan` and blue-falcon-sdbus integration suites need a real BlueZ adapter and a
 BLE peripheral, so they cannot run in CI.

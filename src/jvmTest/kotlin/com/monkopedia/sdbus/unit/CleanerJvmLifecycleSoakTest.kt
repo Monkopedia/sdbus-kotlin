@@ -29,8 +29,9 @@ import kotlin.test.fail
  *
  * Uses ordinary JVM GC (no Kotlin/Native cleaner), but it is still GC-timing dependent, so — like the
  * native lifecycle soak — it is excluded from the default `jvmTest` run behind the `-PgcSoak` gate and
- * runs only on the nightly schedule. Needs a real session bus (run under `dbus-run-session`); when no
- * bus is available the connection factory throws and the test treats that as a skip.
+ * runs only on the nightly schedule. Needs a real session bus, and the nightly job runs it inside
+ * `dbus-run-session`, so an unreachable bus is a broken environment: the factory's throw is left to
+ * FAIL the test rather than swallowed into an early return that JUnit records as a pass (#227).
  */
 class CleanerJvmLifecycleSoakTest {
 
@@ -66,7 +67,7 @@ class CleanerJvmLifecycleSoakTest {
 
     @Test
     fun servedObjectWithPropertyIsCollectedAfterRelease() {
-        val connection = connectOrNull() ?: return // no bus in this environment -> skip
+        val connection = createBusConnection()
         try {
             val weak = setUpAndRelease(connection)
             if (!collected(weak)) {
@@ -97,12 +98,5 @@ class CleanerJvmLifecycleSoakTest {
             if (weak.get() == null) return true
         }
         return false
-    }
-
-    // The connection factory throws when no usable bus is reachable (issue #81); treat as skip.
-    private fun connectOrNull(): Connection? = try {
-        createBusConnection()
-    } catch (e: Error) {
-        null
     }
 }
