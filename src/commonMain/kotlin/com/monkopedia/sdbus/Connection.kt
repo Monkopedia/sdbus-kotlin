@@ -284,6 +284,14 @@ expect fun createSessionBusConnection(address: String): Connection
 /**
  * Opens direct D-Bus connection at a custom address
  *
+ * A direct connection is **brokerless**: no `dbus-daemon` sits between the two ends. Nothing
+ * stamps the `sender` field of an incoming message the way a broker does — the single peer on the
+ * other end supplies it — so the sender of anything received here is peer-asserted rather than
+ * verified. Neither it nor [Message]'s `creds*` accessors are a sound basis for an authorization
+ * decision on this transport. What those accessors report over a direct connection is currently
+ * backend-dependent and is an open question — see
+ * [issue #199](https://github.com/Monkopedia/sdbus-kotlin/issues/199).
+ *
  * @param address ";"-separated list of addresses of bus brokers to try to connect to
  * @return [Connection] instance
  *
