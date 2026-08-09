@@ -35,7 +35,6 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume.assumeTrue
 
 /**
  * Proves that a signal our object emits actually traverses the BUS and reaches an INDEPENDENT
@@ -49,9 +48,11 @@ import org.junit.Assume.assumeTrue
  *
  * JVM-only (cross_test `jvmTest`) because the owned-connection backend is JVM-only and toggle-gated;
  * the native backend's over-the-wire emission is already covered elsewhere. `dbus-monitor` is
- * genuinely optional, so its absence is a real skip; a missing session bus is not — every job that
- * runs this wraps the build in `dbus-run-session` — so that FAILS. Neither is an early return,
- * which JUnit records as a pass (issue #227).
+ * genuinely optional, so its absence is a real skip — unless [EXTERNAL_TOOLS_REQUIRED_ENV] is set,
+ * as the CI job that guarantees dbus-monitor does, because there a skip would silently delete this
+ * coverage (issue #229). A missing session bus is never optional — every job that runs this wraps
+ * the build in `dbus-run-session` — so that FAILS. Neither is an early return, which JUnit records
+ * as a pass (issue #227).
  */
 class WireSignalEmissionExternalTest {
 
@@ -62,14 +63,10 @@ class WireSignalEmissionExternalTest {
                 "and watches for it with dbus-monitor --session. Run the suite under " +
                 "`dbus-run-session -- ./gradlew …`."
         }
-        val dbusMonitor = findExecutable("dbus-monitor")
-        if (dbusMonitor == null) {
-            assumeTrue(
-                "dbus-monitor is not on PATH, so no external observer can see the signal.",
-                false
-            )
-            return@runBlocking
-        }
+        val dbusMonitor = requireExternalTool(
+            "dbus-monitor",
+            "no external observer can see the signal"
+        )
 
         val id = Random.nextInt(100_000, 999_999)
         val service = ServiceName("com.monkopedia.sdbus.wireemit$id")
@@ -126,12 +123,5 @@ class WireSignalEmissionExternalTest {
             monitor.destroy()
             if (!monitor.waitFor(5, TimeUnit.SECONDS)) monitor.destroyForcibly()
         }
-    }
-
-    private fun findExecutable(name: String): File? {
-        val path = System.getenv("PATH") ?: return null
-        return path.split(File.pathSeparator)
-            .map { File(it, name) }
-            .firstOrNull { it.canExecute() }
     }
 }

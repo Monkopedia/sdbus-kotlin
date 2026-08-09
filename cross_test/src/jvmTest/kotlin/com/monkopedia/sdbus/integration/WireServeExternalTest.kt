@@ -30,14 +30,12 @@ import com.monkopedia.sdbus.createBusConnection
 import com.monkopedia.sdbus.createObject
 import com.monkopedia.sdbus.method
 import com.monkopedia.sdbus.prop
-import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume.assumeTrue
 
 /**
  * Proves an object exported by a JVM sdbus-kotlin service on the OWNED wire backend is reachable by
@@ -52,9 +50,11 @@ import org.junit.Assume.assumeTrue
  *    busctl gets correct results.
  *
  * The owned wire connection is now the only JVM backend (epic #93 phase 6 retired dbus-java), so
- * this always runs. `busctl` is genuinely optional, so its absence is a real skip; a missing
- * session bus is not — every job that runs this wraps the build in `dbus-run-session` — so that
- * FAILS. Neither is an early return, which JUnit records as a pass (issue #227).
+ * this always runs. `busctl` is genuinely optional, so its absence is a real skip — unless
+ * [EXTERNAL_TOOLS_REQUIRED_ENV] is set, as the CI job that guarantees busctl does, because there a
+ * skip would silently delete this coverage (issue #229). A missing session bus is never optional —
+ * every job that runs this wraps the build in `dbus-run-session` — so that FAILS. Neither is an
+ * early return, which JUnit records as a pass (issue #227).
  */
 class WireServeExternalTest {
 
@@ -65,14 +65,10 @@ class WireServeExternalTest {
                 "and hands its address to busctl. Run the suite under " +
                 "`dbus-run-session -- ./gradlew …`."
         }
-        val busctl = findExecutable("busctl")
-        if (busctl == null) {
-            assumeTrue(
-                "busctl is not on PATH, so no external peer can call the served object.",
-                false
-            )
-            return@runBlocking
-        }
+        val busctl = requireExternalTool(
+            "busctl",
+            "no external peer can call the served object"
+        )
 
         val id = Random.nextInt(100_000, 999_999)
         val service = ServiceName("com.monkopedia.sdbus.serve$id")
@@ -221,12 +217,5 @@ class WireServeExternalTest {
             connection.stopEventLoop()
             connection.release()
         }
-    }
-
-    private fun findExecutable(name: String): File? {
-        val path = System.getenv("PATH") ?: return null
-        return path.split(File.pathSeparator)
-            .map { File(it, name) }
-            .firstOrNull { it.canExecute() }
     }
 }

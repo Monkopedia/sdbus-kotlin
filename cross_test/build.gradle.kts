@@ -57,6 +57,14 @@ val reverseInteropEnabled = providers
 // actually configures it — mirroring the gcSoak gate in the root build.
 tasks.named<Test>("jvmTest") {
     filter.excludeTestsMatching("com.monkopedia.sdbus.integration.CrossRuntimeInteropSmokeTest")
+    // EXTERNAL_TOOLS_REQUIRED is read from the test JVM's environment by `requireExternalTool`
+    // (ExternalToolGate.kt), which Gradle's up-to-date check knows nothing about — so without this,
+    // newly setting it would replay the previous, ungated result and the guard would appear to have
+    // been honoured when it never ran (#188, found on DBUSMOCK_REQUIRED, which still has that bug).
+    inputs.property(
+        "EXTERNAL_TOOLS_REQUIRED",
+        providers.environmentVariable("EXTERNAL_TOOLS_REQUIRED")
+    ).optional(true)
 }
 
 // Kotlin/Native's test runner has no runtime-skip primitive, so `DbusmockHarness.skipTest`'s native

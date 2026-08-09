@@ -53,6 +53,8 @@ jobs:
           # python3-dbusmock powers the independent-peer harness (the Dbusmock* suites). Because
           # this job installs it deliberately, the test step sets DBUSMOCK_REQUIRED so a missing
           # package fails loudly instead of turning the whole foreign-peer layer into no-ops.
+          # `dbus` likewise provides dbus-monitor (via dbus-bin); busctl ships with systemd on
+          # ubuntu-24.04. Both are guaranteed here, hence EXTERNAL_TOOLS_REQUIRED below.
           sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev dbus python3-dbusmock
 
       - name: Run Full Test Suite on x64
@@ -64,6 +66,12 @@ jobs:
           # This job installs python3-dbusmock above, so the harness must fail — not skip — when
           # it cannot start a dbusmock peer.
           DBUSMOCK_REQUIRED: "1"
+          # busctl and dbus-monitor are guaranteed here (see the install step), and the two suites
+          # that drive them — WireServeExternalTest / WireSignalEmissionExternalTest — are the only
+          # proof a JVM-served object is reachable by, and a JVM-emitted signal observable from, a
+          # genuinely external process (#90, #93 phases 4/3b). Without this they would skip and the
+          # job would stay green if either binary vanished from the image (#229).
+          EXTERNAL_TOOLS_REQUIRED: "1"
         run: |
           set -euo pipefail
           X64_SYSTEMD_LIB="$(find "${GITHUB_WORKSPACE}/libs/x86_64" -maxdepth 2 -type d -name lib | head -n 1 || true)"
