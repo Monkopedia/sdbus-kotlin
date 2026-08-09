@@ -235,9 +235,10 @@ expect sealed class Message {
      * **On the JVM backend no credential ever describes another process.** Credentials are
      * attached on exactly one path there — a received signal whose sender resolves to another
      * connection inside this same JVM — and the values attached are read from the *receiving*
-     * process (`ProcessHandle.current()` plus `com.sun.security.auth.module.UnixSystem`), which
-     * on that path is the same process. Every other message, including any signal or method call
-     * that came from a different process, carries no credentials at all, so these accessors throw.
+     * process (`ProcessHandle.current()`, `com.sun.security.auth.module.UnixSystem` and
+     * `/proc/self`), which on that path is the same process. Every other message, including any
+     * signal or method call that came from a different process, carries no credentials at all, so
+     * these accessors throw.
      * Resolving an external peer would need a `GetConnectionCredentials` call the backend does not
      * make. There is therefore no JVM configuration in which these properties report a remote
      * principal: they either throw or describe you. The native backend queries real per-sender
@@ -259,11 +260,11 @@ expect sealed class Message {
      * The effective UID of the sender. Carries the same availability and trust caveats as
      * [credsPid], including throwing [SdbusException] when credentials are unavailable.
      *
-     * **The JVM backend does not report an effective UID here.** On its one credential-bearing
-     * path it stores `getuid()` — the real UID, the same value as [credsUid] — in this field; it
-     * never calls `geteuid()`. The result is a plausible wrong answer rather than a failure, so a
-     * check that reads it can pass for a process whose effective identity differs from its real
-     * one. Only the native backend reports a genuine effective UID.
+     * This is a genuine effective UID on both backends, and is never a copy of [credsUid]: native
+     * asks sd-bus for `SD_BUS_CREDS_EUID`, and the JVM backend — where the JDK exposes only
+     * `getuid()` — reads the effective column of `/proc/self/status`. Where that file cannot be
+     * read the JVM backend reports no effective UID and this accessor throws, rather than
+     * answering with the real UID.
      */
     val credsEuid: UInt
 
@@ -277,8 +278,9 @@ expect sealed class Message {
      * The effective GID of the sender. Carries the same availability and trust caveats as
      * [credsPid], including throwing [SdbusException] when credentials are unavailable.
      *
-     * **The JVM backend does not report an effective GID here**, for the same reason as
-     * [credsEuid]: it stores `getgid()`, identical to [credsGid], and never calls `getegid()`.
+     * As with [credsEuid] this is a genuine effective GID on both backends and is never a copy of
+     * [credsGid]: `SD_BUS_CREDS_EGID` on native, the effective column of `/proc/self/status` on
+     * the JVM, and a throw rather than the real GID when that is unreadable.
      */
     val credsEgid: UInt
 

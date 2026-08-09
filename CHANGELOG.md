@@ -85,6 +85,18 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Fixed
 
+- **`Message.credsEuid` / `Message.credsEgid` now report genuine effective ids on the JVM backend
+  instead of the real ones.** The one JVM path that attaches credentials stored `getuid()` /
+  the login gid — via `com.sun.security.auth.module.UnixSystem`, which reports only real ids — in the
+  two fields named *effective* (`UnixSystem` takes the uid from `getuid()` and the gid from that
+  uid's passwd entry — real ids either way, never `geteuid()`/`getegid()`, which the JDK does not
+  expose), so both answered with a plausible wrong number rather than failing.
+  They are now read from the effective column of `/proc/self/status`; when that cannot be read the
+  fields stay unset and the accessors throw, so a real id is never substituted for an effective one.
+  Native was already correct (`SD_BUS_CREDS_EUID` / `_EGID`), so this closes a cross-backend
+  divergence. No value changes on a process whose effective ids equal its real ones — every
+  non-setuid process — and the public signatures are unchanged. (#247)
+
 - **A method registered with `hasNoReply = true` now advertises
   `org.freedesktop.DBus.Method.NoReply` in the introspection the native backend serves.** The vtable
   translation tested the flag and then OR-ed the result with a literal `0u` — the constant named in
