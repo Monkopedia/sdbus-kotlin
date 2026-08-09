@@ -74,8 +74,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 - **`Message.credsEuid` / `Message.credsEgid` now report genuine effective ids on the JVM backend
   instead of the real ones.** The one JVM path that attaches credentials stored `getuid()` /
-  `getgid()` — via `com.sun.security.auth.module.UnixSystem`, which reports only real ids — in the
-  two fields named *effective*, so both answered with a plausible wrong number rather than failing.
+  the login gid — via `com.sun.security.auth.module.UnixSystem`, which reports only real ids — in the
+  two fields named *effective* (`UnixSystem` takes the uid from `getuid()` and the gid from that
+  uid's passwd entry — real ids either way, never `geteuid()`/`getegid()`, which the JDK does not
+  expose), so both answered with a plausible wrong number rather than failing.
   They are now read from the effective column of `/proc/self/status`; when that cannot be read the
   fields stay unset and the accessors throw, so a real id is never substituted for an effective one.
   Native was already correct (`SD_BUS_CREDS_EUID` / `_EGID`), so this closes a cross-backend

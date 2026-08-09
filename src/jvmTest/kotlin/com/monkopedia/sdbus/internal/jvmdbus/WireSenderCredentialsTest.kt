@@ -1,14 +1,19 @@
 package com.monkopedia.sdbus.internal.jvmdbus
 
+import com.monkopedia.sdbus.Message
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * Unit coverage for the effective-id source the JVM backend attaches to a local sender's
- * credentials (issue #247). The defect this pins is invisible on an ordinary process, where the
- * real and effective ids are equal — so these cases feed `/proc/<pid>/status` text in which they
- * DIFFER, which is the only way to see which column was read.
+ * Unit coverage for the sender credentials the JVM backend attaches to a message from one of its
+ * own connections (issue #247), in both halves: which column of `/proc/<pid>/status` the effective
+ * ids are read from, and which field each id is then written to.
+ *
+ * Every case here supplies ids that DIFFER from one another. That is the point: on any real
+ * process the effective ids equal the real ones, so a case built from this process's own identity
+ * cannot see the difference between reading the effective id and copying the real one, and would
+ * stay green with #247's substitution restored.
  */
 class WireSenderCredentialsTest {
 
@@ -43,5 +48,44 @@ class WireSenderCredentialsTest {
         assertNull(effectiveIdFromProcStatus("", "Uid:"))
         assertNull(effectiveIdFromProcStatus("Uid:\t1000\n", "Uid:"), "no effective column")
         assertNull(effectiveIdFromProcStatus("Uid:\t1000\tnobody\n", "Uid:"), "not a number")
+    }
+
+    @Test
+    fun eachIdIsWrittenToItsOwnField() {
+        val sender = ":1.247-${System.nanoTime()}"
+        val creds = WireSenderCredentials(
+            pid = 11,
+            uid = 22u,
+            euid = 33u,
+            gid = 44u,
+            egid = 55u,
+            supplementaryGids = listOf(66u),
+            selinuxContext = "unconfined_u:unconfined_r:unconfined_t"
+        )
+        LocalJvmServiceRegistry.registerLocalUniqueName(sender)
+        val stamped = try {
+            Message.Metadata(sender = sender).withLocalSenderCredentials(sender, creds)
+        } finally {
+            LocalJvmServiceRegistry.unregisterLocalUniqueName(sender)
+        }
+
+        assertEquals(11, stamped.credsPid)
+        assertEquals(22u, stamped.credsUid)
+        assertEquals(33u, stamped.credsEuid, "credsEuid must carry the euid, not the uid (22)")
+        assertEquals(44u, stamped.credsGid)
+        assertEquals(55u, stamped.credsEgid, "credsEgid must carry the egid, not the gid (44)")
+        assertEquals(listOf(66u), stamped.credsSupplementaryGids)
+        assertEquals(creds.selinuxContext, stamped.selinuxContext)
+    }
+
+    @Test
+    fun aSenderThatIsNotOneOfOurConnectionsGetsNoCredentials() {
+        val creds = WireSenderCredentials(1, 2u, 3u, 4u, 5u, listOf(6u), "ctx")
+        val stamped = Message.Metadata(sender = ":1.not-ours")
+            .withLocalSenderCredentials(":1.not-ours", creds)
+
+        assertNull(stamped.credsUid)
+        assertNull(stamped.credsEuid)
+        assertNull(stamped.credsEgid)
     }
 }

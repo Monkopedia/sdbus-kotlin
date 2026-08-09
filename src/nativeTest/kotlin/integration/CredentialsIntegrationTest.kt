@@ -31,8 +31,10 @@ import platform.posix.getuid
  * `seLinuxContext`), read from inside a served method handler via
  * [com.monkopedia.sdbus.Object.currentlyProcessedMessage]. The caller is a second connection in
  * this same process, so sd-bus resolves the credentials to this process and they can be checked
- * against the live POSIX identity. Native-only: euid/egid/SELinux are not implemented on the JVM
- * backend (covered there by JvmCredentialsTest).
+ * against the live POSIX identity. Native-only in placement rather than in coverage: the JVM
+ * backend reports the same seven, but only for a received signal whose sender is one of its own
+ * connections, so JvmCredentialsTest exercises them through that path instead of from a served
+ * handler.
  */
 class CredentialsIntegrationTest {
 

@@ -780,7 +780,7 @@ private fun installSignalMatch(
 
 // --- sender credentials (received signals) ---------------------------------------------------
 
-private data class WireSenderCredentials(
+internal data class WireSenderCredentials(
     val pid: Int?,
     val uid: UInt?,
     val euid: UInt?,
@@ -837,10 +837,15 @@ private val localProcessWireCredentials: WireSenderCredentials by lazy {
     )
 }
 
-private fun Message.Metadata.withLocalSenderCredentials(sender: String?): Message.Metadata {
+// [creds] is a parameter only so a test can drive this mapping with five distinct ids: on any real
+// process the effective ids equal the real ones, so a test that took the ids from the lazy above
+// could not tell the two apart and would pass with #247's substitution restored.
+internal fun Message.Metadata.withLocalSenderCredentials(
+    sender: String?,
+    creds: WireSenderCredentials = localProcessWireCredentials
+): Message.Metadata {
     val senderName = sender?.takeIf { it.isNotBlank() } ?: return this
     if (LocalJvmServiceRegistry.resolveLocalUniqueName(senderName) == null) return this
-    val creds = localProcessWireCredentials
     if (creds.pid == null &&
         creds.uid == null &&
         creds.euid == null &&
