@@ -783,21 +783,44 @@ private fun installSignalMatch(
 private data class WireSenderCredentials(
     val pid: Int?,
     val uid: UInt?,
+    val euid: UInt?,
     val gid: UInt?,
+    val egid: UInt?,
     val supplementaryGids: List<UInt>?,
     val selinuxContext: String?
 )
+
+// The EFFECTIVE uid/gid of this process, which the JDK does not expose anywhere: it has no
+// geteuid()/getegid() binding, and com.sun.security.auth.module.UnixSystem reports only the REAL
+// ids. The kernel publishes both in /proc/self/status, whose `Uid:` and `Gid:` lines carry four
+// values -- real, effective, saved-set, filesystem -- so the second one is the effective id.
+// Answering an effective-id accessor with the real id is a plausible wrong answer rather than a
+// failure (issue #247), so when the file is missing or unparseable this yields null: the fields
+// stay unset and the accessors throw, like every other unavailable credential.
+internal fun effectiveIdFromProcStatus(status: String, prefix: String): UInt? =
+    status.lineSequence()
+        .firstOrNull { it.startsWith(prefix) }
+        ?.removePrefix(prefix)
+        ?.split('\t', ' ')
+        ?.filter(String::isNotEmpty)
+        ?.getOrNull(1)
+        ?.toUIntOrNull()
 
 // Credentials of THIS process, used for senders that are one of our own connections (resolved via
 // LocalJvmServiceRegistry). A signal that traversed the bus carries the authoritative sender (the
 // bus stamps it), and for a same-process sender that is this very process -- so reporting the local
 // process credentials is correct and matches the dbus-java backend's local short-circuit
-// (resolveSenderCredentials -> localProcessCredentialsOrNull). Credentials of an EXTERNAL sender
-// would require a GetConnectionCredentials bus call, which cannot run on the reader thread that
-// delivers signals without deadlocking; no test needs it, so it is intentionally left out here.
+// (resolveSenderCredentials -> localProcessCredentialsOrNull). Each id comes from a source that
+// reports THAT id: the real ones from UnixSystem, the effective ones from /proc/self/status (see
+// [effectiveIdFromProcStatus]). Credentials of an EXTERNAL sender would require a
+// GetConnectionCredentials bus call, which cannot run on the reader thread that delivers signals
+// without deadlocking; no test needs it, so it is intentionally left out here.
 private val localProcessWireCredentials: WireSenderCredentials by lazy {
     val pid = runCatching { ProcessHandle.current().pid().toInt() }.getOrNull()
     val unix = runCatching { com.sun.security.auth.module.UnixSystem() }.getOrNull()
+    val procStatus = runCatching {
+        java.nio.file.Files.readString(java.nio.file.Paths.get("/proc/self/status"))
+    }.getOrNull()
     val selinuxContext = runCatching {
         java.nio.file.Files.readString(java.nio.file.Paths.get("/proc/self/attr/current"))
             .trim('\u0000', ' ')
@@ -806,7 +829,9 @@ private val localProcessWireCredentials: WireSenderCredentials by lazy {
     WireSenderCredentials(
         pid = pid,
         uid = unix?.uid?.toUInt(),
+        euid = procStatus?.let { effectiveIdFromProcStatus(it, "Uid:") },
         gid = unix?.gid?.toUInt(),
+        egid = procStatus?.let { effectiveIdFromProcStatus(it, "Gid:") },
         supplementaryGids = unix?.groups?.map { it.toUInt() },
         selinuxContext = selinuxContext
     )
@@ -818,7 +843,9 @@ private fun Message.Metadata.withLocalSenderCredentials(sender: String?): Messag
     val creds = localProcessWireCredentials
     if (creds.pid == null &&
         creds.uid == null &&
+        creds.euid == null &&
         creds.gid == null &&
+        creds.egid == null &&
         creds.supplementaryGids == null &&
         creds.selinuxContext == null
     ) {
@@ -827,9 +854,9 @@ private fun Message.Metadata.withLocalSenderCredentials(sender: String?): Messag
     return copy(
         credsPid = creds.pid,
         credsUid = creds.uid,
-        credsEuid = creds.uid,
+        credsEuid = creds.euid,
         credsGid = creds.gid,
-        credsEgid = creds.gid,
+        credsEgid = creds.egid,
         credsSupplementaryGids = creds.supplementaryGids,
         selinuxContext = creds.selinuxContext
     )
