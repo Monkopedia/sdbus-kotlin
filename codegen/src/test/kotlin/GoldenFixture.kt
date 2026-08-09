@@ -24,7 +24,6 @@ package com.monkopedia.sdbus
 
 import com.squareup.kotlinpoet.FileSpec
 import java.io.File
-import kotlinx.serialization.decodeFromString
 
 /**
  * The three sets of golden files each fixture directory under `codegen/src/test/resources` holds,
@@ -40,9 +39,7 @@ internal enum class GoldenFixture(val prefix: String, private val generator: () 
     PROXY("proxy", ::ProxyGenerator);
 
     fun generate(testRoot: File): List<FileSpec> {
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(
-            File(testRoot, "test.xml").readText()
-        )
+        val xml = parseIntrospectionXml(File(testRoot, "test.xml").readText())
         return generator().transformXmlToFile(xml).sortedBy { it.name }
     }
 

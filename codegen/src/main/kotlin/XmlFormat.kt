@@ -24,6 +24,7 @@ package com.monkopedia.sdbus
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -37,9 +38,10 @@ import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 
 /**
- * The single parser for D-Bus introspection XML, shared by the [Xml2Kotlin] CLI and the tests so
- * the golden fixtures assert against the configuration the tool actually ships. Unknown content
- * is dropped rather than failing, so vendor extensions don't break generation.
+ * The serialization format the [Xml2Kotlin] CLI and the tests share, so the golden fixtures assert
+ * against the configuration the tool actually ships. Unknown content is dropped rather than
+ * failing, so vendor extensions don't break generation. Call [parseIntrospectionXml] rather than
+ * this directly — it is what applies the limits hostile XML is held to.
  *
  * `XML.compat` is deprecated in xmlutil 1.0, but its replacements deliberately change the parsing
  * defaults and xmlutil offers no non-deprecated route back to the old ones. Switching is a
@@ -59,6 +61,109 @@ internal val introspectionXml: XML = XML.compat {
         ): List<ParsedData<*>> = emptyList()
     }
 }
+
+/**
+ * Parses D-Bus introspection XML into the model the generators consume. The one entry point the CLI
+ * and the tests both use, so what the golden fixtures assert against and what the tool ships are
+ * held to the same limit.
+ *
+ * Introspection XML is supplied by the service being introspected, and `:codegen` runs inside a
+ * developer's build (the Gradle plugin calls it in-process), so a hostile document costs build
+ * availability rather than anything at runtime.
+ */
+internal fun parseIntrospectionXml(xml: String): XmlRootNode {
+    prologRefusal(xml)?.let { throw IllegalArgumentException(it) }
+    return introspectionXml.decodeFromString(xml)
+}
+
+/**
+ * Why [xml]'s prolog must not be handed to the parser, or null to go ahead.
+ *
+ * A `<!DOCTYPE ... [ ... ]>` internal subset is the only place introspection XML can declare XML
+ * entities, and xmlutil's parser expands them with no limit of any kind: measured against xmlutil
+ * 1.0.1, a 421-byte document nesting six ten-fold entities decodes to a 1,000,000-character
+ * attribute value in 30ms — each further level multiplies by ten — and `<!ENTITY a "&a;">` never
+ * terminates at all. There is no configuration knob for that (the JVM path is xmlutil's own
+ * `KtXmlReader`, not JAXP, so the `jdk.xml.entityExpansionLimit` default does not apply), and
+ * `expandEntities = false` would not help either because attribute values are expanded
+ * unconditionally.
+ *
+ * Refusing the subset outright covers that whole class and is the narrowest thing that does: it is
+ * the only route to a declared entity, external entities the parser already rejects on its own, and
+ * what a real service emits is at most the external `introspect.dtd` doctype, which still parses.
+ * The cover is only as good as this scan's reading of the prolog, which is why what it cannot read
+ * is refused rather than passed on.
+ *
+ * Only the prolog is read — the byte order mark, XML declaration, comments and processing
+ * instructions that may precede the doctype are stepped over — so a literal `<!DOCTYPE` in a
+ * comment or in element content is not mistaken for a declaration. **A prolog this cannot read is
+ * refused rather than assumed to declare nothing**: the scan is what decides whether entities are
+ * possible, so treating what it does not model as safe is how a leading byte order mark got past an
+ * earlier version of it.
+ *
+ * The one thing that legitimately ends the scan is the root element — a `<` opening neither a
+ * markup declaration nor a processing instruction — and that is the only branch this returns null
+ * from. A doctype without an internal subset is read *past* rather than stopped at, because the
+ * parser honours a second `<!DOCTYPE` later in the prolog even though two of them is not
+ * well-formed; stopping at the first one's `>` let a subset behind the doctype every real service
+ * sends declare entities freely. Stopping at the root element is safe for the reason a second
+ * doctype is not: measured against xmlutil 1.0.1, a declaration after the root element is never
+ * applied, and an entity referenced inside the root fails with `Unknown entity` instead.
+ */
+private fun prologRefusal(xml: String): String? {
+    var i = if (xml.startsWith(BYTE_ORDER_MARK)) 1 else 0
+    while (i < xml.length) {
+        when {
+            xml[i].isWhitespace() -> i++
+            xml.startsWith("<!--", i) -> i = xml.endOf("-->", i + 4) ?: return UNREADABLE_PROLOG
+            xml.startsWith("<?", i) -> i = xml.endOf("?>", i + 2) ?: return UNREADABLE_PROLOG
+            xml.startsWith(DOCTYPE, i) -> {
+                val end = endOfDoctypeBody(xml, i + DOCTYPE.length) ?: return UNREADABLE_PROLOG
+                if (xml[end] == '[') return INTERNAL_SUBSET
+                i = end + 1
+            }
+            xml[i] == '<' && !xml.startsWith("<!", i) -> return null // The root element.
+            else -> return UNREADABLE_PROLOG
+        }
+    }
+    return UNREADABLE_PROLOG
+}
+
+/**
+ * The index of the character ending the doctype declaration whose body starts at [start] in [xml] —
+ * either the `[` opening an internal subset or the `>` closing the declaration — or null if it is
+ * unterminated. Quoted public and system literals are stepped over, since neither character means
+ * either of those things inside one.
+ */
+private fun endOfDoctypeBody(xml: String, start: Int): Int? {
+    var i = start
+    while (i < xml.length) {
+        when (val c = xml[i]) {
+            '[', '>' -> return i
+            '\'', '"' -> i = xml.endOf(c.toString(), i + 1) ?: return null
+            else -> i++
+        }
+    }
+    return null
+}
+
+/** The index just past the next [token] at or after [from], or null if there isn't one. */
+private fun String.endOf(token: String, from: Int): Int? =
+    indexOf(token, from).takeIf { it >= 0 }?.plus(token.length)
+
+private const val BYTE_ORDER_MARK = '\uFEFF'
+
+private const val DOCTYPE = "<!DOCTYPE"
+
+private const val INTERNAL_SUBSET =
+    "Introspection XML declares a DTD internal subset (<!DOCTYPE ... [ ... ]>). Introspection " +
+        "XML has no use for one, and the entities it can declare are expanded without any limit, " +
+        "so the declaration is refused rather than parsed."
+
+private const val UNREADABLE_PROLOG =
+    "The XML prolog of the introspection XML could not be read as far as the root element, so " +
+        "whether it may declare entities is unknown. It is refused rather than guessed at; the " +
+        "parser would reject it in any case."
 
 @Serializable
 @XmlSerialName("node")
