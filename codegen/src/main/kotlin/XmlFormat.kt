@@ -88,17 +88,27 @@ internal fun parseIntrospectionXml(xml: String): XmlRootNode {
  * `expandEntities = false` would not help either because attribute values are expanded
  * unconditionally.
  *
- * Refusing the subset outright is both the complete fix and the narrowest one: it is the only route
- * to a declared entity, external entities the parser already rejects on its own, and what a real
- * service emits is at most the external `introspect.dtd` doctype, which still parses.
+ * Refusing the subset outright covers that whole class and is the narrowest thing that does: it is
+ * the only route to a declared entity, external entities the parser already rejects on its own, and
+ * what a real service emits is at most the external `introspect.dtd` doctype, which still parses.
+ * The cover is only as good as this scan's reading of the prolog, which is why what it cannot read
+ * is refused rather than passed on.
  *
  * Only the prolog is read — the byte order mark, XML declaration, comments and processing
  * instructions that may precede the doctype are stepped over — so a literal `<!DOCTYPE` in a
  * comment or in element content is not mistaken for a declaration. **A prolog this cannot read is
  * refused rather than assumed to declare nothing**: the scan is what decides whether entities are
  * possible, so treating what it does not model as safe is how a leading byte order mark got past an
- * earlier version of it. The only thing that legitimately ends the scan is the root element, which
- * is a `<` opening neither a markup declaration nor a processing instruction.
+ * earlier version of it.
+ *
+ * The one thing that legitimately ends the scan is the root element — a `<` opening neither a
+ * markup declaration nor a processing instruction — and that is the only branch this returns null
+ * from. A doctype without an internal subset is read *past* rather than stopped at, because the
+ * parser honours a second `<!DOCTYPE` later in the prolog even though two of them is not
+ * well-formed; stopping at the first one's `>` let a subset behind the doctype every real service
+ * sends declare entities freely. Stopping at the root element is safe for the reason a second
+ * doctype is not: measured against xmlutil 1.0.1, a declaration after the root element is never
+ * applied, and an entity referenced inside the root fails with `Unknown entity` instead.
  */
 private fun prologRefusal(xml: String): String? {
     var i = if (xml.startsWith(BYTE_ORDER_MARK)) 1 else 0
@@ -107,7 +117,11 @@ private fun prologRefusal(xml: String): String? {
             xml[i].isWhitespace() -> i++
             xml.startsWith("<!--", i) -> i = xml.endOf("-->", i + 4) ?: return UNREADABLE_PROLOG
             xml.startsWith("<?", i) -> i = xml.endOf("?>", i + 2) ?: return UNREADABLE_PROLOG
-            xml.startsWith("<!DOCTYPE", i) -> return doctypeRefusal(xml, i + "<!DOCTYPE".length)
+            xml.startsWith(DOCTYPE, i) -> {
+                val end = endOfDoctypeBody(xml, i + DOCTYPE.length) ?: return UNREADABLE_PROLOG
+                if (xml[end] == '[') return INTERNAL_SUBSET
+                i = end + 1
+            }
             xml[i] == '<' && !xml.startsWith("<!", i) -> return null // The root element.
             else -> return UNREADABLE_PROLOG
         }
@@ -115,19 +129,22 @@ private fun prologRefusal(xml: String): String? {
     return UNREADABLE_PROLOG
 }
 
-/** [prologRefusal] for the doctype declaration running from [start] in [xml]. */
-private fun doctypeRefusal(xml: String, start: Int): String? {
+/**
+ * The index of the character ending the doctype declaration whose body starts at [start] in [xml] —
+ * either the `[` opening an internal subset or the `>` closing the declaration — or null if it is
+ * unterminated. Quoted public and system literals are stepped over, since neither character means
+ * either of those things inside one.
+ */
+private fun endOfDoctypeBody(xml: String, start: Int): Int? {
     var i = start
     while (i < xml.length) {
         when (val c = xml[i]) {
-            '[' -> return INTERNAL_SUBSET
-            '>' -> return null
-            // A quoted public or system literal; '[' and '>' inside it mean neither of the above.
-            '\'', '"' -> i = xml.endOf(c.toString(), i + 1) ?: return UNREADABLE_PROLOG
+            '[', '>' -> return i
+            '\'', '"' -> i = xml.endOf(c.toString(), i + 1) ?: return null
             else -> i++
         }
     }
-    return UNREADABLE_PROLOG
+    return null
 }
 
 /** The index just past the next [token] at or after [from], or null if there isn't one. */
@@ -135,6 +152,8 @@ private fun String.endOf(token: String, from: Int): Int? =
     indexOf(token, from).takeIf { it >= 0 }?.plus(token.length)
 
 private const val BYTE_ORDER_MARK = '\uFEFF'
+
+private const val DOCTYPE = "<!DOCTYPE"
 
 private const val INTERNAL_SUBSET =
     "Introspection XML declares a DTD internal subset (<!DOCTYPE ... [ ... ]>). Introspection " +
