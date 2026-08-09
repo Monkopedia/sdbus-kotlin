@@ -163,7 +163,7 @@ expect sealed class Message {
      * one this property is named for, sharing the same field. So `if (!isValid) return` discards
      * locally built messages on JVM and keeps them on native. Which of the two definitions this
      * property should have is unsettled — see
-     * [issue #246](https://github.com/Monkopedia/sdbus-kotlin/issues/246) — so treat the value as
+     * [issue #256](https://github.com/Monkopedia/sdbus-kotlin/issues/256) — so treat the value as
      * unspecified for anything but native's `msg != null`.
      */
     val isValid: Boolean
@@ -174,9 +174,10 @@ expect sealed class Message {
     /**
      * Whether the read cursor has reached the end of the message body.
      *
-     * The JVM backend keeps only a variant on its container stack — arrays, structs and dict
-     * entries are flat in its payload model — so inside any other container it answers about the
-     * message body rather than about that container.
+     * **`complete = false` does not stop at the end of the current container on JVM**, inside a
+     * variant included: that backend answers whether the cursor has consumed the flat body, so
+     * with any body value left after the container it reports `false` where native reports `true`.
+     * `complete = true` agrees on both.
      *
      * @param complete When `true`, also requires that any open containers have been exited
      */
@@ -204,9 +205,10 @@ expect sealed class Message {
     /**
      * Resets the read cursor to the start of the message, or of the currently open container.
      *
-     * The JVM backend keeps only a variant on its container stack (see [isAtEnd]), and the cursor
-     * inside an entered variant always addresses that variant's single value, so a non-complete
-     * rewind there has nothing to move.
+     * A variant is the only container the JVM backend keeps on its container stack — arrays,
+     * structs and dict entries are flat in its payload model — and the cursor inside an entered
+     * variant always addresses that variant's single value, so a non-complete rewind there has
+     * nothing to move.
      *
      * @param complete When `true`, rewind past all containers to the very beginning; when `false`,
      *   rewind only the currently open container and leave it open. If no container is open the

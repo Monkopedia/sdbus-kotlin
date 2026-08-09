@@ -95,7 +95,18 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   structs and dict entries are flat there). `MessageApiParityCommonTest` now pins all three on both
   backends; native already satisfied every assertion unchanged. The `@param complete` KDoc on
   `copyTo` was also wrong about *both* backends — it described `true` as copying "the whole message"
-  — and has been corrected. (#246)
+  — and has been corrected. The consumer-visible consequence runs through public `Variant`: because
+  `Variant.deserializeFrom` is built on `copyTo`, a second `deserializeFrom` from the same source
+  message used to re-read the first value on JVM and never advanced the source; it now reads the
+  next value and consumes it, which is what native always did. (#246)
+- **A `Variant` is no longer left unusable by a `get` of the wrong type on the JVM backend.** Native
+  validates the contained signature in `sd_bus_message_enter_container`, so a mismatched extraction
+  never enters and leaves the variant untouched; the JVM backend enters first and only detects the
+  mismatch while decoding, so the failed `get` left the variant entered and every later `get`,
+  `peekValueType` and `containsValueOfType` on it failed — the last two being the inspection path
+  the `Variant` documentation recommends. `Variant.get` now unwinds the container when extraction
+  throws. This was previously masked on JVM by `rewind`'s ignored `complete` parameter, so it
+  surfaced only once that was fixed. (#246)
 
 ## [1.0.1] - 2026-07-15
 

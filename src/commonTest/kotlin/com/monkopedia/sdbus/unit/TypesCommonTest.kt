@@ -8,6 +8,7 @@ import com.monkopedia.sdbus.containsValueOfType
 import com.monkopedia.sdbus.createPlainMessage
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -90,6 +91,25 @@ class TypesCommonTest {
         )
         val variant = Variant(value)
         assertTrue(variant.containsValueOfType<TypeWithVariants>())
+    }
+
+    // A failed extraction must not consume the variant. Native gets this from
+    // sd_bus_message_enter_container, which validates the contained signature before it enters, so
+    // a mismatched get leaves the message untouched. The JVM backend enters first and only detects
+    // the mismatch while decoding, so it has to unwind (#246).
+    @Test
+    fun aVariant_RemainsReadableAfterAGetOfTheWrongType() {
+        val variant = Variant("a string")
+
+        assertFailsWith<SdbusException> { variant.get<Int>() }
+
+        assertEquals(
+            "a string",
+            variant.get<String>(),
+            "a failed extraction must leave the variant readable"
+        )
+        assertEquals("s", variant.peekValueType())
+        assertTrue(variant.containsValueOfType<String>())
     }
 
     @Test
