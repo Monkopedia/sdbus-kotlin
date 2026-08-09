@@ -81,6 +81,21 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   (`busctl`, d-feet, other language bindings), which previously described a fire-and-forget method
   as ordinary request/reply. The JVM backend still does not serve this annotation; that is part of
   #193. (#197)
+- **`Message.isAtEnd`, `Message.copyTo` and `Message.rewind` now honor their `complete` parameter on
+  the JVM backend, and `copyTo` no longer replaces the destination's header.** All three JVM actuals
+  ignored the flag, so they returned a silently wrong answer rather than an error: `isAtEnd(true)`
+  reported `true` with a variant still entered, `rewind(false)` inside a variant rewound to the start
+  of the body and dropped the container, and `copyTo` copied the whole payload from index 0 whatever
+  the flag said. `copyTo` additionally assigned the source's metadata onto the destination —
+  interface, member, path, sender, destination and sender credentials — making it a copy of identity
+  rather than of contents; native's `sd_bus_message_copy` moves body data only. The JVM behavior now
+  matches sd-bus: `copyTo` takes values from the read cursor and consumes them, one complete value
+  when `complete` is `false` and the rest of the open container when it is `true`, and `complete` is
+  honored against the variant stack (the only container the JVM payload model keeps open — arrays,
+  structs and dict entries are flat there). `MessageApiParityCommonTest` now pins all three on both
+  backends; native already satisfied every assertion unchanged. The `@param complete` KDoc on
+  `copyTo` was also wrong about *both* backends — it described `true` as copying "the whole message"
+  — and has been corrected. (#246)
 
 ## [1.0.1] - 2026-07-15
 

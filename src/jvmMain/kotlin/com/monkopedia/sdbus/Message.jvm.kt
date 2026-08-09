@@ -183,15 +183,33 @@ actual sealed class Message {
         get() = metadata.valid
     actual val isEmpty: Boolean
         get() = payload.isEmpty()
-    actual fun isAtEnd(complete: Boolean): Boolean = readIndex >= payload.size
+
+    // The only container this payload model keeps open is an entered variant: arrays, structs and
+    // dict entries are flattened, so their enter/exit calls are no-ops. `complete` is therefore
+    // honoured against the variant stack, which is the whole of "any open containers" here.
+    actual fun isAtEnd(complete: Boolean): Boolean =
+        readIndex >= payload.size && (!complete || enteredVariantValues.isEmpty())
     actual fun copyTo(destination: Message, complete: Boolean) {
-        destination.payload.addAll(payload)
-        destination.metadata = metadata
+        // sd_bus_message_copy semantics: copy from the read cursor, consuming what is copied --
+        // one complete value when `complete` is false, everything left when it is true -- and move
+        // body data only, never the destination's header.
+        if (readIndex >= payload.size) return
+        val end = if (complete) payload.size else readIndex + 1
+        val values = payload.subList(readIndex, end).toList()
+        readIndex = end
+        destination.payload.addAll(values)
     }
     actual fun seal(): Unit = Unit
     actual fun rewind(complete: Boolean): Unit = run {
-        readIndex = 0
-        enteredVariantValues.clear()
+        if (complete) {
+            readIndex = 0
+            enteredVariantValues.clear()
+        } else if (enteredVariantValues.isEmpty()) {
+            readIndex = 0
+        }
+        // Inside an entered variant the cursor always addresses that variant's single value, so
+        // rewinding the currently open container has nothing to move -- and must not disturb the
+        // outer cursor or pop the container, which is what sd_bus_message_rewind(m, false) does.
     }
     actual val credsPid: Int
         get() = requireJvmCredential(metadata.credsPid, "Message.credsPid")
