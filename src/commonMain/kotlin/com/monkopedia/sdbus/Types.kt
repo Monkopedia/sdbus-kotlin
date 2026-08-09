@@ -120,8 +120,18 @@ class Variant constructor() {
         msg.rewind(false)
 
         msg.enterVariant(signature.value)
-        @Suppress("UNCHECKED_CAST")
-        val v: T = msg.deserialize(type, module)
+        val v: T = try {
+            msg.deserialize(type, module)
+        } catch (e: Throwable) {
+            // Leave the variant readable after a failed extraction. Native's enter validates the
+            // contained signature before entering, so a mismatched get never gets this far; the
+            // JVM backend has already consumed the value by the time decoding rejects it, and
+            // without this unwind the variant stays entered and every later get, peekValueType
+            // and containsValueOfType on it fails. The exit is best-effort because it can itself
+            // fail on a partially read container, and it must not replace the real error.
+            runCatching { msg.exitVariant() }
+            throw e
+        }
         msg.exitVariant()
         return v
     }

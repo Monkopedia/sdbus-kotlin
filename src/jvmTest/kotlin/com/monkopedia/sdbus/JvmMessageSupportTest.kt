@@ -138,6 +138,37 @@ class JvmMessageSupportTest {
         }
     }
 
+    // #246: copyTo moves body data only. The destination's header is its identity, and native's
+    // sd_bus_message_copy never touches it. Asserted here rather than in commonTest because the
+    // common surface offers no way to build a header-bearing message without a bus.
+    @Test
+    fun copyTo_leavesTheDestinationHeaderAlone() {
+        val source = createPlainMessage()
+        source.append(42)
+        source.seal()
+
+        val destination = MethodCall().also {
+            it.metadata = Message.Metadata(
+                interfaceName = "org.example.Copy",
+                memberName = "Target",
+                path = "/org/example/copy",
+                valid = true,
+                empty = true
+            )
+        }
+
+        source.copyTo(destination, true)
+
+        assertEquals(
+            InterfaceName("org.example.Copy"),
+            destination.interfaceName,
+            "copyTo must copy contents, not identity: the destination keeps its own header"
+        )
+        assertEquals(MemberName("Target"), destination.memberName)
+        assertEquals(ObjectPath("/org/example/copy"), destination.objectPath)
+        assertEquals(42, destination.readInt())
+    }
+
     @Test
     fun credentialAccessors_doNotUseUnsupportedOperationExceptions() {
         val message = createPlainMessage()

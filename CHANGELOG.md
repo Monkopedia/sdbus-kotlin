@@ -106,6 +106,32 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   (`busctl`, d-feet, other language bindings), which previously described a fire-and-forget method
   as ordinary request/reply. The JVM backend still does not serve this annotation; that is part of
   #193. (#197)
+- **`Message.isAtEnd`, `Message.copyTo` and `Message.rewind` now honor their `complete` parameter on
+  the JVM backend, and `copyTo` no longer replaces the destination's header.** All three JVM actuals
+  ignored the flag, so they returned a silently wrong answer rather than an error: `isAtEnd(true)`
+  reported `true` with a variant still entered, `rewind(false)` inside a variant rewound to the start
+  of the body and dropped the container, and `copyTo` copied the whole payload from index 0 whatever
+  the flag said. `copyTo` additionally assigned the source's metadata onto the destination —
+  interface, member, path, sender, destination and sender credentials — making it a copy of identity
+  rather than of contents; native's `sd_bus_message_copy` moves body data only. The JVM behavior now
+  matches sd-bus: `copyTo` takes values from the read cursor and consumes them, one complete value
+  when `complete` is `false` and the rest of the open container when it is `true`, and `complete` is
+  honored against the variant stack (the only container the JVM payload model keeps open — arrays,
+  structs and dict entries are flat there). `MessageApiParityCommonTest` now pins all three on both
+  backends; native already satisfied every assertion unchanged. The `@param complete` KDoc on
+  `copyTo` was also wrong about *both* backends — it described `true` as copying "the whole message"
+  — and has been corrected. The consumer-visible consequence runs through public `Variant`: because
+  `Variant.deserializeFrom` is built on `copyTo`, a second `deserializeFrom` from the same source
+  message used to re-read the first value on JVM and never advanced the source; it now reads the
+  next value and consumes it, which is what native always did. (#246)
+- **A `Variant` is no longer left unusable by a `get` of the wrong type on the JVM backend.** Native
+  validates the contained signature in `sd_bus_message_enter_container`, so a mismatched extraction
+  never enters and leaves the variant untouched; the JVM backend enters first and only detects the
+  mismatch while decoding, so the failed `get` left the variant entered and every later `get`,
+  `peekValueType` and `containsValueOfType` on it failed — the last two being the inspection path
+  the `Variant` documentation recommends. `Variant.get` now unwinds the container when extraction
+  throws. This was previously masked on JVM by `rewind`'s ignored `complete` parameter, so it
+  surfaced only once that was fixed. (#246)
 
 ## [1.0.1] - 2026-07-15
 

@@ -163,7 +163,7 @@ expect sealed class Message {
      * one this property is named for, sharing the same field. So `if (!isValid) return` discards
      * locally built messages on JVM and keeps them on native. Which of the two definitions this
      * property should have is unsettled — see
-     * [issue #246](https://github.com/Monkopedia/sdbus-kotlin/issues/246) — so treat the value as
+     * [issue #256](https://github.com/Monkopedia/sdbus-kotlin/issues/256) — so treat the value as
      * unspecified for anything but native's `msg != null`.
      */
     val isValid: Boolean
@@ -174,27 +174,28 @@ expect sealed class Message {
     /**
      * Whether the read cursor has reached the end of the message body.
      *
-     * **[complete] is honoured on native only.** The JVM backend ignores it and answers a third
-     * question instead — whether the cursor has consumed the flat payload — with no regard to
-     * container nesting, so `isAtEnd(true)` there can report `true` while containers are still
-     * open, and `isAtEnd(false)` does not stop at the end of the current container.
+     * **`complete = false` does not stop at the end of the current container on JVM**, inside a
+     * variant included: that backend answers whether the cursor has consumed the flat body, so
+     * with any body value left after the container it reports `false` where native reports `true`.
+     * `complete = true` agrees on both.
      *
      * @param complete When `true`, also requires that any open containers have been exited
      */
     fun isAtEnd(complete: Boolean): Boolean
 
     /**
-     * Copies the contents of this message into [destination].
+     * Copies body values out of this message into [destination], starting at this message's read
+     * cursor and consuming what it copies.
      *
-     * **[complete] is honoured on native only**, and the JVM backend copies more than the
-     * contents. On JVM the flag is ignored — the whole payload is always copied from the start,
-     * never from the cursor — and the copy additionally overwrites [destination]'s metadata
-     * (interface, member, path, sender, destination, validity flag and sender credentials) with
-     * this message's. Native's `sd_bus_message_copy` moves body data only and leaves the
-     * destination's header alone.
+     * Only body data moves: [destination] keeps its own header — interface, member, path, sender,
+     * destination and sender credentials — so this copies contents, not identity.
      *
      * @param destination Message to copy into
-     * @param complete When `true`, copy the whole message; otherwise copy from the current cursor
+     * @param complete When `true`, copy every value remaining in the currently open container;
+     *   when `false`, copy exactly one complete value (a basic value, or a whole container).
+     *   (This corrects the parameter description published up to and including 1.0.1, which said
+     *   `true` copies "the whole message" and `false` copies "from the current cursor"; both
+     *   branches copy from the cursor, and neither backend ever rewound first.)
      */
     fun copyTo(destination: Message, complete: Boolean)
 
@@ -202,14 +203,16 @@ expect sealed class Message {
     fun seal()
 
     /**
-     * Resets the read cursor to the start of the message.
+     * Resets the read cursor to the start of the message, or of the currently open container.
      *
-     * **[complete] is honoured on native only.** The JVM backend ignores it and always rewinds to
-     * the very beginning of the body, so `rewind(false)` inside a container does not return the
-     * cursor to the start of that container — it returns it to the start of the message, and the
-     * next read yields a value from there rather than failing.
+     * A variant is the only container the JVM backend keeps on its container stack — arrays,
+     * structs and dict entries are flat in its payload model — and the cursor inside an entered
+     * variant always addresses that variant's single value, so a non-complete rewind there has
+     * nothing to move.
      *
-     * @param complete When `true`, rewind past all containers to the very beginning
+     * @param complete When `true`, rewind past all containers to the very beginning; when `false`,
+     *   rewind only the currently open container and leave it open. If no container is open the
+     *   two are equivalent.
      */
     fun rewind(complete: Boolean)
 
