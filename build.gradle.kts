@@ -257,6 +257,20 @@ val dokkaLogoStyleSheet = rootProject.file("dokka/styles/logo-styles.css")
 dokka {
     dokkaPublications.named("html") {
         outputDirectory.set(projectDir.resolve("build/dokka"))
+        // #254: Dokka only *prints* `Couldn't resolve link: [...]`, so the docs build used to exit
+        // BUILD SUCCESSFUL with dead KDoc links and pages.yaml published them anyway — the only
+        // thing between a broken link and github.io was somebody counting warnings by hand.
+        // failOnWarning makes the expected count zero rather than a baseline someone edits upward,
+        // and asserting it in the build (not in a workflow) means a local run of this task fails
+        // exactly the way CI does.
+        //
+        // Deliberately broader than "unresolved links": it fails on ANY Dokka warning. Measured at
+        // 20dcae6 that is a distinction without a difference — every warning this task emitted was
+        // an unresolved link (8 of 8) — and the broad gate needs no log parsing, so unlike a grep
+        // for `Couldn't resolve link` it cannot be defeated by Dokka rewording that message. If a
+        // future Dokka emits some new warning category, fix it or suppress that category; turning
+        // this flag back off restores the #254 defect wholesale.
+        failOnWarning.set(true)
     }
     dokkaSourceSets.configureEach {
         includes.from(rootProject.file("dokka/moduledoc.md"))

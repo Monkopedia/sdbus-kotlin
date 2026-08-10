@@ -708,13 +708,14 @@ internal class DBusWireConnection private constructor(
  * to [bound] after a nested-dispatch storm subsides.
  *
  * SCOPE of same-thread compensation: [beginNestedBlock] only covers a worker that blocks *on its own
- * thread* inside [call]/[callBlocking]. A serve handler that instead (a) offloads its nested
- * same-connection call to a DIFFERENT thread/dispatcher (e.g. `withContext(Dispatchers.IO) {
- * connection.call(...) }`) while keeping the worker parked, or (b) blocks the worker on a
- * non-same-connection dependency (a shared lock, or a result that only ANOTHER served call on this
- * connection can produce), runs off the marked worker thread, so [beginNestedBlock] returns false and
- * no fast-path compensation fires. Handlers SHOULD still do nested same-connection calls synchronously
- * on the worker thread; that remains the cheap, exact path.
+ * thread* inside [DBusWireConnection.call]/[DBusWireConnection.callBlocking]. A serve handler that
+ * instead (a) offloads its nested same-connection call to a DIFFERENT thread/dispatcher (e.g.
+ * `withContext(Dispatchers.IO) { connection.call(...) }`) while keeping the worker parked, or (b)
+ * blocks the worker on a non-same-connection dependency (a shared lock, or a result that only
+ * ANOTHER served call on this connection can produce), runs off the marked worker thread, so
+ * [beginNestedBlock] returns false and no fast-path compensation fires. Handlers SHOULD still do
+ * nested same-connection calls synchronously on the worker thread; that remains the cheap, exact
+ * path.
  *
  * WATCHDOG backstop for the cases same-thread compensation misses (issue #101 follow-up). A single
  * daemon thread periodically samples forward progress: if the queue is non-empty AND no task has
