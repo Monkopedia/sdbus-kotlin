@@ -53,6 +53,19 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Changed — codegen
 
+- **⚠️ Binary-incompatible change to the `com.monkopedia:sdbus-kotlin-codegen` artifact.** Carrying
+  the `honorNamingAnnotations` option above into the generators changed their constructor signatures
+  rather than adding to them: `BaseGenerator`, `InterfaceGenerator`, `AdaptorGenerator` and
+  `ProxyGenerator` go from `<init>(String)` to `<init>(String, boolean)`, and `NamingManager` from
+  `<init>(XmlRootNode, String)` to `<init>(XmlRootNode, String, boolean)` (the synthetic `$default`
+  bridges move with them). The parameter is defaulted, so Kotlin **source** that constructs a
+  generator still compiles unchanged — but code already **linked** against those constructors, and
+  Java callers passing the arguments explicitly, must be recompiled. Everything else in
+  `codegen/api/codegen.api` is additive (`NamingManager.AliasType`, `GeneratedType.nameHint`,
+  `generateAlias`, `Xml2Kotlin.honorNamingAnnotations`), and the `Xml2Kotlin` CLI entry point and the
+  Gradle plugin do not construct the generators directly, so neither is affected. The
+  `com.monkopedia:sdbus-kotlin` library artifact is untouched: no entry in `api/sdbus-kotlin.api` or
+  `api/sdbus-kotlin.klib.api` moves. (#158)
 - **Standard D-Bus annotations are now mapped onto the runtime vtable/proxy flags.** The generated
   adaptor carries `org.freedesktop.DBus.Deprecated` (on the interface, methods, signals and
   properties) and `org.freedesktop.DBus.Property.EmitsChangedSignal` into its `addVTable` block, and

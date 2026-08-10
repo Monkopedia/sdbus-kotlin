@@ -26,11 +26,13 @@ import java.io.File
 
 /**
  * Rewrites the checked-in golden files of every fixture directory under the test-resources
- * directory named by the single argument, from its `test.xml`. For use after an intentional
- * generator change: `./gradlew :codegen:regenerateGoldens`, then review the resulting `git diff`
- * before committing it.
+ * directory named by the single argument, from its `test.xml` — the default output for every
+ * fixture, plus the `hinted-` output for those that pin the naming-annotation side of the flag too.
+ * For use after an intentional generator change: `./gradlew :codegen:regenerateGoldens`, then
+ * review the resulting `git diff` before committing it.
  *
- * This is deliberately a separate entry point from [GeneratorTest], which only ever compares.
+ * This is deliberately a separate entry point from [GeneratorTest] and [NamingHintTest], which only
+ * ever compare.
  * Regenerating and verifying are then different operations that cannot be mistaken for each other —
  * no run of the test suite can write the answer it is about to check.
  */
@@ -44,12 +46,19 @@ fun main(args: Array<String>) {
 
     var written = 0
     for (testRoot in fixtures) {
+        // A fixture only carries `hinted-` goldens if its XML has naming annotations to honor;
+        // writing them everywhere would invent goldens no test asserts.
+        val sides =
+            if (GoldenFixture.hasHintedGoldens(testRoot)) listOf(false, true) else listOf(false)
         for (fixture in GoldenFixture.entries) {
-            val generated = fixture.generate(testRoot)
-            fixture.goldenFiles(testRoot).forEach { it.delete() }
-            generated.forEachIndexed { index, fileSpec ->
-                File(testRoot, "${fixture.prefix}.$index.kt").writeText(fileSpec.toString())
-                written++
+            for (hinted in sides) {
+                val generated = fixture.generate(testRoot, hinted)
+                fixture.goldenFiles(testRoot, hinted).forEach { it.delete() }
+                generated.forEachIndexed { index, fileSpec ->
+                    File(testRoot, "${fixture.prefix(hinted)}.$index.kt")
+                        .writeText(fileSpec.toString())
+                    written++
+                }
             }
         }
     }

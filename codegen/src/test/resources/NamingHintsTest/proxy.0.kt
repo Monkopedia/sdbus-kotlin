@@ -29,7 +29,7 @@ public class NamingProxy(
 
   public val resized: Flow<Size> =
       proxy.signalFlow(Naming.Companion.INTERFACE_NAME, SignalName("Resized")) {
-        call(::Size)
+        call { a: Size -> a }
       }
 
   public override fun register() {

@@ -1,8 +1,8 @@
 package com.monkopedia.sdbus
 
 import java.io.File
-import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -11,31 +11,32 @@ import org.junit.jupiter.params.provider.MethodSource
  * annotations honored and compares against the `hinted-` goldens, so a fixture that carries both
  * `interface.0.kt` and `hinted-interface.0.kt` pins both sides of the flag from one XML.
  *
- * There is deliberately no write-the-goldens switch here — the goldens are only ever compared.
+ * Like [GeneratorTest] it only ever reads the goldens; `./gradlew :codegen:regenerateGoldens`
+ * rewrites both sides.
  */
 class NamingHintTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    fun testInterface(testRoot: File) =
-        assertHinted(testRoot, "interface", InterfaceGenerator(honorNamingAnnotations = true))
+    fun testInterface(testRoot: File) = assertHinted(testRoot, GoldenFixture.INTERFACE)
 
     @ParameterizedTest
     @MethodSource("data")
-    fun testAdaptor(testRoot: File) =
-        assertHinted(testRoot, "adaptor", AdaptorGenerator(honorNamingAnnotations = true))
+    fun testAdaptor(testRoot: File) = assertHinted(testRoot, GoldenFixture.ADAPTOR)
 
     @ParameterizedTest
     @MethodSource("data")
-    fun testProxy(testRoot: File) =
-        assertHinted(testRoot, "proxy", ProxyGenerator(honorNamingAnnotations = true))
+    fun testProxy(testRoot: File) = assertHinted(testRoot, GoldenFixture.PROXY)
 
-    private fun assertHinted(root: File, prefix: String, generator: BaseGenerator) {
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(File(root, "test.xml").readText())
-        val actual = generator.transformXmlToFile(xml).sortedBy { it.name }
-        val expected = root.listFiles().orEmpty()
-            .filter { it.name.startsWith("hinted-$prefix.") && it.name.endsWith(".kt") }
-            .sortedBy { it.name }
+    private fun assertHinted(testRoot: File, fixture: GoldenFixture) {
+        val expected = fixture.goldenFiles(testRoot, hinted = true)
+        // Without this, a fixture with no goldens of this kind would compare nothing and pass.
+        assertTrue(
+            expected.isNotEmpty(),
+            "No ${fixture.prefix(hinted = true)}.*.kt golden files in ${testRoot.name}; " +
+                "run :codegen:regenerateGoldens and commit them"
+        )
+        val actual = fixture.generate(testRoot, hinted = true)
         assertEquals(expected.size, actual.size)
         expected.zip(actual).forEach { (expectedFile, actualFile) ->
             assertEquals(expectedFile.readText(), actualFile.toString())
@@ -49,7 +50,7 @@ class NamingHintTest {
             ?.file
             ?.let { File(it).parentFile.listFiles() }
             .orEmpty()
-            .filter { dir -> dir.listFiles().orEmpty().any { it.name.startsWith("hinted-") } }
+            .filter { GoldenFixture.hasHintedGoldens(it) }
             .map { arrayOf(it) }
     }
 }
