@@ -47,9 +47,9 @@ import kotlin.time.Duration
  *   processes AND same-JVM connections alike;
  * - signal RECEPTION is correspondingly wire-only: every subscriber (whether listening to an
  *   external peer or to one of our own objects) registers `AddMatch` + a reader filter via
- *   [installSignalMatch] over its own socket, so each signal is delivered exactly once. The
- *   in-process [LocalJvmSignalBus]/[LocalJvmMatchBus] is NOT used on this backend -- it stays the
- *   dbus-java backend's same-process mechanism. Sender credentials of a signal from one of our own
+ *   [installSignalMatch] over its own socket, so each signal is delivered exactly once. There is no
+ *   in-process signal/match bus to fall back to: that was the dbus-java backend's same-process
+ *   mechanism, and dbus-java is retired. Sender credentials of a signal from one of our own
  *   connections are filled from the local process ([withLocalSenderCredentials]);
  * - what stays DEFERRED is incoming method-call SERVING over the wire (phase 4).
  */
@@ -743,8 +743,8 @@ private fun WireMessage.matches(spec: MatchSpec): Boolean {
 // reader delivers. Because the wire backend now emits signals over the wire too (see
 // [emitWireSignal]), this single path covers BOTH cross-process senders (e.g. a dbusmock peer) and
 // our OWN same-JVM served objects: each connection has its own socket + AddMatch, so the bus routes
-// every matching signal to it exactly once. The in-process [LocalJvmSignalBus]/[LocalJvmMatchBus]
-// is no longer used on this backend (it stays the dbus-java backend's same-process mechanism).
+// every matching signal to it exactly once. There is no in-process signal/match bus to fall back to
+// (that was the dbus-java backend's same-process mechanism, and dbus-java is retired).
 private fun installSignalMatch(
     wire: DBusWireConnection,
     rule: String,
