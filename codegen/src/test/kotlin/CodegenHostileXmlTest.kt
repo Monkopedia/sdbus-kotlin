@@ -204,6 +204,58 @@ class CodegenHostileXmlTest {
         assertEquals(null, namingManagerFailureFor("a".repeat(254) + "s"))
     }
 
+    /**
+     * The shape #259 measured: `<node>` nests without limit and the decoder recurses per level, so
+     * 60,000 bytes with no entity declaration in them aborted the parse with `StackOverflowError`.
+     * The document is bounded because the refusal has to arrive before the decoder is ever handed
+     * it — the scan stops at the first element over the limit rather than reading to the end.
+     */
+    @Test
+    fun nestingDeeperThanTheLimit_isRefusedRatherThanOverflowingTheStack() {
+        assertRefusedAsTooDeeplyNested(nestedNodes(5_000))
+    }
+
+    /**
+     * One level over, to pin where the limit actually falls. The depth the decoder overflows at is
+     * not a fixed one — measured on JDK 21 at a 256KB stack, 68 levels cold and 545 warm — so what
+     * is pinned here is the limit, and the refusal at it is a clean message rather than an `Error`.
+     */
+    @Test
+    fun nestingOneLevelOverTheLimit_isRefused() {
+        assertRefusedAsTooDeeplyNested(nestedNodes(MAX_NESTING_DEPTH + 1))
+    }
+
+    /**
+     * The control that keeps the two cases above from being satisfied by refusing nesting
+     * generally: a document nested to exactly the limit still parses, all the way down. A real
+     * `Introspect` reply is `node > interface > method > arg` and the deepest of the 23 checked-in
+     * fixtures is 6 elements, so the limit sits an order of magnitude above anything legitimate.
+     */
+    @Test
+    fun nestingAtTheLimit_stillParses() {
+        val xml = nestedNodes(MAX_NESTING_DEPTH)
+
+        assertEquals(null, parseWithin(xml))
+        var node = TestXmlSupport.parse(xml)
+        repeat(MAX_NESTING_DEPTH - 2) { node = node.nodes.single() }
+        assertEquals("org.example.Deep", node.interfaces.single().name)
+    }
+
+    /** A document whose deepest element — the interface at the bottom — sits at [depth]. */
+    private fun nestedNodes(depth: Int): String = "<node>".repeat(depth - 1) +
+        """<interface name="org.example.Deep"/>""" +
+        "</node>".repeat(depth - 1)
+
+    private fun assertRefusedAsTooDeeplyNested(xml: String) {
+        val failure = parseWithin(xml)
+            ?: fail("expected the nesting to be refused, but the document parsed")
+        assertTrue(
+            failure.message.orEmpty().contains("maximum nesting depth of $MAX_NESTING_DEPTH"),
+            "expected the failure to name the limit it hit, got: " +
+                "${failure::class.simpleName}: ${failure.message}"
+        )
+    }
+
     private fun assertRefusedAsInternalSubset(xml: String) {
         val failure = parseWithin(xml)
             ?: fail("expected the entity declaration to be refused, but the document parsed")
@@ -245,6 +297,12 @@ class CodegenHostileXmlTest {
     }
 
     companion object {
+        /**
+         * The parser's limit, spelled out here rather than shared with it: the boundary pair below
+         * is what says where it falls, so moving it has to mean changing this too.
+         */
+        private const val MAX_NESTING_DEPTH = 64
+
         /** Two orders of magnitude over the green path, which answers in under a hundredth. */
         private const val PARSE_TIMEOUT_MS = 5_000L
 

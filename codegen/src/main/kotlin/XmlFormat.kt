@@ -25,6 +25,7 @@ package com.monkopedia.sdbus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
+import nl.adaptivity.xmlutil.EventType
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -36,6 +37,7 @@ import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
+import nl.adaptivity.xmlutil.xmlStreaming
 
 /**
  * The serialization format the [Xml2Kotlin] CLI and the tests share, so the golden fixtures assert
@@ -72,9 +74,18 @@ internal val introspectionXml: XML = XML.compat {
  * availability rather than anything at runtime.
  */
 internal fun parseIntrospectionXml(xml: String): XmlRootNode {
-    prologRefusal(xml)?.let { throw IllegalArgumentException(it) }
+    refusal(xml)?.let { throw IllegalArgumentException(it) }
     return introspectionXml.decodeFromString(xml)
 }
+
+/**
+ * Why [xml] must not be handed to the decoder, or null to go ahead. Both checks read the document
+ * before it is decoded and answer the same way, so what is bounded is one list rather than two
+ * mechanisms: the prolog may not declare entities, and the elements may not nest past
+ * [MAX_NESTING_DEPTH]. The prolog goes first — the nesting scan parses, and parsing is what an
+ * entity declaration makes unbounded.
+ */
+private fun refusal(xml: String): String? = prologRefusal(xml) ?: nestingRefusal(xml)
 
 /**
  * Why [xml]'s prolog must not be handed to the parser, or null to go ahead.
@@ -151,6 +162,40 @@ private fun endOfDoctypeBody(xml: String, start: Int): Int? {
 private fun String.endOf(token: String, from: Int): Int? =
     indexOf(token, from).takeIf { it >= 0 }?.plus(token.length)
 
+/**
+ * Why [xml] nests too deeply to decode, or null to go ahead.
+ *
+ * [XmlRootNode] holds `nodes: List<XmlRootNode>` and the serialization decoder descends a stack
+ * frame or more per level, so element nesting is the one thing that bounds that recursion — no
+ * other property of the document does. `"<node>".repeat(n)` aborts the decode with
+ * `StackOverflowError` at 60,000 bytes with no entity declaration anywhere in it, so nothing
+ * [prologRefusal] covers is engaged.
+ *
+ * The n it does that at is not a fixed depth, and reporting one would be misleading. Measured
+ * against xmlutil 1.0.1 on JDK 21 with a 256KB stack, one thread per attempt: a cold decode
+ * overflowed from 68 levels, a warm one (after 3,000 decodes) only from 545. The cliff tracks how
+ * much of the decoder has been compiled rather than anything about the document, which is why
+ * [MAX_NESTING_DEPTH] is argued from what introspection XML legitimately needs instead.
+ *
+ * The depth is counted with the parser's own reader rather than a second hand-rolled reading of the
+ * markup. `introspectionXml` leaves `defaultToGenericParser` false, so this is the same
+ * `xmlStreaming.newReader` call `decodeFromString` goes on to make: the scan is not a model of the
+ * parse, it is the parse — and it has to stay that same call for that to keep holding. It does not
+ * itself recurse, since the reader keeps an explicit element stack, so 50,000 levels cost it time
+ * and no stack at all. It stops at the first element over the limit rather than reading to the end,
+ * so a document built to be deep is refused in milliseconds. A document the reader cannot read at
+ * all throws here rather than at the decoder, with the parser's own message; either way it does not
+ * reach the decoder.
+ */
+private fun nestingRefusal(xml: String): String? = xmlStreaming.newReader(xml).use { reader ->
+    while (reader.hasNext()) {
+        if (reader.next() == EventType.START_ELEMENT && reader.depth > MAX_NESTING_DEPTH) {
+            return TOO_DEEPLY_NESTED
+        }
+    }
+    null
+}
+
 private const val BYTE_ORDER_MARK = '\uFEFF'
 
 private const val DOCTYPE = "<!DOCTYPE"
@@ -159,6 +204,28 @@ private const val INTERNAL_SUBSET =
     "Introspection XML declares a DTD internal subset (<!DOCTYPE ... [ ... ]>). Introspection " +
         "XML has no use for one, and the entities it can declare are expanded without any limit, " +
         "so the declaration is refused rather than parsed."
+
+/**
+ * How deeply introspection XML may nest its elements. This project's number rather than the
+ * specification's — D-Bus bounds names and signatures but says nothing about introspection nesting
+ * — and it is argued from the legitimate side, because the other side does not hold still: the
+ * depth the decoder overflows at moves with JIT state, from 68 levels to 545 on the same stack
+ * (see [nestingRefusal]), so no constant can be called a safe fraction of it.
+ *
+ * Where legitimate documents sit can be said exactly. A real `Introspect` reply is
+ * `node > interface > method > arg`, the deepest of the 23 checked-in fixtures is 6 elements, and a
+ * document that assembled a whole BlueZ object tree with its documentation would still be under 20.
+ * 64 is an order of magnitude above that, and it decodes reliably — at 64 and at 65, on cold 256KB
+ * threads, zero overflows in five attempts each. Raising it is not free: 128, or 255 for symmetry
+ * with the signature limit, is back inside the range that overflowed cold.
+ */
+private const val MAX_NESTING_DEPTH = 64
+
+private const val TOO_DEEPLY_NESTED =
+    "Introspection XML nests elements deeper than the maximum nesting depth of " +
+        "$MAX_NESTING_DEPTH. The parser recurses once per level and runs out of stack in the low " +
+        "hundreds, while a real introspection reply nests a handful of elements, so the document " +
+        "is refused rather than decoded."
 
 private const val UNREADABLE_PROLOG =
     "The XML prolog of the introspection XML could not be read as far as the root element, so " +
