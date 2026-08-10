@@ -31,8 +31,8 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   three report what they refused. Generated output for valid XML is unchanged. (#194)
 - **Deeply nested introspection XML no longer overflows the stack.** `<node>` elements nest without
   limit and the decoder recurses once per level, so 60KB of `<node>` — no entity declaration, so
-  nothing the limits above cover — aborted the parse with `StackOverflowError` (measured from 385
-  levels on a 256KB stack). Elements are now held to a maximum nesting depth of 64, counted with
+  nothing the limits above cover — aborted the parse with `StackOverflowError` (from 68 levels on a
+  cold 256KB stack). Elements are now held to a maximum nesting depth of 64, counted with
   the parser's own reader before decoding and reported like the other refusals. A real
   `Introspect` reply is `node > interface > method > arg` and the deepest checked-in fixture is 6
   elements, so the limit is an order of magnitude above anything legitimate. (#259)

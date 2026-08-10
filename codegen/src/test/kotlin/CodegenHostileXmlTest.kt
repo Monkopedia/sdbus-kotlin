@@ -216,9 +216,9 @@ class CodegenHostileXmlTest {
     }
 
     /**
-     * One level over, to pin where the limit actually falls. Measured on JDK 21, the decoder
-     * overflowed from 385 levels on a 256KB stack and from 409 on the default one, so the refusal
-     * here is a clean message rather than an `Error` either way.
+     * One level over, to pin where the limit actually falls. The depth the decoder overflows at is
+     * not a fixed one — measured on JDK 21 at a 256KB stack, 68 levels cold and 545 warm — so what
+     * is pinned here is the limit, and the refusal at it is a clean message rather than an `Error`.
      */
     @Test
     fun nestingOneLevelOverTheLimit_isRefused() {

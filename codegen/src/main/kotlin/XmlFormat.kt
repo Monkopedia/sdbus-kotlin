@@ -166,18 +166,26 @@ private fun String.endOf(token: String, from: Int): Int? =
  * Why [xml] nests too deeply to decode, or null to go ahead.
  *
  * [XmlRootNode] holds `nodes: List<XmlRootNode>` and the serialization decoder descends a stack
- * frame or more per level, so element nesting is the one thing that bounds that recursion \u2014 no
- * other property of the document does. Measured against xmlutil 1.0.1 on JDK 21,
- * `"<node>".repeat(n)` aborted the decode with `StackOverflowError` from n = 385 on a 256KB stack
- * and from n = 409 on the default one: 60,000 bytes, no entity declaration anywhere in them, so
- * nothing [prologRefusal] covers is engaged.
+ * frame or more per level, so element nesting is the one thing that bounds that recursion — no
+ * other property of the document does. `"<node>".repeat(n)` aborts the decode with
+ * `StackOverflowError` at 60,000 bytes with no entity declaration anywhere in it, so nothing
+ * [prologRefusal] covers is engaged.
+ *
+ * The n it does that at is not a fixed depth, and reporting one would be misleading. Measured
+ * against xmlutil 1.0.1 on JDK 21 with a 256KB stack, one thread per attempt: a cold decode
+ * overflowed from 68 levels, a warm one (after 3,000 decodes) only from 545. The cliff tracks how
+ * much of the decoder has been compiled rather than anything about the document, which is why
+ * [MAX_NESTING_DEPTH] is argued from what introspection XML legitimately needs instead.
  *
  * The depth is counted with the parser's own reader rather than a second hand-rolled reading of the
- * markup. That is exact, and it does not itself recurse \u2014 the reader keeps an explicit element
- * stack, so 50,000 levels cost it time and no stack at all. It stops at the first element over the
- * limit rather than reading to the end, so a document built to be deep is refused in milliseconds.
- * A document the reader cannot read at all throws here rather than at the decoder, with the
- * parser's own message; either way it does not reach the decoder.
+ * markup. `introspectionXml` leaves `defaultToGenericParser` false, so this is the same
+ * `xmlStreaming.newReader` call `decodeFromString` goes on to make: the scan is not a model of the
+ * parse, it is the parse — and it has to stay that same call for that to keep holding. It does not
+ * itself recurse, since the reader keeps an explicit element stack, so 50,000 levels cost it time
+ * and no stack at all. It stops at the first element over the limit rather than reading to the end,
+ * so a document built to be deep is refused in milliseconds. A document the reader cannot read at
+ * all throws here rather than at the decoder, with the parser's own message; either way it does not
+ * reach the decoder.
  */
 private fun nestingRefusal(xml: String): String? = xmlStreaming.newReader(xml).use { reader ->
     while (reader.hasNext()) {
@@ -200,11 +208,16 @@ private const val INTERNAL_SUBSET =
 /**
  * How deeply introspection XML may nest its elements. This project's number rather than the
  * specification's — D-Bus bounds names and signatures but says nothing about introspection nesting
- * — so it is set where nothing legitimate can reach it: a real `Introspect` reply is
- * `node > interface > method > arg`, the deepest of the 23 checked-in fixtures is 6 elements, and
- * a document that assembled a whole BlueZ object tree with its documentation would still be under
- * 20. That is an order of magnitude of headroom, and the limit is still a factor of six below the
- * shallowest depth measured to overflow the decoder.
+ * — and it is argued from the legitimate side, because the other side does not hold still: the
+ * depth the decoder overflows at moves with JIT state, from 68 levels to 545 on the same stack
+ * (see [nestingRefusal]), so no constant can be called a safe fraction of it.
+ *
+ * Where legitimate documents sit can be said exactly. A real `Introspect` reply is
+ * `node > interface > method > arg`, the deepest of the 23 checked-in fixtures is 6 elements, and a
+ * document that assembled a whole BlueZ object tree with its documentation would still be under 20.
+ * 64 is an order of magnitude above that, and it decodes reliably — at 64 and at 65, on cold 256KB
+ * threads, zero overflows in five attempts each. Raising it is not free: 128, or 255 for symmetry
+ * with the signature limit, is back inside the range that overflowed cold.
  */
 private const val MAX_NESTING_DEPTH = 64
 
