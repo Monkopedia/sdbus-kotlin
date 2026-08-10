@@ -140,6 +140,16 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   throws. This was previously masked on JVM by `rewind`'s ignored `complete` parameter, so it
   surfaced only once that was fixed. (#246)
 
+- **`RequestNameFlag.ALLOW_REPLACEMENT` and `RequestNameFlag.REPLACE_EXISTING` were swapped on the
+  native backend.** `Connection.requestName` translates the D-Bus wire bits the enum carries into
+  sd-bus's own flag enum, where the two are transposed (`SD_BUS_NAME_REPLACE_EXISTING` is bit 0 and
+  `SD_BUS_NAME_ALLOW_REPLACEMENT` is bit 1), and the mapping asserted they coincided. So on native a
+  request that meant "I allow replacement" reached sd-bus as "replace the current owner" and vice
+  versa: a name whose owner had allowed replacement could not be taken over, and the challenger was
+  queued instead. The JVM backend hands the wire bits to the daemon directly and always matched the
+  semantics documented on `RequestNameFlag`, so this affected native only. The mapping now names the
+  cinterop `SD_BUS_NAME_*` constants, making it compiler-checked rather than comment-checked. (#212)
+
 ## [1.0.1] - 2026-07-15
 
 A maintenance release: refreshed external dependencies to their latest stable versions. There are
