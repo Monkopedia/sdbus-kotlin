@@ -51,20 +51,23 @@ val reverseInteropEnabled = providers
     .systemProperty("kdbus.crossRuntimeInterop.reverse.enabled")
     .orElse(providers.gradleProperty("kdbus.crossRuntimeInterop.reverse.enabled"))
 
+// A test task's system properties are an `@Input` to Gradle, but its *environment* is `@Internal`
+// — so a variable the test process reads at runtime is invisible to up-to-date checking, and newly
+// setting one replays the previous result: the guard reports as honoured having never run (#188).
+// Declaring it here is what makes toggling it re-run the tests it gates.
+fun Task.declareEnvironmentInputs(vararg names: String) = names.forEach { name ->
+    inputs.property(name, providers.environmentVariable(name)).optional(true)
+}
+
 // CrossRuntimeInteropSmokeTest only does anything under `jvmInteropTest` below, which is the task
 // that selects it and hands it a linked native test binary. Keep it out of the plain `jvmTest`
 // task (which `allTests` runs on every CI job) so it is reported exactly once, by the task that
 // actually configures it — mirroring the gcSoak gate in the root build.
 tasks.named<Test>("jvmTest") {
     filter.excludeTestsMatching("com.monkopedia.sdbus.integration.CrossRuntimeInteropSmokeTest")
-    // EXTERNAL_TOOLS_REQUIRED is read from the test JVM's environment by `requireExternalTool`
-    // (ExternalToolGate.kt), which Gradle's up-to-date check knows nothing about — so without this,
-    // newly setting it would replay the previous, ungated result and the guard would appear to have
-    // been honoured when it never ran (#188, found on DBUSMOCK_REQUIRED, which still has that bug).
-    inputs.property(
-        "EXTERNAL_TOOLS_REQUIRED",
-        providers.environmentVariable("EXTERNAL_TOOLS_REQUIRED")
-    ).optional(true)
+    // EXTERNAL_TOOLS_REQUIRED gates `requireExternalTool` (ExternalToolGate.kt); DBUSMOCK_REQUIRED
+    // and DBUSMOCK_PYTHON gate `launchDbusmock` (DbusmockHarness.jvm.kt).
+    declareEnvironmentInputs("EXTERNAL_TOOLS_REQUIRED", "DBUSMOCK_REQUIRED", "DBUSMOCK_PYTHON")
 }
 
 // Kotlin/Native's test runner has no runtime-skip primitive, so `DbusmockHarness.skipTest`'s native
@@ -89,6 +92,13 @@ tasks.named<Test>("jvmTest") {
 //    reports passes that asserted nothing.
 //  * If the class names below drift, the exclusions silently stop matching. Gradle's filter API
 //    offers no "this exclusion matched nothing" signal to guard that with.
+//
+// These two are read twice over: here at configuration time, and again by the test binary itself at
+// runtime. The configuration-time read needs nothing extra — its only effect is `filter`, which is a
+// task input, so a flip in `dbusmockCanRun()` invalidates `linuxX64Test` on its own. The runtime read
+// is what `declareEnvironmentInputs` below covers: a change that leaves the filter alone (a
+// different interpreter, or the required flag flipping while dbusmock is installed either way) would
+// otherwise replay the previous result (#188).
 val dbusmockRequired = providers.environmentVariable("DBUSMOCK_REQUIRED").isPresent
 val dbusmockPython = providers.environmentVariable("DBUSMOCK_PYTHON").getOrElse("python3")
 val sessionBusPresent = providers.environmentVariable("DBUS_SESSION_BUS_ADDRESS").isPresent
@@ -113,6 +123,7 @@ tasks.named<AbstractTestTask>("linuxX64Test") {
     // that as a pass. They are covered where they are actually driven: `jvmInteropTest`, which now
     // fails unless the spawned peer really ran its case and reported it passing (#183).
     filter.excludeTestsMatching("com.monkopedia.sdbus.integration.NativeInteropPeerTest")
+    declareEnvironmentInputs("DBUSMOCK_REQUIRED", "DBUSMOCK_PYTHON")
     if (!dbusmockCanRun()) {
         logger.lifecycle(
             "cross_test: excluding the Dbusmock* suites from linuxX64Test — '$dbusmockPython -m " +
