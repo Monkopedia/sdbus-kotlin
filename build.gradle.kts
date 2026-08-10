@@ -263,6 +263,13 @@ dokka {
         // failOnWarning makes the expected count zero rather than a baseline someone edits upward,
         // and asserting it in the build (not in a workflow) means a local run of this task fails
         // exactly the way CI does.
+        //
+        // Deliberately broader than "unresolved links": it fails on ANY Dokka warning. Measured at
+        // 20dcae6 that is a distinction without a difference — every warning this task emitted was
+        // an unresolved link (8 of 8) — and the broad gate needs no log parsing, so unlike a grep
+        // for `Couldn't resolve link` it cannot be defeated by Dokka rewording that message. If a
+        // future Dokka emits some new warning category, fix it or suppress that category; turning
+        // this flag back off restores the #254 defect wholesale.
         failOnWarning.set(true)
     }
     dokkaSourceSets.configureEach {
