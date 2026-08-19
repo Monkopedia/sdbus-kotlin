@@ -29,22 +29,44 @@ import java.io.File
  * The three sets of golden files each fixture directory under `codegen/src/test/resources` holds,
  * named after the file prefix they are stored under (`interface.0.kt`, `adaptor.0.kt`, ...).
  *
- * [GeneratorTest] verifies the checked-in goldens against this, and `:codegen:regenerateGoldens`
- * rewrites them from this — the single definition keeps the writer and the verifier in lockstep
- * without either being able to stand in for the other.
+ * Each set has two sides: the default output, and — for the fixtures whose XML carries naming
+ * annotations — the `hinted-` output of the same XML with `honorNamingAnnotations` on.
+ *
+ * [GeneratorTest] and [NamingHintTest] verify the checked-in goldens against this, and
+ * `:codegen:regenerateGoldens` rewrites them from this — the single definition keeps the writer and
+ * the verifiers in lockstep without either being able to stand in for the other.
  */
-internal enum class GoldenFixture(val prefix: String, private val generator: () -> BaseGenerator) {
-    INTERFACE("interface", ::InterfaceGenerator),
-    ADAPTOR("adaptor", ::AdaptorGenerator),
-    PROXY("proxy", ::ProxyGenerator);
+internal enum class GoldenFixture(
+    val prefix: String,
+    private val generator: (Boolean) -> BaseGenerator
+) {
+    INTERFACE("interface", { InterfaceGenerator(honorNamingAnnotations = it) }),
+    ADAPTOR("adaptor", { AdaptorGenerator(honorNamingAnnotations = it) }),
+    PROXY("proxy", { ProxyGenerator(honorNamingAnnotations = it) });
 
-    fun generate(testRoot: File): List<FileSpec> {
+    /** The file prefix this kind of golden is stored under, on either side of the flag. */
+    fun prefix(hinted: Boolean): String = if (hinted) "$HINTED_PREFIX$prefix" else prefix
+
+    fun generate(testRoot: File, hinted: Boolean = false): List<FileSpec> {
         val xml = parseIntrospectionXml(File(testRoot, "test.xml").readText())
-        return generator().transformXmlToFile(xml).sortedBy { it.name }
+        return generator(hinted).transformXmlToFile(xml).sortedBy { it.name }
     }
 
     /** The golden files checked in for this fixture, in the order [generate] produces them. */
-    fun goldenFiles(testRoot: File): List<File> = testRoot.listFiles().orEmpty()
-        .filter { it.name.startsWith("$prefix.") && it.name.endsWith(".kt") }
-        .sortedBy { it.name }
+    fun goldenFiles(testRoot: File, hinted: Boolean = false): List<File> =
+        testRoot.listFiles().orEmpty()
+            .filter { it.name.startsWith("${prefix(hinted)}.") && it.name.endsWith(".kt") }
+            .sortedBy { it.name }
+
+    companion object {
+        private const val HINTED_PREFIX = "hinted-"
+
+        /**
+         * Whether [testRoot] pins the naming-annotation side of the flag as well as the default
+         * one. Only the fixtures whose XML carries naming annotations do; the rest would generate
+         * a byte-identical second copy of themselves.
+         */
+        fun hasHintedGoldens(testRoot: File): Boolean =
+            testRoot.listFiles().orEmpty().any { it.name.startsWith(HINTED_PREFIX) }
+    }
 }

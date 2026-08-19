@@ -26,6 +26,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
     sourceSets {
         getByName("nativeMain") {
+            // TestFiles symlinks the whole codegen fixture tree into one compilation. The
+            // `hinted-*` goldens are the same interfaces named from annotations, so they would
+            // redeclare their default counterparts; :codegen compiles that output on its own.
+            kotlin.exclude("**/hinted-*.kt")
             dependencies {
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.serialization)

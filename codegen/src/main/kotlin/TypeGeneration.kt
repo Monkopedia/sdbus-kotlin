@@ -22,12 +22,14 @@
  */
 package com.monkopedia.sdbus
 
+import com.monkopedia.sdbus.NamingManager.AliasType
 import com.monkopedia.sdbus.NamingManager.GeneratedType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeAliasSpec
 import com.squareup.kotlinpoet.TypeSpec
 
 fun GeneratedType.generateType(): FileSpec =
@@ -49,6 +51,11 @@ fun GeneratedType.generateType(): FileSpec =
             }.build()
         )
     }.build()
+
+fun AliasType.generateAlias(): FileSpec =
+    FileSpec.builder(reference.packageName, reference.simpleName)
+        .addTypeAlias(TypeAliasSpec.builder(reference.simpleName, aliased.reference).build())
+        .build()
 
 private fun makeUnique(baseName: String, usedNames: MutableSet<String>): String {
     var name = baseName

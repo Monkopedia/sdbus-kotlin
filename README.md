@@ -82,9 +82,47 @@ sdbus {
 | `generateProxies` | Generate client-side `<Interface>Proxy` classes. |
 | `generateAdapters` | Generate service-side abstract `<Interface>Adaptor` classes for you to implement. |
 | `outputPackage` | Override the package of the generated code. By default it is derived from the D-Bus interface name (e.g. `org.bluez.Adapter1` generates into package `org.bluez`). |
+| `honorNamingAnnotations` | Take generated type names from `org.qtproject.QtDBus.QtTypeName` annotations in the XML instead of deriving them from member names. Off by default; see below. |
 
 For each `<interface>` in the XML the generator emits a Kotlin interface (e.g. `Adapter1`) plus,
 depending on the flags above, an `Adapter1Proxy` and/or an abstract `Adapter1Adaptor`.
+
+### Naming types from the XML
+
+By default every generated type name is derived from the members that use it, so `<arg
+name="origin" type="(dd)"/>` produces a `data class Origin`. Introspection XML written for
+`qdbusxml2cpp` often carries the intended name already, as an `org.qtproject.QtDBus.QtTypeName`
+annotation. Setting `honorNamingAnnotations = true` (`--honor-naming-annotations` on the CLI) uses
+those names:
+
+```xml
+<method name="Transform">
+  <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QPointF"/>
+  <arg name="origin" type="(dd)" direction="in"/>
+</method>
+<property name="Metadata" type="a{sv}" access="read">
+  <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+</property>
+```
+
+- The annotation is read plain from a `<property>` or an `<arg>`, and suffixed `.In<n>` / `.Out<n>`
+  from a `<method>` or `<signal>` — the three places `qdbusxml2cpp` writes it. Nothing else is a
+  naming hint: in particular the `tp:type` / `tp:name-for-bindings` **attributes** of the telepathy
+  DTD are not `<annotation>` elements and the parser does not retain them.
+- A signature that already generates a class of its own (a struct) is simply renamed: `Origin`
+  above becomes `QPointF`.
+- A signature that does not — a map, a list, a primitive — gets a `typealias` for the name instead,
+  so `Metadata` above is typed `QVariantMap` while still being a `Map<String, Variant>` at the call
+  site.
+- Hints are keyed by D-Bus signature, like every other type the generator resolves, so a hint names
+  every member whose own type is that signature rather than the single member it was written on.
+  A signature nested *inside* a generated struct keeps its structural rendering.
+- A value that is not usable as a Kotlin name (`QMap<QString,QVariant>`) fails the build rather
+  than being ignored.
+
+It is off by default because a hint *replaces* a name the generator would otherwise derive, which
+renames types that already-compiled code refers to. With it unset, generated output is unchanged
+whatever annotations the XML carries.
 
 ## Build Setup
 
