@@ -38,8 +38,13 @@ jobs:
       # Dokka is configured with failOnWarning (see build.gradle.kts), so this step goes red on any
       # unresolved link; it lives in this job because it needs no D-Bus session bus and nothing
       # beyond the headers installed above.
+      #
+      # #264: :codegen has its own Dokka publication, and although it is not on the docs site its
+      # dokkaJavadocJar packages that publication's output and is in the publish graph — so this
+      # gate sits in front of a Maven Central artifact. Both publications are checked here; every
+      # project with a Dokka publication belongs on this line.
       - name: KDoc link check (Dokka)
-        run: ./gradlew :dokkaGeneratePublicationHtml --stacktrace
+        run: ./gradlew :dokkaGeneratePublicationHtml :codegen:dokkaGeneratePublicationHtml --stacktrace
 
   full-tests-x64:
     runs-on: ubuntu-24.04

@@ -69,12 +69,13 @@ class AdaptorGenerator(packageOverride: String? = null, honorNamingAnnotations: 
     override fun methodBuilder(intf: Interface, method: Method): FunSpec.Builder? = null
 
     /**
-     * Writable properties whose `org.freedesktop.DBus.Property.EmitsChangedSignal` annotation is not
-     * `false`/`const` get a concrete backing property delegated to [com.monkopedia.sdbus.notifying],
-     * so that BOTH a remote `Properties.Set` (routed through the vtable setter bound in [register])
-     * AND a server-side assignment auto-emit `PropertiesChanged`. Read-only properties, properties
-     * that opt out of the signal, and properties whose type has no representable default value are
-     * left abstract for the implementor to provide.
+     * Writable properties whose `org.freedesktop.DBus.Property.EmitsChangedSignal` annotation is
+     * not `false`/`const` get a concrete backing property delegated to the runtime library's
+     * `com.monkopedia.sdbus.notifying`, so that BOTH a remote `Properties.Set` (routed through the
+     * vtable setter that [buildRegistration] emits into the generated `register()`) AND a
+     * server-side assignment auto-emit `PropertiesChanged`. Read-only properties, properties that
+     * opt out of the signal, and properties whose type has no representable default value are left
+     * abstract for the implementor to provide.
      */
     override fun propertyBuilder(intf: Interface, prop: Property): PropertySpec.Builder? {
         if (prop.access != READWRITE && prop.access != WRITE) return null
@@ -138,7 +139,7 @@ class AdaptorGenerator(packageOverride: String? = null, honorNamingAnnotations: 
      * Emits the `addVTable` block, carrying the standard D-Bus annotations through to the vtable
      * flags: `org.freedesktop.DBus.Deprecated` on the interface/method/signal/property, and
      * `org.freedesktop.DBus.Method.NoReply` on the method. Only non-default flags are emitted --
-     * `EmitsChangedSignal` resolves to a [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags]
+     * `EmitsChangedSignal` resolves to a `com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags`
      * entry only when it is not the D-Bus default of `true`, which the runtime already applies.
      *
      * Setting a vtable flag is not the same as advertising it. What the running adaptor then serves
@@ -268,7 +269,7 @@ class AdaptorGenerator(packageOverride: String? = null, honorNamingAnnotations: 
             emitsChangedSignalValue(intf).let { it != "false" && it != "const" }
 
         /**
-         * The [com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags] entry matching [this]
+         * The `com.monkopedia.sdbus.Flags.PropertyUpdateBehaviorFlags` entry matching [this]
          * property's resolved `EmitsChangedSignal` value, or `null` for the D-Bus default (`true`)
          * which the runtime already applies.
          */
@@ -284,9 +285,9 @@ class AdaptorGenerator(packageOverride: String? = null, honorNamingAnnotations: 
             }
 
         /**
-         * A representable initial value for the [notifying] delegate backing a writable property, or
-         * `null` for types with no obvious default (so the property is left abstract instead of
-         * generating uncompilable code).
+         * A representable initial value for the `com.monkopedia.sdbus.notifying` delegate backing
+         * a writable property, or `null` for types with no obvious default (so the property is left
+         * abstract instead of generating uncompilable code).
          */
         private fun Property.defaultValue(): CodeBlock? = when (type) {
             "b" -> CodeBlock.of("false")
