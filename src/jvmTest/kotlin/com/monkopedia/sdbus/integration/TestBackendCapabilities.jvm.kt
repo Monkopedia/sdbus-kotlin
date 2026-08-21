@@ -4,14 +4,18 @@ package com.monkopedia.sdbus.integration
 // daemon unicast-routes the directed signal and the recipient sees the destination header (#137).
 internal actual val backendDeliversDirectedSignalsUnicast: Boolean = true
 
-// WireServe builds the introspection XML from WireServeRegistry, which captures the per-member
-// deprecated bit and no other vtable flag -- so nothing interface-level reaches the XML.
-internal actual val backendServesInterfaceLevelDeprecated: Boolean = false
+// WireServeRegistry captures the interface-level deprecated bit off InterfaceFlagsVTableItem and
+// WireServe writes it as a child of <interface>, matching what sd-bus emits for
+// SD_BUS_VTABLE_DEPRECATED on the vtable start item (#193 spike).
+internal actual val backendServesInterfaceLevelDeprecated: Boolean = true
 
-// Same reason: the wire backend records no property update behavior to advertise.
-internal actual val backendServesEmitsChangedSignal: Boolean = false
+// WireServeRegistry captures each property's PropertyUpdateBehaviorFlags and WireServe writes
+// const / invalidates / false; the D-Bus default ("true") is left implicit, as sd-bus does
+// (#193 spike).
+internal actual val backendServesEmitsChangedSignal: Boolean = true
 
-// Same reason: hasNoReply drives the reply-suppression path only, never the introspection XML.
+// Still false: hasNoReply drives the reply-suppression path only, never the introspection XML.
+// Out of scope for #193 -- the native half of this row was fixed separately in #216/#197.
 internal actual val backendServesMethodNoReply: Boolean = false
 
 // KNOWN JVM/NATIVE DIVERGENCE, #193 -- OPEN, not an accepted limitation (see the expect
