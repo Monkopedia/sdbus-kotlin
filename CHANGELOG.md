@@ -7,6 +7,26 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
+### Fixed — JVM backend
+
+- **The JVM wire backend now bounds hostile peer input, and a dead connection says so.** Length
+  prefixes and container nesting arriving from a peer were trusted without limit, and a u32 length
+  at or above 2^31 narrowed to a *negative* `Int` that passed every `length > size` check. A single
+  frame could therefore raise `OutOfMemoryError` (a declared 2.1 GB body from 16 bytes of input),
+  `NegativeArraySizeException`, `StackOverflowError` (nested variants cost 3 bytes per level) or
+  `ClassCastException` (a header field carrying the wrong variant type) — and an array declaring
+  `0xFFFFFFF0` bytes decoded *successfully* to an empty list, silently losing the real contents.
+  Wire lengths are now validated while still unsigned against the D-Bus specification's own limits
+  (128 MiB per message, 64 MiB per array, container nesting depth 64), and header fields use checked
+  casts. Anything past those limits is now rejected as a malformed message where it previously
+  raised one of the errors above. (#190)
+- **A reader thread that dies no longer leaves the connection reporting itself healthy.** The reader
+  caught only `IOException` and `DBusMarshallingException`; anything else killed the thread while the
+  socket stayed open, so the connection accepted calls that could only ever time out. It now catches
+  broadly, records the cause, closes the socket, fails in-flight calls with the real error rather
+  than a generic "connection closed", and refuses further sends — so a call on a dead connection
+  fails immediately instead of waiting out its timeout. (#190)
+
 ### Added — codegen
 
 - **New opt-in option `honorNamingAnnotations` (`--honor-naming-annotations`) names generated types
