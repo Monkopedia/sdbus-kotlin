@@ -1,6 +1,7 @@
 package com.monkopedia.sdbus.plugin
 
 import com.monkopedia.sdbus.capitalized
+import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.jvm.tasks.Jar
@@ -13,10 +14,12 @@ class SdbusPlugin : Plugin<Project> {
         target.afterEvaluate {
             val outputDirectory = target.layout.buildDirectory.dir("generated/sdbus")
             val rootTask = target.tasks.create("generateSdbusWrappers")
-            ext.outputs.ifEmpty { mutableListOf("linuxMain") }.forEach {
-                target.kotlinExtension.sourceSets.findByName(it)?.apply {
-                    kotlin.srcDirs(outputDirectory)
-                }
+            val sourceSets = target.kotlinExtension.sourceSets
+            ext.outputs.ifEmpty { listOf("linuxMain") }.forEach { name ->
+                val sourceSet = sourceSets.findByName(name) ?: throw InvalidUserDataException(
+                    unknownSourceSetMessage(name, ext.outputs.isEmpty(), sourceSets.names)
+                )
+                sourceSet.kotlin.srcDirs(outputDirectory)
             }
             target.tasks.withType(AbstractKotlinCompileTool::class.java).configureEach { task ->
                 task.dependsOn(rootTask)
@@ -38,4 +41,24 @@ class SdbusPlugin : Plugin<Project> {
             }
         }
     }
+}
+
+/**
+ * Attaching generated sources to a source set that does not exist would otherwise succeed
+ * silently, leaving the consumer with generated files on disk that nothing ever compiles.
+ */
+private fun unknownSourceSetMessage(
+    name: String,
+    isDefault: Boolean,
+    available: Collection<String>
+): String = buildString {
+    append("sdbus has nowhere to attach its generated code: Kotlin source set \"")
+    append(name)
+    append("\" does not exist in this project. ")
+    if (isDefault) {
+        append("It is the default; set sdbus { outputs } to the source set that should ")
+        append("compile the generated code. ")
+    }
+    append("Available source sets: ")
+    append(available.joinToString(", "))
 }

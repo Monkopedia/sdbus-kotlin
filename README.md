@@ -78,7 +78,7 @@ sdbus {
 | Option | Meaning |
 | --- | --- |
 | `sources` | Directories scanned (recursively) for D-Bus introspection `*.xml` files. |
-| `outputs` | Names of the Kotlin source sets that receive the generated code (defaults to `linuxMain`). Use `commonMain` to share the generated bindings across JVM and native targets. |
+| `outputs` | Names of the Kotlin source sets that receive the generated code (defaults to `linuxMain`). Use `commonMain` to share the generated bindings across JVM and native targets. A name that does not exist in your project fails configuration and lists the source sets that do — note that a single-target project has no `linuxMain`, so set this explicitly. |
 | `generateProxies` | Generate client-side `<Interface>Proxy` classes. |
 | `generateAdapters` | Generate service-side abstract `<Interface>Adaptor` classes for you to implement. |
 | `outputPackage` | Override the package of the generated code. By default it is derived from the D-Bus interface name (e.g. `org.bluez.Adapter1` generates into package `org.bluez`). |
