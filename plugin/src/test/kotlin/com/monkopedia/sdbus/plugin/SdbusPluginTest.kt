@@ -106,6 +106,68 @@ class SdbusPluginTest {
         assertFalse(File(generatedRoot, "Corner.kt").exists())
     }
 
+    @Test
+    fun unknownOutputSourceSetFailsConfigurationListingTheRealOnes() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        compileTargetJvm = true,
+        outputSourceSet = "notASourceSet"
+    ) { dir ->
+        val result = runTaskAndFail(dir, "generateSdbusWrappers")
+
+        assertTrue(
+            result.output.contains("notASourceSet"),
+            "Expected the failure to name the bad value; output was:\n" + result.output
+        )
+        assertTrue(
+            result.output.contains("jvmMain"),
+            "Expected the failure to list the source sets that do exist; output was:\n" +
+                result.output
+        )
+        assertFalse(
+            File(dir, "build/generated/sdbus/sample/sampleOut/org/foo/Background.kt").exists(),
+            "Generation should not have run at all; the failure is a configuration error."
+        )
+    }
+
+    @Test
+    fun omittedOutputsFallsBackToLinuxMainAndSaysSo() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        omitOutputs = true
+    ) { dir ->
+        val result = runTaskAndFail(dir, "generateSdbusWrappers")
+
+        assertTrue(
+            result.output.contains("linuxMain"),
+            "Expected the failure to name the default; output was:\n" + result.output
+        )
+        assertTrue(
+            result.output.contains("It is the default; set sdbus { outputs }"),
+            "A missing default needs different advice from a typo; output was:\n" +
+                result.output
+        )
+    }
+
+    @Test
+    fun knownOutputSourceSetGetsTheGeneratedDirectory() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        compileTargetJvm = true
+    ) { dir ->
+        val result = runTask(dir, "printSdbusSrcDirs")
+
+        val generatedDir = File(dir, "build/generated/sdbus").absolutePath
+        val srcDirs = result.output.lineSequence()
+            .single { it.startsWith("SRCDIRS=") }
+            .removePrefix("SRCDIRS=")
+            .split(":")
+        assertTrue(
+            generatedDir in srcDirs,
+            "Expected jvmMain to include $generatedDir; source dirs were $srcDirs"
+        )
+    }
+
     private fun withProject(
         generateProxies: Boolean,
         generateAdapters: Boolean,
@@ -115,8 +177,14 @@ class SdbusPluginTest {
         compileTargetJvm: Boolean = false,
         includeCompileFixture: Boolean = false,
         applyMavenPublish: Boolean = false,
+        outputSourceSet: String? = null,
+        omitOutputs: Boolean = false,
         block: (File) -> Unit
     ) {
+        // A single-target KMP project has no "linuxMain" intermediate source set — the
+        // hierarchy template only materialises one for a group with several targets. See
+        // the plugin's default in SdbusPlugin, which is why this fixture must be explicit.
+        val targetSourceSet = if (compileTargetJvm) "jvmMain" else "linuxX64Main"
         val root = Files.createTempDirectory("kdbus-plugin-test").toFile()
         try {
             writeFile(
@@ -153,16 +221,23 @@ class SdbusPluginTest {
                       generateAdapters = $generateAdapters
                       honorNamingAnnotations = $honorNamingAnnotations
                       ${outputPackage?.let { "outputPackage = \"$it\"" } ?: ""}
-                      outputs.add("${if (compileTargetJvm) "jvmMain" else "linuxMain"}")
+                      ${if (omitOutputs) "" else outputsLine(outputSourceSet ?: targetSourceSet)}
                       sources.srcDir("src/sdbus")
+                    }
+
+                    tasks.register("printSdbusSrcDirs") {
+                      doLast {
+                        val srcDirs =
+                          kotlin.sourceSets.getByName("$targetSourceSet").kotlin.srcDirs
+                        println("SRCDIRS=" + srcDirs.joinToString(":"))
+                      }
                     }
                 """
             )
             writeFile(File(root, "src/sdbus/sample.xml"), xml)
             if (includeCompileFixture) {
-                val sourceSetDir = if (compileTargetJvm) "jvmMain" else "linuxMain"
                 writeFile(
-                    File(root, "src/$sourceSetDir/kotlin/com/monkopedia/sdbus/Stubs.kt"),
+                    File(root, "src/$targetSourceSet/kotlin/com/monkopedia/sdbus/Stubs.kt"),
                     """
                         package com.monkopedia.sdbus
 
@@ -184,7 +259,7 @@ class SdbusPluginTest {
                     """
                 )
                 writeFile(
-                    File(root, "src/$sourceSetDir/kotlin/org/foo/Usage.kt"),
+                    File(root, "src/$targetSourceSet/kotlin/org/foo/Usage.kt"),
                     """
                         package org.foo
 
@@ -203,7 +278,13 @@ class SdbusPluginTest {
         }
     }
 
-    private fun runTask(projectDir: File, vararg args: String): BuildResult = GradleRunner.create()
+    private fun runTask(projectDir: File, vararg args: String): BuildResult =
+        runner(projectDir, *args).build()
+
+    private fun runTaskAndFail(projectDir: File, vararg args: String): BuildResult =
+        runner(projectDir, *args).buildAndFail()
+
+    private fun runner(projectDir: File, vararg args: String): GradleRunner = GradleRunner.create()
         .withProjectDir(projectDir)
         .withPluginClasspath()
         .withArguments(
@@ -213,7 +294,8 @@ class SdbusPluginTest {
             "-g",
             File(System.getProperty("user.home"), ".gradle").absolutePath
         )
-        .build()
+
+    private fun outputsLine(sourceSet: String): String = "outputs.add(\"$sourceSet\")"
 
     private fun writeFile(file: File, content: String) {
         file.parentFile.mkdirs()

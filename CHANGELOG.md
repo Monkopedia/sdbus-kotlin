@@ -31,6 +31,25 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   emitted statement changes — so this is additive documentation rather than a behavior change.
   XML that documents nothing generates exactly what it did before. (#160)
 
+### Fixed — Gradle plugin
+
+- **A rejected generator argument no longer kills the Gradle daemon.** The `generateSdbusWrappers`
+  tasks invoked the generator through Clikt's `main`, the terminal entry point for a CLI process: it
+  reports a `CliktError` by printing usage and calling `exitProcess`, which inside a build takes down
+  the JVM. The consumer saw `Gradle daemon disappeared unexpectedly`, with no stack trace and nothing
+  naming this plugin — and the message explaining the problem was discarded along with the JVM. The
+  task now calls `parse`, which does the same parsing and raises the same errors, and wraps whatever
+  the generator throws so the reported failure names the XML file being processed. (#265)
+- **An unknown source-set name in `sdbus { outputs }` now fails the build instead of silently
+  attaching the generated code to nothing.** `findByName` returned null for a name that does not
+  exist in the project's layout and the result was discarded, so generation ran, files were written,
+  the task succeeded — and the consumer then got `Unresolved reference` against their own code, with
+  generated files sitting on disk suggesting the generator was at fault. Configuration now fails with
+  a message naming the bad value and listing the source sets that do exist. Note that a
+  single-target Kotlin Multiplatform project has no `linuxMain` (the hierarchy template only
+  materialises an intermediate source set for a group with several targets), so a project relying on
+  the `linuxMain` default now gets that error where it previously generated into the void. (#266)
+
 ### Fixed — codegen
 
 - **Introspection XML can no longer make the generator do unbounded work.** Two inputs used to cost
