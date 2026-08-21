@@ -131,6 +131,25 @@ class SdbusPluginTest {
     }
 
     @Test
+    fun omittedOutputsFallsBackToLinuxMainAndSaysSo() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        omitOutputs = true
+    ) { dir ->
+        val result = runTaskAndFail(dir, "generateSdbusWrappers")
+
+        assertTrue(
+            result.output.contains("linuxMain"),
+            "Expected the failure to name the default; output was:\n" + result.output
+        )
+        assertTrue(
+            result.output.contains("It is the default; set sdbus { outputs }"),
+            "A missing default needs different advice from a typo; output was:\n" +
+                result.output
+        )
+    }
+
+    @Test
     fun knownOutputSourceSetGetsTheGeneratedDirectory() = withProject(
         generateProxies = false,
         generateAdapters = false,
@@ -159,6 +178,7 @@ class SdbusPluginTest {
         includeCompileFixture: Boolean = false,
         applyMavenPublish: Boolean = false,
         outputSourceSet: String? = null,
+        omitOutputs: Boolean = false,
         block: (File) -> Unit
     ) {
         // A single-target KMP project has no "linuxMain" intermediate source set — the
@@ -201,7 +221,7 @@ class SdbusPluginTest {
                       generateAdapters = $generateAdapters
                       honorNamingAnnotations = $honorNamingAnnotations
                       ${outputPackage?.let { "outputPackage = \"$it\"" } ?: ""}
-                      outputs.add("${outputSourceSet ?: targetSourceSet}")
+                      ${if (omitOutputs) "" else outputsLine(outputSourceSet ?: targetSourceSet)}
                       sources.srcDir("src/sdbus")
                     }
 
@@ -274,6 +294,8 @@ class SdbusPluginTest {
             "-g",
             File(System.getProperty("user.home"), ".gradle").absolutePath
         )
+
+    private fun outputsLine(sourceSet: String): String = "outputs.add(\"$sourceSet\")"
 
     private fun writeFile(file: File, content: String) {
         file.parentFile.mkdirs()

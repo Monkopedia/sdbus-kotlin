@@ -67,7 +67,8 @@ open class SdbusGenerationTask : DefaultTask() {
                 Xml2Kotlin().parse(args)
             } catch (e: Exception) {
                 throw GradleException(
-                    "Failed to generate sdbus wrappers for ${xml.absolutePath}: ${e.message}",
+                    "Failed to generate sdbus wrappers for ${xml.absolutePath}: " +
+                        (e.message ?: e.toString()),
                     e
                 )
             }
