@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The JVM D-Bus backend (epic #93): the one and only backend, routing everything through the
@@ -167,11 +168,18 @@ private fun emitWireSignal(
 // instead. #141.
 private val directConnectionCounter = AtomicLong()
 
+// sd-bus's BUS_DEFAULT_TIMEOUT_USEC, the value a native connection reports when nothing called
+// sd_bus_set_method_call_timeout. Every "use the connection default" path -- the raw-message
+// callMethod(message) overloads and MethodCall.send(Duration.ZERO) -- resolves to this, so a
+// connection that reported Duration.ZERO here was reporting "no timeout" and left those calls
+// unbounded. #184.
+private val DEFAULT_METHOD_CALL_TIMEOUT: Duration = 25.seconds
+
 internal class WireDbusConnection(private val wire: DBusWireConnection) : JvmDbusConnection {
     private val localUniqueName: String =
         wire.uniqueName ?: ":jvm-wire-${directConnectionCounter.incrementAndGet()}"
     private val released = AtomicBoolean(false)
-    private var timeout: Duration = Duration.ZERO
+    private var timeout: Duration = DEFAULT_METHOD_CALL_TIMEOUT
 
     val wireConnection: DBusWireConnection get() = wire
     fun isReleased(): Boolean = released.get()
@@ -279,15 +287,25 @@ internal class WireDbusProxy(
     override fun createMethodCall(
         interfaceName: InterfaceName,
         methodName: MethodName
-    ): MethodCall = MethodCall().also {
-        it.metadata = Message.Metadata(
-            interfaceName = interfaceName.value,
-            memberName = methodName.value,
-            destination = destination.value,
-            path = objectPath.value,
-            valid = true,
-            empty = true
-        )
+    ): MethodCall {
+        // Local capture so the timeout hook below holds the connection alone, not this proxy.
+        val owningConnection = connection
+        return MethodCall().also {
+            it.metadata = Message.Metadata(
+                interfaceName = interfaceName.value,
+                memberName = methodName.value,
+                destination = destination.value,
+                path = objectPath.value,
+                valid = true,
+                empty = true
+            )
+            // MethodCall.send(Duration.ZERO) documents "uses the connection default"; read it at
+            // send time rather than here, so a methodCallTimeout set after the call was created
+            // still applies -- the same order Proxy.callMethod(message) resolves it in. #184.
+            it.connectionDefaultTimeoutMicros = {
+                owningConnection?.defaultTimeoutMicros() ?: 0uL
+            }
+        }
     }
 
     override fun callMethod(message: MethodCall): MethodReply = callMethod(message, 0uL)
