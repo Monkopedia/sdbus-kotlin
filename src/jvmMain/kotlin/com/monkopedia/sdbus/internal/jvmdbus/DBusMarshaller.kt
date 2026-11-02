@@ -60,6 +60,28 @@ internal enum class Endian(val code: Byte) {
 internal class DBusMarshallingException(message: String) : RuntimeException(message)
 
 /**
+ * The D-Bus specification's hard protocol limits, which `dbus-daemon` enforces on every message it
+ * relays. Using the spec's own numbers keeps the checks below a CONFORMANCE test rather than an
+ * invented threshold: nothing a conforming peer may legally send is refused.
+ */
+internal object DBusLimits {
+    /** `DBUS_MAXIMUM_MESSAGE_LENGTH`: 2^27 bytes for header + alignment padding + body. */
+    const val MAX_MESSAGE_LENGTH = 134_217_728
+
+    /** `DBUS_MAXIMUM_ARRAY_LENGTH`: 2^26 bytes of array content (the header fields are an array). */
+    const val MAX_ARRAY_LENGTH = 67_108_864
+
+    /**
+     * Maximum container-nesting depth. The spec caps a signature at "32 array type codes and 32
+     * open parentheses", and says so with the consequence spelled out: "the maximum total depth of
+     * recursion is 64". Counting EVERY container level (array, struct, dict-entry, variant) against
+     * that 64 therefore accepts every signature the spec permits, while still refusing a
+     * nested-variant bomb — each level of which costs only 3 bytes on the wire.
+     */
+    const val MAX_TYPE_RECURSION_DEPTH = 64
+}
+
+/**
  * The parsed model of a single complete D-Bus type, carrying its natural [alignment] and the
  * signature fragment it [code]s back to.
  */
@@ -121,23 +143,31 @@ internal object DBusSignatureParser {
     }
 
     /** Parses exactly one complete type starting at [index]; returns it and the next index. */
-    fun parseOne(signature: String, index: Int): Pair<DBusType, Int> {
+    fun parseOne(signature: String, index: Int): Pair<DBusType, Int> = parseOne(signature, index, 0)
+
+    private fun parseOne(signature: String, index: Int, depth: Int): Pair<DBusType, Int> {
         if (index >= signature.length) {
             throw DBusMarshallingException("Unexpected end of signature '$signature'")
+        }
+        if (depth > DBusLimits.MAX_TYPE_RECURSION_DEPTH) {
+            throw DBusMarshallingException(
+                "Signature nests deeper than the D-Bus maximum of " +
+                    "${DBusLimits.MAX_TYPE_RECURSION_DEPTH}: '$signature'"
+            )
         }
         return when (val c = signature[index]) {
             'a' -> {
                 if (signature.getOrNull(index + 1) == '{') {
-                    val (entry, next) = parseDictEntry(signature, index + 1)
+                    val (entry, next) = parseDictEntry(signature, index + 1, depth + 1)
                     DBusType.ArrayType(entry) to next
                 } else {
-                    val (element, next) = parseOne(signature, index + 1)
+                    val (element, next) = parseOne(signature, index + 1, depth + 1)
                     DBusType.ArrayType(element) to next
                 }
             }
 
-            '(' -> parseStruct(signature, index)
-            '{' -> parseDictEntry(signature, index)
+            '(' -> parseStruct(signature, index, depth + 1)
+            '{' -> parseDictEntry(signature, index, depth + 1)
             'v' -> DBusType.VariantType to index + 1
             'y', 'b', 'n', 'q', 'i', 'u', 'x', 't', 'd', 's', 'o', 'g', 'h' ->
                 DBusType.Basic(c) to index + 1
@@ -148,14 +178,14 @@ internal object DBusSignatureParser {
         }
     }
 
-    private fun parseStruct(signature: String, openIndex: Int): Pair<DBusType, Int> {
+    private fun parseStruct(signature: String, openIndex: Int, depth: Int): Pair<DBusType, Int> {
         val fields = mutableListOf<DBusType>()
         var index = openIndex + 1
         while (signature.getOrNull(index) != ')') {
             if (index >= signature.length) {
                 throw DBusMarshallingException("Unterminated struct in '$signature'")
             }
-            val (field, next) = parseOne(signature, index)
+            val (field, next) = parseOne(signature, index, depth)
             fields.add(field)
             index = next
         }
@@ -165,9 +195,9 @@ internal object DBusSignatureParser {
         return DBusType.StructType(fields) to index + 1
     }
 
-    private fun parseDictEntry(signature: String, openIndex: Int): Pair<DBusType, Int> {
-        val (key, afterKey) = parseOne(signature, openIndex + 1)
-        val (value, afterValue) = parseOne(signature, afterKey)
+    private fun parseDictEntry(signature: String, openIndex: Int, depth: Int): Pair<DBusType, Int> {
+        val (key, afterKey) = parseOne(signature, openIndex + 1, depth)
+        val (value, afterValue) = parseOne(signature, afterKey, depth)
         if (signature.getOrNull(afterValue) != '}') {
             throw DBusMarshallingException("Unterminated dict-entry in '$signature'")
         }
@@ -361,6 +391,9 @@ internal class DBusReader(private val bytes: ByteArray, offset: Int, private val
     var offset: Int = offset
         private set
 
+    // How many container levels deep [unmarshalValue] currently is; see [nested].
+    private var depth = 0
+
     fun align(boundary: Int) {
         val rem = offset % boundary
         if (rem != 0) offset += boundary - rem
@@ -394,15 +427,54 @@ internal class DBusReader(private val bytes: ByteArray, offset: Int, private val
         return bytes[offset++].toInt() and 0xff
     }
 
+    /**
+     * Reads a 32-bit wire length prefix, rejecting anything above [limit] BEFORE it is narrowed to
+     * [Int]. [readRaw] zero-extends the four bytes into a [Long], so the comparison is exact and
+     * unsigned and the narrowing that follows is provably in `0..limit`.
+     *
+     * This is the ONLY place a wire-supplied length becomes an [Int], which is what makes the
+     * overflow structurally impossible rather than merely guarded: no `length > bytes.size` check
+     * downstream can be handed a negative length that silently passes it (issue #190).
+     */
+    private fun readLength(limit: Int, what: String): Int {
+        val length = readRaw(4)
+        if (length > limit) {
+            throw DBusMarshallingException(
+                "Declared $what length $length exceeds the D-Bus maximum of $limit bytes"
+            )
+        }
+        return length.toInt()
+    }
+
     /** Reads [types], one value per type, in order. */
     fun unmarshal(types: List<DBusType>): List<Any?> = types.map { unmarshalValue(it) }
 
     fun unmarshalValue(type: DBusType): Any? = when (type) {
         is DBusType.Basic -> unmarshalBasic(type.type)
-        is DBusType.ArrayType -> unmarshalArray(type)
-        is DBusType.StructType -> unmarshalStruct(type)
-        is DBusType.DictEntryType -> unmarshalDictEntry(type)
-        DBusType.VariantType -> unmarshalVariant()
+        is DBusType.ArrayType -> nested { unmarshalArray(type) }
+        is DBusType.StructType -> nested { unmarshalStruct(type) }
+        is DBusType.DictEntryType -> nested { unmarshalDictEntry(type) }
+        DBusType.VariantType -> nested { unmarshalVariant() }
+    }
+
+    /**
+     * Runs [block] one container level deeper, refusing to descend past
+     * [DBusLimits.MAX_TYPE_RECURSION_DEPTH]. Demarshalling is recursive, so without this a peer can
+     * spend 3 bytes per level to buy a stack frame and overflow the stack from a tiny body.
+     */
+    private fun <T> nested(block: () -> T): T {
+        if (depth >= DBusLimits.MAX_TYPE_RECURSION_DEPTH) {
+            throw DBusMarshallingException(
+                "Container nesting exceeds the D-Bus maximum depth of " +
+                    "${DBusLimits.MAX_TYPE_RECURSION_DEPTH}"
+            )
+        }
+        depth++
+        try {
+            return block()
+        } finally {
+            depth--
+        }
     }
 
     private fun unmarshalBasic(type: Char): Any = when (type) {
@@ -451,7 +523,7 @@ internal class DBusReader(private val bytes: ByteArray, offset: Int, private val
     private fun readString(lengthPrefixBytes: Int): String {
         val length = if (lengthPrefixBytes == 4) {
             align(4)
-            readRaw(4).toInt()
+            readLength(DBusLimits.MAX_MESSAGE_LENGTH, "string")
         } else {
             readByte()
         }
@@ -465,7 +537,7 @@ internal class DBusReader(private val bytes: ByteArray, offset: Int, private val
 
     private fun unmarshalArray(type: DBusType.ArrayType): Any {
         align(4)
-        val byteLength = readRaw(4).toInt()
+        val byteLength = readLength(DBusLimits.MAX_ARRAY_LENGTH, "array")
         align(type.element.alignment)
         val end = offset + byteLength
         if (end > bytes.size) {
