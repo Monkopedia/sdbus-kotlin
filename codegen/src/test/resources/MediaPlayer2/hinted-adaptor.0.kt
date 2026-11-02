@@ -1,0 +1,55 @@
+package org.mpris
+
+import com.monkopedia.sdbus.MethodName
+import com.monkopedia.sdbus.Object
+import com.monkopedia.sdbus.PropertyName
+import com.monkopedia.sdbus.addVTable
+import com.monkopedia.sdbus.method
+import com.monkopedia.sdbus.notifying
+import com.monkopedia.sdbus.prop
+import kotlin.Boolean
+
+public abstract class MediaPlayer2Adaptor(
+  public val obj: Object,
+) : MediaPlayer2 {
+  override var fullscreen: Boolean by
+      obj.notifying(MediaPlayer2.Companion.INTERFACE_NAME, PropertyName("Fullscreen"), false)
+
+  public override fun register() {
+    obj.addVTable(MediaPlayer2.Companion.INTERFACE_NAME) {
+      method(MethodName("Raise")) {
+        asyncCall(this@MediaPlayer2Adaptor::raise)
+      }
+      method(MethodName("Quit")) {
+        asyncCall(this@MediaPlayer2Adaptor::quit)
+      }
+      prop(PropertyName("CanQuit")) {
+        with(this@MediaPlayer2Adaptor::canQuit)
+      }
+      prop(PropertyName("Fullscreen")) {
+        with(this@MediaPlayer2Adaptor::fullscreen)
+      }
+      prop(PropertyName("CanSetFullscreen")) {
+        with(this@MediaPlayer2Adaptor::canSetFullscreen)
+      }
+      prop(PropertyName("CanRaise")) {
+        with(this@MediaPlayer2Adaptor::canRaise)
+      }
+      prop(PropertyName("HasTrackList")) {
+        with(this@MediaPlayer2Adaptor::hasTrackList)
+      }
+      prop(PropertyName("Identity")) {
+        with(this@MediaPlayer2Adaptor::identity)
+      }
+      prop(PropertyName("DesktopEntry")) {
+        with(this@MediaPlayer2Adaptor::desktopEntry)
+      }
+      prop(PropertyName("SupportedUriSchemes")) {
+        with(this@MediaPlayer2Adaptor::supportedUriSchemes)
+      }
+      prop(PropertyName("SupportedMimeTypes")) {
+        with(this@MediaPlayer2Adaptor::supportedMimeTypes)
+      }
+    }
+  }
+}

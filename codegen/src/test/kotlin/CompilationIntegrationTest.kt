@@ -1,8 +1,10 @@
 package com.monkopedia.sdbus
 
+import java.io.File
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.serialization.decodeFromString
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -32,9 +34,26 @@ class CompilationIntegrationTest {
         """
 
         val root = TestXmlSupport.parse(xml)
-        val interfaceFiles = InterfaceGenerator().transformXmlToFile(root)
-        val proxyFiles = ProxyGenerator().transformXmlToFile(root)
-        val adaptorFiles = AdaptorGenerator().transformXmlToFile(root)
+        assertGeneratedCodeCompiles(root, honorNamingAnnotations = false)
+    }
+
+    @Test
+    fun generatedCodeNamedFromAnnotationsCompiles() {
+        val xml = File("src/test/resources/NamingHintsTest/test.xml").readText()
+
+        val root = introspectionXml.decodeFromString<XmlRootNode>(xml)
+        assertGeneratedCodeCompiles(root, honorNamingAnnotations = true)
+    }
+
+    private fun assertGeneratedCodeCompiles(root: XmlRootNode, honorNamingAnnotations: Boolean) {
+        val interfaceFiles = InterfaceGenerator(
+            honorNamingAnnotations = honorNamingAnnotations
+        ).transformXmlToFile(root)
+        val proxyFiles =
+            ProxyGenerator(honorNamingAnnotations = honorNamingAnnotations).transformXmlToFile(root)
+        val adaptorFiles = AdaptorGenerator(
+            honorNamingAnnotations = honorNamingAnnotations
+        ).transformXmlToFile(root)
 
         val srcDir = Files.createTempDirectory("codegen-compile-test-src").toFile()
         val outDir = Files.createTempDirectory("codegen-compile-test-out").toFile()

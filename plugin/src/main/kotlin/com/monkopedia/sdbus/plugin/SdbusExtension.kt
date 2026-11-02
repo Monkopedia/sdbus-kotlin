@@ -23,6 +23,14 @@ open class SdbusExtension(
     @get:Optional
     open var outputPackage: String? = null
 
+    /**
+     * Name generated types from `org.qtproject.QtDBus.QtTypeName` annotations in the XML rather
+     * than deriving every name from the member names. Off by default because a hint replaces a
+     * derived name, which would rename types that already-compiled code refers to.
+     */
+    @Input
+    open var honorNamingAnnotations: Boolean = false
+
     @get:InputDirectory
     open val sources: SourceDirectorySet by lazy {
         objectFactory.sourceDirectorySet("sdbusXml", "XML Inputs for Sdbus Kotlin import")

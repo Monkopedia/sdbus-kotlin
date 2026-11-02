@@ -36,15 +36,11 @@ import platform.posix.close
 import platform.posix.dup
 import platform.posix.errno
 
-/**
- * A representation of the file descriptor D-Bus type that owns
- * the underlying fd, provides access to it, and closes the fd when
- * the UnixFd is released.
- *
- * UnixFd can be default constructed (owning invalid fd), or constructed from
- * an explicitly provided fd by either duplicating ([UnixFd] primary constructor)
- * or adopting that fd as-is ([UnixFd.adopt]).
- */
+// Intentionally carries no class KDoc: with none here, Dokka renders the `expect`
+// declaration's documentation on this actual too (as it already does for the JVM actual, which
+// likewise has none). A second copy of that prose is what drifted in #208 -- the sentence was
+// corrected here and left wrong on the `expect`, which is the declaration published to
+// consumers. One source, so it cannot happen again in either direction.
 @OptIn(ExperimentalNativeApi::class)
 @Serializable(UnixFd.Companion::class)
 actual class UnixFd internal actual constructor(

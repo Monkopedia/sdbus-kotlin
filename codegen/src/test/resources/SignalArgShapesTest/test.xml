@@ -1,0 +1,39 @@
+<!-- Covers every argument shape a signal can have, because the proxy picks the decoder it binds
+     into signalFlow from the shape of the argument list: no args, one argument of a plain type,
+     one argument of a parameterized type (array/dict), one argument of a struct type, and several
+     arguments. Before #218 the single-parameterized-argument shape fell through to the
+     constructor-reference branch and emitted `call(::List<String>)`, which is not valid Kotlin;
+     no other checked-in fixture declares a signal of that shape, so nothing caught it. -->
+<node>
+  <interface name="org.example.signals.Shapes">
+
+    <signal name="NoArgs">
+    </signal>
+
+    <signal name="OneSimple">
+      <arg type="s" name="reason"/>
+    </signal>
+
+    <signal name="OneArray">
+      <arg type="as" name="paths"/>
+    </signal>
+
+    <signal name="OneDict">
+      <arg type="a{sv}" name="properties"/>
+    </signal>
+
+    <signal name="OneNestedDict">
+      <arg type="a{oa{sa{sv}}}" name="objects"/>
+    </signal>
+
+    <signal name="OneStruct">
+      <arg type="(us)" name="entry"/>
+    </signal>
+
+    <signal name="TwoArgs">
+      <arg type="i" name="index"/>
+      <arg type="s" name="label"/>
+    </signal>
+
+  </interface>
+</node>

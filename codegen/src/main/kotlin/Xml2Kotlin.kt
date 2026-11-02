@@ -66,8 +66,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with sdbus-kotlin. If not, see <http://www.gnu.org/licenses/>.
  */
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package com.monkopedia.sdbus
 
 import com.github.ajalt.clikt.core.CliktCommand
@@ -78,8 +76,6 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import java.io.File
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 
 fun main(args: Array<String>) = Xml2Kotlin().main(args)
 
@@ -99,26 +95,25 @@ class Xml2Kotlin : CliktCommand() {
         "--output-package",
         help = "Override Kotlin package for generated files"
     )
+    val honorNamingAnnotations by option(
+        "--honor-naming-annotations",
+        help = "Name generated types from org.qtproject.QtDBus.QtTypeName annotations in the XML"
+    ).flag()
 
     override fun run() {
         val packageOverride = outputPackage?.trim()?.takeUnless { it.isEmpty() }
-        val xml = introspectionXml.decodeFromString<XmlRootNode>(input.readText())
+        val xml = parseIntrospectionXml(input.readText())
         if (!keep) {
             output.deleteRecursively()
         }
         output.mkdirs()
-        InterfaceGenerator(packageOverride).transformXmlToFile(xml).forEach {
-            it.writeTo(output)
+        val generators = buildList {
+            add(InterfaceGenerator(packageOverride, honorNamingAnnotations))
+            if (adaptor) add(AdaptorGenerator(packageOverride, honorNamingAnnotations))
+            if (proxy) add(ProxyGenerator(packageOverride, honorNamingAnnotations))
         }
-        if (adaptor) {
-            AdaptorGenerator(packageOverride).transformXmlToFile(xml).forEach {
-                it.writeTo(output)
-            }
-        }
-        if (proxy) {
-            ProxyGenerator(packageOverride).transformXmlToFile(xml).forEach {
-                it.writeTo(output)
-            }
+        generators.forEach { generator ->
+            generator.transformXmlToFile(xml).forEach { it.writeTo(output) }
         }
     }
 }

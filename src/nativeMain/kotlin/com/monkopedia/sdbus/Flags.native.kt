@@ -29,6 +29,7 @@ import com.monkopedia.sdbus.Flags.GeneralFlags.METHOD_NO_REPLY
 import com.monkopedia.sdbus.Flags.GeneralFlags.PRIVILEGED
 import kotlinx.cinterop.ExperimentalForeignApi
 import sdbus.SD_BUS_VTABLE_DEPRECATED
+import sdbus.SD_BUS_VTABLE_METHOD_NO_REPLY
 import sdbus.SD_BUS_VTABLE_PROPERTY_CONST
 import sdbus.SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE
 import sdbus.SD_BUS_VTABLE_PROPERTY_EMITS_INVALIDATION
@@ -59,7 +60,7 @@ internal fun Flags.toSdBusMethodFlags(): ULong {
         sdbusFlags = sdbusFlags or SD_BUS_VTABLE_UNPRIVILEGED
     }
     if (has(METHOD_NO_REPLY)) {
-        sdbusFlags = sdbusFlags or 0u // SD_BUS_VTABLE_METHOD_NO_REPLY
+        sdbusFlags = sdbusFlags or SD_BUS_VTABLE_METHOD_NO_REPLY
     }
 
     return sdbusFlags

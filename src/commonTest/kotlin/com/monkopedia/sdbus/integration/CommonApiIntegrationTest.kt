@@ -1164,6 +1164,38 @@ class CommonApiIntegrationTest {
         }
     }
 
+    // Regression for #212: ALLOW_REPLACEMENT and REPLACE_EXISTING are transposed between the D-Bus
+    // wire bits RequestNameFlag carries and sd-bus's own flag enum, and the native backend used to
+    // map them straight across — so a name its owner had marked replaceable could not be taken over,
+    // and the second caller was queued instead. The JVM backend passes the wire bits to the daemon
+    // directly and always matched the documented semantics; this runs on BOTH backends.
+    @Test
+    fun requestName_replaceExistingTakesOverANameThatAllowedReplacement() {
+        val ids = uniqueFixtureIds("replaceName")
+        val name = ServiceName("${ids.service.value}.Replaceable")
+        val incumbent = createBusConnection()
+        val challenger = createBusConnection()
+
+        try {
+            assertEquals(
+                RequestNameReply.PRIMARY_OWNER,
+                incumbent.requestName(name, RequestNameFlag.ALLOW_REPLACEMENT)
+            )
+
+            // The incumbent allowed replacement, so REPLACE_EXISTING must hand ownership over
+            // rather than queue behind it.
+            assertEquals(
+                RequestNameReply.PRIMARY_OWNER,
+                challenger.requestName(name, RequestNameFlag.REPLACE_EXISTING)
+            )
+        } finally {
+            runCatching { challenger.releaseName(name) }
+            runCatching { incumbent.releaseName(name) }
+            incumbent.release()
+            challenger.release()
+        }
+    }
+
     // Coverage for #110: the direct two-arg property accessors on Proxy
     // (getPropertyAsync / setPropertyAsync / getAllProperties / getAllPropertiesAsync). Confirms the
     // async variants agree with the sync getProperty/setProperty results and that the Variant unwrap

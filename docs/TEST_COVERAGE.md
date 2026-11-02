@@ -79,8 +79,11 @@ weakening it.
   headline a couple of points; the per-area shape is stable.
 - **Tooling note:** `WireDbusBackend.kt` is flagged binary/`data` by the OS, so `grep` silently
   returns no matches on it — use `awk`/`rg`/Read when auditing that file.
-- **dbusmock suites can false-pass locally** without a configured dbusmock venv; trust CI / the venv
-  for those rows, not a bare local green.
+- **Do not trust a bare local green for the dbusmock rows** without a configured dbusmock venv —
+  trust CI or the venv. Since #182 `jvmTest` reports them as a real `<skipped/>`, and since #186
+  `:cross_test:linuxX64Test` does not run them at all when the harness cannot start (Kotlin/Native
+  cannot record a skip, so running them would report passes that asserted nothing). Both are honest,
+  but neither *measures* anything: locally those rows are typically unmeasured rather than covered.
 
 ## Re-measuring
 

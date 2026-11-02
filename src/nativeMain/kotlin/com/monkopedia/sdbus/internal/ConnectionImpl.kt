@@ -97,6 +97,9 @@ import platform.posix.poll
 import platform.posix.pollfd
 import platform.posix.uint64_tVar
 import platform.posix.usleep
+import sdbus.SD_BUS_NAME_ALLOW_REPLACEMENT
+import sdbus.SD_BUS_NAME_QUEUE
+import sdbus.SD_BUS_NAME_REPLACE_EXISTING
 import sdbus._SD_BUS_MESSAGE_TYPE_INVALID
 import sdbus.sd_bus_error
 import sdbus.sd_bus_interface_name_is_valid
@@ -269,17 +272,22 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
         checkNotReleased()
         checkServiceName(name.value)
 
-        // RequestNameFlag carries the D-Bus WIRE bits (DO_NOT_QUEUE=0x4); the C `sd_bus_request_name`
-        // takes sd-bus's OWN flag enum, where bit 0x4 is SD_BUS_NAME_QUEUE — the INVERSE (opt-in
-        // queueing). ALLOW_REPLACEMENT (0x1) / REPLACE_EXISTING (0x2) coincide; the queue bit must be
-        // inverted. Feeding the wire bits straight in would flip queueing and diverge from the JVM
-        // backend, which passes the wire flags to the daemon directly.
-        // sd-bus flag bits: SD_BUS_NAME_ALLOW_REPLACEMENT=0x1, SD_BUS_NAME_REPLACE_EXISTING=0x2,
-        // SD_BUS_NAME_QUEUE=0x4 (set when NOT DO_NOT_QUEUE, i.e. the inverted queue bit).
+        // RequestNameFlag carries the D-Bus WIRE bits; the C `sd_bus_request_name` takes sd-bus's
+        // OWN flag enum, and no bit of it lines up with the wire: replacement and allow-replacement
+        // are transposed, and sd-bus's queue bit is the INVERSE of the wire's DO_NOT_QUEUE (opt-in
+        // rather than opt-out). Feeding the wire bits straight in would diverge from the JVM
+        // backend, which passes them to the daemon directly. Naming the cinterop constants keeps
+        // this mapping compiler-checked rather than comment-checked (#212).
         var sdbusMask = 0u
-        if (RequestNameFlag.ALLOW_REPLACEMENT in flags) sdbusMask = sdbusMask or 0x1u
-        if (RequestNameFlag.REPLACE_EXISTING in flags) sdbusMask = sdbusMask or 0x2u
-        if (RequestNameFlag.DO_NOT_QUEUE !in flags) sdbusMask = sdbusMask or 0x4u
+        if (RequestNameFlag.ALLOW_REPLACEMENT in flags) {
+            sdbusMask = sdbusMask or SD_BUS_NAME_ALLOW_REPLACEMENT
+        }
+        if (RequestNameFlag.REPLACE_EXISTING in flags) {
+            sdbusMask = sdbusMask or SD_BUS_NAME_REPLACE_EXISTING
+        }
+        if (RequestNameFlag.DO_NOT_QUEUE !in flags) {
+            sdbusMask = sdbusMask or SD_BUS_NAME_QUEUE
+        }
         val r = sdbus.sd_bus_request_name(bus.value, name.value, sdbusMask.convert())
         // sd_bus_request_name collapses the four RequestName reply codes onto its return value:
         //   PRIMARY_OWNER -> 1, IN_QUEUE -> 0, EXISTS -> -EEXIST, ALREADY_OWNER -> -EALREADY.

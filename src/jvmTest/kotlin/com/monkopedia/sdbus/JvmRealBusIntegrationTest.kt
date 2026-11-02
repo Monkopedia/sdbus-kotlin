@@ -7,17 +7,15 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
+/**
+ * These tests need a *real* bus, and every job that runs them wraps the build in
+ * `dbus-run-session` (exporting `DBUS_SYSTEM_BUS_ADDRESS` alongside the session one), so an
+ * unreachable bus here is a broken environment rather than a legitimate absence. The connection
+ * factories throw an [SdbusException] ("Failed to open bus", issue #81) and that is left to FAIL
+ * the test: the early return they used to be swallowed into was recorded by JUnit as a PASS for a
+ * case that connected to nothing (issue #227).
+ */
 class JvmRealBusIntegrationTest {
-
-    // These tests need a *real* bus. The connection factories throw when the bus is
-    // unreachable (issue #81) instead of silently returning the in-process stub backend, so
-    // "no usable bus in this environment" now surfaces as a thrown SdbusException -- treat it as a
-    // skip, the way the old ":jvm-stub" unique-name gate did.
-    private fun connectOrNull(connect: () -> Connection): Connection? = try {
-        connect()
-    } catch (e: SdbusException) {
-        null
-    }
 
     // Regression for the BlueZ-on-JVM failure, exercised over the real wire (same-process
     // calls short-circuit through local dispatch and never serialize, so they can't catch
@@ -29,7 +27,7 @@ class JvmRealBusIntegrationTest {
     // serializes as "as" and succeeds; without it the connection is torn down.
     @Test
     fun methodCall_withEmptyArrayArg_overWire_doesNotDropConnection() = runBlocking {
-        val connection = connectOrNull { createBusConnection() } ?: return@runBlocking
+        val connection = createBusConnection()
         val proxy = createProxy(
             connection,
             ServiceName("org.freedesktop.DBus"),
@@ -51,12 +49,9 @@ class JvmRealBusIntegrationTest {
     }
 
     @Test
-    fun createSystemBusConnection_usesDistinctConnectionsWhenRealBusIsAvailable() {
-        val first = connectOrNull { createSystemBusConnection() } ?: return
-        val second = connectOrNull { createSystemBusConnection() } ?: run {
-            first.release()
-            return
-        }
+    fun createSystemBusConnection_usesDistinctConnections() {
+        val first = createSystemBusConnection()
+        val second = createSystemBusConnection()
         try {
             assertNotEquals(first.uniqueName.value, second.uniqueName.value)
         } finally {
@@ -66,12 +61,9 @@ class JvmRealBusIntegrationTest {
     }
 
     @Test
-    fun createSessionBusConnection_usesDistinctConnectionsWhenRealBusIsAvailable() {
-        val first = connectOrNull { createSessionBusConnection() } ?: return
-        val second = connectOrNull { createSessionBusConnection() } ?: run {
-            first.release()
-            return
-        }
+    fun createSessionBusConnection_usesDistinctConnections() {
+        val first = createSessionBusConnection()
+        val second = createSessionBusConnection()
         try {
             assertNotEquals(first.uniqueName.value, second.uniqueName.value)
         } finally {
@@ -90,12 +82,8 @@ class JvmRealBusIntegrationTest {
         val objectManagerInterface = InterfaceName("org.freedesktop.DBus.ObjectManager")
         val interfacesAdded = SignalName("InterfacesAdded")
 
-        val serverConnection = connectOrNull { createSessionBusConnection(service) }
-            ?: return@runBlocking
-        val proxyConnection = connectOrNull { createSessionBusConnection() } ?: run {
-            serverConnection.release()
-            return@runBlocking
-        }
+        val serverConnection = createSessionBusConnection(service)
+        val proxyConnection = createSessionBusConnection()
 
         serverConnection.startEventLoop()
         proxyConnection.startEventLoop()
@@ -138,12 +126,8 @@ class JvmRealBusIntegrationTest {
         val valueProperty = PropertyName("value")
         var value = 17
 
-        val serverConnection = connectOrNull { createSessionBusConnection(service) }
-            ?: return@runBlocking
-        val proxyConnection = connectOrNull { createSessionBusConnection() } ?: run {
-            serverConnection.release()
-            return@runBlocking
-        }
+        val serverConnection = createSessionBusConnection(service)
+        val proxyConnection = createSessionBusConnection()
 
         serverConnection.startEventLoop()
         proxyConnection.startEventLoop()
@@ -188,12 +172,8 @@ class JvmRealBusIntegrationTest {
         val valueProperty = PropertyName("value")
         var value = 23
 
-        val serverConnection = connectOrNull { createSystemBusConnection() }
-            ?: return@runBlocking
-        val proxyConnection = connectOrNull { createSystemBusConnection() } ?: run {
-            serverConnection.release()
-            return@runBlocking
-        }
+        val serverConnection = createSystemBusConnection()
+        val proxyConnection = createSystemBusConnection()
         val serverUnique = serverConnection.uniqueName.value
 
         serverConnection.startEventLoop()
@@ -243,12 +223,8 @@ class JvmRealBusIntegrationTest {
         val signalName = SignalName("Changed")
         val expectedPid = ProcessHandle.current().pid().toInt()
 
-        val serverConnection = connectOrNull { createSessionBusConnection(service) }
-            ?: return@runBlocking
-        val proxyConnection = connectOrNull { createSessionBusConnection() } ?: run {
-            serverConnection.release()
-            return@runBlocking
-        }
+        val serverConnection = createSessionBusConnection(service)
+        val proxyConnection = createSessionBusConnection()
         val serverUnique = serverConnection.uniqueName.value
 
         val senderSeen = CompletableDeferred<String>()

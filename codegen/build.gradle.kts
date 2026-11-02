@@ -51,6 +51,17 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// Rewrites the checked-in golden files GeneratorTest compares against, for use after an
+// intentional generator change. Kept separate from the test task on purpose: the test only reads
+// goldens, this only writes them, so neither can pass itself off as the other.
+tasks.register<JavaExec>("regenerateGoldens") {
+    group = "build"
+    description = "Regenerates the codegen golden fixtures from their test.xml inputs."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.monkopedia.sdbus.RegenerateGoldensKt")
+    args(layout.projectDirectory.dir("src/test/resources").asFile.absolutePath)
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_1_8)
@@ -68,6 +79,22 @@ val dokkaLogoStyleSheet = rootProject.file("dokka/styles/logo-styles.css")
 dokka {
     dokkaPublications.named("html") {
         outputDirectory.set(projectDir.resolve("build/dokka"))
+        // #264: the same defect #254/#263 fixed for the root project was still live here. Dokka
+        // only *prints* `Couldn't resolve link: [...]`, so this task exited BUILD SUCCESSFUL with
+        // five dead KDoc links in AdaptorGenerator.kt. This module's docs are not on the site --
+        // pages.yaml publishes only the root project -- but dokkaJavadocJar packages *this* task's
+        // output and is in the publishToMavenLocal/Central graph, so the gate sits directly in
+        // front of a published artifact. failOnWarning makes the expected count zero rather than a
+        // baseline someone edits upward, and asserting it in the build (not in a workflow) means a
+        // local run of this task fails exactly the way CI does.
+        //
+        // Deliberately broader than "unresolved links": it fails on ANY Dokka warning. Measured at
+        // 76d22a3 that is a distinction without a difference -- every warning this task emitted was
+        // an unresolved link (5 of 5) -- and the broad gate needs no log parsing, so unlike a grep
+        // for `Couldn't resolve link` it cannot be defeated by Dokka rewording that message. If a
+        // future Dokka emits some new warning category, fix it or suppress that category; turning
+        // this flag back off restores the #254 defect wholesale.
+        failOnWarning.set(true)
     }
     pluginsConfiguration.html {
         customAssets.from(dokkaAssets)

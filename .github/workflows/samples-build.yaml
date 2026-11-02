@@ -1,0 +1,55 @@
+name: Samples Build
+
+# The two samples under samples/ are standalone composite builds: each has its own
+# settings.gradle.kts, its own wrapper, and pulls the library in with includeBuild("../..").
+# That means no task in the root build — allTests included — can reach them, so before this
+# workflow existed a library API change could break both samples and every gate stayed green.
+# The samples are the worked examples README.md points new users at, so they are the code most
+# likely to be copied and, until now, the only Kotlin here with no compiler pointed at it.
+#
+# Compile only. Neither sample is runnable in CI: bluez-scan needs a real BlueZ adapter plus a
+# BLE peripheral, and demo-service needs a session bus it is not worth standing up for a build
+# check. `assemble` builds the JVM jar and the linuxX64 executables without running anything.
+#
+# No paths: filter on purpose — the breakage this guards against comes from library changes
+# outside samples/, so a filter would disable the check exactly when it is needed.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-samples:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        sample:
+          - bluez-scan
+          - demo-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libsystemd-dev
+
+      - name: Assemble ${{ matrix.sample }}
+        working-directory: samples/${{ matrix.sample }}
+        run: ./gradlew assemble --stacktrace

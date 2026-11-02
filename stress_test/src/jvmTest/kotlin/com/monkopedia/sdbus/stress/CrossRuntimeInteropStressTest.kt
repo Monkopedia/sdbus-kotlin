@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.TimeoutCancellationException
@@ -185,11 +187,11 @@ class CrossRuntimeInteropStressTest {
         val objectPath = PHASE3_OBJECT_PATH
         val expectedArg = 50 + iteration
         val nativeOutput = ByteArrayOutputStream()
+        val peerTest = "jvmClientCanInvokeIncrementOverDirectBus"
         val process = ProcessBuilder(
             kexe.toString(),
-            "--ktest_no_exit_code",
             "--ktest_logger=TEAMCITY",
-            "--ktest_gradle_filter=*NativeInteropPeerTest.jvmClientCanInvokeIncrementOverDirectBus*"
+            nativePeerFilter(peerTest)
         ).also { builder ->
             builder.environment()["KDBUS_NATIVE_INTEROP_ROLE"] = "server"
             builder.environment()["KDBUS_INTEROP_SOCKET"] = socketPath.toString()
@@ -250,12 +252,13 @@ class CrossRuntimeInteropStressTest {
                 connection.release()
             }
 
-            val nativeLog = nativeOutput.toString(Charsets.UTF_8)
             assertTrue(
                 process.waitFor(timeoutSeconds(), TimeUnit.SECONDS),
-                "Native peer did not exit in time. Output:\n$nativeLog"
+                "Native peer did not exit in time. Output:\n" +
+                    nativeOutput.toString(Charsets.UTF_8)
             )
-            assertEquals(0, process.exitValue(), "Native peer failed. Output:\n$nativeLog")
+            val nativeLog = drainedPeerOutput(outputPump, nativeOutput)
+            assertNativePeerPassed(process, nativeLog, peerTest)
         } finally {
             process.destroyForcibly()
             outputPump.join(1_000)
@@ -274,11 +277,11 @@ class CrossRuntimeInteropStressTest {
         val objectPath = PHASE3_OBJECT_PATH
         val expectedArg = 300 + iteration
         val nativeOutput = ByteArrayOutputStream()
+        val peerTest = "jvmClientCanInvokeIncrementOverDirectBus"
         val process = ProcessBuilder(
             kexe.toString(),
-            "--ktest_no_exit_code",
             "--ktest_logger=TEAMCITY",
-            "--ktest_gradle_filter=*NativeInteropPeerTest.jvmClientCanInvokeIncrementOverDirectBus*"
+            nativePeerFilter(peerTest)
         ).also { builder ->
             builder.environment()["KDBUS_NATIVE_INTEROP_ROLE"] = "server"
             builder.environment()["KDBUS_INTEROP_SOCKET"] = socketPath.toString()
@@ -325,6 +328,9 @@ class CrossRuntimeInteropStressTest {
                     failure != null,
                     "Expected call failure when native peer drops in-flight"
                 )
+                // No assertNativePeerPassed here, unlike the other cases: this case SIGKILLs the
+                // peer mid-reply on purpose, so it neither finishes its test nor exits 0. What is
+                // under test is the JVM client's reaction to the drop, asserted just above.
             } finally {
                 proxy.release()
                 connection.release()
@@ -348,11 +354,11 @@ class CrossRuntimeInteropStressTest {
         val expectedArg = 400 + iteration
         val recoveryArg = expectedArg + 1
         val nativeOutput = ByteArrayOutputStream()
+        val peerTest = "jvmClientCanInvokeIncrementOverDirectBus"
         val process = ProcessBuilder(
             kexe.toString(),
-            "--ktest_no_exit_code",
             "--ktest_logger=TEAMCITY",
-            "--ktest_gradle_filter=*NativeInteropPeerTest.jvmClientCanInvokeIncrementOverDirectBus*"
+            nativePeerFilter(peerTest)
         ).also { builder ->
             builder.environment()["KDBUS_NATIVE_INTEROP_ROLE"] = "server"
             builder.environment()["KDBUS_INTEROP_SOCKET"] = socketPath.toString()
@@ -417,12 +423,13 @@ class CrossRuntimeInteropStressTest {
                 connection.release()
             }
 
-            val nativeLog = nativeOutput.toString(Charsets.UTF_8)
             assertTrue(
                 process.waitFor(timeoutSeconds(), TimeUnit.SECONDS),
-                "Native peer did not exit in time. Output:\n$nativeLog"
+                "Native peer did not exit in time. Output:\n" +
+                    nativeOutput.toString(Charsets.UTF_8)
             )
-            assertEquals(0, process.exitValue(), "Native peer failed. Output:\n$nativeLog")
+            val nativeLog = drainedPeerOutput(outputPump, nativeOutput)
+            assertNativePeerPassed(process, nativeLog, peerTest)
         } finally {
             process.destroyForcibly()
             outputPump.join(1_000)
@@ -492,11 +499,11 @@ class CrossRuntimeInteropStressTest {
                 waitForSocket(socketPath, timeoutMillis()),
                 "Socket not ready: $socketPath"
             )
+            val peerTest = "nativeClientCanInvokeIncrementOverDirectBus"
             val launchedProcess = ProcessBuilder(
                 kexe.toString(),
-                "--ktest_no_exit_code",
                 "--ktest_logger=TEAMCITY",
-                "--ktest_gradle_filter=*NativeInteropPeerTest.nativeClientCanInvokeIncrementOverDirectBus*"
+                nativePeerFilter(peerTest)
             ).also { procBuilder ->
                 procBuilder.environment()["KDBUS_NATIVE_INTEROP_ROLE"] = "client"
                 procBuilder.environment()["KDBUS_INTEROP_SOCKET"] = socketPath.toString()
@@ -518,9 +525,10 @@ class CrossRuntimeInteropStressTest {
                 procBuilder.redirectErrorStream(true)
             }.start()
             process = launchedProcess
-            outputPump = thread(start = true, isDaemon = true, name = "stress-native-output") {
+            val pump = thread(start = true, isDaemon = true, name = "stress-native-output") {
                 launchedProcess.inputStream.use { input -> input.copyTo(nativeOutput) }
             }
+            outputPump = pump
             dropConnectionAfterMs?.let { delayMs ->
                 Thread.sleep(delayMs)
                 runCatching { connection.disconnect() }
@@ -532,12 +540,12 @@ class CrossRuntimeInteropStressTest {
                     "Listen failure:\n${listenFailureDetails()}\nOutput:\n" +
                     nativeOutput.toString(Charsets.UTF_8)
             )
-            val nativeLog = nativeOutput.toString(Charsets.UTF_8)
-            assertEquals(
-                0,
-                launchedProcess.exitValue(),
-                "Native client failed for address '$connectionAddress'. " +
-                    "Listen failure:\n${listenFailureDetails()}\nOutput:\n$nativeLog"
+            val nativeLog = drainedPeerOutput(pump, nativeOutput)
+            assertNativePeerPassed(
+                launchedProcess,
+                nativeLog,
+                peerTest,
+                "Address '$connectionAddress'. Listen failure:\n${listenFailureDetails()}"
             )
             val shouldExpectFailure = expectNativeFailure || expectedNativeFailureContains != null
             if (!shouldExpectFailure) {
@@ -572,6 +580,71 @@ class CrossRuntimeInteropStressTest {
         val selected = System.getProperty(STRESS_CASE_FILTER_PROP)?.trim().orEmpty()
         if (selected.isEmpty()) return true
         return caseName.contains(selected, ignoreCase = true)
+    }
+
+    /**
+     * Waits for the output pump to finish draining and returns everything the peer printed.
+     *
+     * An incomplete drain must report itself: [assertNativePeerPassed] reads this text, so a
+     * truncated snapshot would otherwise surface as "never ran <case>", pointing at a rename that
+     * did not happen. The peer has already exited and spawns no children, so the pipe is at EOF and
+     * this returns in microseconds.
+     */
+    private fun drainedPeerOutput(pump: Thread, sink: ByteArrayOutputStream): String {
+        pump.join(PUMP_DRAIN_MILLIS)
+        assertFalse(
+            pump.isAlive,
+            "Native peer output was still draining after ${PUMP_DRAIN_MILLIS}ms, so the capture " +
+                "below is incomplete and cannot be asserted on:\n" + sink.toString(Charsets.UTF_8)
+        )
+        return sink.toString(Charsets.UTF_8)
+    }
+
+    /**
+     * The `--ktest_gradle_filter` that selects the single `NativeInteropPeerTest` case a spawned
+     * peer should run. Built from the same [peerTest] string [assertNativePeerPassed] looks for in
+     * the peer's output, so the filter and the assertion cannot drift apart.
+     */
+    private fun nativePeerFilter(peerTest: String) =
+        "--ktest_gradle_filter=*NativeInteropPeerTest.$peerTest*"
+
+    /**
+     * Fails this case unless the spawned native peer actually ran [peerTest] and reported it as
+     * passing. Three things have to hold, and the exit code on its own establishes none of them:
+     *
+     * - **It reported no failed test.** The `##teamcity[testFailed …]` line carries the native-side
+     *   assertion message, which says far more than "exit code 1".
+     * - **It ran [peerTest] at all.** A `--ktest_gradle_filter` that matches nothing runs zero tests
+     *   and exits 0, so a rename on the native side would quietly empty this case out while leaving
+     *   it green — the same trap #219 found in the ARM job's `--gtest_filter`.
+     * - **It exited 0.** Only meaningful because the peers are no longer spawned with
+     *   `--ktest_no_exit_code`: that flag suppressed the runner's failure exit status, so every
+     *   `assertEquals(0, exitValue())` here was a tautology and every assertion the peer made was
+     *   discarded (#183).
+     */
+    private fun assertNativePeerPassed(
+        peer: Process,
+        nativeLog: String,
+        peerTest: String,
+        details: String = ""
+    ) {
+        val context = buildString {
+            if (details.isNotEmpty()) appendLine(details)
+            append("Output:\n").append(nativeLog)
+        }
+        val failedMarker = "##teamcity[testFailed name='$peerTest'"
+        val reportedFailure = nativeLog.lineSequence().firstOrNull { failedMarker in it }
+        assertNull(
+            reportedFailure,
+            "Native peer reported '$peerTest' as failed: $reportedFailure\n$context"
+        )
+        assertTrue(
+            nativeLog.contains("##teamcity[testFinished name='$peerTest'"),
+            "Native peer never ran '$peerTest', so this case measured nothing — the filter " +
+                "${nativePeerFilter(peerTest)} matched no test. Was it renamed in " +
+                "NativeInteropPeerTest?\n$context"
+        )
+        assertEquals(0, peer.exitValue(), "Native peer '$peerTest' exited non-zero.\n$context")
     }
 
     private fun nativeTestBinaryPath(): Path {
@@ -714,5 +787,12 @@ class CrossRuntimeInteropStressTest {
         private const val PHASE3_INTERFACE = "org.monkopedia.sdbus.phase3"
         private const val PHASE3_OBJECT_PATH = "/org/monkopedia/sdbus/phase3/Object"
         private const val INCREMENT_METHOD = "Increment"
+
+        /**
+         * How long to wait for the output-pump thread after the peer exits. Its capture is what
+         * [assertNativePeerPassed] reads, so a snapshot taken while the pipe is still draining could
+         * report "never ran" for a peer that ran fine.
+         */
+        private const val PUMP_DRAIN_MILLIS = 5_000L
     }
 }

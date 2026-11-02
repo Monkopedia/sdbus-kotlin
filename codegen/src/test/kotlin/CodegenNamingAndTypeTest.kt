@@ -4,6 +4,7 @@ import com.monkopedia.sdbus.NamingManager.GeneratedType
 import com.monkopedia.sdbus.NamingManager.NamingType
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -142,5 +143,78 @@ class CodegenNamingAndTypeTest {
             adaptorFile.contains("call(`interface`, `object`)"),
             "Adaptor signal call() should backtick-escape keywords: $adaptorFile"
         )
+    }
+
+    @Test
+    fun namingAnnotationsAreInertUnlessHonored() {
+        val root = TestXmlSupport.parse(HINTED_XML)
+
+        val default = InterfaceGenerator().transformXmlToFile(root)
+            .associate { it.name to it.toString() }
+
+        assertEquals(setOf("Hinted", "Corner"), default.keys)
+        assertTrue(default.getValue("Hinted").contains("val corner: Corner"), default.toString())
+        assertTrue(
+            default.getValue("Hinted").contains("val extra: Map<String, Variant>"),
+            default.toString()
+        )
+    }
+
+    @Test
+    fun honoredNamingAnnotationsRenameStructsAndAliasEverythingElse() {
+        val root = TestXmlSupport.parse(HINTED_XML)
+
+        val hinted = InterfaceGenerator(honorNamingAnnotations = true)
+            .transformXmlToFile(root)
+            .associate { it.name to it.toString() }
+
+        assertEquals(setOf("Hinted", "QPoint", "QVariantMap"), hinted.keys)
+        // The struct had a generated class already, so the hint renamed it in place.
+        assertTrue(hinted.getValue("QPoint").contains("data class QPoint"), hinted.toString())
+        // a{sv} generates nothing, so the hint is a typealias and stays a Map at the call site.
+        assertTrue(
+            hinted.getValue("QVariantMap")
+                .contains("typealias QVariantMap = Map<String, Variant>"),
+            hinted.toString()
+        )
+        assertTrue(hinted.getValue("Hinted").contains("val corner: QPoint"), hinted.toString())
+        assertTrue(hinted.getValue("Hinted").contains("val extra: QVariantMap"), hinted.toString())
+    }
+
+    @Test
+    fun namingAnnotationThatIsNotAKotlinNameFailsLoudly() {
+        val root = TestXmlSupport.parse(
+            """
+            <node>
+              <interface name="org.example.Hinted">
+                <property name="Corner" type="(ii)" access="read">
+                  <annotation name="org.qtproject.QtDBus.QtTypeName"
+                              value="QMap&lt;QString,QVariant&gt;"/>
+                </property>
+              </interface>
+            </node>
+            """
+        )
+
+        val message = assertFailsWith<IllegalArgumentException> {
+            InterfaceGenerator(honorNamingAnnotations = true).transformXmlToFile(root)
+        }.message
+
+        assertTrue(message.orEmpty().contains("QMap<QString,QVariant>"), message)
+    }
+
+    private companion object {
+        private val HINTED_XML = """
+            <node>
+              <interface name="org.example.Hinted">
+                <property name="Corner" type="(ii)" access="read">
+                  <annotation name="org.qtproject.QtDBus.QtTypeName" value="QPoint"/>
+                </property>
+                <property name="Extra" type="a{sv}" access="read">
+                  <annotation name="org.qtproject.QtDBus.QtTypeName" value="QVariantMap"/>
+                </property>
+              </interface>
+            </node>
+        """
     }
 }

@@ -56,7 +56,8 @@ val String.decapitalized: String
 val String.capitalCamelCase: String
     get() = decapitalCamelCase.capitalized
 
-class InterfaceGenerator(packageOverride: String? = null) : BaseGenerator(packageOverride) {
+class InterfaceGenerator(packageOverride: String? = null, honorNamingAnnotations: Boolean = false) :
+    BaseGenerator(packageOverride, honorNamingAnnotations) {
     override val fileSuffix: String
         get() = ""
 

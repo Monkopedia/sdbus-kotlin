@@ -29,6 +29,20 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Added — codegen
 
+- **New opt-in option `honorNamingAnnotations` (`--honor-naming-annotations`) names generated types
+  from `org.qtproject.QtDBus.QtTypeName` annotations in the XML.** The annotation is read plain from
+  a `<property>` or an `<arg>` and suffixed `.In<n>` / `.Out<n>` from a `<method>` or `<signal>` —
+  the three placements `qdbusxml2cpp` uses. A signature that already generates a class of its own is
+  renamed; one that does not (a map, a list, a primitive) gets a `typealias`, so e.g. a `Metadata`
+  property annotated `QVariantMap` is typed `QVariantMap` and is still a `Map<String, Variant>` at
+  the call site. Only `<annotation>` elements can be seen — the `tp:type` / `tp:name-for-bindings`
+  *attributes* some XML carries are not retained by the parser and are not hints.
+
+  This is a new option rather than a behavior change: a hint can only ever *replace* a name the
+  generator would otherwise derive, so applying hints unconditionally would rename types that
+  already-compiled consumer code refers to. It is therefore off by default, and with it off the
+  generator emits exactly what it emitted before whatever annotations the XML carries — the
+  checked-in fixtures are asserted byte-for-byte on both sides of the flag from the same XML. (#158)
 - **Generated code now carries KDoc taken from the introspection XML.** Documentation reaches the
   generated interface, proxy and adaptor from both carriers the parser already understood and
   previously discarded: `org.gtk.GDBus.DocString` / `DocString.Short` annotations, and `<doc:doc>`
@@ -37,8 +51,60 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   emitted statement changes — so this is additive documentation rather than a behavior change.
   XML that documents nothing generates exactly what it did before. (#160)
 
+### Fixed — Gradle plugin
+
+- **A rejected generator argument no longer kills the Gradle daemon.** The `generateSdbusWrappers`
+  tasks invoked the generator through Clikt's `main`, the terminal entry point for a CLI process: it
+  reports a `CliktError` by printing usage and calling `exitProcess`, which inside a build takes down
+  the JVM. The consumer saw `Gradle daemon disappeared unexpectedly`, with no stack trace and nothing
+  naming this plugin — and the message explaining the problem was discarded along with the JVM. The
+  task now calls `parse`, which does the same parsing and raises the same errors, and wraps whatever
+  the generator throws so the reported failure names the XML file being processed. (#265)
+- **An unknown source-set name in `sdbus { outputs }` now fails the build instead of silently
+  attaching the generated code to nothing.** `findByName` returned null for a name that does not
+  exist in the project's layout and the result was discarded, so generation ran, files were written,
+  the task succeeded — and the consumer then got `Unresolved reference` against their own code, with
+  generated files sitting on disk suggesting the generator was at fault. Configuration now fails with
+  a message naming the bad value and listing the source sets that do exist. Note that a
+  single-target Kotlin Multiplatform project has no `linuxMain` (the hierarchy template only
+  materialises an intermediate source set for a group with several targets), so a project relying on
+  the `linuxMain` default now gets that error where it previously generated into the void. (#266)
+
+### Fixed — codegen
+
+- **Introspection XML can no longer make the generator do unbounded work.** Two inputs used to cost
+  build availability rather than failing: a `<!DOCTYPE>` internal subset declaring XML entities (the
+  parser expanded them with no limit — ten-fold per nesting level, and an entity referencing itself
+  never terminated at all), and a type signature with thousands of array type codes (unbounded
+  recursion, `StackOverflowError`). An internal subset is now refused outright — introspection XML
+  has no use for one, and the external `introspect.dtd` doctype a real `dbus-daemon` sends still
+  parses, byte order mark and all — and a signature is held to the D-Bus specification's own
+  255-character maximum, which bounds the recursion by construction. A document whose prolog cannot
+  be read as far as its root element is refused too, rather than assumed to declare nothing. All
+  three report what they refused. Generated output for valid XML is unchanged. (#194)
+- **Deeply nested introspection XML no longer overflows the stack.** `<node>` elements nest without
+  limit and the decoder recurses once per level, so 60KB of `<node>` — no entity declaration, so
+  nothing the limits above cover — aborted the parse with `StackOverflowError` (from 68 levels on a
+  cold 256KB stack). Elements are now held to a maximum nesting depth of 64, counted with
+  the parser's own reader before decoding and reported like the other refusals. A real
+  `Introspect` reply is `node > interface > method > arg` and the deepest checked-in fixture is 6
+  elements, so the limit is an order of magnitude above anything legitimate. (#259)
+
 ### Changed — codegen
 
+- **⚠️ Binary-incompatible change to the `com.monkopedia:sdbus-kotlin-codegen` artifact.** Carrying
+  the `honorNamingAnnotations` option above into the generators changed their constructor signatures
+  rather than adding to them: `BaseGenerator`, `InterfaceGenerator`, `AdaptorGenerator` and
+  `ProxyGenerator` go from `<init>(String)` to `<init>(String, boolean)`, and `NamingManager` from
+  `<init>(XmlRootNode, String)` to `<init>(XmlRootNode, String, boolean)` (the synthetic `$default`
+  bridges move with them). The parameter is defaulted, so Kotlin **source** that constructs a
+  generator still compiles unchanged — but code already **linked** against those constructors, and
+  Java callers passing the arguments explicitly, must be recompiled. Everything else in
+  `codegen/api/codegen.api` is additive (`NamingManager.AliasType`, `GeneratedType.nameHint`,
+  `generateAlias`, `Xml2Kotlin.honorNamingAnnotations`), and the `Xml2Kotlin` CLI entry point and the
+  Gradle plugin do not construct the generators directly, so neither is affected. The
+  `com.monkopedia:sdbus-kotlin` library artifact is untouched: no entry in `api/sdbus-kotlin.api` or
+  `api/sdbus-kotlin.klib.api` moves. (#158)
 - **Standard D-Bus annotations are now mapped onto the runtime vtable/proxy flags.** The generated
   adaptor carries `org.freedesktop.DBus.Deprecated` (on the interface, methods, signals and
   properties) and `org.freedesktop.DBus.Property.EmitsChangedSignal` into its `addVTable` block, and
@@ -76,6 +142,79 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   change for anyone who relied on xmlutil being transitively available at compile time through
   `sdbus-kotlin-codegen` or the `com.monkopedia.sdbus.plugin` Gradle plugin; declare it directly instead.
   (#167)
+
+### Fixed — codegen
+
+- **A signal with exactly one argument of a parameterized type no longer generates code that fails
+  to compile.** The proxy's signal decoder was selected from the *kind* of the mapped Kotlin type
+  rather than from how many arguments the signal declares, so a single argument of an array or dict
+  type (`as`, `ai`, `a{sv}` — ordinary shapes in real interfaces) fell through to the
+  constructor-reference branch and emitted `call(::List<String>)`, which is not valid Kotlin. The
+  same fall-through gave a single argument of a *struct* type `call(::Entry)`, which compiled but
+  decoded two top-level arguments where the adaptor registers one; that is corrected too. Signals
+  with no arguments and with several arguments are unaffected, and regenerating XML that declares
+  neither shape produces byte-identical output. A `SignalArgShapesTest` fixture now covers every
+  signal argument shape, so `compile_test` guards this permanently. (#218)
+
+### Fixed
+
+- **`Message.credsEuid` / `Message.credsEgid` now report genuine effective ids on the JVM backend
+  instead of the real ones.** The one JVM path that attaches credentials stored `getuid()` /
+  the login gid — via `com.sun.security.auth.module.UnixSystem`, which reports only real ids — in the
+  two fields named *effective* (`UnixSystem` takes the uid from `getuid()` and the gid from that
+  uid's passwd entry — real ids either way, never `geteuid()`/`getegid()`, which the JDK does not
+  expose), so both answered with a plausible wrong number rather than failing.
+  They are now read from the effective column of `/proc/self/status`; when that cannot be read the
+  fields stay unset and the accessors throw, so a real id is never substituted for an effective one.
+  Native was already correct (`SD_BUS_CREDS_EUID` / `_EGID`), so this closes a cross-backend
+  divergence. No value changes on a process whose effective ids equal its real ones — every
+  non-setuid process — and the public signatures are unchanged. (#247)
+
+- **A method registered with `hasNoReply = true` now advertises
+  `org.freedesktop.DBus.Method.NoReply` in the introspection the native backend serves.** The vtable
+  translation tested the flag and then OR-ed the result with a literal `0u` — the constant named in
+  the adjacent comment, `SD_BUS_VTABLE_METHOD_NO_REPLY`, was never bound — so the branch was a
+  no-op and the bit never reached sd-bus. Behavior is unchanged: the fire-and-forget half already
+  worked on both backends, and this only corrects what the adaptor tells an external introspector
+  (`busctl`, d-feet, other language bindings), which previously described a fire-and-forget method
+  as ordinary request/reply. The JVM backend still does not serve this annotation; that is part of
+  #193. (#197)
+- **`Message.isAtEnd`, `Message.copyTo` and `Message.rewind` now honor their `complete` parameter on
+  the JVM backend, and `copyTo` no longer replaces the destination's header.** All three JVM actuals
+  ignored the flag, so they returned a silently wrong answer rather than an error: `isAtEnd(true)`
+  reported `true` with a variant still entered, `rewind(false)` inside a variant rewound to the start
+  of the body and dropped the container, and `copyTo` copied the whole payload from index 0 whatever
+  the flag said. `copyTo` additionally assigned the source's metadata onto the destination —
+  interface, member, path, sender, destination and sender credentials — making it a copy of identity
+  rather than of contents; native's `sd_bus_message_copy` moves body data only. The JVM behavior now
+  matches sd-bus: `copyTo` takes values from the read cursor and consumes them, one complete value
+  when `complete` is `false` and the rest of the open container when it is `true`, and `complete` is
+  honored against the variant stack (the only container the JVM payload model keeps open — arrays,
+  structs and dict entries are flat there). `MessageApiParityCommonTest` now pins all three on both
+  backends; native already satisfied every assertion unchanged. The `@param complete` KDoc on
+  `copyTo` was also wrong about *both* backends — it described `true` as copying "the whole message"
+  — and has been corrected. The consumer-visible consequence runs through public `Variant`: because
+  `Variant.deserializeFrom` is built on `copyTo`, a second `deserializeFrom` from the same source
+  message used to re-read the first value on JVM and never advanced the source; it now reads the
+  next value and consumes it, which is what native always did. (#246)
+- **A `Variant` is no longer left unusable by a `get` of the wrong type on the JVM backend.** Native
+  validates the contained signature in `sd_bus_message_enter_container`, so a mismatched extraction
+  never enters and leaves the variant untouched; the JVM backend enters first and only detects the
+  mismatch while decoding, so the failed `get` left the variant entered and every later `get`,
+  `peekValueType` and `containsValueOfType` on it failed — the last two being the inspection path
+  the `Variant` documentation recommends. `Variant.get` now unwinds the container when extraction
+  throws. This was previously masked on JVM by `rewind`'s ignored `complete` parameter, so it
+  surfaced only once that was fixed. (#246)
+
+- **`RequestNameFlag.ALLOW_REPLACEMENT` and `RequestNameFlag.REPLACE_EXISTING` were swapped on the
+  native backend.** `Connection.requestName` translates the D-Bus wire bits the enum carries into
+  sd-bus's own flag enum, where the two are transposed (`SD_BUS_NAME_REPLACE_EXISTING` is bit 0 and
+  `SD_BUS_NAME_ALLOW_REPLACEMENT` is bit 1), and the mapping asserted they coincided. So on native a
+  request that meant "I allow replacement" reached sd-bus as "replace the current owner" and vice
+  versa: a name whose owner had allowed replacement could not be taken over, and the challenger was
+  queued instead. The JVM backend hands the wire bits to the daemon directly and always matched the
+  semantics documented on `RequestNameFlag`, so this affected native only. The mapping now names the
+  cinterop `SD_BUS_NAME_*` constants, making it compiler-checked rather than comment-checked. (#212)
 
 ## [1.0.1] - 2026-07-15
 
