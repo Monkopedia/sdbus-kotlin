@@ -92,12 +92,14 @@ timeout-shaped `com.monkopedia.sdbus.Error` — never a hang.
 
 The **connection-level default** (`Connection.methodCallTimeout`) is selected by a per-call
 timeout of `Duration.ZERO` — the sentinel the raw-message overloads (`Proxy.callMethod(message)`,
-`Proxy.callMethodAsync(message)`) send. On native it maps to
-`sd_bus_set/get_method_call_timeout` (sd_bus resolves a 0 per-call timeout through the
-connection default inside `sd_bus_call`); the JVM call paths consult the stored value the same
-way (issue #80). Any other explicit per-call timeout wins over the connection default; if the
-connection default is never set either, each backend's own default reply timeout applies
-(sd-bus's 25 s default / the JVM wire backend's own default reply timeout).
+`Proxy.callMethodAsync(message)`) send, and the one `MethodCall.send(Duration.ZERO)` carries. On
+native it maps to `sd_bus_set/get_method_call_timeout` (sd_bus resolves a 0 per-call timeout
+through the connection default inside `sd_bus_call`); the JVM call paths consult the stored value
+the same way (issue #80, and `MethodCall.send` since #184). Any other explicit per-call timeout
+wins over the connection default; if the connection default is never set either, both backends
+report and apply 25 s — sd-bus's `BUS_DEFAULT_TIMEOUT_USEC` on native (overridable by
+`$SYSTEMD_BUS_TIMEOUT`, which the JVM backend does **not** read), and the same value as the JVM
+connection's initial `methodCallTimeout` (issue #184).
 
 Note that the high-level invoker block defaults `timeout` to `Duration.INFINITE` — *no* per-call
 timeout, **not** the connection default — so `callMethod { call(…) }` with no `timeout =` line

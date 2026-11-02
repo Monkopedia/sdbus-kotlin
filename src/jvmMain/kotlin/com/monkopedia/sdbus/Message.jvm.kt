@@ -412,9 +412,17 @@ actual class MethodCall internal constructor() : Message() {
     internal var sentReply: MethodReply? = null
     private val replySent = CountDownLatch(1)
 
+    // Duration.ZERO is the API's "use the connection default" sentinel (see MethodCall.send's
+    // KDoc), the same one Proxy.callMethod(message) already resolves. A call built by
+    // Proxy.createMethodCall reads the owning connection's current default through this hook; a
+    // standalone MethodCall has no connection to defer to, so its default stays 0 = no timeout.
+    internal var connectionDefaultTimeoutMicros: () -> ULong = { 0uL }
+
     actual fun send(timeout: Duration): MethodReply = send(timeout.inWholeMicroseconds.toULong())
 
     internal fun send(timeout: ULong): MethodReply {
+        val effectiveTimeout =
+            if (timeout == 0uL) connectionDefaultTimeoutMicros() else timeout
         val interfaceName = metadata.interfaceName
             ?: throw createError(-1, "MethodCall.send failed: missing interface name")
         val methodName = metadata.memberName
@@ -434,7 +442,7 @@ actual class MethodCall internal constructor() : Message() {
                     "MethodCall.send failed: no static binding for $path:$interfaceName.$methodName/${payload.size}"
                 )
         }
-        val result = if (timeout == 0uL) {
+        val result = if (effectiveTimeout == 0uL) {
             invoke()
         } else {
             val value = AtomicReference<Any?>()
@@ -450,7 +458,7 @@ actual class MethodCall internal constructor() : Message() {
                     .onFailure { failure.set(it) }
                 done.countDown()
             }
-            val timeoutMillis = ((timeout + 999uL) / 1000uL).toLong().coerceAtLeast(1L)
+            val timeoutMillis = ((effectiveTimeout + 999uL) / 1000uL).toLong().coerceAtLeast(1L)
             if (!done.await(timeoutMillis, TimeUnit.MILLISECONDS)) {
                 throw createError(-1, "Method call timed out")
             }

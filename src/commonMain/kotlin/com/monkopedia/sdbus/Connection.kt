@@ -85,10 +85,18 @@ interface Connection : Resource {
     val currentlyProcessedMessage: Message
 
     /**
-     * General method call timeout
+     * The connection's default method call timeout.
      *
-     * General method call timeout is used for all method calls upon this connection.
-     * Method call-specific timeout overrides this general setting.
+     * It applies to calls that ask for it, which is **not** every call on this connection: the
+     * raw-message overloads ([Proxy.callMethod]/[Proxy.callMethodAsync] taking a
+     * [MethodCall]) and any call whose per-call timeout is [Duration.ZERO], the
+     * "use the connection default" sentinel. The high-level invoker block defaults
+     * [MethodInvoker.timeout] to [Duration.INFINITE] — *no* per-call timeout, not this value — so
+     * `callMethod { … }` with no `timeout =` line is unaffected by this property. Any other
+     * explicit per-call timeout overrides it.
+     *
+     * Unset, it reads back as the backend's own default reply timeout (sd-bus's, 25 s unless
+     * `$SYSTEMD_BUS_TIMEOUT` says otherwise).
      *
      * @throws [com.monkopedia.sdbus.SdbusException] in case of failure
      */
