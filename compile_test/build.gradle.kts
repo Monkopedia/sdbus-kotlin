@@ -22,13 +22,24 @@ kotlin {
         compilerOptions {
             freeCompilerArgs.set(listOf("-linker-options", "-L /usr/lib"))
         }
+        // The `hinted-*` goldens nativeMain has to leave out, given a compilation of their own.
+        compilations.create("hinted") {
+            defaultSourceSet {
+                kotlin.srcDir("../codegen/src/test/resources")
+                kotlin.include("**/hinted-*.kt")
+                dependencies {
+                    implementation(libs.kotlinx.coroutines)
+                    implementation(project(":"))
+                }
+            }
+        }
     }
     applyDefaultHierarchyTemplate()
     sourceSets {
         getByName("nativeMain") {
             // TestFiles symlinks the whole codegen fixture tree into one compilation. The
             // `hinted-*` goldens are the same interfaces named from annotations, so they would
-            // redeclare their default counterparts; :codegen compiles that output on its own.
+            // redeclare their default counterparts; the `hinted` compilation above compiles them.
             kotlin.exclude("**/hinted-*.kt")
             dependencies {
                 implementation(libs.kotlinx.coroutines)
@@ -44,4 +55,9 @@ kotlin {
             }
         }
     }
+}
+
+// CI reaches this module through allTests, which only compiles nativeMain on its own.
+tasks.named("allTests") {
+    dependsOn("compileHintedKotlinLinuxX64")
 }
