@@ -24,8 +24,8 @@
 
 package com.monkopedia.sdbus.internal
 
-import com.monkopedia.sdbus.SdbusException
 import com.monkopedia.sdbus.sdbusRequire
+import com.monkopedia.sdbus.toError
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
@@ -47,11 +47,11 @@ internal inline fun invokeHandlerAndCatchErrors(
 ): Boolean {
     try {
         callable()
-    } catch (e: SdbusException) {
-        sd_bus_error_set(retError, e.name, e.message)
-        return false
     } catch (t: Throwable) {
-        sd_bus_error_set(retError, SDBUSCPP_ERROR_NAME, t.message ?: "Unknown error occurred")
+        // Same mapping a method handler's error reply uses (MethodBuilder), so a throwing property
+        // getter/setter reports the same name and message as a throwing method. See #283.
+        val error = t.toError()
+        sd_bus_error_set(retError, error.name, error.errorMessage)
         return false
     }
 
@@ -65,5 +65,3 @@ internal fun now(): Duration = memScoped {
 
     return ts[0].tv_nsec.nanoseconds + ts[0].tv_sec.seconds
 }
-
-internal const val SDBUSCPP_ERROR_NAME = "org.sdbuscpp.Error"
