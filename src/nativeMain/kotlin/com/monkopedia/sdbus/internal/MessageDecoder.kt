@@ -289,12 +289,11 @@ internal class ListDecoder<K, N : CVariable>(
         lastInline = null
     }
 
-    override fun decodeByte(): Byte {
-        if (isUnsigned) {
-            return (decodeValue() as UByte).toByte()
-        }
-        return super.decodeByte()
-    }
+    // `y` is the only signature a Byte or UByte maps to, and deserializeArrayFast always fills it
+    // with UByte, so narrow it for both. Likewise Float travels as `d`, which is filled with Double.
+    override fun decodeByte(): Byte = (decodeValue() as UByte).toByte()
+
+    override fun decodeFloat(): Float = (decodeValue() as Double).toFloat()
 
     override fun decodeShort(): Short {
         if (isUnsigned) {
