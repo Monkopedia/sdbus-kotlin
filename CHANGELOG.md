@@ -207,6 +207,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   caller (except that a JVM property throw with no message still reports `Handler failed`).
   **A consumer matching on `org.sdbuscpp.Error` will no longer see it**; that name is no longer sent
   anywhere. (#283)
+- **`List<Byte>` / `ByteArray` decode and `List<Float>` / `FloatArray` encode and decode no longer
+  throw `ClassCastException` on the native backend.** Kotlin `Byte` travels as `y` and `Float` as
+  `d`, and the native trivial-array fast path stored them without converting to the `UByte` /
+  `Double` its converters expect. The `Float` cases threw locally, on encode before anything was
+  sent or on decode; the `Byte` decode failed on the receiving side, so over a real bus the caller
+  saw it as an `org.freedesktop.DBus.Error.Failed` reply. The fast path now widens `Float` to
+  `Double` on encode and narrows `UByte` to `Byte` and `Double` to `Float` on decode. There is no
+  wire change: `Float` is still carried as `d`. This completes #8's fast-path fix, which covered
+  only the unsigned types, for the remaining fixed-width trivial types. (#286)
 
 ## [1.0.1] - 2026-07-15
 

@@ -304,6 +304,9 @@ internal class ListEncoder<K, N : CVariable>(
     override fun encodeLong(value: Long) =
         add(if (signature.value == "t") value.toULong() else value)
 
+    // Float has no D-Bus type of its own and travels as `d`, so widen it for the Double converter.
+    override fun encodeFloat(value: Float) = add(value.toDouble())
+
     override fun encodeValue(value: Any) = add(value)
 
     override fun endStructure(descriptor: SerialDescriptor) {

@@ -15,6 +15,7 @@ import com.monkopedia.sdbus.createProxy
 import com.monkopedia.sdbus.method
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -57,6 +58,12 @@ class TypeMatrixRoundTripTest {
         val g: Signature,
         val v: Variant
     )
+
+    @Serializable
+    private data class ByteStruct(val byte: Byte, val bytes: List<Byte>)
+
+    @Serializable
+    private data class FloatStruct(val float: Float, val floats: List<Float>)
 
     @Serializable
     private data class NestedStruct(val inner: SimpleStruct, val list: List<Int>)
@@ -217,6 +224,40 @@ class TypeMatrixRoundTripTest {
 
     @Test
     fun arrayOfDoubles_ad_roundTrips() = assertRoundTrips("arrDouble", listOf(1.5, -2.5, 0.0))
+
+    // Byte and Float have no D-Bus type of their own and travel as y and d (#286).
+    @Test
+    fun byteAndFloatScalars_roundTrip() {
+        assertRoundTrips("signedByte", Byte.MIN_VALUE)
+        assertRoundTrips("float", -2.5f)
+    }
+
+    @Test
+    fun arrayOfSignedBytes_ay_roundTrips() =
+        assertRoundTrips("arrSignedByte", listOf<Byte>(Byte.MIN_VALUE, -1, 0, Byte.MAX_VALUE))
+
+    @Test
+    fun byteArray_ay_roundTrips() {
+        val sent = byteArrayOf(Byte.MIN_VALUE, -1, 0, Byte.MAX_VALUE)
+        assertContentEquals(sent, roundTrip("byteArray", sent))
+    }
+
+    @Test
+    fun arrayOfFloats_ad_roundTrips() = assertRoundTrips("arrFloat", listOf(1.5f, -2.5f, 0f))
+
+    @Test
+    fun floatArray_ad_roundTrips() {
+        val sent = floatArrayOf(1.5f, -2.5f, 0f)
+        assertContentEquals(sent, roundTrip("floatArray", sent))
+    }
+
+    @Test
+    fun structWithByteArray_roundTrips() =
+        assertRoundTrips("structByte", ByteStruct(-1, listOf(Byte.MIN_VALUE, Byte.MAX_VALUE)))
+
+    @Test
+    fun structWithFloatArray_roundTrips() =
+        assertRoundTrips("structFloat", FloatStruct(0.1f, listOf(1.5f, -2.5f)))
 
     @Test
     fun emptyArrayOfInts_ai_roundTrips() = assertRoundTrips("arrIntEmpty", emptyList<Int>())
