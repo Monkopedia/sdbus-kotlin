@@ -195,6 +195,14 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   queued instead. The JVM backend hands the wire bits to the daemon directly and always matched the
   semantics documented on `RequestNameFlag`, so this affected native only. The mapping now names the
   cinterop `SD_BUS_NAME_*` constants, making it compiler-checked rather than comment-checked. (#212)
+- **`List<Byte>` / `ByteArray` decode and `List<Float>` / `FloatArray` encode and decode no longer
+  throw `ClassCastException` on the native backend.** Kotlin `Byte` travels as `y` and `Float` as `d`,
+  and the native trivial-array fast path stored them without converting to the `UByte` / `Double`
+  its converters expect, so a hand-written interface using either array type failed — over a real
+  bus as an `org.freedesktop.DBus.Error.Failed` reply. The fast path now widens `Float` to `Double`
+  on encode and narrows `UByte` to `Byte` and `Double` to `Float` on decode. There is no wire change:
+  `Float` is still carried as `d`. This completes #8's fast-path fix, which covered only the unsigned
+  types, for the remaining trivial types. (#286)
 
 ## [1.0.1] - 2026-07-15
 
