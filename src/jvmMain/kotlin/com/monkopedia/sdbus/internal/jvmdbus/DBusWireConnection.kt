@@ -140,6 +140,13 @@ internal class DBusWireConnection private constructor(
     private var readerThread: Thread? = null
 
     /**
+     * The error that tore the reader thread down, or null while the connection is healthy (and
+     * after an ordinary [close]). Set exactly once, by the reader itself, before it exits.
+     */
+    @Volatile
+    private var readerFailure: Throwable? = null
+
+    /**
      * The unique name assigned by the bus during [hello] (e.g. `:1.42`), or null before Hello — and
      * always null on a brokerless [direct] connection, which has no daemon to assign one.
      */
@@ -199,16 +206,28 @@ internal class DBusWireConnection private constructor(
     private fun startReader() {
         running = true
         readerThread = thread(start = true, isDaemon = true, name = "sdbus-jvm-wire-reader") {
+            var fatal: Throwable? = null
             try {
                 while (running) {
                     dispatch(resolveReceivedFds(WireMessageCodec.read(input)))
                 }
-            } catch (_: IOException) {
-                // Expected on close() (socket closed) or peer disconnect.
-            } catch (_: DBusMarshallingException) {
-                // Malformed frame; treat as fatal for this connection.
+            } catch (t: Throwable) {
+                // Anything that escapes the loop is fatal to this connection: the stream is FRAMED,
+                // so once a frame fails to parse the byte offset is no longer known and nothing
+                // after it can be decoded. Catching Throwable rather than just IOException /
+                // DBusMarshallingException is what stops a hostile or buggy frame from killing the
+                // reader while `running` stayed true and the socket stayed open -- which left the
+                // connection reporting itself healthy while delivering nothing, so every later call
+                // could only ever time out (issue #190). `running == false` means close() did this.
+                if (running) fatal = IOException("D-Bus reader failed: $t", t)
             } finally {
-                failAllPending(IOException("D-Bus connection closed"))
+                // Make the death OBSERVABLE rather than silent: stop pretending to run, close the
+                // socket so subsequent sends fail immediately instead of vanishing into a peer we
+                // can no longer read, and hand in-flight callers the real cause.
+                running = false
+                readerFailure = fatal
+                runCatching { socket.close() }
+                failAllPending(fatal ?: IOException("D-Bus connection closed"))
             }
         }
     }
@@ -243,6 +262,16 @@ internal class DBusWireConnection private constructor(
     // --- sending --------------------------------------------------------------------------------
 
     private fun nextSerial(): Int = serialCounter.incrementAndGet()
+
+    /**
+     * Refuses to put anything on the wire once the reader has died: a connection with no reader can
+     * never deliver a reply, so the alternative is the caller waiting out its full timeout for a
+     * reply that provably is not coming. This is the one thing that made the old silent reader death
+     * indistinguishable from a healthy-but-slow bus (issue #190).
+     */
+    private fun checkAlive() {
+        readerFailure?.let { throw IOException("D-Bus connection is dead: ${it.message}", it) }
+    }
 
     private fun writeMessage(message: WireMessage) {
         // Collect any UnixFds in the body (depth-first, body order) and replace each with its
@@ -337,6 +366,7 @@ internal class DBusWireConnection private constructor(
      * pending entry if they give up waiting (timeout).
      */
     private fun dispatchCall(request: WireMessage): PendingCall {
+        checkAlive()
         val serial = nextSerial()
         val future = CompletableFuture<WireMessage>()
         pending[serial] = future
@@ -411,6 +441,7 @@ internal class DBusWireConnection private constructor(
 
     /** Fire-and-forget send (e.g. a method call with NO_REPLY_EXPECTED, a signal, or a reply). */
     fun send(message: WireMessage): Int {
+        checkAlive()
         val serial = nextSerial()
         writeMessage(message.copy(serial = serial))
         return serial
