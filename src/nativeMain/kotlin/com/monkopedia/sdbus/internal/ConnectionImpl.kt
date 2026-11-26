@@ -155,12 +155,14 @@ private fun openPseudoBus(sdbus: ISdBus): BusPtr = memScoped {
     val r = sdbus.sd_bus_new(bus)
     sdbusRequire(r < 0, "Failed to open pseudo bus", -r)
 
-    sdbus.sd_bus_start(bus[0])
+    val startResult = sdbus.sd_bus_start(bus[0])
     // It is expected that sd_bus_start has failed here, returning -EINVAL, due to having
     // not set a bus address, but it will leave the bus in an OPENING state, which enables
     // us to create plain D-Bus messages as a local data storage (for Variant, for example),
     // without dependency on real IPC communication with the D-Bus broker daemon.
-    sdbusRequire(r < 0 && r != -EINVAL, "Failed to start pseudo bus", -r)
+    val startFailed = startResult < 0 && startResult != -EINVAL
+    if (startFailed) sdbus.sd_bus_close_unref(bus[0])
+    sdbusRequire(startFailed, "Failed to start pseudo bus", -startResult)
 
     return Reference(bus[0]) {
         sdbus.sd_bus_close_unref(it)
@@ -468,6 +470,8 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             sdbus_match_callback,
             stableRef.asCPointer()
         )
+        // On failure no slot exists, so the cleanup closure below never runs: dispose here.
+        if (r < 0) stableRef.dispose()
         sdbusRequire(r < 0, "Failed to add match $match", -r)
 
         Reference(matchInfo to slot[0]) { (_, ref) ->
@@ -497,6 +501,8 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             ref?.asCPointer()
         )
 
+        // On failure no slot exists, so the cleanup closure below never runs: dispose here.
+        if (r < 0) ref?.dispose()
         sdbusRequire(r < 0, "Failed to register object vtable", -r)
 
         val cPointer = slot[0]
@@ -708,6 +714,8 @@ internal class ConnectionImpl(private val sdbus: ISdBus, private val bus: BusPtr
             ref?.asCPointer()
         )
 
+        // On failure no slot exists, so the cleanup closure below never runs: dispose here.
+        if (r < 0) ref?.dispose()
         sdbusRequire(r < 0, "Failed to register signal handler", -r)
 
         val localSdbus = sdbus
