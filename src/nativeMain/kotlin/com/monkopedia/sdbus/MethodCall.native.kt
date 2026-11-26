@@ -81,6 +81,8 @@ actual class MethodCall internal constructor(
             userDataRef?.asCPointer(),
             timeout
         )
+        // On failure no slot exists, so the cleanup closure below never runs: dispose here.
+        if (r < 0) userDataRef?.dispose()
         sdbusRequire(r < 0, "Failed to call method asynchronously", -r)
 
         // Local capture so the cleanup closure does not pin this MethodCall message (see

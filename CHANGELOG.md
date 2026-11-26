@@ -236,6 +236,20 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   `Double` on encode and narrows `UByte` to `Byte` and `Double` to `Float` on decode. There is no
   wire change: `Float` is still carried as `d`. This completes #8's fast-path fix, which covered
   only the unsigned types, for the remaining fixed-width trivial types. (#286)
+- **Three native error paths no longer leak, or swallow the failure.** All three are reached only
+  when a libsystemd call fails; nothing changes when it succeeds. (#276)
+  - The pseudo bus that backs every `Variant` dropped `sd_bus_start`'s result and re-tested the
+    `sd_bus_new` result instead, so its guard could never fire: a genuine start failure (anything
+    other than the expected `-EINVAL`) was ignored and the half-started bus used anyway. It now
+    throws `Failed to start pseudo bus` and releases the bus.
+  - A registration that sd-bus rejects — `addMatch`, an object vtable (e.g. `-EEXIST` for a path
+    and interface already registered), a signal handler, or an async method call — leaked the
+    `StableRef` to its user data, pinning the handler and everything it captures for the life of
+    the process. It is now disposed when the registration fails.
+  - `createDirectBusConnection` (address or fd), `createServerBusConnection` and
+    `createSessionBusConnection(address)` leaked a whole `sd_bus` each time opening failed, so a
+    caller retrying against a socket that is not up yet leaked one per attempt. The bus is now
+    unref'd on every failure.
 
 ## [1.0.1] - 2026-07-15
 

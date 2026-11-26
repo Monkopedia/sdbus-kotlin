@@ -253,109 +253,77 @@ internal class SdBus : ISdBus {
     override fun sd_bus_open_user_with_address(
         ret: CValuesRef<CPointerVar<sd_bus>>?,
         address: String
+    ): Int = openNewBus(ret) { bus ->
+        var r = sdbus.sd_bus_set_address(bus, address)
+        if (r < 0) return@openNewBus r
+        r = sdbus.sd_bus_set_bus_client(bus, 1)
+        if (r < 0) return@openNewBus r
+        sdbus.sd_bus_set_trusted(bus, 1)
+    }
+
+    override fun sd_bus_open_direct(ret: CValuesRef<CPointerVar<sd_bus>>?, address: String): Int =
+        openNewBus(ret) { bus ->
+            var r = sdbus.sd_bus_set_address(bus, address)
+            if (r < 0) return@openNewBus r
+            r = sdbus.sd_bus_set_bus_client(bus, 0)
+            if (r < 0) return@openNewBus r
+            if (useAnonymousDirectAuth) {
+                r = sdbus.sd_bus_set_anonymous(bus, 1)
+                if (r < 0) return@openNewBus r
+            }
+            sdbus.sd_bus_set_trusted(bus, 1)
+        }
+
+    // sd_bus_set_fd goes last: once it succeeds the bus owns the fd and unref'ing the bus closes
+    // it, while createDirectBusConnection leaves the fd with the caller when opening throws. So no
+    // later configure step may fail and have openNewBus close the caller's fd.
+    override fun sd_bus_open_direct(ret: CValuesRef<CPointerVar<sd_bus>>?, fd: Int): Int =
+        openNewBus(ret) { bus ->
+            var r = sdbus.sd_bus_set_bus_client(bus, 0)
+            if (r < 0) return@openNewBus r
+            if (useAnonymousDirectAuth) {
+                r = sdbus.sd_bus_set_anonymous(bus, 1)
+                if (r < 0) return@openNewBus r
+            }
+            r = sdbus.sd_bus_set_trusted(bus, 1)
+            if (r < 0) return@openNewBus r
+            sdbus.sd_bus_set_fd(bus, fd, fd)
+        }
+
+    // sd_bus_set_fd goes last for the same reason as in sd_bus_open_direct(fd) above.
+    override fun sd_bus_open_server(ret: CValuesRef<CPointerVar<sd_bus>>?, fd: Int): Int =
+        openNewBus(ret) { bus ->
+            val id: CValue<sd_id128_t> = cValue()
+            var r = sdbus.sd_id128_randomize(id)
+            if (r < 0) return@openNewBus r
+            r = sdbus.sd_bus_set_server(bus, 1, id)
+            if (r < 0) return@openNewBus r
+            sdbus.sd_bus_set_fd(bus, fd, fd)
+        }
+
+    /**
+     * Allocates a bus, applies [configure] to it and starts it, storing it in [ret] only on
+     * success. A bus that fails to configure or start is unref'd rather than leaked (#276).
+     */
+    private inline fun openNewBus(
+        ret: CValuesRef<CPointerVar<sd_bus>>?,
+        configure: (CPointer<sd_bus>?) -> Int
     ): Int = memScoped {
         val cValue = cValue<CPointerVar<sd_bus>>().getPointer(this)
         var r = sdbus.sd_bus_new(cValue)
         if (r < 0) return@memScoped r
         val bus = cValue[0]
-        r = sdbus.sd_bus_set_address(bus, address)
-        if (r < 0) return@memScoped r
-        r = sdbus.sd_bus_set_bus_client(bus, 1)
-        if (r < 0) return@memScoped r
-        r = sdbus.sd_bus_set_trusted(bus, 1)
-        if (r < 0) return@memScoped r
-        r = sdbus.sd_bus_start(bus)
-        if (r < 0) return@memScoped r
+        r = configure(bus)
+        if (r >= 0) r = sdbus.sd_bus_start(bus)
+        if (r < 0) {
+            sd_bus_close_unref(bus)
+            return@memScoped r
+        }
 
         ret?.getPointer(this)?.set(0, bus)
 
         0
     }
-
-    override fun sd_bus_open_direct(ret: CValuesRef<CPointerVar<sd_bus>>?, address: String): Int =
-        memScoped {
-            val cValue = cValue<CPointerVar<sd_bus>>().getPointer(this)
-            var r = sdbus.sd_bus_new(cValue)
-            if (r < 0) {
-                return@memScoped r
-            }
-            val bus = cValue[0]
-            r = sdbus.sd_bus_set_address(bus, address)
-            if (r < 0) {
-                return@memScoped r
-            }
-            r = sdbus.sd_bus_set_bus_client(bus, 0)
-            if (r < 0) {
-                return@memScoped r
-            }
-            if (useAnonymousDirectAuth) {
-                r = sdbus.sd_bus_set_anonymous(bus, 1)
-                if (r < 0) {
-                    return@memScoped r
-                }
-            }
-            r = sdbus.sd_bus_set_trusted(bus, 1)
-            if (r < 0) {
-                return@memScoped r
-            }
-            r = sdbus.sd_bus_start(bus)
-            if (r < 0) {
-                return@memScoped r
-            }
-
-            ret?.getPointer(this)?.set(0, bus)
-
-            0
-        }
-
-    override fun sd_bus_open_direct(ret: CValuesRef<CPointerVar<sd_bus>>?, fd: Int): Int =
-        memScoped {
-            val cValue = cValue<CPointerVar<sd_bus>>().getPointer(this)
-            var r = sdbus.sd_bus_new(cValue)
-            if (r < 0) return@memScoped r
-            val bus = cValue[0]
-            r = sdbus.sd_bus_set_fd(bus, fd, fd)
-            if (r < 0) return@memScoped r
-            r = sdbus.sd_bus_set_bus_client(bus, 0)
-            if (r < 0) return@memScoped r
-            if (useAnonymousDirectAuth) {
-                r = sdbus.sd_bus_set_anonymous(bus, 1)
-                if (r < 0) return@memScoped r
-            }
-            r = sdbus.sd_bus_set_trusted(bus, 1)
-            if (r < 0) return@memScoped r
-            r = sdbus.sd_bus_start(bus)
-            if (r < 0) return@memScoped r
-
-            ret?.getPointer(this)?.set(0, bus)
-
-            0
-        }
-
-    override fun sd_bus_open_server(ret: CValuesRef<CPointerVar<sd_bus>>?, fd: Int): Int =
-        memScoped {
-            val cValue = cValue<CPointerVar<sd_bus>>().getPointer(this)
-            var r = sdbus.sd_bus_new(cValue)
-            if (r < 0) return@memScoped r
-
-            val bus = cValue[0]
-            r = sdbus.sd_bus_set_fd(bus, fd, fd)
-            if (r < 0) return@memScoped r
-
-            val id: CValue<sd_id128_t> = cValue()
-            r = sdbus.sd_id128_randomize(id)
-            if (r < 0) return@memScoped r
-
-            r = sdbus.sd_bus_set_server(bus, 1, id)
-            if (r < 0) return@memScoped r
-
-            r = sdbus.sd_bus_start(bus)
-            if (r < 0) return@memScoped r
-
-            ret?.getPointer(this)?.set(0, bus)
-
-            0
-        }
 
     override fun sd_bus_open_system_remote(
         ret: CValuesRef<CPointerVar<sd_bus>>?,
