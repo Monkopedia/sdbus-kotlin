@@ -158,6 +158,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Fixed
 
+- **Reading one `Variant` from several threads no longer corrupts the native heap or fails on
+  JVM.** Every read moved the read cursor of the variant's backing message, so concurrent readers
+  raced on it. On native that aborted the process (`malloc(): unaligned tcache chunk detected`,
+  `double free or corruption`); on JVM most reads threw and the variant could stay unreadable
+  afterwards. Nothing in the API marked a variant as single-thread, and `ObjectManagerProxy` hands
+  the same variants to every collector of `objectData()`, `objects`, `objectsFor()` and
+  `interfacesFor()`, so two collectors reading a property were enough. Each variant now serialises
+  its own reads behind a private per-variant lock. No API or wire change. Reported by
+  blue-falcon-sdbus (blue-falcon-sdbus#75). (#294)
 - **`Message.credsEuid` / `Message.credsEgid` now report genuine effective ids on the JVM backend
   instead of the real ones.** The one JVM path that attaches credentials stored `getuid()` /
   the login gid — via `com.sun.security.auth.module.UnixSystem`, which reports only real ids — in the
