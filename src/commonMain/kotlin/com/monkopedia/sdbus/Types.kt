@@ -22,6 +22,8 @@
  */
 package com.monkopedia.sdbus
 
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -66,10 +68,20 @@ inline fun <reified T> Variant.containsValueOfType(): Boolean {
  * Construct a variant from a value with the [Variant] factory function, and read the value back
  * with [get]. Use [containsValueOfType] or [peekValueType] to inspect the contained type before
  * extracting it.
+ *
+ * A variant is safe to read from several threads at once.
  */
 @Serializable(Variant.Companion::class)
 class Variant constructor() {
     private val msg: PlainMessage = createPlainMessage()
+
+    // Every read moves the cursor of `msg`, so concurrent readers of one variant would race on it
+    // (#294): sd-bus corrupts the heap, and the JVM backend fails the read and can leave the
+    // variant unreadable. ObjectManagerProxy hands the same variants to every collector, so every
+    // use of `msg` holds this lock. It is per variant, and nothing called under it takes a
+    // connection's lock (the only sd-bus wrapper reached is the pseudo connection's message
+    // allocation, for a nested variant), so it cannot invert with a handler that already holds one.
+    private val lock = SynchronizedObject()
 
     internal constructor(message: Message) : this() {
         // Do nothing, message wil deserialize
@@ -116,7 +128,7 @@ class Variant constructor() {
         type: DeserializationStrategy<T>,
         module: SerializersModule,
         signature: TypeSignature
-    ): T {
+    ): T = synchronized(lock) {
         msg.rewind(false)
 
         msg.enterVariant(signature.value)
@@ -133,12 +145,12 @@ class Variant constructor() {
             throw e
         }
         msg.exitVariant()
-        return v
+        v
     }
 
     /** Whether this variant holds no value. */
     val isEmpty: Boolean
-        get() = msg.isEmpty
+        get() = synchronized(lock) { msg.isEmpty }
 
     /**
      * Serializes the value held by this variant into [msg].
@@ -146,8 +158,8 @@ class Variant constructor() {
      * @param msg Destination message to append the variant's contents to
      * @throws [com.monkopedia.sdbus.SdbusException] if this variant is empty
      */
-    fun serializeTo(msg: Message) {
-        if (isEmpty) {
+    fun serializeTo(msg: Message): Unit = synchronized(lock) {
+        if (this.msg.isEmpty) {
             throw createError(-1, "Cannot serialize an empty variant")
         }
         this.msg.rewind(true)
@@ -159,7 +171,7 @@ class Variant constructor() {
      *
      * @param msg Source message to read the variant's contents from
      */
-    fun deserializeFrom(msg: Message) {
+    fun deserializeFrom(msg: Message): Unit = synchronized(lock) {
         msg.copyTo(this.msg, false)
         this.msg.seal()
         this.msg.rewind(false)
@@ -169,9 +181,9 @@ class Variant constructor() {
      * Returns the D-Bus signature string of the value currently held by this variant, or `null`
      * if it cannot be determined.
      */
-    fun peekValueType(): String? {
+    fun peekValueType(): String? = synchronized(lock) {
         msg.rewind(false)
-        return msg.peekType().contents
+        msg.peekType().contents
     }
 
     override fun toString(): String = "Variant(${peekValueType()})"
