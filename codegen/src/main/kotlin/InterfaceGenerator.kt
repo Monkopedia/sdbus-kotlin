@@ -50,7 +50,7 @@ val String.capitalized: String
     }
 val String.decapitalized: String
     get() = replaceFirstChar {
-        it.lowercase(Locale.getDefault())
+        it.lowercase(Locale.ROOT)
     }
 
 val String.capitalCamelCase: String

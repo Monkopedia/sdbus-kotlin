@@ -104,7 +104,9 @@ class NamingManager(
                 val actualName = name ?: reference.asVarName
                 actualName to reference
             }
-            val pkg = pkgs.groupBy { it }.values.maxByOrNull { it.single() }?.firstOrNull()
+            // Most-referenced package; ties keep the greatest name, as before #272.
+            val pkg = pkgs.groupBy { it }.values
+                .maxWithOrNull(compareBy({ it.size }, { it.first() }))?.firstOrNull()
                 ?.lowercase()
                 ?: "sdbus.generated"
             val hint = nameHint
