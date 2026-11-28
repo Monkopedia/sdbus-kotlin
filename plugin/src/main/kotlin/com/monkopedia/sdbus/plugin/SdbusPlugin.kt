@@ -1,6 +1,7 @@
 package com.monkopedia.sdbus.plugin
 
 import com.monkopedia.sdbus.capitalized
+import java.io.File
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -27,7 +28,12 @@ class SdbusPlugin : Plugin<Project> {
             target.tasks.withType(Jar::class.java).configureEach { task ->
                 task.dependsOn(rootTask)
             }
-            ext.sources.asFileTree.filter { it.isFile && it.extension == "xml" }.forEach { file ->
+            val sourceFiles = ext.sources.asFileTree.files
+            val xmlFiles = sourceFiles.filter { it.isFile && it.extension == "xml" }
+            if (xmlFiles.isEmpty()) {
+                throw InvalidUserDataException(noXmlMessage(ext.sources.srcDirs, sourceFiles.size))
+            }
+            xmlFiles.forEach { file ->
                 val name = "generateSdbusWrappers${file.nameWithoutExtension.capitalized}"
                 val task = target.tasks.register(name, SdbusGenerationTask::class.java) {
                     it.outputDir = outputDirectory.get().dir(file.nameWithoutExtension).asFile
@@ -61,4 +67,28 @@ private fun unknownSourceSetMessage(
     }
     append("Available source sets: ")
     append(available.joinToString(", "))
+}
+
+/**
+ * With no XML to read, no generation task is registered, so `generateSdbusWrappers` would
+ * otherwise succeed having produced nothing, leaving the consumer with a green build and an
+ * empty output directory.
+ */
+private fun noXmlMessage(srcDirs: Set<File>, fileCount: Int): String = buildString {
+    append("sdbus has nothing to generate: ")
+    if (srcDirs.isEmpty()) {
+        append("sdbus { sources } has no directories. Add the directory holding the D-Bus ")
+        append("introspection XML, e.g. sources.srcDir(\"src/sdbus\").")
+        return@buildString
+    }
+    append("sdbus { sources } contains no .xml files. Searched: ")
+    append(
+        srcDirs.joinToString(", ") { dir ->
+            if (dir.isDirectory) dir.path else "${dir.path} (does not exist)"
+        }
+    )
+    append(". Found ")
+    append(fileCount)
+    append(if (fileCount == 1) " file" else " files")
+    append(", none with the .xml extension.")
 }

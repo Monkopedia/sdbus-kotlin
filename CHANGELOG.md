@@ -69,6 +69,14 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   single-target Kotlin Multiplatform project has no `linuxMain` (the hierarchy template only
   materialises an intermediate source set for a group with several targets), so a project relying on
   the `linuxMain` default now gets that error where it previously generated into the void. (#266)
+- **An empty or unmatched `sdbus { sources }` now fails the build instead of generating nothing.**
+  If `sources` was never given a directory, named a directory that does not exist, or held no
+  `.xml` files, no generation task was registered and `generateSdbusWrappers` succeeded with an
+  empty output directory. Configuration now fails with a message saying which of those it was,
+  naming the directories searched and how many files they held. **This is a behaviour change:** a
+  project that applies the plugin with no XML — for example one that sets it up conditionally — now
+  gets a configuration error where its build used to pass, and should stop applying the plugin
+  there. A project that generates anything today is unaffected. (#277)
 
 ### Fixed — codegen
 
