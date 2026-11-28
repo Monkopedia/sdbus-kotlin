@@ -168,17 +168,74 @@ class SdbusPluginTest {
         )
     }
 
+    @Test
+    fun unsetSourcesFailsConfiguration() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        configureSources = false,
+        xml = null
+    ) { dir ->
+        val result = runTaskAndFail(dir, "generateSdbusWrappers")
+
+        assertTrue(
+            result.output.contains("sdbus { sources } has no directories"),
+            "Expected the failure to say sources was never configured; output was:\n" +
+                result.output
+        )
+        assertFalse(
+            File(dir, "build/generated/sdbus").exists(),
+            "Generation should not have run at all; the failure is a configuration error."
+        )
+    }
+
+    @Test
+    fun sourcesDirectoryThatDoesNotExistFailsConfiguration() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        xml = null
+    ) { dir ->
+        val result = runTaskAndFail(dir, "generateSdbusWrappers")
+
+        assertTrue(
+            result.output.contains("${File(dir, "src/sdbus").path} (does not exist)"),
+            "Expected the failure to name the missing directory; output was:\n" + result.output
+        )
+        assertFalse(File(dir, "build/generated/sdbus").exists())
+    }
+
+    @Test
+    fun sourcesWithNoXmlFailsConfigurationCountingWhatItFound() = withProject(
+        generateProxies = false,
+        generateAdapters = false,
+        xml = null
+    ) { dir ->
+        writeFile(File(dir, "src/sdbus/sample.txt"), SAMPLE_XML)
+
+        val result = runTaskAndFail(dir, "generateSdbusWrappers")
+
+        assertTrue(
+            result.output.contains("sdbus { sources } contains no .xml files"),
+            "Expected the failure to say no XML matched; output was:\n" + result.output
+        )
+        assertTrue(
+            result.output.contains("Found 1 file, none with the .xml extension"),
+            "Expected the failure to count the files it did find; output was:\n" + result.output
+        )
+        assertFalse(File(dir, "build/generated/sdbus").exists())
+    }
+
     private fun withProject(
         generateProxies: Boolean,
         generateAdapters: Boolean,
         outputPackage: String? = null,
         honorNamingAnnotations: Boolean = false,
-        xml: String = SAMPLE_XML,
+        xml: String? = SAMPLE_XML,
         compileTargetJvm: Boolean = false,
         includeCompileFixture: Boolean = false,
         applyMavenPublish: Boolean = false,
         outputSourceSet: String? = null,
         omitOutputs: Boolean = false,
+        configureSources: Boolean = true,
         block: (File) -> Unit
     ) {
         // A single-target KMP project has no "linuxMain" intermediate source set — the
@@ -222,7 +279,7 @@ class SdbusPluginTest {
                       honorNamingAnnotations = $honorNamingAnnotations
                       ${outputPackage?.let { "outputPackage = \"$it\"" } ?: ""}
                       ${if (omitOutputs) "" else outputsLine(outputSourceSet ?: targetSourceSet)}
-                      sources.srcDir("src/sdbus")
+                      ${if (configureSources) "sources.srcDir(\"src/sdbus\")" else ""}
                     }
 
                     tasks.register("printSdbusSrcDirs") {
@@ -234,7 +291,7 @@ class SdbusPluginTest {
                     }
                 """
             )
-            writeFile(File(root, "src/sdbus/sample.xml"), xml)
+            xml?.let { writeFile(File(root, "src/sdbus/sample.xml"), it) }
             if (includeCompileFixture) {
                 writeFile(
                     File(root, "src/$targetSourceSet/kotlin/com/monkopedia/sdbus/Stubs.kt"),
