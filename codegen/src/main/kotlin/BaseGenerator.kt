@@ -121,7 +121,7 @@ abstract class BaseGenerator(
 
     protected fun Signal.signalName() = name.replaceFirstChar {
         if (it.isLowerCase()) {
-            it.titlecase(Locale.getDefault())
+            it.titlecase(Locale.ROOT)
         } else {
             it.toString()
         }

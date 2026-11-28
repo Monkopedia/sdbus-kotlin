@@ -2,6 +2,7 @@ package com.monkopedia.sdbus
 
 import com.monkopedia.sdbus.NamingManager.GeneratedType
 import com.monkopedia.sdbus.NamingManager.NamingType
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -216,5 +217,80 @@ class CodegenNamingAndTypeTest {
               </interface>
             </node>
         """
+    }
+
+    private fun sharedStructPackage(xml: String): String {
+        val files = InterfaceGenerator().transformXmlToFile(TestXmlSupport.parse(xml))
+        return files.single { it.name != "A" && it.name != "B" }.packageName
+    }
+
+    @Test
+    fun sharedStructGoesToThePackageThatReferencesItMost() {
+        // Two packages, one referencing the struct twice: this used to throw
+        // "List has more than one element" (#272).
+        val pkg = sharedStructPackage(
+            """
+            <node>
+              <interface name="org.alpha.A">
+                <property name="First"  type="(ii)" access="read"/>
+                <property name="Second" type="(ii)" access="read"/>
+              </interface>
+              <interface name="org.beta.B">
+                <property name="Third" type="(ii)" access="read"/>
+              </interface>
+            </node>
+            """
+        )
+        assertEquals("org.alpha", pkg)
+    }
+
+    @Test
+    fun sharedStructTieBetweenPackagesKeepsTheExistingPick() {
+        val pkg = sharedStructPackage(
+            """
+            <node>
+              <interface name="org.alpha.A">
+                <property name="First" type="(ii)" access="read"/>
+              </interface>
+              <interface name="org.beta.B">
+                <property name="Third" type="(ii)" access="read"/>
+              </interface>
+            </node>
+            """
+        )
+        assertEquals("org.beta", pkg)
+    }
+
+    @Test
+    fun generatedIdentifiersDoNotDependOnTheDefaultLocale() {
+        val root = TestXmlSupport.parse(
+            """
+            <node>
+              <interface name="org.example.LocaleTest">
+                <property name="Id" type="s" access="read"/>
+                <property name="Interface" type="s" access="read"/>
+                <signal name="idChanged">
+                  <arg name="value" type="s"/>
+                </signal>
+              </interface>
+            </node>
+            """
+        )
+
+        fun generate(locale: Locale): Map<String, String> {
+            val previous = Locale.getDefault()
+            Locale.setDefault(locale)
+            try {
+                return listOf(InterfaceGenerator(), ProxyGenerator(), AdaptorGenerator())
+                    .flatMap { it.transformXmlToFile(root) }
+                    .associate { it.name to it.toString() }
+            } finally {
+                Locale.setDefault(previous)
+            }
+        }
+
+        val reference = generate(Locale.ROOT)
+        assertTrue(reference.getValue("LocaleTest").contains("val `interface`: String"))
+        assertEquals(reference, generate(Locale.forLanguageTag("tr-TR")))
     }
 }

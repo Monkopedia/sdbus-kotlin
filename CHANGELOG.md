@@ -89,6 +89,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   the parser's own reader before decoding and reported like the other refusals. A real
   `Introspect` reply is `node > interface > method > arg` and the deepest checked-in fixture is 6
   elements, so the limit is an order of magnitude above anything legitimate. (#259)
+- **A struct signature shared across packages no longer crashes the generator.** When interfaces in
+  two or more packages used the same struct signature and one package used it more than once —
+  legal XML — generation failed with `IllegalArgumentException: List has more than one element`.
+  The generated type now goes to the package that references it most; a tie keeps the package the
+  generator already picked, so output for XML that generated before is unchanged. (#272)
+- **Generated identifiers no longer depend on the build machine's locale.** Lower- and
+  title-casing the first letter used the JVM's default locale, so a Turkish or Azeri build turned
+  `Id` into `ıd` and `Interface` into `ınterface` — which, no longer being a Kotlin keyword, also
+  lost its backtick escaping. Casing is now locale-independent. (#272)
 
 ### Changed — codegen
 
